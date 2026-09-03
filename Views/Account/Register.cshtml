@@ -1,0 +1,125 @@
+﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<!-- Google reCAPTCHA API -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<div class="auth-page">
+    <div class="auth-container auth-container-wide">
+        <div class="auth-card auth-card-register shadow-lg border-0">
+
+            <!-- Brand Logo -->
+            <div class="auth-logo text-center mb-4">
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" class="auth-logo-img" />
+            </div>
+
+            <div class="auth-heading text-center">
+                <h1>Create your account</h1>
+                <p class="auth-subtitle">Join our fashion community and explore top trends</p>
+            </div>
+
+            <form asp-action="Register" method="post" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger modern-alert mb-4" role="alert"></div>
+
+                <!-- First & Last Name -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="auth-field">
+                            <label asp-for="FirstName" class="form-label">First name</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-person input-icon"></i>
+                                <input asp-for="FirstName" class="form-control" placeholder="John" />
+                            </div>
+                            <span asp-validation-for="FirstName" class="text-danger field-validation-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="auth-field">
+                            <label asp-for="LastName" class="form-label">Last name</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-person input-icon"></i>
+                                <input asp-for="LastName" class="form-control" placeholder="Doe" />
+                            </div>
+                            <span asp-validation-for="LastName" class="text-danger field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="auth-field">
+                    <label asp-for="Email" class="form-label">Email address</label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-envelope input-icon"></i>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="you@example.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger field-validation-error"></span>
+                </div>
+
+                <!-- Phone -->
+                <div class="auth-field">
+                    <label asp-for="Phone" class="form-label">Phone number</label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-telephone input-icon"></i>
+                        <input asp-for="Phone" type="tel" class="form-control" placeholder="+855 12 345 678" />
+                    </div>
+                    <span asp-validation-for="Phone" class="text-danger field-validation-error"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="auth-field">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger field-validation-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="auth-field">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-shield-lock input-icon"></i>
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••••" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google reCAPTCHA -->
+                <div class="auth-captcha-wrapper mt-3 mb-3">
+                    <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="auth-primary-btn w-100 mt-3">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Create account</span>
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>OR</span>
+            </div>
+
+            <p class="auth-bottom">
+                Already have an account?
+                <a asp-action="Login" class="auth-link">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,298 @@
+@using WebApplication_ClothingEcommerce.Data.Enums
+@model WebApplication_ClothingEcommerce.Models.Product
+
+@{
+    ViewData["Title"] = "Create Product";
+}
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+
+    <div class="mb-4">
+
+        <a asp-action="Index"
+           class="text-decoration-none text-muted">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Products
+
+        </a>
+
+        <h2 class="fw-bold mt-3 mb-1">
+            Create Product
+        </h2>
+
+        <p class="text-muted">
+            Add a new clothing product
+        </p>
+
+    </div>
+
+
+    <!-- VALIDATION -->
+
+    <div asp-validation-summary="ModelOnly"
+         class="alert alert-danger">
+    </div>
+
+
+    <!-- FORM -->
+
+    <form asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+
+            <!-- LEFT -->
+
+            <div class="col-lg-8">
+
+                <div class="card shadow-sm border-0">
+
+                    <div class="card-header bg-white py-3">
+
+                        <h5 class="mb-0 fw-bold">
+                            Product Information
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- NAME -->
+
+                        <div class="mb-3">
+
+                            <label asp-for="Name"
+                                   class="form-label fw-semibold">
+                                Product Name
+                            </label>
+
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Enter product name..." />
+
+                            <span asp-validation-for="Name"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <!-- DESCRIPTION -->
+
+                        <div class="mb-3">
+
+                            <label asp-for="Description"
+                                   class="form-label fw-semibold">
+                                Description
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="5"
+                                      placeholder="Enter product description...">
+                            </textarea>
+
+                            <span asp-validation-for="Description"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <!-- CATEGORY -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="CategoryId"
+                                       class="form-label fw-semibold">
+                                    Category
+                                </label>
+
+                                <select asp-for="CategoryId"
+                                        class="form-select"
+                                        asp-items="ViewBag.Categories">
+
+                                    <option value="">
+                                        -- Select Category --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="CategoryId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- BRAND -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="BrandId"
+                                       class="form-label fw-semibold">
+                                    Brand
+                                </label>
+
+                                <select asp-for="BrandId"
+                                        class="form-select"
+                                        asp-items="ViewBag.Brands">
+
+                                    <option value="">
+                                        -- Select Brand --
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="BrandId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- GENDER -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="Gender"
+                                       class="form-label fw-semibold">
+                                    Gender
+                                </label>
+
+                                <select asp-for="Gender"
+                                        class="form-select">
+
+                                    <option value="">
+                                        -- Select Gender --
+                                    </option>
+
+                                    <option value="Men">
+                                        Men
+                                    </option>
+
+                                    <option value="Women">
+                                        Women
+                                    </option>
+
+                                    <option value="Unisex">
+                                        Unisex
+                                    </option>
+
+                                    <option value="Kids">
+                                        Kids
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="Gender"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- MATERIAL -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="Material"
+                                       class="form-label fw-semibold">
+                                    Material
+                                </label>
+
+                                <input asp-for="Material"
+                                       class="form-control"
+                                       placeholder="e.g. Cotton" />
+
+                                <span asp-validation-for="Material"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT -->
+
+            <div class="col-lg-4">
+
+                <!-- STATUS -->
+
+                <div class="card shadow-sm border-0 mb-4">
+
+                    <div class="card-header bg-white py-3">
+
+                        <h5 class="mb-0 fw-bold">
+                            Status
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <label asp-for="Status"
+                               class="form-label fw-semibold">
+                            Product Status
+                        </label>
+
+                        <select asp-for="Status"
+                                class="form-select"
+                                asp-items="Html.GetEnumSelectList<ProductStatus>()">
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="card shadow-sm border-0">
+
+                    <div class="card-body">
+
+                        <button type="submit"
+                                class="btn btn-primary w-100 mb-2">
+
+                            <i class="bi bi-check-lg me-1"></i>
+                            Create Product
+
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary w-100">
+
+                            Cancel
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

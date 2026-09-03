@@ -1,0 +1,97 @@
+@model WebApplication_ClothingEcommerce.Models.Order
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Orders</a>
+            <h2 class="fw-bold mt-2 mb-0">Order #@Model.Id.ToString()[..8]</h2>
+            <small class="text-muted">Placed on @Model.OrderDate.ToLocalTime().ToString("f")</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"><i class="bi bi-pencil me-1"></i> Update Status</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i> Delete</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Order Items</h5></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Details</th>
+                                    <th>Unit Price</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Items != null && Model.Items.Any())
+                                {
+                                    foreach (var item in Model.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@(item.Variant?.Product?.Name ?? "Product")</div>
+                                                <small class="text-muted">Color: @(item.Variant?.Color?.Name ?? "-") | Size: @(item.Variant?.Size?.Name ?? "-")</small>
+                                            </td>
+                                            <td>$@item.UnitPrice.ToString("F2")</td>
+                                            <td class="text-center">@item.Quantity</td>
+                                            <td class="text-end fw-bold">$@((item.UnitPrice * item.Quantity).ToString("F2"))</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="4" class="text-center py-4 text-muted">No items in this order.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Summary</h5></div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Status</span>
+                        <span class="badge bg-primary">@Model.Status</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Total Items</span>
+                        <span>@(Model.Items?.Sum(i => i.Quantity) ?? 0)</span>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Total Amount</span>
+                        <h4 class="fw-bold text-success mb-0">$@Model.TotalAmount.ToString("F2")</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Customer & Shipping</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Customer</small>
+                        <strong>@Model.Customer?.FirstName @Model.Customer?.LastName</strong>
+                        <div class="text-muted small">@Model.Customer?.Email</div>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Address</small>
+                        <span>@(Model.Address?.Street ?? Model.AddressId.ToString())</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

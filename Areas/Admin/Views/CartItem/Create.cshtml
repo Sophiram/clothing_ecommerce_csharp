@@ -1,0 +1,54 @@
+@model WebApplication_ClothingEcommerce.Models.CartItem
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>CartItem</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="CartId" class="control-label"></label>
+                <input asp-for="CartId" class="form-control" />
+                <span asp-validation-for="CartId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="VariantId" class="control-label"></label>
+                <input asp-for="VariantId" class="form-control" />
+                <span asp-validation-for="VariantId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Quantity" class="control-label"></label>
+                <input asp-for="Quantity" class="form-control" />
+                <span asp-validation-for="Quantity" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Cart" class="control-label"></label>
+                <input asp-for="Cart" class="form-control" />
+                <span asp-validation-for="Cart" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Variant" class="control-label"></label>
+                <input asp-for="Variant" class="form-control" />
+                <span asp-validation-for="Variant" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

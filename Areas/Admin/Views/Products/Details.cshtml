@@ -1,0 +1,591 @@
+@model WebApplication_ClothingEcommerce.Models.Product
+
+@{
+    ViewData["Title"] = "Product Details";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <a asp-action="Index"
+               class="text-decoration-none text-muted">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Products
+
+            </a>
+
+            <h2 class="fw-bold mt-3 mb-1">
+                @Model.Name
+            </h2>
+
+            <p class="text-muted mb-0">
+                Product details and management
+            </p>
+
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-warning">
+
+                <i class="bi bi-pencil me-1"></i>
+                Edit
+
+            </a>
+
+            <a asp-action="Delete"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-danger">
+
+                <i class="bi bi-trash me-1"></i>
+                Delete
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+
+            <i class="bi bi-check-circle me-2"></i>
+
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+
+            <i class="bi bi-exclamation-triangle me-2"></i>
+
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    <div class="row g-4">
+
+        <!-- PRODUCT INFORMATION -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 mb-4">
+
+                <div class="card-header bg-white py-3">
+
+                    <h5 class="fw-bold mb-0">
+                        Product Information
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Name
+                        </small>
+
+                        <div class="fw-semibold">
+                            @Model.Name
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Category
+                        </small>
+
+                        <div>
+                            @(Model.Category?.Name ?? "-")
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Brand
+                        </small>
+
+                        <div>
+                            @(Model.Brand?.Name ?? "-")
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Gender
+                        </small>
+
+                        <div>
+                            @Model.Gender
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Material
+                        </small>
+
+                        <div>
+                            @Model.Material
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <small class="text-muted">
+                            Status
+                        </small>
+
+                        <div>
+
+                            @if (Model.Status.ToString() == "Active")
+                            {
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    @Model.Status
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <small class="text-muted">
+                            Description
+                        </small>
+
+                        <div class="mt-1">
+                            @(Model.Description ?? "No description.")
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- IMAGES -->
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-white py-3
+                    d-flex justify-content-between
+                    align-items-center">
+
+                    <h5 class="fw-bold mb-0">
+
+                        <i class="bi bi-images me-2"></i>
+                        Product Images
+
+                    </h5>
+
+
+                    <a asp-controller="ProductImages"
+                       asp-action="Create"
+                       asp-route-productId="@Model.Id"
+                       class="btn btn-primary btn-sm">
+
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Add Image
+
+                    </a>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    @if (Model.Images != null &&
+                         Model.Images.Any())
+                    {
+                        <div class="row g-3">
+
+                            @foreach (var image in Model.Images)
+                            {
+                                <div class="col-md-4">
+
+                                    <div class="card h-100 border">
+
+                                        <div class="position-relative">
+
+                                            <img src="@image.ImageUrl"
+                                                 alt="@Model.Name"
+                                                 class="card-img-top"
+                                                 style="
+                                            height:220px;
+                                            object-fit:cover;
+                                            " />
+
+                                            @if (image.IsPrimary)
+                                            {
+                                                <span class="position-absolute
+                                                    top-0
+                                                    start-0
+                                                    badge
+                                                    bg-success
+                                                    m-2">
+
+                                                    <i class="bi bi-star-fill me-1"></i>
+                                                    Primary
+
+                                                </span>
+                                            }
+
+                                        </div>
+
+
+                                        <div class="card-body">
+
+                                            <div class="d-grid gap-2">
+
+                                                @if (!image.IsPrimary)
+                                                {
+                                                    <form asp-controller="ProductImages"
+                                                          asp-action="SetPrimary"
+                                                          method="post">
+
+                                                        @Html.AntiForgeryToken()
+
+                                                        <input type="hidden"
+                                                               name="id"
+                                                               value="@image.Id" />
+
+                                                        <input type="hidden"
+                                                               name="productId"
+                                                               value="@Model.Id" />
+
+                                                        <button type="submit"
+                                                                class="btn btn-outline-success btn-sm w-100">
+
+                                                            <i class="bi bi-star me-1"></i>
+                                                            Set Primary
+
+                                                        </button>
+
+                                                    </form>
+                                                }
+
+
+                                                <form asp-controller="ProductImages"
+                                                      asp-action="Delete"
+                                                      method="post"
+                                                      onsubmit="return confirm('Delete this image?');">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@image.Id" />
+
+                                                    <input type="hidden"
+                                                           name="productId"
+                                                           value="@Model.Id" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-outline-danger btn-sm w-100">
+
+                                                        <i class="bi bi-trash me-1"></i>
+                                                        Delete
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+
+                            <i class="bi bi-images fs-1 text-muted"></i>
+
+                            <h5 class="mt-3">
+                                No images yet
+                            </h5>
+
+                            <p class="text-muted">
+                                Add an image URL for this product.
+                            </p>
+
+                            <a asp-controller="ProductImages"
+                               asp-action="Create"
+                               asp-route-productId="@Model.Id"
+                               class="btn btn-primary">
+
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Add First Image
+
+                            </a>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- VARIANTS -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-white py-3
+                    d-flex justify-content-between
+                    align-items-center">
+
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-palette me-2"></i>
+                        Product Variants
+                    </h5>
+
+                    <a asp-controller="ProductVariants"
+                       asp-action="Create"
+                       asp-route-productId="@Model.Id"
+                       class="btn btn-primary btn-sm">
+
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Add Variant
+
+                    </a>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    @if (Model.Variants != null &&
+     Model.Variants.Any())
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-hover align-middle">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Size</th>
+                                        <th>Color</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach (var variant in Model.Variants)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                <span class="fw-semibold">
+                                                    @variant.SKU
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="badge bg-light text-dark border">
+                                                    @variant.Size?.Name
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                @variant.Color?.Name
+                                            </td>
+
+                                            <td>
+                                                <strong>
+                                                    $@variant.Price.ToString("N2")
+                                                </strong>
+                                            </td>
+
+                                            <td>
+
+                                                @if (variant.Inventory != null)
+                                                {
+                                                    <span class="badge
+                                                        @(variant.Inventory.Quantity > 0
+                                                            ? "bg-success"
+                                                            : "bg-danger")">
+
+                                                        @variant.Inventory.Quantity
+
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        0
+                                                    </span>
+                                                }
+
+                                            </td>
+
+                                            <td>
+
+                                                @if (variant.Status == VariantStatus.Available)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        Available
+                                                    </span>
+                                                }
+                                                else if (variant.Status == VariantStatus.OutOfStock)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        Out of Stock
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        @variant.Status
+                                                    </span>
+                                                }
+
+                                            </td>
+
+                                            <td class="text-end">
+
+                                                <div class="btn-group btn-group-sm">
+
+                                                    <a asp-controller="ProductVariants"
+                                                       asp-action="Details"
+                                                       asp-route-id="@variant.Id"
+                                                       class="btn btn-outline-primary">
+
+                                                        <i class="bi bi-eye"></i>
+
+                                                    </a>
+
+                                                    <a asp-controller="ProductVariants"
+                                                       asp-action="Edit"
+                                                       asp-route-id="@variant.Id"
+                                                       class="btn btn-outline-warning">
+
+                                                        <i class="bi bi-pencil"></i>
+
+                                                    </a>
+
+                                                    <a asp-controller="ProductVariants"
+                                                       asp-action="Delete"
+                                                       asp-route-id="@variant.Id"
+                                                       class="btn btn-outline-danger">
+
+                                                        <i class="bi bi-trash"></i>
+
+                                                    </a>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+
+                            <i class="bi bi-palette fs-1 text-muted"></i>
+
+                            <h5 class="mt-3">
+                                No variants yet
+                            </h5>
+
+                            <p class="text-muted">
+                                Add size and color variants for this product.
+                            </p>
+
+                            <a asp-controller="ProductVariants"
+                               asp-action="Create"
+                               asp-route-productId="@Model.Id"
+                               class="btn btn-primary">
+
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Add First Variant
+
+                            </a>
+
+                        </div>
+                    }
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

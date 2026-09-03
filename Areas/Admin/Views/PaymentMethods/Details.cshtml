@@ -1,0 +1,110 @@
+﻿@model WebApplication_ClothingEcommerce.Models.PaymentMethod
+
+@{
+    ViewData["Title"] = "Payment Method Details";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+
+        <h2 class="fw-bold">
+            Payment Method Details
+        </h2>
+
+    </div>
+
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+
+            <div class="text-center mb-4">
+
+                @if (!string.IsNullOrWhiteSpace(Model.Icon))
+                {
+                    <img src="@Model.Icon"
+                         alt="@Model.Name"
+                         style="width:90px;height:90px;object-fit:contain;" />
+                }
+
+                <h3 class="mt-3">
+                    @Model.Name
+                </h3>
+
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">
+                        Active
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">
+                        Disabled
+                    </span>
+                }
+
+            </div>
+
+
+            <dl class="row">
+
+                <dt class="col-sm-3">
+                    Description
+                </dt>
+
+                <dd class="col-sm-9">
+                    @(Model.Description ?? "-")
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Display Order
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.DisplayOrder
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Total Payments
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.Payments.Count
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Created
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                </dd>
+
+            </dl>
+
+
+            <div class="d-flex gap-2">
+
+                <a asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-primary">
+                    Edit
+                </a>
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+                    Back
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

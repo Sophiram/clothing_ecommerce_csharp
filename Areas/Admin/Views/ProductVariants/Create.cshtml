@@ -1,0 +1,303 @@
+@model WebApplication_ClothingEcommerce.Models.ProductVariant
+
+@{
+    ViewData["Title"] = "Add Product Variant";
+
+    var quantity = ViewBag.Quantity ?? 0;
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+
+        <a asp-controller="Products"
+           asp-action="Details"
+           asp-route-id="@Model.ProductId"
+           class="text-decoration-none text-muted">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Product
+
+        </a>
+
+        <h2 class="fw-bold mt-3 mb-1">
+            Add Product Variant
+        </h2>
+
+        <p class="text-muted">
+            Create a size and color variant with price and inventory.
+        </p>
+
+    </div>
+
+
+    <div class="row justify-content-center">
+
+        <div class="col-xl-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-palette me-2"></i>
+                        Variant Information
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+                    <div asp-validation-summary="All"
+                         class="alert alert-danger">
+                    </div>
+
+
+                    <form asp-action="Create"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+
+                        <!-- PRODUCT -->
+
+                        <div class="mb-4">
+
+                            <label asp-for="ProductId"
+                                   class="form-label fw-semibold">
+
+                                Product
+
+                            </label>
+
+                            <select asp-for="ProductId"
+                                    asp-items="ViewBag.Products"
+                                    class="form-select">
+
+                                <option value="">
+                                    Select Product
+                                </option>
+
+                            </select>
+
+                            <span asp-validation-for="ProductId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+
+                            <!-- SIZE -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="SizeId"
+                                       class="form-label fw-semibold">
+
+                                    Size
+
+                                </label>
+
+                                <select asp-for="SizeId"
+                                        asp-items="ViewBag.Sizes"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Select Size
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="SizeId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- COLOR -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="ColorId"
+                                       class="form-label fw-semibold">
+
+                                    Color
+
+                                </label>
+
+                                <select asp-for="ColorId"
+                                        asp-items="ViewBag.Colors"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Select Color
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="ColorId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-3 mt-1">
+
+
+                            <!-- SKU -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="SKU"
+                                       class="form-label fw-semibold">
+
+                                    SKU
+
+                                </label>
+
+                                <input asp-for="SKU"
+                                       class="form-control"
+                                       placeholder="e.g. ADI-TS-BLK-M" />
+
+                                <div class="form-text">
+                                    SKU must be unique.
+                                </div>
+
+                                <span asp-validation-for="SKU"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- PRICE -->
+
+                            <div class="col-md-6">
+
+                                <label asp-for="Price"
+                                       class="form-label fw-semibold">
+
+                                    Price
+
+                                </label>
+
+                                <div class="input-group">
+
+                                    <span class="input-group-text">
+                                        $
+                                    </span>
+
+                                    <input asp-for="Price"
+                                           type="number"
+                                           step="0.01"
+                                           min="0"
+                                           class="form-control"
+                                           placeholder="0.00" />
+
+                                </div>
+
+                                <span asp-validation-for="Price"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- INVENTORY -->
+
+                        <div class="mt-4">
+
+                            <label class="form-label fw-semibold">
+
+                                Initial Quantity
+
+                            </label>
+
+                            <input type="number"
+                                   name="quantity"
+                                   value="@quantity"
+                                   min="0"
+                                   class="form-control" />
+
+                            <div class="form-text">
+
+                                Initial stock quantity for this variant.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- STATUS -->
+
+                        <div class="mt-4">
+
+                            <label asp-for="Status"
+                                   class="form-label fw-semibold">
+
+                                Status
+
+                            </label>
+
+                            <select asp-for="Status"
+                                    class="form-select"
+                                    asp-items="Html.GetEnumSelectList<WebApplication_ClothingEcommerce.Data.Enums.VariantStatus>()">
+                            </select>
+
+                            <span asp-validation-for="Status"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <!-- ACTIONS -->
+
+                        <div class="d-flex gap-2 mt-4">
+
+                            <button type="submit"
+                                    class="btn btn-primary flex-fill">
+
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Create Variant
+
+                            </button>
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@Model.ProductId"
+                               class="btn btn-outline-secondary flex-fill">
+
+                                Cancel
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

@@ -1,0 +1,213 @@
+@model WebApplication_ClothingEcommerce.Models.Brand
+
+@{
+    ViewData["Title"] = "Edit Brand";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="mb-4">
+
+        <div class="text-uppercase text-muted small fw-bold mb-1">
+            Catalog / Brands
+        </div>
+
+        <h1 class="h3 fw-bold mb-1">
+            Edit Brand
+        </h1>
+
+        <p class="text-muted mb-0">
+            Update brand information and logo.
+        </p>
+
+    </div>
+
+
+    <!-- CARD -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white border-0 p-4">
+
+            <div class="d-flex align-items-center gap-3">
+
+                @if (!string.IsNullOrWhiteSpace(Model.Logo))
+                {
+                    <img src="@Model.Logo"
+                         alt="@Model.Name"
+                         class="rounded border"
+                         style="width:60px;height:60px;object-fit:contain;" />
+                }
+                else
+                {
+                    <div class="bg-light border rounded d-flex align-items-center justify-content-center"
+                         style="width:60px;height:60px;">
+
+                        <i class="bi bi-award fs-4 text-muted"></i>
+
+                    </div>
+                }
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        @Model.Name
+                    </h5>
+
+                    <small class="text-muted">
+                        Brand ID: @Model.Id
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+            <form asp-action="Edit"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       asp-for="Id" />
+
+                <input type="hidden"
+                       asp-for="Logo" />
+
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger">
+                </div>
+
+
+                <div class="row g-4">
+
+
+                    <!-- NAME -->
+
+                    <div class="col-md-6">
+
+                        <label asp-for="Name"
+                               class="form-label fw-semibold">
+                            Brand Name
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control" />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- NEW LOGO -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Replace Logo
+                        </label>
+
+                        <input type="file"
+                               name="logo"
+                               class="form-control"
+                               accept=".jpg,.jpeg,.png,.webp" />
+
+                        <div class="form-text">
+                            Leave empty to keep the current logo.
+                        </div>
+
+                        <span asp-validation-for="Logo"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <div class="col-12">
+
+                        <label asp-for="Description"
+                               class="form-label fw-semibold">
+                            Description
+                        </label>
+
+                        <textarea asp-for="Description"
+                                  class="form-control"
+                                  rows="5"></textarea>
+
+                        <span asp-validation-for="Description"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- CURRENT LOGO -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Logo))
+                    {
+                        <div class="col-12">
+
+                            <div class="border rounded p-3">
+
+                                <div class="text-muted small fw-bold mb-2">
+                                    CURRENT LOGO
+                                </div>
+
+                                <img src="@Model.Logo"
+                                     alt="@Model.Name"
+                                     class="img-thumbnail"
+                                     style="max-width:180px;max-height:180px;object-fit:contain;" />
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="border-top mt-4 pt-4 d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-dark">
+
+                        <i class="bi bi-check-lg me-1"></i>
+                        Save Changes
+
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

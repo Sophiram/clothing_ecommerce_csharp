@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewData["Title"] - CLOTHÉ
+    </title>
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+</head>
+
+<body>
+
+    <!-- =====================================================
+         NAVBAR
+    ====================================================== -->
+    <!-- =====================================================
+     NAVBAR
+====================================================== -->
+
+    <nav class="google-navbar navbar navbar-expand-lg">
+
+        <div class="container navbar-inner">
+
+            <!-- LOGO -->
+            <a class="google-brand d-flex align-items-center gap-2"
+               asp-controller="Home"
+               asp-action="Index">
+
+                <!-- ប្រើរូបភាព Logo ជំនួស icon ដើម -->
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="height: 40px; width: auto; object-fit: contain;" />
+
+                @* <div class="google-brand-text">
+                    <strong>CLOTHÉ</strong>
+                    <small>CLOTHING STORE</small>
+                </div> *@
+            </a>
+
+            <!-- TOGGLER -->
+            <button class="navbar-toggler google-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <!-- NAV -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+
+                <ul class="navbar-nav google-nav">
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a asp-controller="Shop"
+                           asp-action="Index"
+                           class="nav-link">
+                            Shop
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-controller="Shop"
+                           asp-action="Index">
+                            Categories
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-controller="Home"
+                           asp-action="About">
+                            About
+                        </a>
+                    </li>
+
+                    <!-- ADMIN MENU LINK (បង្ហាញតែពេល user ជា Admin) -->
+                    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-danger font-weight-bold"
+                               asp-area="Admin"
+                               asp-controller="Dashboard"
+                               asp-action="Index">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+
+                <!-- ACTIONS -->
+                <div class="google-actions">
+
+                    <!-- SEARCH -->
+                    <a asp-controller="Shop"
+                       asp-action="Index"
+                       class="google-icon-button"
+                       title="Search">
+                        <i class="bi bi-search"></i>
+                    </a>
+
+                    <!-- WISHLIST -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-controller="Wishlist"
+                           asp-action="Index"
+                           class="google-icon-button"
+                           title="Wishlist">
+                            <i class="bi bi-heart"></i>
+                        </a>
+                    }
+
+                    <!-- CART -->
+                    <a asp-controller="Cart"
+                       asp-action="Index"
+                       class="google-icon-button cart-button"
+                       title="Cart">
+                        <i class="bi bi-bag"></i>
+
+                        @if (ViewBag.CartCount != null && ViewBag.CartCount > 0)
+                        {
+                            <span class="google-cart-count">
+                                @ViewBag.CartCount
+                            </span>
+                        }
+                    </a>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <!-- ACCOUNT -->
+                        <div class="dropdown">
+
+                            <button class="google-account"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    type="button">
+
+                                <span class="google-avatar">
+                                    @{
+                                        var firstLetter = User.Identity?.Name?.Substring(0, 1).ToUpper();
+                                    }
+
+                                    @(firstLetter ?? "U")
+                                </span>
+
+                            </button>
+
+                            <ul class="dropdown-menu dropdown-menu-end google-account-menu">
+
+                                <li>
+                                    <div class="account-header">
+
+                                        <div class="google-avatar large">
+                                            @(firstLetter ?? "U")
+                                        </div>
+
+                                        <div>
+                                            <strong>My Account</strong>
+                                            <small>@User.Identity?.Name</small>
+                                        </div>
+
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider" />
+                                </li>
+
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item text-primary fw-bold"
+                                           asp-area="Admin"
+                                           asp-controller="Dashboard"
+                                           asp-action="Index">
+                                            <i class="bi bi-shield-lock"></i>
+                                            Admin Dashboard
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-area="Admin"
+                                           asp-controller="Products"
+                                           asp-action="Index">
+                                            <i class="bi bi-box-seam-fill"></i>
+                                            Manage Products
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+                                }
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       asp-controller="Profile"
+                                       asp-action="Index">
+                                        <i class="bi bi-person"></i>
+                                        Profile
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item"
+                                       asp-controller="Orders"
+                                       asp-action="Index">
+                                        <i class="bi bi-box-seam"></i>
+                                        My Orders
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider" />
+                                </li>
+
+                                <li>
+                                    <form asp-controller="Account"
+                                          asp-action="Logout"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit"
+                                                class="dropdown-item logout">
+
+                                            <i class="bi bi-box-arrow-right"></i>
+                                            Sign out
+
+                                        </button>
+
+                                    </form>
+                                </li>
+
+                            </ul>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- LOGIN -->
+                        <a asp-controller="Account"
+                           asp-action="Login"
+                           class="google-login">
+                            Sign in
+                        </a>
+
+                        <!-- REGISTER -->
+                        <a asp-controller="Account"
+                           asp-action="Register"
+                           class="google-register">
+                            Get started
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main>
+        @RenderBody()
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="google-footer">
+
+        <div class="container">
+
+            <div class="footer-top">
+
+                <div class="footer-brand">
+
+                    <div class="footer-google-logo d-flex align-items-center gap-2 mb-3">
+                        <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="height: 35px; width: auto; object-fit: contain;" />
+                        @* <strong>CLOTHÉ</strong> *@
+                    </div>
+
+                    <p>
+                        Modern clothing for everyday life.
+                        Discover quality fashion designed
+                        for confidence and comfort.
+                    </p>
+
+                    <div class="footer-social">
+
+                        <a href="#">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+
+                        <a href="#">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+
+                        <a href="#">
+                            <i class="bi bi-tiktok"></i>
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h6>SHOP</h6>
+
+                    <a asp-controller="Shop"
+                       asp-action="Index">
+
+                        All Products
+
+                    </a>
+
+                    <a asp-controller="Shop"
+                       asp-action="Index">
+
+                        New Arrivals
+
+                    </a>
+
+                    <a asp-controller="Shop"
+                       asp-action="Index">
+
+                        Best Sellers
+
+                    </a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h6>ACCOUNT</h6>
+
+                    <a asp-controller="Profile"
+                       asp-action="Index">
+                        My Profile
+                    </a>
+
+                    <a asp-controller="Orders"
+                       asp-action="Index">
+
+                        My Orders
+
+                    </a>
+
+                    <a asp-controller="Wishlist"
+                       asp-action="Index">
+
+                        Wishlist
+
+                    </a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h6>HELP</h6>
+
+                    <a href="#">
+                        Contact Us
+                    </a>
+
+                    <a href="#">
+                        Shipping
+                    </a>
+
+                    <a href="#">
+                        Returns
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <div class="footer-bottom">
+
+                <span>
+                    © @DateTime.Now.Year CLOTHÉ.
+                    All rights reserved.
+                </span>
+
+                <span>
+                    Made with
+                    <i class="bi bi-heart-fill footer-heart"></i>
+                    for fashion.
+                </span>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>

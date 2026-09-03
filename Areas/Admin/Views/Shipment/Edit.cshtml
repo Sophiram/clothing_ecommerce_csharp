@@ -1,0 +1,64 @@
+@model WebApplication_ClothingEcommerce.Models.Shipment
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Shipment</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="OrderId" class="control-label"></label>
+                <input asp-for="OrderId" class="form-control" />
+                <span asp-validation-for="OrderId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TrackingNumber" class="control-label"></label>
+                <input asp-for="TrackingNumber" class="form-control" />
+                <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ShippingCompany" class="control-label"></label>
+                <input asp-for="ShippingCompany" class="form-control" />
+                <span asp-validation-for="ShippingCompany" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ShipmentStatus" class="control-label"></label>
+                <input asp-for="ShipmentStatus" class="form-control" />
+                <span asp-validation-for="ShipmentStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ShippedAt" class="control-label"></label>
+                <input asp-for="ShippedAt" class="form-control" />
+                <span asp-validation-for="ShippedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveredAt" class="control-label"></label>
+                <input asp-for="DeliveredAt" class="form-control" />
+                <span asp-validation-for="DeliveredAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Order" class="control-label"></label>
+                <input asp-for="Order" class="form-control" />
+                <span asp-validation-for="Order" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

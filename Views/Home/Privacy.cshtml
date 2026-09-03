@@ -1,0 +1,142 @@
+﻿@model WebApplication_ClothingEcommerce.Models.Wishlist?
+
+@{
+    ViewData["Title"] = "Wishlist";
+}
+
+<div class="container py-5">
+
+    <div class="mb-5">
+
+        <div class="eyebrow">
+            SAVED ITEMS
+        </div>
+
+        <h1 class="fw-bold">
+            My Wishlist
+        </h1>
+
+    </div>
+
+
+    @if (Model == null || !Model.Items.Any())
+    {
+        <div class="empty-state">
+
+            <i class="bi bi-heart"></i>
+
+            <h3 class="fw-bold mt-3">
+                Your wishlist is empty
+            </h3>
+
+            <p class="text-secondary">
+                Save products you love for later.
+            </p>
+
+            <a asp-controller="Shop"
+               asp-action="Index"
+               class="btn btn-dark">
+
+                Browse Products
+
+            </a>
+
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            @foreach (var item in Model.Items)
+            {
+                var product = item.Variant.Product;
+
+                var image = product?.Images
+                    .FirstOrDefault(i => i.IsPrimary)
+                    ?? product?.Images.FirstOrDefault();
+
+                <div class="col-6 col-md-4 col-lg-3">
+
+                    <div class="product-card">
+
+                        <a asp-controller="Shop"
+                           asp-action="Details"
+                           asp-route-id="@product?.Id">
+
+                            <div class="product-image-wrap">
+
+                                <img src="@(image?.ImageUrl ?? "https://via.placeholder.com/600x700?text=No+Image")"
+                                     class="product-image"
+                                     alt="@product?.Name" />
+
+                            </div>
+
+                        </a>
+
+                        <div class="pt-3">
+
+                            <h6 class="fw-bold">
+                                @product?.Name
+                            </h6>
+
+                            <strong>
+                                $@item.Variant.Price.ToString("0.00")
+                            </strong>
+
+
+                            <div class="d-flex gap-2 mt-3">
+
+                                <form asp-action="Remove"
+                                      method="post">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@item.Id" />
+
+                                    <button class="btn btn-outline-danger btn-sm">
+
+                                        <i class="bi bi-trash"></i>
+
+                                    </button>
+
+                                </form>
+
+
+                                <form asp-controller="Cart"
+                                      asp-action="Add"
+                                      method="post"
+                                      class="flex-grow-1">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="variantId"
+                                           value="@item.VariantId" />
+
+                                    <input type="hidden"
+                                           name="quantity"
+                                           value="1" />
+
+                                    <button class="btn btn-dark btn-sm w-100">
+
+                                        Add to Cart
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>

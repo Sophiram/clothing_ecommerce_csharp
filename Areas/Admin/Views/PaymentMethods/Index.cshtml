@@ -1,0 +1,443 @@
+﻿@model IEnumerable<WebApplication_ClothingEcommerce.Models.PaymentMethod>
+
+@{
+    ViewData["Title"] = "Payment Methods";
+}
+
+<div class="admin-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div>
+            <div class="page-eyebrow">
+                SALES / PAYMENTS
+            </div>
+
+            <h1 class="page-title">
+                Payment Methods
+            </h1>
+
+            <p class="page-description">
+                Manage payment methods available during checkout.
+            </p>
+        </div>
+
+        <div>
+
+            <a asp-action="Create"
+               class="btn-primary-custom">
+
+                <i class="bi bi-plus-lg"></i>
+
+                <span>
+                    Add Payment Method
+                </span>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ALERTS
+    ====================================================== -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="admin-alert admin-alert-success">
+
+            <i class="bi bi-check-circle-fill"></i>
+
+            <span>
+                @TempData["Success"]
+            </span>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="admin-alert admin-alert-danger">
+
+            <i class="bi bi-exclamation-circle-fill"></i>
+
+            <span>
+                @TempData["Error"]
+            </span>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         PAYMENT METHODS CARD
+    ====================================================== -->
+
+    <div class="admin-card">
+
+        <!-- CARD HEADER -->
+
+        <div class="admin-card-header">
+
+            <div>
+
+                <h2 class="admin-card-title">
+                    Payment Methods
+                </h2>
+
+                <p class="admin-card-subtitle">
+                    Configure and manage available checkout payment options.
+                </p>
+
+            </div>
+
+            <div class="admin-card-count">
+
+                <span>
+                    @(Model?.Count() ?? 0)
+                </span>
+
+                <small>
+                    methods
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SEARCH
+        ================================================== -->
+
+        <div class="search-wrapper">
+
+            <form method="get"
+                  class="search-form">
+
+                <div class="search-input-wrapper">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="search-input"
+                           placeholder="Search payment methods..." />
+
+                </div>
+
+                <button type="submit"
+                        class="btn-search">
+
+                    <i class="bi bi-search"></i>
+
+                    <span>
+                        Search
+                    </span>
+
+                </button>
+
+                <a asp-action="Index"
+                   class="btn-reset">
+
+                    <i class="bi bi-arrow-counterclockwise"></i>
+
+                    <span>
+                        Reset
+                    </span>
+
+                </a>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             TABLE
+        ================================================== -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th style="width:80px;">
+                                ORDER
+                            </th>
+
+                            <th>
+                                PAYMENT METHOD
+                            </th>
+
+                            <th>
+                                DESCRIPTION
+                            </th>
+
+                            <th>
+                                STATUS
+                            </th>
+
+                            <th>
+                                PAYMENTS
+                            </th>
+
+                            <th class="text-end">
+                                ACTIONS
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var method in Model)
+                        {
+                            <tr>
+
+                                <!-- ORDER -->
+
+                                <td>
+
+                                    <span class="order-number">
+                                        @method.DisplayOrder
+                                    </span>
+
+                                </td>
+
+
+                                <!-- PAYMENT METHOD -->
+
+                                <td>
+
+                                    <div class="payment-method">
+
+                                        <div class="payment-icon">
+
+                                            @if (!string.IsNullOrWhiteSpace(method.Icon))
+                                            {
+                                                <img src="@method.Icon"
+                                                     alt="@method.Name" />
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-credit-card"></i>
+                                            }
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <div class="payment-name">
+                                                @method.Name
+                                            </div>
+
+                                            <div class="payment-id">
+                                                ID #@method.Id
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- DESCRIPTION -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(method.Description))
+                                    {
+                                        <span class="description-text"
+                                              title="@method.Description">
+
+                                            @method.Description
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            No description
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- STATUS -->
+
+                                <td>
+
+                                    @if (method.IsActive)
+                                    {
+                                        <span class="status-pill status-active">
+
+                                            <span class="status-dot"></span>
+
+                                            Active
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-pill status-disabled">
+
+                                            <span class="status-dot"></span>
+
+                                            Disabled
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- PAYMENTS -->
+
+                                <td>
+
+                                    <span class="payment-count">
+                                        @method.Payments.Count
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ACTIONS -->
+
+                                <td>
+
+                                    <div class="table-actions">
+
+                                        <!-- DETAILS -->
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@method.Id"
+                                           class="action-btn"
+                                           title="View details">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+
+                                        <!-- EDIT -->
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@method.Id"
+                                           class="action-btn"
+                                           title="Edit payment method">
+
+                                            <i class="bi bi-pencil"></i>
+
+                                        </a>
+
+
+                                        <!-- ENABLE / DISABLE -->
+
+                                        <form asp-action="ToggleActive"
+                                              asp-route-id="@method.Id"
+                                              method="post">
+
+                                            @Html.AntiForgeryToken()
+
+                                            @if (method.IsActive)
+                                            {
+                                                <button type="submit"
+                                                        class="action-btn action-warning"
+                                                        title="Disable">
+
+                                                    <i class="bi bi-pause-circle"></i>
+
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit"
+                                                        class="action-btn action-success"
+                                                        title="Enable">
+
+                                                    <i class="bi bi-play-circle"></i>
+
+                                                </button>
+                                            }
+
+                                        </form>
+
+
+                                        <!-- DELETE -->
+                                        @if (method.Payments.Count == 0)
+                                        {
+                                            <a asp-action="Delete"
+                                               asp-route-id="@method.Id"
+                                               class="action-btn action-danger"
+                                               title="Delete">
+
+                                                <i class="bi bi-trash"></i>
+
+                                            </a>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY STATE -->
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+
+                    <i class="bi bi-credit-card-2-front"></i>
+
+                </div>
+
+                <h5>
+                    No payment methods found
+                </h5>
+
+                <p>
+                    Add your first payment method to make it available during checkout.
+                </p>
+
+                <a asp-action="Create"
+                   class="btn-primary-custom">
+
+                    <i class="bi bi-plus-lg"></i>
+
+                    Add Payment Method
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+
+</div>

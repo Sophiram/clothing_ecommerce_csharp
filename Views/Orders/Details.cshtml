@@ -1,0 +1,807 @@
+﻿@model WebApplication_ClothingEcommerce.Models.Order
+
+@{
+    ViewData["Title"] = "Order Details";
+
+    var orderNumber = Model.Id.ToString()[..8].ToUpper();
+
+    var subtotal = Model.Items?.Sum(x => x.UnitPrice * x.Quantity) ?? 0m;
+    var deliveryFee = Model.TotalAmount - subtotal;
+
+    if (deliveryFee < 0)
+    {
+        deliveryFee = 0m;
+    }
+
+    var statusClass = Model.Status.ToString() switch
+    {
+        "Pending" => "bg-warning-subtle text-warning-emphasis",
+        "Processing" => "bg-info-subtle text-info-emphasis",
+        "Shipped" => "bg-primary-subtle text-primary",
+        "Delivered" => "bg-success-subtle text-success",
+        "Cancelled" => "bg-danger-subtle text-danger",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    var paymentStatusClass = Model.Payment?.PaymentStatus.ToString() switch
+    {
+        "Paid" => "bg-success-subtle text-success",
+        "Pending" => "bg-warning-subtle text-warning-emphasis",
+        "Failed" => "bg-danger-subtle text-danger",
+        "Refunded" => "bg-info-subtle text-info-emphasis",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    var shipmentStatusClass = Model.Shipment?.ShipmentStatus.ToString() switch
+    {
+        "Pending" => "bg-warning-subtle text-warning-emphasis",
+        "Processing" => "bg-info-subtle text-info-emphasis",
+        "Shipped" => "bg-primary-subtle text-primary",
+        "Delivered" => "bg-success-subtle text-success",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+}
+
+<!-- =========================================================
+     BREADCRUMB
+========================================================= -->
+
+<section class="py-3 bg-light border-bottom">
+    <div class="container">
+
+        <nav aria-label="breadcrumb">
+
+            <ol class="breadcrumb mb-0">
+
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="text-decoration-none text-secondary">
+
+                        <i class="bi bi-house me-1"></i>
+                        Home
+
+                    </a>
+                </li>
+
+                <li class="breadcrumb-item">
+                    <a asp-controller="Orders"
+                       asp-action="Index"
+                       class="text-decoration-none text-secondary">
+
+                        <i class="bi bi-box-seam me-1"></i>
+                        My Orders
+
+                    </a>
+                </li>
+
+                <li class="breadcrumb-item active text-primary fw-semibold"
+                    aria-current="page">
+
+                    Order Details
+
+                </li>
+
+            </ol>
+
+        </nav>
+
+    </div>
+</section>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<section class="py-5 bg-light min-vh-100">
+
+    <div class="container">
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <div class="d-flex
+            flex-column
+            flex-md-row
+            justify-content-between
+            align-items-md-center
+            gap-3
+            mb-4">
+
+            <div>
+
+                <div class="text-uppercase
+                    text-primary
+                    fw-bold
+                    small
+                    mb-1">
+
+                    ORDER DETAILS
+
+                </div>
+
+                <h1 class="fw-bold mb-1">
+
+                    Order #@orderNumber
+
+                </h1>
+
+                <p class="text-secondary mb-0">
+
+                    Placed on
+                    @Model.OrderDate.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+
+                </p>
+
+            </div>
+
+
+            <span class="badge
+                rounded-pill
+                px-4
+                py-2
+                fs-6
+                @statusClass">
+
+                @Model.Status
+
+            </span>
+
+        </div>
+
+
+        <!-- =====================================================
+             SUCCESS MESSAGE
+        ====================================================== -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success
+                border-0
+                shadow-sm
+                rounded-3
+                d-flex
+                align-items-center
+                gap-2
+                mb-4">
+
+                <i class="bi bi-check-circle-fill fs-5"></i>
+
+                <span>
+                    @TempData["Success"]
+                </span>
+
+            </div>
+        }
+
+
+        <div class="row g-4">
+
+            <!-- =================================================
+                 LEFT COLUMN
+            ================================================== -->
+
+            <div class="col-lg-8">
+
+
+                <!-- =================================================
+                     ORDER ITEMS
+                ================================================== -->
+
+                <div class="card
+                    border-0
+                    shadow-sm
+                    rounded-4
+                    mb-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex
+                            justify-content-between
+                            align-items-center
+                            mb-4">
+
+                            <div>
+
+                                <h5 class="fw-bold mb-1">
+                                    Order Items
+                                </h5>
+
+                                <small class="text-secondary">
+
+                                    @Model.Items.Count
+                                    @(Model.Items.Count == 1 ? "item" : "items")
+
+                                </small>
+
+                            </div>
+
+                            <i class="bi bi-bag-check
+                                fs-3
+                                text-primary">
+                            </i>
+
+                        </div>
+
+
+                        @if (Model.Items.Any())
+                        {
+                            @foreach (var item in Model.Items)
+                            {
+                                var image =
+                                    item.Variant?.Product?.Images?
+                                        .FirstOrDefault(x => x.IsPrimary)
+                                    ?? item.Variant?.Product?.Images?
+                                        .FirstOrDefault();
+
+                                var itemTotal =
+                                    item.UnitPrice * item.Quantity;
+
+                                <div class="row
+                                    g-3
+                                    align-items-center
+                                    border-bottom
+                                    pb-4
+                                    mb-4">
+
+                                    <!-- IMAGE -->
+
+                                    <div class="col-4 col-sm-3 col-md-2">
+
+                                        @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
+                                        {
+                                            <img src="@image.ImageUrl"
+                                                 alt="@item.Variant?.Product?.Name"
+                                                 class="img-fluid rounded-3 border"
+                                                 style="width:100%;
+                                            height:110px;
+                                            object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light
+                                                border
+                                                rounded-3
+                                                d-flex
+                                                align-items-center
+                                                justify-content-center"
+                                                 style="height:110px;">
+
+                                                <i class="bi bi-image
+                                                    fs-2
+                                                    text-secondary">
+                                                </i>
+
+                                            </div>
+                                        }
+
+                                    </div>
+
+
+                                    <!-- PRODUCT INFO -->
+
+                                    <div class="col-8 col-sm-5 col-md-5">
+
+                                        <div class="small
+                                            text-primary
+                                            text-uppercase
+                                            fw-bold
+                                            mb-1">
+
+                                            @(item.Variant?.Product?.Brand?.Name ?? "CLOTHÉ")
+
+                                        </div>
+
+                                        <h6 class="fw-bold mb-1">
+
+                                            @(item.Variant?.Product?.Name ?? "Product")
+
+                                        </h6>
+
+
+                                        <div class="small text-secondary">
+
+                                            @if (item.Variant?.Size != null)
+                                            {
+                                                <span class="me-3">
+
+                                                    Size:
+                                                    <strong class="text-dark">
+                                                        @item.Variant.Size.Name
+                                                    </strong>
+
+                                                </span>
+                                            }
+
+                                            @if (item.Variant?.Color != null)
+                                            {
+                                                <span>
+
+                                                    Color:
+                                                    <strong class="text-dark">
+                                                        @item.Variant.Color.Name
+                                                    </strong>
+
+                                                </span>
+                                            }
+
+                                        </div>
+
+
+                                        @if (item.Variant != null)
+                                        {
+                                            <div class="small text-secondary mt-1">
+
+                                                SKU:
+                                                @item.Variant.SKU
+
+                                            </div>
+                                        }
+
+
+                                        <div class="small text-secondary mt-1">
+
+                                            Quantity:
+                                            <strong class="text-dark">
+                                                @item.Quantity
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- UNIT PRICE -->
+
+                                    <div class="col-6 col-md-2">
+
+                                        <small class="text-secondary d-block">
+                                            Unit Price
+                                        </small>
+
+                                        <strong>
+                                            $@item.UnitPrice.ToString("0.00")
+                                        </strong>
+
+                                    </div>
+
+
+                                    <!-- TOTAL -->
+
+                                    <div class="col-6 col-md-3 text-end">
+
+                                        <small class="text-secondary d-block">
+                                            Total
+                                        </small>
+
+                                        <strong class="fs-5 text-primary">
+
+                                            $@itemTotal.ToString("0.00")
+
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+
+                                <i class="bi bi-bag-x
+                                    display-5
+                                    text-secondary">
+                                </i>
+
+                                <p class="text-secondary mb-0 mt-2">
+                                    No order items found.
+                                </p>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SHIPPING ADDRESS
+                ================================================== -->
+
+                <div class="card
+                    border-0
+                    shadow-sm
+                    rounded-4
+                    mb-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex
+                            align-items-center
+                            gap-3
+                            mb-4">
+
+                            <div class="rounded-circle
+                                bg-primary-subtle
+                                text-primary
+                                d-flex
+                                align-items-center
+                                justify-content-center"
+                                 style="width:46px;height:46px;">
+
+                                <i class="bi bi-geo-alt-fill"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5 class="fw-bold mb-0">
+                                    Shipping Address
+                                </h5>
+
+                                <small class="text-secondary">
+                                    Delivery destination
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        @if (Model.Address != null)
+                        {
+                            <div class="ps-1">
+
+                                <strong class="d-block mb-1">
+
+                                    Delivery Address
+
+                                </strong>
+
+                                <div class="text-secondary">
+
+                                    @Model.Address.Street
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Address.City))
+                                    {
+                                        <span>
+                                            , @Model.Address.City
+                                        </span>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Address.Province))
+                                    {
+                                        <span>
+                                            , @Model.Address.Province
+                                        </span>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Address.PostalCode))
+                                    {
+                                        <span>
+                                            , @Model.Address.PostalCode
+                                        </span>
+                                    }
+
+                                </div>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-light
+                                border
+                                rounded-3
+                                mb-0">
+
+                                <i class="bi bi-info-circle me-2"></i>
+
+                                Shipping address is unavailable.
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT COLUMN
+            ================================================== -->
+
+            <div class="col-lg-4">
+
+
+                <!-- =================================================
+                     ORDER SUMMARY
+                ================================================== -->
+
+                <div class="card
+                    border-0
+                    shadow-sm
+                    rounded-4
+                    mb-4">
+
+                    <div class="card-body p-4">
+
+                        <h5 class="fw-bold mb-4">
+                            Order Summary
+                        </h5>
+
+
+                        <div class="d-flex
+                            justify-content-between
+                            mb-3">
+
+                            <span class="text-secondary">
+                                Subtotal
+                            </span>
+
+                            <strong>
+                                $@subtotal.ToString("0.00")
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex
+                            justify-content-between
+                            mb-3">
+
+                            <span class="text-secondary">
+                                Delivery
+                            </span>
+
+                            @if (deliveryFee > 0)
+                            {
+                                <strong>
+                                    $@deliveryFee.ToString("0.00")
+                                </strong>
+                            }
+                            else
+                            {
+                                <strong class="text-success">
+                                    Free
+                                </strong>
+                            }
+
+                        </div>
+
+
+                        <hr />
+
+
+                        <div class="d-flex
+                            justify-content-between
+                            align-items-center">
+
+                            <span class="fw-bold fs-5">
+                                Total
+                            </span>
+
+                            <strong class="fs-3 text-primary">
+
+                                $@Model.TotalAmount.ToString("0.00")
+
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PAYMENT
+                ================================================== -->
+
+                <div class="card
+                    border-0
+                    shadow-sm
+                    rounded-4
+                    mb-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex
+                            align-items-center
+                            gap-2
+                            mb-4">
+
+                            <i class="bi bi-credit-card
+                                text-primary
+                                fs-5">
+                            </i>
+
+                            <h5 class="fw-bold mb-0">
+                                Payment
+                            </h5>
+
+                        </div>
+
+
+                        @if (Model.Payment != null)
+                        {
+                            <div class="d-flex
+                                justify-content-between
+                                mb-3">
+
+                                <span class="text-secondary">
+                                    Method
+                                </span>
+
+                                <strong>
+                                    @Model.Payment.PaymentMethod
+                                </strong>
+
+                            </div>
+
+
+                            <div class="d-flex
+                                justify-content-between
+                                align-items-center">
+
+                                <span class="text-secondary">
+                                    Status
+                                </span>
+
+                                <span class="badge
+                                    rounded-pill
+                                    px-3
+                                    py-2
+                                    @paymentStatusClass">
+
+                                    @Model.Payment.PaymentStatus
+
+                                </span>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary mb-0">
+                                Payment information unavailable.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SHIPMENT
+                ================================================== -->
+
+                <div class="card
+                    border-0
+                    shadow-sm
+                    rounded-4
+                    mb-4">
+
+                    <div class="card-body p-4">
+
+                        <div class="d-flex
+                            align-items-center
+                            gap-2
+                            mb-4">
+
+                            <i class="bi bi-truck
+                                text-primary
+                                fs-5">
+                            </i>
+
+                            <h5 class="fw-bold mb-0">
+                                Shipment
+                            </h5>
+
+                        </div>
+
+
+                        @if (Model.Shipment != null)
+                        {
+                            <div class="mb-3">
+
+                                <span class="text-secondary small d-block">
+                                    Shipping Company
+                                </span>
+
+                                <strong>
+                                    @Model.Shipment.ShippingCompany
+                                </strong>
+
+                            </div>
+
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Shipment.TrackingNumber))
+                            {
+                                <div class="mb-3">
+
+                                    <span class="text-secondary small d-block">
+                                        Tracking Number
+                                    </span>
+
+                                    <code>
+                                        @Model.Shipment.TrackingNumber
+                                    </code>
+
+                                </div>
+                            }
+
+
+                            <div class="d-flex
+                                justify-content-between
+                                align-items-center">
+
+                                <span class="text-secondary">
+                                    Status
+                                </span>
+
+                                <span class="badge
+                                    rounded-pill
+                                    px-3
+                                    py-2
+                                    @shipmentStatusClass">
+
+                                    @Model.Shipment.ShipmentStatus
+
+                                </span>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary mb-0">
+                                Shipment information unavailable.
+                            </p>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ACTIONS
+                ================================================== -->
+
+                <a asp-controller="Orders"
+                   asp-action="Index"
+                   class="btn btn-outline-dark
+                    w-100
+                    rounded-3
+                    mb-2">
+
+                    <i class="bi bi-arrow-left me-2"></i>
+
+                    Back to Orders
+
+                </a>
+
+
+                <a asp-controller="Shop"
+                   asp-action="Index"
+                   class="btn btn-dark
+                    w-100
+                    rounded-3">
+
+                    <i class="bi bi-bag me-2"></i>
+
+                    Continue Shopping
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

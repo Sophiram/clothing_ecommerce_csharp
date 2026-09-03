@@ -1,0 +1,332 @@
+@model WebApplication_ClothingEcommerce.Models.ProductVariant
+
+@{
+    ViewData["Title"] = "Edit Product Variant";
+
+    var quantity = ViewBag.Quantity ?? 0;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="mb-4">
+
+        <a asp-action="Details"
+           asp-route-id="@Model.Id"
+           class="text-decoration-none text-muted">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Variant
+
+        </a>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+
+            <div>
+                <h2 class="fw-bold mb-1">
+                    Edit Product Variant
+                </h2>
+
+                <p class="text-muted mb-0">
+                    Update size, color, price and inventory.
+                </p>
+            </div>
+
+            <span class="badge bg-primary fs-6 px-3 py-2">
+                <i class="bi bi-pencil me-1"></i>
+                Edit Variant
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- VALIDATION -->
+    <div asp-validation-summary="All"
+         class="alert alert-danger @(ViewData.ModelState.IsValid ? "d-none" : "")">
+    </div>
+
+
+    <div class="row justify-content-center">
+
+        <div class="col-xl-8 col-lg-10">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white py-3">
+
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-sliders me-2"></i>
+                        Variant Information
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+                    <form asp-action="Edit"
+                          asp-route-id="@Model.Id"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               asp-for="Id" />
+
+
+                        <!-- PRODUCT -->
+                        <div class="mb-4">
+
+                            <label asp-for="ProductId"
+                                   class="form-label fw-semibold">
+
+                                Product
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            <select asp-for="ProductId"
+                                    asp-items="ViewBag.Products"
+                                    class="form-select">
+
+                                <option value="">
+                                    Select Product
+                                </option>
+
+                            </select>
+
+                            <span asp-validation-for="ProductId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <div class="row g-4">
+
+                            <!-- SIZE -->
+                            <div class="col-md-6">
+
+                                <label asp-for="SizeId"
+                                       class="form-label fw-semibold">
+
+                                    Size
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <select asp-for="SizeId"
+                                        asp-items="ViewBag.Sizes"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Select Size
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="SizeId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- COLOR -->
+                            <div class="col-md-6">
+
+                                <label asp-for="ColorId"
+                                       class="form-label fw-semibold">
+
+                                    Color
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <select asp-for="ColorId"
+                                        asp-items="ViewBag.Colors"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Select Color
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="ColorId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-4 mt-1">
+
+                            <!-- SKU -->
+                            <div class="col-md-6">
+
+                                <label asp-for="SKU"
+                                       class="form-label fw-semibold">
+
+                                    SKU
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <input asp-for="SKU"
+                                       class="form-control"
+                                       placeholder="e.g. ADI-TS-BLK-M" />
+
+                                <span asp-validation-for="SKU"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- PRICE -->
+                            <div class="col-md-6">
+
+                                <label asp-for="Price"
+                                       class="form-label fw-semibold">
+
+                                    Price
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <div class="input-group">
+
+                                    <span class="input-group-text">
+                                        $
+                                    </span>
+
+                                    <input asp-for="Price"
+                                           type="number"
+                                           step="0.01"
+                                           min="0"
+                                           class="form-control"
+                                           placeholder="0.00" />
+
+                                </div>
+
+                                <span asp-validation-for="Price"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-4 mt-1">
+
+                            <!-- INVENTORY -->
+                            <div class="col-md-6">
+
+                                <label for="quantity"
+                                       class="form-label fw-semibold">
+
+                                    Inventory Quantity
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <div class="input-group">
+
+                                    <span class="input-group-text">
+                                        <i class="bi bi-box-seam"></i>
+                                    </span>
+
+                                    <input type="number"
+                                           id="quantity"
+                                           name="quantity"
+                                           value="@quantity"
+                                           min="0"
+                                           class="form-control" />
+
+                                </div>
+
+                                <div class="form-text">
+                                    Available stock quantity.
+                                </div>
+
+                                @if (ViewData.ModelState["quantity"] != null)
+                                {
+                                    <span class="text-danger">
+                                        @ViewData.ModelState["quantity"]?.Errors.FirstOrDefault()?.ErrorMessage
+                                    </span>
+                                }
+
+                            </div>
+
+
+                            <!-- STATUS -->
+                            <div class="col-md-6">
+
+                                <label asp-for="Status"
+                                       class="form-label fw-semibold">
+
+                                    Status
+
+                                </label>
+
+                                <select asp-for="Status"
+                                        asp-items="Html.GetEnumSelectList<WebApplication_ClothingEcommerce.Data.Enums.VariantStatus>()"
+                                        class="form-select">
+                                </select>
+
+                                <span asp-validation-for="Status"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTIONS -->
+
+                        <hr class="my-4" />
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-primary px-4">
+
+                                <i class="bi bi-check-lg me-1"></i>
+                                Save Changes
+
+                            </button>
+
+                            <a asp-action="Details"
+                               asp-route-id="@Model.Id"
+                               class="btn btn-outline-secondary px-4">
+
+                                Cancel
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

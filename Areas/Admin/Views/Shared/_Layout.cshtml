@@ -1,0 +1,810 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using WebApplication_ClothingEcommerce.Models
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewData["Title"] - CLOTHÉ Admin
+    </title>
+
+
+    <!-- =====================================================
+         FONTS
+    ====================================================== -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+          rel="stylesheet" />
+
+
+    <!-- =====================================================
+         BOOTSTRAP
+    ====================================================== -->
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+
+    <!-- =====================================================
+         BOOTSTRAP ICONS
+    ====================================================== -->
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+
+    <!-- =====================================================
+         ADMIN CSS
+    ====================================================== -->
+
+    <link rel="stylesheet"
+          href="~/css/admin.css"
+          asp-append-version="true" />
+
+</head>
+
+
+<body>
+
+
+<div class="admin-wrapper">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="admin-sidebar"
+           id="adminSidebar">
+
+
+       <!-- BRAND -->
+
+<div class="admin-brand">
+
+    <a asp-area="Admin"
+       asp-controller="Dashboard"
+       asp-action="Index"
+       class="brand-link">
+
+        <!-- Desktop Logo -->
+        <img src="~/images/ClothingLogo.png"
+             alt="CLOTHÉ"
+             class="brand-logo brand-logo-full" />
+
+        <!-- Mobile / Small Logo -->
+        <img src="~/images/ClothingIcon.svg"
+             alt="CLOTHÉ"
+             class="brand-logo brand-logo-icon" />
+
+    </a>
+
+</div>
+
+
+        <!-- SIDEBAR CONTENT -->
+
+        <div class="sidebar-content">
+
+
+            <!-- =================================================
+                 MAIN
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                MAIN
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Dashboard"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+
+                        <i class="bi bi-grid-1x2-fill"></i>
+
+                        <span>
+                            Dashboard
+                        </span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+
+            <!-- =================================================
+                 CATALOG
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                CATALOG
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
+
+                        <i class="bi bi-box-seam"></i>
+
+                        <span>
+                            Products
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Categories"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Categories" ? "active" : "")">
+
+                        <i class="bi bi-tags"></i>
+
+                        <span>
+                            Categories
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Brands"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Brands" ? "active" : "")">
+
+                        <i class="bi bi-award"></i>
+
+                        <span>
+                            Brands
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Sizes"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Sizes" ? "active" : "")">
+
+                        <i class="bi bi-rulers"></i>
+
+                        <span>
+                            Sizes
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Colors"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Colors" ? "active" : "")">
+
+                        <i class="bi bi-palette"></i>
+
+                        <span>
+                            Colors
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="ProductVariants"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ProductVariants" ? "active" : "")">
+
+                        <i class="bi bi-grid-3x3-gap"></i>
+
+                        <span>
+                            Product Variants
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Inventories"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventories" ? "active" : "")">
+
+                        <i class="bi bi-boxes"></i>
+
+                        <span>
+                            Inventory
+                        </span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+
+            <!-- =================================================
+                 SALES
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                SALES
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Orders"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")">
+
+                        <i class="bi bi-cart-check"></i>
+
+                        <span>
+                            Orders
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Payments"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Payments" ? "active" : "")">
+
+                        <i class="bi bi-credit-card"></i>
+
+                        <span>
+                            Payments
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="PaymentMethods"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "PaymentMethods" ? "active" : "")">
+
+                        <i class="bi bi-wallet2"></i>
+
+                        <span>
+                            Payment Methods
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Shipments"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Shipments" ? "active" : "")">
+
+                        <i class="bi bi-truck"></i>
+
+                        <span>
+                            Shipments
+                        </span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+
+            <!-- =================================================
+                 CUSTOMERS
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                CUSTOMERS
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Customers"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Customers" ? "active" : "")">
+
+                        <i class="bi bi-people"></i>
+
+                        <span>
+                            Customers
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Reviews"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Reviews" ? "active" : "")">
+
+                        <i class="bi bi-star"></i>
+
+                        <span>
+                            Reviews
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Wishlists"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Wishlists" ? "active" : "")">
+
+                        <i class="bi bi-heart"></i>
+
+                        <span>
+                            Wishlists
+                        </span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+
+            <!-- =================================================
+                 SYSTEM
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                SYSTEM
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Users"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+
+                        <i class="bi bi-person-gear"></i>
+
+                        <span>
+                            Users
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Roles"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")">
+
+                        <i class="bi bi-shield-lock"></i>
+
+                        <span>
+                            Roles
+                        </span>
+
+                    </a>
+
+                </li>
+
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Settings"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")">
+
+                        <i class="bi bi-gear"></i>
+
+                        <span>
+                            Settings
+                        </span>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+
+            <!-- =================================================
+                 STORE
+            ================================================== -->
+
+            <div class="sidebar-section-title">
+                STORE
+            </div>
+
+            <ul class="sidebar-menu">
+
+                <li>
+
+                    <a asp-area=""
+                       asp-controller="Home"
+                       asp-action="Index"
+                       target="_blank">
+
+                        <i class="bi bi-shop"></i>
+
+                        <span>
+                            View Store
+                        </span>
+
+                        <i class="bi bi-box-arrow-up-right external-icon"></i>
+
+                    </a>
+
+                </li>
+
+            </ul>
+
+        </div>
+
+
+        <!-- =====================================================
+             SIDEBAR FOOTER
+        ====================================================== -->
+
+        <div class="sidebar-footer">
+
+            <form asp-area=""
+                  asp-controller="Account"
+                  asp-action="Logout"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="logout-button">
+
+                    <i class="bi bi-box-arrow-right"></i>
+
+                    <span>
+                        Logout
+                    </span>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MOBILE OVERLAY
+    ====================================================== -->
+
+    <div class="admin-sidebar-overlay"
+         id="sidebarOverlay">
+    </div>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <div class="admin-main"
+         id="adminMain">
+
+
+        <!-- =================================================
+             NAVBAR
+        ================================================== -->
+
+        <header class="admin-navbar">
+
+
+            <!-- LEFT -->
+
+            <div class="navbar-left">
+
+                <button type="button"
+                        id="sidebarToggle"
+                        class="sidebar-toggle"
+                        aria-label="Toggle sidebar"
+                        aria-controls="adminSidebar"
+                        aria-expanded="true">
+
+                    <i class="bi bi-list"></i>
+
+                </button>
+
+
+                <div class="breadcrumb-area">
+
+                    <span class="breadcrumb-main">
+                        Admin
+                    </span>
+
+                    <i class="bi bi-chevron-right"></i>
+
+                    <span class="breadcrumb-current">
+                        @ViewData["Title"]
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT -->
+
+            <div class="navbar-right">
+
+
+                <!-- VIEW STORE -->
+
+                <a asp-area=""
+                   asp-controller="Home"
+                   asp-action="Index"
+                   target="_blank"
+                   class="store-button">
+
+                    <i class="bi bi-globe2"></i>
+
+                    <span>
+                        View Store
+                    </span>
+
+                </a>
+
+
+                <!-- NOTIFICATION -->
+
+                <button type="button"
+                        class="icon-button"
+                        aria-label="Notifications">
+
+                    <i class="bi bi-bell"></i>
+
+                    <span class="notification-badge">
+                        0
+                    </span>
+
+                </button>
+
+
+                <!-- PROFILE -->
+
+                <div class="dropdown">
+
+                    <button class="admin-profile dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+
+                        <div class="profile-icon">
+
+                            <i class="bi bi-person"></i>
+
+                        </div>
+
+
+                        <div class="profile-info">
+
+                            <span class="profile-name">
+
+                                @(User.Identity?.Name ?? "Administrator")
+
+                            </span>
+
+                            <small>
+                                Administrator
+                            </small>
+
+                        </div>
+
+                    </button>
+
+
+                    <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
+
+                        <li>
+
+                            <div class="dropdown-user">
+
+                                <div class="profile-icon large">
+
+                                    <i class="bi bi-person"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        @(User.Identity?.Name ?? "Administrator")
+                                    </strong>
+
+                                    <small>
+                                        Administrator
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                        </li>
+
+
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
+
+
+                        <li>
+
+                            <a class="dropdown-item"
+                               asp-area="Admin"
+                               asp-controller="Settings"
+                               asp-action="Index">
+
+                                <i class="bi bi-gear"></i>
+
+                                Settings
+
+                            </a>
+
+                        </li>
+
+
+                        <li>
+
+                            <form asp-area=""
+                                  asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="dropdown-item text-danger">
+
+                                    <i class="bi bi-box-arrow-right"></i>
+
+                                    Logout
+
+                                </button>
+
+                            </form>
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+
+        <main class="admin-content">
+
+            @RenderBody()
+
+        </main>
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="admin-footer">
+
+            <span>
+                © 2026 CLOTHÉ
+            </span>
+
+            <span>
+                Admin Management System
+            </span>
+
+        </footer>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SCRIPTS
+====================================================== -->
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="~/js/admin.js"
+        asp-append-version="true"></script>
+
+
+@await RenderSectionAsync("Scripts", required: false)
+
+</body>
+
+</html>

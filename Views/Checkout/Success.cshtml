@@ -1,0 +1,53 @@
+﻿@model WebApplication_ClothingEcommerce.Models.Order
+
+@{
+    ViewData["Title"] = "Order Confirmed";
+}
+
+<div class="container py-5">
+
+    <div class="empty-state">
+
+        <i class="bi bi-check-circle text-success"></i>
+
+        <h1 class="fw-bold mt-4">
+            Order Confirmed!
+        </h1>
+
+        <p class="lead text-secondary">
+            Thank you for your purchase.
+        </p>
+
+        <p>
+            Order ID:
+            <strong>@Model.Id</strong>
+        </p>
+
+        <h3 class="fw-bold">
+            $@Model.TotalAmount.ToString("0.00")
+        </h3>
+
+        <div class="d-flex justify-content-center gap-2 mt-4">
+
+            <a asp-controller="Orders"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-dark">
+
+                View Order
+
+            </a>
+
+            <a asp-controller="Shop"
+               asp-action="Index"
+               class="btn btn-outline-dark">
+
+                Continue Shopping
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>

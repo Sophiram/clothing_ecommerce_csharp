@@ -1,0 +1,123 @@
+@model WebApplication_ClothingEcommerce.Models.Cart
+@{
+    ViewData["Title"] = "Customer Shopping Cart";
+    Guid customerId = ViewBag.CustomerId;
+    decimal grandTotal = 0;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-cart3 me-2"></i>Customer Shopping Cart</h2>
+            <p class="text-muted mb-0">Customer ID: <span class="font-monospace text-primary">@customerId</span></p>
+        </div>
+        @if (Model != null && Model.Items != null && Model.Items.Any())
+        {
+            <form asp-action="ClearCart" method="post" onsubmit="return confirm('Are you sure you want to clear this cart?');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="customerId" value="@customerId" />
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash me-1"></i> Clear Cart
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (Model == null || Model.Items == null || !Model.Items.Any())
+    {
+        <div class="card shadow-sm border-0 py-5 text-center">
+            <div class="card-body">
+                <i class="bi bi-cart-x text-muted fs-1 mb-3"></i>
+                <h5>Cart is Empty</h5>
+                <p class="text-muted">This customer does not have any items in their shopping cart.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Variant Info</th>
+                                        <th>Price</th>
+                                        <th style="width: 140px;">Quantity</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        var itemTotal = (item.Variant?.Price ?? 0) * item.Quantity;
+                                        grandTotal += itemTotal;
+
+                                        <tr>
+                                            <td class="fw-semibold">
+                                                @(item.Variant?.Product?.Name ?? "Unknown Product")
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    Color: <strong>@(item.Variant?.Color?.Name ?? "-")</strong> |
+                                                    Size: <strong>@(item.Variant?.Size?.Name ?? "-")</strong>
+                                                </small>
+                                            </td>
+                                            <td>$@(item.Variant?.Price.ToString("F2") ?? "0.00")</td>
+                                            <td>
+                                                <form asp-action="UpdateQuantity" method="post" class="d-flex align-items-center gap-1">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="customerId" value="@customerId" />
+                                                    <input type="hidden" name="cartItemId" value="@item.Id" />
+                                                    <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control form-control-sm text-center" onchange="this.form.submit()" />
+                                                </form>
+                                            </td>
+                                            <td class="text-end fw-bold">$@itemTotal.ToString("F2")</td>
+                                            <td class="text-center">
+                                                <form asp-action="RemoveItem" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="customerId" value="@customerId" />
+                                                    <input type="hidden" name="cartItemId" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total Items</span>
+                            <span class="fw-semibold">@Model.Items.Sum(i => i.Quantity)</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Created At</span>
+                            <small class="text-muted">@Model.CreatedAt.ToLocalTime().ToString("g")</small>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-bold">Grand Total</span>
+                            <h4 class="fw-bold text-primary mb-0">$@grandTotal.ToString("F2")</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

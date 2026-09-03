@@ -1,0 +1,161 @@
+@model WebApplication_ClothingEcommerce.Models.Brand
+
+@{
+    ViewData["Title"] = "Create Brand";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="mb-4">
+
+        <div class="text-uppercase text-muted small fw-bold mb-1">
+            Catalog / Brands
+        </div>
+
+        <h1 class="h3 fw-bold mb-1">
+            Create Brand
+        </h1>
+
+        <p class="text-muted mb-0">
+            Add a new brand to your clothing store.
+        </p>
+
+    </div>
+
+
+    <!-- FORM -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white border-0 p-4">
+
+            <h5 class="fw-bold mb-1">
+                Brand Information
+            </h5>
+
+            <p class="text-muted small mb-0">
+                Enter the brand information and upload its logo.
+            </p>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+            <form asp-action="Create"
+                  method="post"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger">
+                </div>
+
+
+                <div class="row g-4">
+
+
+                    <!-- NAME -->
+
+                    <div class="col-md-6">
+
+                        <label asp-for="Name"
+                               class="form-label fw-semibold">
+                            Brand Name
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control"
+                               placeholder="e.g. Nike" />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- LOGO -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-semibold">
+                            Brand Logo
+                        </label>
+
+                        <input type="file"
+                               name="logo"
+                               class="form-control"
+                               accept=".jpg,.jpeg,.png,.webp" />
+
+                        <div class="form-text">
+                            JPG, JPEG, PNG or WEBP. Maximum 5 MB.
+                        </div>
+
+                        <span asp-validation-for="Logo"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <div class="col-12">
+
+                        <label asp-for="Description"
+                               class="form-label fw-semibold">
+                            Description
+                        </label>
+
+                        <textarea asp-for="Description"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Enter brand description..."></textarea>
+
+                        <span asp-validation-for="Description"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="border-top mt-4 pt-4 d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-dark">
+
+                        <i class="bi bi-check-lg me-1"></i>
+                        Create Brand
+
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

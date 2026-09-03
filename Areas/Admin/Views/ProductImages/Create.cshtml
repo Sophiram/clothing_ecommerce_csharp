@@ -1,0 +1,499 @@
+@model WebApplication_ClothingEcommerce.Models.ProductImage
+
+@{
+    ViewData["Title"] = "Add Product Image";
+
+    var product =
+        ViewBag.Product as WebApplication_ClothingEcommerce.Models.Product;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <a asp-controller="Products"
+               asp-action="Details"
+               asp-route-id="@Model.ProductId"
+               class="text-decoration-none text-muted">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Product
+
+            </a>
+
+            <h2 class="fw-bold mt-3 mb-1">
+                Add Product Image
+            </h2>
+
+            <p class="text-muted mb-0">
+                Add an image URL to your product
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         PRODUCT INFO
+    ====================================================== -->
+    @if (product != null)
+    {
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-body">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="rounded-circle
+                        bg-primary-subtle
+                        text-primary
+                        d-flex
+                        align-items-center
+                        justify-content-center
+                        me-3"
+                         style="
+                        width:48px;
+                        height:48px;
+                        ">
+
+                        <i class="bi bi-box-seam fs-5"></i>
+
+                    </div>
+
+                    <div>
+
+                        <div class="small text-muted">
+                            Adding image to product
+                        </div>
+
+                        <div class="fw-bold fs-5">
+                            @product.Name
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <div class="row g-4">
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white border-0 py-3">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="rounded
+                            bg-primary-subtle
+                            text-primary
+                            p-2
+                            me-3">
+
+                            <i class="bi bi-image fs-5"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h5 class="fw-bold mb-0">
+                                Image Information
+                            </h5>
+
+                            <small class="text-muted">
+                                Enter your product image URL
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+                    <!-- VALIDATION -->
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+
+                            <div class="fw-semibold mb-1">
+
+                                <i class="bi bi-exclamation-circle me-1"></i>
+
+                                Please fix the following error:
+
+                            </div>
+
+                            <div asp-validation-summary="All"></div>
+
+                        </div>
+                    }
+
+
+                    <!-- FORM -->
+
+                    <form asp-controller="ProductImages"
+                          asp-action="Create"
+                          method="post"
+                          id="imageForm">
+
+                        @Html.AntiForgeryToken()
+
+                        <!-- PRODUCT ID -->
+
+                        <input type="hidden"
+                               asp-for="ProductId" />
+
+
+                        <!-- IMAGE URL -->
+
+                        <div class="mb-4">
+
+                            <label asp-for="ImageUrl"
+                                   class="form-label fw-semibold">
+
+                                Image URL
+
+                                <span class="text-danger">
+                                    *
+                                </span>
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+                                    <i class="bi bi-link-45deg"></i>
+                                </span>
+
+                                <input asp-for="ImageUrl"
+                                       id="imageUrl"
+                                       class="form-control"
+                                       placeholder="https://example.com/image.jpg"
+                                       autocomplete="off" />
+
+                            </div>
+
+                            <div class="form-text">
+
+                                Paste a direct link to the product image.
+
+                            </div>
+
+                            <span asp-validation-for="ImageUrl"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+
+                        <!-- PRIMARY -->
+
+                        <div class="card bg-light border-0 mb-4">
+
+                            <div class="card-body">
+
+                                <div class="form-check">
+
+                                    <input asp-for="IsPrimary"
+                                           id="isPrimary"
+                                           class="form-check-input"
+                                           style="
+                                    width:20px;
+                                    height:20px;
+                                    " />
+
+                                    <label asp-for="IsPrimary"
+                                           class="form-check-label ms-2">
+
+                                        <span class="fw-semibold">
+                                            Set as primary image
+                                        </span>
+
+                                        <div class="small text-muted mt-1">
+
+                                            The primary image will be displayed
+                                            first for this product.
+
+                                        </div>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTIONS -->
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-primary px-4">
+
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Add Image
+
+                            </button>
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@Model.ProductId"
+                               class="btn btn-outline-secondary px-4">
+
+                                Cancel
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PREVIEW
+        ================================================== -->
+
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white border-0 py-3">
+
+                    <h5 class="fw-bold mb-0">
+
+                        <i class="bi bi-eye me-2"></i>
+                        Image Preview
+
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div id="imagePreviewContainer"
+                         class="rounded overflow-hidden bg-light
+                        d-flex align-items-center
+                        justify-content-center"
+                         style="
+                        min-height:350px;
+                        ">
+
+                        <div id="emptyPreview"
+                             class="text-center text-muted">
+
+                            <i class="bi bi-image fs-1"></i>
+
+                            <div class="mt-2">
+                                Image preview will appear here
+                            </div>
+
+                        </div>
+
+
+                        <img id="imagePreview"
+                             src=""
+                             alt="Image Preview"
+                             class="d-none w-100"
+                             style="
+                        height:350px;
+                        object-fit:contain;
+                        " />
+
+                    </div>
+
+
+                    <!-- PRIMARY BADGE -->
+
+                    <div id="primaryPreview"
+                         class="d-none mt-3">
+
+                        <span class="badge bg-success">
+
+                            <i class="bi bi-star-fill me-1"></i>
+
+                            Primary Image
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- TIP -->
+
+            <div class="alert alert-info mt-3 border-0">
+
+                <div class="d-flex">
+
+                    <i class="bi bi-info-circle fs-5 me-2"></i>
+
+                    <div>
+
+                        <div class="fw-semibold">
+                            Image URL Tip
+                        </div>
+
+                        <small>
+                            Make sure the URL points directly to an
+                            image file or a publicly accessible image.
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        const imageUrlInput =
+            document.getElementById("imageUrl");
+
+        const imagePreview =
+            document.getElementById("imagePreview");
+
+        const emptyPreview =
+            document.getElementById("emptyPreview");
+
+        const primaryCheckbox =
+            document.getElementById("isPrimary");
+
+        const primaryPreview =
+            document.getElementById("primaryPreview");
+
+
+        // =====================================================
+        // IMAGE PREVIEW
+        // =====================================================
+
+        function updateImagePreview() {
+
+            const url =
+                imageUrlInput.value.trim();
+
+            if (!url) {
+
+                imagePreview.classList.add("d-none");
+
+                emptyPreview.classList.remove("d-none");
+
+                imagePreview.src = "";
+
+                return;
+            }
+
+
+            imagePreview.onload = function() {
+
+                imagePreview.classList.remove("d-none");
+
+                emptyPreview.classList.add("d-none");
+
+            };
+
+
+            imagePreview.onerror = function() {
+
+                imagePreview.classList.add("d-none");
+
+                emptyPreview.classList.remove("d-none");
+
+            };
+
+
+            imagePreview.src = url;
+        }
+
+
+        // =====================================================
+        // URL INPUT
+        // =====================================================
+
+        imageUrlInput.addEventListener(
+            "input",
+            updateImagePreview
+        );
+
+
+        // =====================================================
+        // PRIMARY
+        // =====================================================
+
+        function updatePrimaryPreview() {
+
+            if (primaryCheckbox.checked) {
+
+                primaryPreview.classList.remove("d-none");
+
+            }
+            else {
+
+                primaryPreview.classList.add("d-none");
+
+            }
+        }
+
+
+        primaryCheckbox.addEventListener(
+            "change",
+            updatePrimaryPreview
+        );
+
+
+        // =====================================================
+        // INITIAL
+        // =====================================================
+
+        updateImagePreview();
+
+        updatePrimaryPreview();
+
+    </script>
+}

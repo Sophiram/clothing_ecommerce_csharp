@@ -1,0 +1,330 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Brand>
+
+@{
+    ViewData["Title"] = "Brands";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+        <div>
+
+            <div class="text-uppercase text-muted small fw-bold mb-1">
+                Catalog / Brands
+            </div>
+
+            <h1 class="h3 fw-bold mb-1">
+                Brands
+            </h1>
+
+            <p class="text-muted mb-0">
+                Manage product brands and their logos.
+            </p>
+
+        </div>
+
+        <a asp-action="Create"
+           class="btn btn-dark">
+
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Brand
+
+        </a>
+
+    </div>
+
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center gap-2">
+
+            <i class="bi bi-check-circle-fill"></i>
+
+            <span>
+                @TempData["Success"]
+            </span>
+
+        </div>
+    }
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+
+            <i class="bi bi-exclamation-circle-fill"></i>
+
+            <span>
+                @TempData["Error"]
+            </span>
+
+        </div>
+    }
+
+
+    <!-- CARD -->
+
+    <div class="card border-0 shadow-sm">
+
+        <!-- CARD HEADER -->
+
+        <div class="card-header bg-white border-0 p-4">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Brand List
+                    </h5>
+
+                    <p class="text-muted small mb-0">
+                        Manage all brands available in your store.
+                    </p>
+
+                </div>
+
+                <span class="badge bg-dark rounded-pill px-3 py-2">
+                    @(Model?.Count() ?? 0) Brands
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <div class="px-4 pb-4">
+
+            <form method="get">
+
+                <div class="input-group">
+
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search brands..." />
+
+                    <button type="submit"
+                            class="btn btn-dark">
+
+                        Search
+
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+
+                        <i class="bi bi-arrow-counterclockwise"></i>
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- TABLE -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th class="px-4">
+                                LOGO
+                            </th>
+
+                            <th>
+                                BRAND
+                            </th>
+
+                            <th>
+                                DESCRIPTION
+                            </th>
+
+                            <th>
+                                PRODUCTS
+                            </th>
+
+                            <th class="text-end px-4">
+                                ACTIONS
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var brand in Model)
+                        {
+                            <tr>
+
+                                <!-- LOGO -->
+
+                                <td class="px-4">
+
+                                    @if (!string.IsNullOrWhiteSpace(brand.Logo))
+                                    {
+                                        <img src="@brand.Logo"
+                                             alt="@brand.Name"
+                                             class="rounded border bg-white"
+                                             style="width:52px;height:52px;object-fit:contain;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light border rounded d-flex align-items-center justify-content-center"
+                                             style="width:52px;height:52px;">
+
+                                            <i class="bi bi-award fs-4 text-muted"></i>
+
+                                        </div>
+                                    }
+
+                                </td>
+
+
+                                <!-- BRAND -->
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @brand.Name
+                                    </div>
+
+                                    <small class="text-muted">
+                                        ID: @brand.Id
+                                    </small>
+
+                                </td>
+
+
+                                <!-- DESCRIPTION -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(brand.Description))
+                                    {
+                                        <span class="text-muted">
+                                            @brand.Description
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            No description
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- PRODUCTS -->
+
+                                <td>
+
+                                    <span class="badge bg-light text-dark border">
+
+                                        @(brand.Products?.Count ?? 0)
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ACTIONS -->
+
+                                <td class="text-end px-4">
+
+                                    <div class="btn-group">
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@brand.Id"
+                                           class="btn btn-sm btn-outline-secondary"
+                                           title="Details">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </a>
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@brand.Id"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Edit">
+
+                                            <i class="bi bi-pencil"></i>
+
+                                        </a>
+
+                                        <a asp-action="Delete"
+                                           asp-route-id="@brand.Id"
+                                           class="btn btn-sm btn-outline-danger"
+                                           title="Delete">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+
+                <div class="mb-3">
+
+                    <i class="bi bi-award display-5 text-muted"></i>
+
+                </div>
+
+                <h5 class="fw-bold">
+                    No brands found
+                </h5>
+
+                <p class="text-muted">
+                    Add your first brand to start managing your catalog.
+                </p>
+
+                <a asp-action="Create"
+                   class="btn btn-dark">
+
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Add Brand
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+
+</div>

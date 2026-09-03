@@ -1,0 +1,379 @@
+@model WebApplication_ClothingEcommerce.Models.Product
+
+@inject Microsoft.AspNetCore.Identity.SignInManager<WebApplication_ClothingEcommerce.Models.ApplicationUser> SignInManager
+
+@using WebApplication_ClothingEcommerce.Data.Enums
+
+@{
+    ViewData["Title"] = Model.Name;
+
+    var primaryImage =
+        Model.Images?.FirstOrDefault(x => x.IsPrimary)
+        ?? Model.Images?.FirstOrDefault();
+
+    var images =
+        Model.Images?.ToList()
+        ?? new List<WebApplication_ClothingEcommerce.Models.ProductImage>();
+
+    var variants =
+        Model.Variants?
+            .Where(v => v.Status == VariantStatus.Available)
+            .ToList()
+        ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
+
+    var minPrice =
+        variants
+            .Select(v => v.Price)
+            .DefaultIfEmpty(0)
+            .Min();
+
+    var totalStock =
+        variants.Sum(v => v.Inventory?.AvailableQuantity ?? 0);
+}
+
+<!-- =========================================================
+     BREADCRUMB & TOP HEADER
+========================================================= -->
+<section class="py-3 bg-light border-bottom">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Shop" asp-action="Index" class="text-decoration-none text-secondary">
+                        <i class="bi bi-shop me-1"></i> Shop
+                    </a>
+                </li>
+                <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
+                    @Model.Name
+                </li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- =========================================================
+     PRODUCT DETAILS
+========================================================= -->
+<section class="py-5 bg-light">
+    <div class="container py-lg-3">
+
+        <div class="row g-4 g-lg-5">
+
+            <!-- =================================================
+                 PRODUCT IMAGES GALLERY
+            ================================================== -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+                    <div class="bg-white d-flex align-items-center justify-content-center p-3">
+                        @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
+                        {
+                            <img id="mainProductImage"
+                                 src="@primaryImage.ImageUrl"
+                                 alt="@Model.Name"
+                                 class="img-fluid rounded-3 w-100"
+                                 style="height: 500px; object-fit: cover; transition: all 0.3s ease;" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center bg-light w-100 rounded-3"
+                                 style="height: 500px;">
+                                <i class="bi bi-image display-1 text-secondary"></i>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- THUMBNAILS -->
+                @if (images.Count > 1)
+                {
+                    <div class="row g-2">
+                        @foreach (var image in images)
+                        {
+                            if (!string.IsNullOrWhiteSpace(image.ImageUrl))
+                            {
+                                <div class="col-3">
+                                    <button type="button"
+                                            class="btn p-0 w-100 border-0 rounded-3 overflow-hidden shadow-sm thumbnail-btn"
+                                            onclick="changeImage('@image.ImageUrl')">
+                                        <img src="@image.ImageUrl"
+                                             class="img-fluid border"
+                                             alt="@Model.Name"
+                                             style="height: 90px; width: 100%; object-fit: cover;" />
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- =================================================
+                 PRODUCT INFORMATION & PURCHASE
+            ================================================== -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-between">
+                        <div>
+                            <!-- BRAND & STATUS -->
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Brand?.Logo))
+                                    {
+                                        <img src="@Model.Brand.Logo"
+                                             alt="@Model.Brand.Name"
+                                             class="rounded border bg-white"
+                                             style="width:42px;height:42px;object-fit:contain;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded border bg-light d-flex align-items-center justify-content-center"
+                                             style="width:42px;height:42px;">
+
+                                            <i class="bi bi-award text-secondary"></i>
+
+                                        </div>
+                                    }
+
+                                    <div>
+
+                                        <div class="text-uppercase small fw-bold text-primary">
+                                            @(Model.Brand?.Name ?? "CLOTHÉ")
+                                        </div>
+
+                                        <small class="text-muted">
+                                            Official Brand
+                                        </small>
+
+                                    </div>
+
+                                </div>
+
+                                @if (totalStock > 0)
+                                {
+                                    <span class="badge rounded-pill text-bg-success px-3 py-2">
+                                        <i class="bi bi-check-circle-fill me-1"></i> In Stock
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge rounded-pill text-bg-danger px-3 py-2">
+                                        <i class="bi bi-x-circle-fill me-1"></i> Out of Stock
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- NAME -->
+                            <h1 class="fw-bold display-6 mb-3">
+                                @Model.Name
+                            </h1>
+
+                            <!-- PRICE -->
+                            <div class="fs-2 fw-bold text-dark mb-3">
+                                @if (minPrice > 0)
+                                {
+                                    <span class="text-secondary fs-5 fw-normal">From</span>
+                                    <span>$@minPrice.ToString("0.00")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary fs-4">Contact us</span>
+                                }
+                            </div>
+
+                            <!-- DESCRIPTION -->
+                            <p class="text-secondary lh-lg mb-4">
+                                @(Model.Description ?? "No description available for this product.")
+                            </p>
+
+                            <!-- MATERIAL & GENDER HIGHLIGHTS -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <div class="bg-light rounded-3 p-3 border border-1 border-light-subtle">
+                                        <small class="text-secondary fw-bold d-block text-uppercase mb-1">
+                                            <i class="bi bi-layers me-1 text-primary"></i> Material
+                                        </small>
+                                        <span class="fw-semibold text-dark">
+                                            @(Model.Material ?? "N/A")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-light rounded-3 p-3 border border-1 border-light-subtle">
+                                        <small class="text-secondary fw-bold d-block text-uppercase mb-1">
+                                            <i class="bi bi-gender-ambiguous me-1 text-primary"></i> Gender
+                                        </small>
+                                        <span class="fw-semibold text-dark">
+                                            @Model.Gender
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- =================================================
+                             ADD TO CART & ACTIONS
+                        ================================================== -->
+                        <div>
+                            <hr class="my-4" />
+
+                            @if (variants.Count > 0)
+                            {
+                                <form asp-controller="Cart" asp-action="Add" method="post">
+                                    @Html.AntiForgeryToken()
+
+                                    <!-- VARIANT SELECT -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">
+                                            Select Option (Size / Color)
+                                        </label>
+                                        <select name="variantId" class="form-select form-select-lg rounded-3 fs-6" required>
+                                            <option value="">Choose a variant...</option>
+                                            @foreach (var variant in variants)
+                                            {
+                                                var stock = variant.Inventory?.AvailableQuantity ?? 0;
+                                                <option value="@variant.Id" disabled="@(stock <= 0)">
+                                                    @(variant.Size?.Name ?? "One Size") / @(variant.Color?.Name ?? "Default") - $@variant.Price.ToString("0.00") @(stock <= 0 ? "(Out of Stock)" : $"({stock} available)")
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <!-- QUANTITY & ADD TO CART ROW -->
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-4 col-md-3">
+                                            <label class="form-label fw-semibold">Qty</label>
+                                            <input type="number"
+                                                   name="quantity"
+                                                   value="1"
+                                                   min="1"
+                                                   max="10"
+                                                   class="form-control form-control-lg rounded-3 fs-6 text-center" />
+                                        </div>
+                                        <div class="col-8 col-md-9 d-flex align-items-end">
+                                            <button type="submit"
+                                                    class="btn btn-dark btn-lg rounded-3 w-100 shadow-sm"
+                                                    disabled="@(totalStock <= 0)">
+                                                <i class="bi bi-bag-plus me-2"></i> Add to Cart
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning rounded-3 border-0 shadow-sm mb-3">
+                                    <i class="bi bi-exclamation-triangle me-2"></i> No available variants for this product.
+                                </div>
+                            }
+
+                            <!-- WISHLIST ACTION -->
+                            @if (SignInManager.IsSignedIn(User) && variants.Count > 0)
+                            {
+                                <form asp-controller="Wishlist" asp-action="Add" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="variantId" value="@variants.First().Id" />
+                                    <button type="submit" class="btn btn-outline-dark btn-lg rounded-3 w-100">
+                                        <i class="bi bi-heart me-2"></i> Add to Wishlist
+                                    </button>
+                                </form>
+                            }
+                            else if (!SignInManager.IsSignedIn(User))
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-dark btn-lg rounded-3 w-100">
+                                    <i class="bi bi-heart me-2"></i> Sign in to add wishlist
+                                </a>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =========================================================
+             REVIEWS SECTION
+        ========================================================== -->
+        <section class="mt-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-lg-5">
+
+                    <!-- SECTION HEADER -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 border-bottom pb-3">
+                        <div>
+                            <div class="text-uppercase small fw-bold text-primary mb-1">
+                                CUSTOMER FEEDBACK
+                            </div>
+                            <h3 class="fw-bold mb-0">
+                                Customer Reviews
+                            </h3>
+                        </div>
+
+                        <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2 rounded-pill">
+                            <i class="bi bi-chat-left-text me-1"></i>
+                            @(Model.Reviews?.Count ?? 0) reviews
+                        </span>
+                    </div>
+
+                    <!-- REVIEWS LIST -->
+                    @if (Model.Reviews != null && Model.Reviews.Any())
+                    {
+                        <div class="row g-3">
+                            @foreach (var review in Model.Reviews.OrderByDescending(x => x.CreatedAt))
+                            {
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light rounded-3 p-3">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="fw-bold mb-0">
+                                                    @(review.Customer?.FirstName ?? "Customer") @(review.Customer?.LastName ?? "")
+                                                </h6>
+                                                <div class="text-warning">
+                                                    @for (int i = 0; i < review.Rating; i++)
+                                                    {
+                                                        <i class="bi bi-star-fill"></i>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                            {
+                                                <p class="text-secondary mb-0">
+                                                    @review.Comment
+                                                </p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-secondary py-5">
+                            <div class="rounded-circle bg-light text-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                <i class="bi bi-chat-square-text fs-2"></i>
+                            </div>
+                            <h5 class="fw-semibold">No reviews yet</h5>
+                            <p class="text-muted small mb-0">Be the first to review this product after purchasing!</p>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </section>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function changeImage(src) {
+            const image = document.getElementById("mainProductImage");
+            if (image) {
+                image.src = src;
+            }
+        }
+    </script>
+}

@@ -1,0 +1,200 @@
+﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="profile-page">
+
+    <div class="container py-5">
+
+        <div class="profile-header">
+
+            <div>
+
+                <span>
+                    ACCOUNT
+                </span>
+
+                <h1>
+                    My Profile
+                </h1>
+
+                <p>
+                    Manage your personal information.
+                </p>
+
+            </div>
+
+            <div class="google-avatar large">
+
+                @{
+                    var initial =
+                        !string.IsNullOrEmpty(Model.FirstName)
+                            ? Model.FirstName.Substring(0, 1).ToUpper()
+                            : "U";
+                }
+
+                @initial
+
+            </div>
+
+        </div>
+
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success modern-alert mb-4">
+
+                <i class="bi bi-check-circle-fill"></i>
+
+                @TempData["Success"]
+
+            </div>
+        }
+
+
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+
+                <div class="profile-card">
+
+                    <div class="profile-card-header">
+
+                        <h5>
+                            Personal Information
+                        </h5>
+
+                        <span>
+                            Your details
+                        </span>
+
+                    </div>
+
+
+                    <form asp-action="Profile"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="auth-validation">
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label asp-for="FirstName"
+                                       class="form-label">
+                                </label>
+
+                                <input asp-for="FirstName"
+                                       class="form-control" />
+
+                                <span asp-validation-for="FirstName"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label asp-for="LastName"
+                                       class="form-label">
+                                </label>
+
+                                <input asp-for="LastName"
+                                       class="form-control" />
+
+                                <span asp-validation-for="LastName"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label asp-for="Email"
+                                       class="form-label">
+                                </label>
+
+                                <input asp-for="Email"
+                                       class="form-control"
+                                       readonly />
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label asp-for="Phone"
+                                       class="form-label">
+                                </label>
+
+                                <input asp-for="Phone"
+                                       class="form-control" />
+
+                                <span asp-validation-for="Phone"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <button type="submit"
+                                class="auth-submit profile-submit">
+
+                            Save changes
+
+                            <i class="bi bi-check2"></i>
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-lg-4">
+
+                <div class="profile-side-card">
+
+                    <div class="feature-icon">
+
+                        <i class="bi bi-shield-check"></i>
+
+                    </div>
+
+                    <h5>
+                        Account Security
+                    </h5>
+
+                    <p>
+                        Keep your account information
+                        accurate and secure.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

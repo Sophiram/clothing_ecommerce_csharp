@@ -1,0 +1,212 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.ShopViewModel
+
+@{
+    ViewData["Title"] = "Shop";
+}
+
+<div class="container py-5">
+
+    <div class="mb-5">
+
+        <div class="eyebrow">
+            COLLECTION
+        </div>
+
+        <h1 class="fw-bold">
+            Shop All Products
+        </h1>
+
+        <p class="text-secondary">
+            Discover clothing for every style and occasion.
+        </p>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- FILTER -->
+        <div class="col-lg-3">
+
+            <div class="filter-box sticky-lg-top" style="top:90px">
+
+                <form asp-action="Index"
+                      method="get">
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-bold">
+                            Search
+                        </label>
+
+                        <input type="text"
+                               name="search"
+                               value="@Model.Search"
+                               class="form-control"
+                               placeholder="Search products..." />
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-bold">
+                            Category
+                        </label>
+
+                        <a asp-action="Index"
+                           class="filter-link @(Model.CategoryId == null ? "active" : "")">
+
+                            All Categories
+
+                        </a>
+
+                        @foreach (var category in Model.Categories)
+                        {
+                            <a asp-action="Index"
+                               asp-route-categoryId="@category.Id"
+                               asp-route-brandId="@Model.BrandId"
+                               asp-route-search="@Model.Search"
+                               class="filter-link @(Model.CategoryId == category.Id ? "active" : "")">
+
+                                @category.Name
+
+                            </a>
+                        }
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-bold">
+                            Brand
+                        </label>
+
+                        <a asp-action="Index"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-search="@Model.Search"
+                           class="filter-link @(Model.BrandId == null ? "active" : "")">
+
+                            All Brands
+
+                        </a>
+
+                        @foreach (var brand in Model.Brands)
+                        {
+                            <a asp-action="Index"
+                               asp-route-categoryId="@Model.CategoryId"
+                               asp-route-brandId="@brand.Id"
+                               asp-route-search="@Model.Search"
+                               class="filter-link @(Model.BrandId == brand.Id ? "active" : "")">
+
+                                @brand.Name
+
+                            </a>
+                        }
+
+                    </div>
+
+                    <div class="mb-4">
+
+                        <label class="form-label fw-bold">
+                            Sort
+                        </label>
+
+                        <select name="sort"
+                                class="form-select"
+                                onchange="this.form.submit()">
+
+                            <option value="">
+                                Latest
+                            </option>
+
+                            <option value="name"
+                                    selected="@(Model.Sort == "name")">
+                                Name
+                            </option>
+
+                            <option value="price-low"
+                                    selected="@(Model.Sort == "price-low")">
+                                Price: Low to High
+                            </option>
+
+                            <option value="price-high"
+                                    selected="@(Model.Sort == "price-high")">
+                                Price: High to Low
+                            </option>
+
+                            <option value="oldest"
+                                    selected="@(Model.Sort == "oldest")">
+                                Oldest
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <button class="btn btn-dark w-100">
+                        Apply Filters
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- PRODUCTS -->
+
+        <div class="col-lg-9">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <span class="text-secondary">
+                    @Model.Products.Count() products
+                </span>
+
+            </div>
+
+            @if (!Model.Products.Any())
+            {
+                <div class="empty-state">
+
+                    <i class="bi bi-search"></i>
+
+                    <h4 class="fw-bold mt-3">
+                        No products found
+                    </h4>
+
+                    <p class="text-secondary">
+                        Try another search or filter.
+                    </p>
+
+                    <a asp-action="Index"
+                       class="btn btn-dark">
+
+                        View All Products
+
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="col-6 col-md-4">
+
+                            <partial name="_ProductCard"
+                                     model="product" />
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
