@@ -1,0 +1,834 @@
+/* ====================================================================
+   CLOTHÉ — MODERN LUXURY NAVBAR STYLESHEET
+   Features:
+   - Floating glassmorphism sticky header
+   - Refined luxury promo countdown ribbon
+   - Active navigation indicators & glowing Sale badge
+   - Live expandable desktop search & integrated mobile search
+   - Wishlist & Cart action buttons with live badge counters
+   - Premium user profile pill & rich account dropdown menu
+   - Chic modern Sign In / Register CTA buttons
+   - Mobile-first responsive drawer navigation
+   ==================================================================== */
+
+:root {
+    --nav-bg: rgba(255, 255, 255, 0.94);
+    --nav-border: rgba(15, 23, 42, 0.08);
+    --nav-text: #1e293b;
+    --nav-text-muted: #64748b;
+    --nav-dark: #0f172a;
+    --nav-accent: #2563eb;
+    --nav-sale: #ef4444;
+    --nav-sale-end: #f97316;
+    --nav-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --nav-radius: 12px;
+}
+
+/* ----------------------------------------------------
+   1. PROMO COUNTDOWN BAR
+---------------------------------------------------- */
+.clothe-promo-bar {
+    background: linear-gradient(90deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+    color: #f8fafc;
+    font-size: 0.8125rem;
+    padding: 7px 0;
+    position: relative;
+    z-index: 1050;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.clothe-promo-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    padding-right: 32px;
+}
+
+.clothe-promo-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.clothe-promo-tag {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+
+.clothe-promo-countdown {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.clothe-countdown-unit {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(4px);
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-family: "Inter", monospace, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.clothe-countdown-unit small {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.clothe-promo-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #fcd34d;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-decoration: none;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.clothe-promo-cta:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+}
+
+.clothe-promo-close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.clothe-promo-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ----------------------------------------------------
+   2. MAIN NAVBAR CONTAINER
+---------------------------------------------------- */
+.clothe-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: var(--nav-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--nav-border);
+    box-shadow: var(--nav-shadow);
+    padding: 12px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clothe-navbar.scrolled {
+    padding: 8px 0;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+}
+
+.clothe-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+/* ----------------------------------------------------
+   3. BRAND LOGO
+---------------------------------------------------- */
+.clothe-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.clothe-brand-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.clothe-brand:hover .clothe-brand-logo {
+    transform: scale(1.04);
+}
+
+/* ----------------------------------------------------
+   4. NAVIGATION LINKS (DESKTOP)
+---------------------------------------------------- */
+.clothe-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.clothe-nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--nav-text);
+    font-family: "Inter", sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+
+.clothe-nav-link:hover {
+    color: var(--nav-dark);
+    background: rgba(15, 23, 42, 0.05);
+}
+
+.clothe-nav-link.active {
+    color: var(--nav-dark);
+    font-weight: 600;
+    background: rgba(15, 23, 42, 0.07);
+}
+
+/* Sale Hot Link */
+.clothe-nav-link-sale {
+    font-weight: 600;
+    color: var(--nav-sale);
+}
+
+.clothe-nav-link-sale:hover {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.clothe-sale-pill {
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+    animation: pulse-soft 2s infinite ease-in-out;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.06); opacity: 0.92; }
+}
+
+/* Admin Nav Item */
+.clothe-admin-badge {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.clothe-admin-badge:hover {
+    background: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+/* ----------------------------------------------------
+   5. NAVBAR SEARCH BAR (EXPANDABLE / SLEEK)
+---------------------------------------------------- */
+.clothe-nav-search {
+    position: relative;
+    flex: 1;
+    max-width: 260px;
+    transition: max-width 0.3s ease;
+}
+
+.clothe-nav-search:focus-within {
+    max-width: 340px;
+}
+
+.clothe-search-form {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.clothe-search-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 38px 0 38px;
+    font-size: 0.875rem;
+    font-family: "Inter", sans-serif;
+    color: var(--nav-dark);
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    transition: all 0.25s ease;
+    outline: none;
+}
+
+.clothe-search-input:focus {
+    background: #fff;
+    border-color: rgba(15, 23, 42, 0.2);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+}
+
+.clothe-search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.clothe-search-input:focus ~ .clothe-search-icon {
+    color: var(--nav-dark);
+}
+
+.clothe-search-submit {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.clothe-search-submit:hover {
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--nav-dark);
+}
+
+/* ----------------------------------------------------
+   6. ACTION BUTTONS (WISHLIST, CART, USER)
+---------------------------------------------------- */
+.clothe-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.clothe-action-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.clothe-action-btn:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--nav-dark);
+    transform: translateY(-1px);
+}
+
+.clothe-action-btn:active {
+    transform: translateY(0);
+}
+
+/* Live Badge Counters */
+.clothe-badge-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--nav-dark);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 9999px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clothe-badge-count.badge-sale {
+    background: var(--nav-sale);
+}
+
+@keyframes pop-in {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ----------------------------------------------------
+   7. USER PROFILE TRIGGER & DROPDOWN MENU
+---------------------------------------------------- */
+.clothe-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 3px 10px 3px 4px;
+    border-radius: 9999px;
+    color: var(--nav-dark);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clothe-user-trigger:hover,
+.clothe-user-trigger[aria-expanded="true"] {
+    background: rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 23, 42, 0.08);
+}
+
+.clothe-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+    flex-shrink: 0;
+}
+
+.clothe-user-name {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+}
+
+.clothe-user-chevron {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+
+.clothe-user-trigger[aria-expanded="true"] .clothe-user-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu Box */
+.clothe-dropdown-menu {
+    min-width: 270px;
+    margin-top: 10px !important;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    animation: menu-slide-down 0.2s ease-out;
+}
+
+@keyframes menu-slide-down {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.clothe-user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.clothe-user-header-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    flex-shrink: 0;
+}
+
+.clothe-user-meta strong {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--nav-dark);
+    line-height: 1.2;
+}
+
+.clothe-user-meta small {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clothe-user-role-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 4px;
+}
+
+.clothe-user-role-badge.role-admin {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.clothe-user-role-badge.role-member {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Menu items */
+.clothe-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
+    border-radius: 10px;
+    transition: all 0.15s ease;
+}
+
+.clothe-dropdown-menu .dropdown-item i {
+    font-size: 1rem;
+    color: #64748b;
+    width: 20px;
+    text-align: center;
+    transition: color 0.15s ease;
+}
+
+.clothe-dropdown-menu .dropdown-item:hover {
+    background: #f1f5f9;
+    color: var(--nav-dark);
+}
+
+.clothe-dropdown-menu .dropdown-item:hover i {
+    color: var(--nav-dark);
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item i {
+    color: #dc2626;
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item:hover {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.clothe-dropdown-section-title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 8px 12px 4px;
+}
+
+.clothe-dropdown-divider {
+    margin: 6px 0;
+    border-color: #f1f5f9;
+}
+
+.clothe-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ef4444;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.clothe-logout-btn i {
+    font-size: 1rem;
+    color: #ef4444;
+    width: 20px;
+    text-align: center;
+}
+
+.clothe-logout-btn:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ----------------------------------------------------
+   8. GUEST BUTTONS (SIGN IN / REGISTER)
+---------------------------------------------------- */
+.clothe-btn-signin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--nav-dark);
+    background: transparent;
+    border: 1.5px solid rgba(15, 23, 42, 0.15);
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.clothe-btn-signin:hover {
+    background: rgba(15, 23, 42, 0.05);
+    color: #000;
+    border-color: var(--nav-dark);
+}
+
+.clothe-btn-register {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    transition: all 0.2s ease;
+}
+
+.clothe-btn-register:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.28);
+    transform: translateY(-1px);
+}
+
+/* ----------------------------------------------------
+   9. MOBILE NAVIGATION & TOGGLER
+---------------------------------------------------- */
+.clothe-mobile-toggler {
+    display: none;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    color: var(--nav-dark);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.clothe-mobile-toggler:hover {
+    background: rgba(15, 23, 42, 0.05);
+}
+
+.clothe-mobile-toggler:focus {
+    outline: none;
+}
+
+/* Mobile Collapse Container */
+@media (max-width: 991.98px) {
+    .clothe-mobile-toggler {
+        display: inline-flex;
+    }
+
+    .clothe-nav-links {
+        display: none;
+    }
+
+    .clothe-nav-search {
+        display: none;
+    }
+
+    .clothe-user-name,
+    .clothe-user-chevron {
+        display: none;
+    }
+
+    .clothe-user-trigger {
+        padding: 0;
+    }
+
+    /* Mobile Drawer */
+    .clothe-mobile-menu {
+        padding: 16px 0 8px;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 12px;
+    }
+
+    .clothe-mobile-search-wrap {
+        margin-bottom: 16px;
+    }
+
+    .clothe-mobile-search-wrap .clothe-nav-search {
+        display: block;
+        max-width: 100%;
+    }
+
+    .clothe-mobile-nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .clothe-mobile-nav-item a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        color: #1e293b;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+
+    .clothe-mobile-nav-item a:hover,
+    .clothe-mobile-nav-item a.active {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .clothe-mobile-nav-item a.sale-item {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    .clothe-mobile-auth-block {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .clothe-mobile-auth-block .clothe-btn-signin,
+    .clothe-mobile-auth-block .clothe-btn-register {
+        width: 100%;
+        justify-content: center;
+        padding: 11px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .clothe-promo-inner {
+        padding-right: 28px;
+        gap: 8px;
+    }
+
+    .clothe-promo-text {
+        font-size: 0.75rem;
+    }
+
+    .clothe-promo-cta {
+        display: none;
+    }
+
+    .clothe-brand-logo {
+        height: 34px;
+    }
+
+    .clothe-action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+}

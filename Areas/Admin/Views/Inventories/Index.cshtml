@@ -4,300 +4,216 @@
     ViewData["Title"] = "Inventory";
 }
 
-<div class="container-fluid py-4">
+<div class="admin-page">
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <!-- PAGE HEADER -->
+    <div class="page-header">
         <div>
-            <h2 class="fw-bold mb-1">
-                <i class="bi bi-box-seam me-2"></i>
-                Inventory
-            </h2>
-
-            <p class="text-muted mb-0">
-                Manage product stock and inventory quantities.
-            </p>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Inventory</h1>
+            <p class="page-description">Cross-product stock levels — a warehouse view across every variant.</p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-
-            <i class="bi bi-plus-lg me-1"></i>
+        <a asp-action="Create" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i>
             Add Inventory
-
         </a>
-
     </div>
-
 
     <!-- ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
+        <div class="admin-alert admin-alert-success">
+            <i class="bi bi-check-circle-fill"></i>
             @TempData["Success"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
+        <div class="admin-alert admin-alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
             @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
         </div>
     }
 
+    <!-- MAIN CARD -->
+    <div class="admin-card">
 
-    <!-- FILTER -->
+        <div class="admin-card-header">
+            <div>
+                <h3 class="admin-card-title">All Inventory Records</h3>
+                <p class="admin-card-subtitle">Stock, reserved units, and last update per SKU</p>
+            </div>
+            <div class="admin-card-count">
+                <span>@Model.Count()</span>
+                <small>total</small>
+            </div>
+        </div>
 
-    <div class="card shadow-sm border-0 mb-4">
+        <!-- FILTER -->
+        <div class="search-wrapper">
+            <form asp-action="Index" method="get" class="search-form flex-wrap">
 
-        <div class="card-body">
-
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-3 align-items-end">
-
-                <div class="col-md-6">
-
-                    <label class="form-label fw-semibold">
-                        Product
-                    </label>
-
-                    <select name="productId"
-                            asp-items="ViewBag.Products"
-                            class="form-select">
-
-                        <option value="">
-                            All Products
-                        </option>
-
+                <div class="search-input-wrapper" style="flex: 2; min-width: 220px;">
+                    <select name="productId" class="search-input" asp-items="ViewBag.Products">
+                        <option value="">All Products</option>
                     </select>
-
                 </div>
 
-                <div class="col-md-3">
+                <button type="submit" class="btn-search">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
 
-                    <button type="submit"
-                            class="btn btn-dark w-100">
-
-                        <i class="bi bi-funnel me-1"></i>
-                        Filter
-
-                    </button>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <a asp-action="Index"
-                       class="btn btn-outline-secondary w-100">
-
-                        <i class="bi bi-arrow-clockwise me-1"></i>
-                        Reset
-
-                    </a>
-
-                </div>
+                <a asp-action="Index" class="btn-reset">
+                    <i class="bi bi-arrow-repeat"></i> Reset
+                </a>
 
             </form>
-
         </div>
 
-    </div>
+        <!-- TABLE -->
+        <div class="table-responsive">
 
+            <table class="admin-table">
 
-    <!-- TABLE -->
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Size</th>
+                        <th>Color</th>
+                        <th>Total</th>
+                        <th>Reserved</th>
+                        <th>Available</th>
+                        <th>Updated</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
 
-    <div class="card shadow-sm border-0">
+                <tbody>
 
-        <div class="card-header bg-white py-3">
-
-            <div class="d-flex justify-content-between">
-
-                <h5 class="fw-bold mb-0">
-                    Inventory List
-                </h5>
-
-                <span class="badge bg-secondary">
-                    @Model.Count() Records
-                </span>
-
-            </div>
-
-        </div>
-
-        <div class="card-body p-0">
-
-            @if (Model.Any())
-            {
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle mb-0">
-
-                        <thead class="table-light">
+                    @if (Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var available = item.AvailableQuantity;
 
                             <tr>
-                                <th class="ps-4">Product</th>
-                                <th>SKU</th>
-                                <th>Size</th>
-                                <th>Color</th>
-                                <th>Total</th>
-                                <th>Reserved</th>
-                                <th>Available</th>
-                                <th>Updated</th>
-                                <th class="text-end pe-4">
-                                    Actions
-                                </th>
+
+                                <td class="payment-name">
+                                    @item.ProductVariant.Product.Name
+                                </td>
+
+                                <td>
+                                    <code>@item.ProductVariant.SKU</code>
+                                </td>
+
+                                <td>
+                                    <span class="tag-badge">@item.ProductVariant.Size.Name</span>
+                                </td>
+
+                                <td>
+                                    <span class="tag-badge">@item.ProductVariant.Color.Name</span>
+                                </td>
+
+                                <td>
+                                    <strong>@item.Quantity</strong>
+                                </td>
+
+                                <td>
+                                    @item.ReservedQuantity
+                                </td>
+
+                                <td>
+                                    @if (available > 0)
+                                    {
+                                        <span class="status-badge status-active">@available</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-danger">Out of Stock</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <small class="description-text">@item.UpdatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small>
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="action-btn" title="Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn action-warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="action-btn action-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+
+                                    </div>
+                                </td>
+
                             </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="bi bi-box-seam"></i>
+                                    </div>
+                                    <h5>No inventory records</h5>
+                                    <p>Start by adding inventory for a product variant, or adjust your filter.</p>
+                                    <a asp-action="Create" class="btn-primary-custom">
+                                        <i class="bi bi-plus-lg"></i> Add Inventory
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
 
-                        </thead>
+                </tbody>
 
-                        <tbody>
-
-                            @foreach (var item in Model)
-                            {
-                                var available =
-                                    item.AvailableQuantity;
-
-                                <tr>
-
-                                    <td class="ps-4">
-
-                                        <div class="fw-semibold">
-                                            @item.ProductVariant.Product.Name
-                                        </div>
-
-                                    </td>
-
-                                    <td>
-                                        <span class="badge bg-light text-dark border">
-                                            @item.ProductVariant.SKU
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        @item.ProductVariant.Size.Name
-                                    </td>
-
-                                    <td>
-                                        <span>
-                                            @item.ProductVariant.Color.Name
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <strong>
-                                            @item.Quantity
-                                        </strong>
-                                    </td>
-
-                                    <td>
-                                        @item.ReservedQuantity
-                                    </td>
-
-                                    <td>
-
-                                        @if (available > 0)
-                                        {
-                                            <span class="badge bg-success">
-                                                @available
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">
-                                                0
-                                            </span>
-                                        }
-
-                                    </td>
-
-                                    <td>
-                                        <small class="text-muted">
-                                            @item.UpdatedAt.ToLocalTime()
-                                        </small>
-                                    </td>
-
-                                    <td class="text-end pe-4">
-
-                                        <div class="btn-group">
-
-                                            <a asp-action="Details"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-primary">
-
-                                                <i class="bi bi-eye"></i>
-
-                                            </a>
-
-                                            <a asp-action="Edit"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-warning">
-
-                                                <i class="bi bi-pencil"></i>
-
-                                            </a>
-
-                                            <a asp-action="Delete"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-danger">
-
-                                                <i class="bi bi-trash"></i>
-
-                                            </a>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-5">
-
-                    <i class="bi bi-box-seam fs-1 text-muted"></i>
-
-                    <h5 class="mt-3">
-                        No inventory records
-                    </h5>
-
-                    <p class="text-muted">
-                        Start by adding inventory for a product variant.
-                    </p>
-
-                    <a asp-action="Create"
-                       class="btn btn-primary">
-
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Add Inventory
-
-                    </a>
-
-                </div>
-            }
+            </table>
 
         </div>
 
     </div>
 
 </div>
+
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .tag-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        font-size: 0.8rem;
+    }
+</style>

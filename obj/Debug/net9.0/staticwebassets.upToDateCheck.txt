@@ -1,4 +1,6 @@
 wwwroot\css\admin.css
+wwwroot\css\auth-modern.css
+wwwroot\css\navbar-modern.css
 wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\images\brands\42a385245edf429ea084dda88d9dbe17.webp
@@ -70,9 +72,8 @@ wwwroot\lib\jquery\dist\jquery.slim.js
 wwwroot\lib\jquery\dist\jquery.slim.min.js
 wwwroot\lib\jquery\dist\jquery.slim.min.map
 wwwroot\lib\jquery\LICENSE.txt
-D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.slim.min.map
-D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\LICENSE.txt
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.slim.min.js
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.slim.min.map
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.slim.js
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.min.map
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\dist\jquery.min.js
@@ -130,8 +131,11 @@ D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_Cloth
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\css\site.css
-D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\favicon.ico
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\lib\jquery\LICENSE.txt
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\js\site.js
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\js\admin.js
-D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\css\admin.css
 D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\images\ClothingIcon.svg
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\css\admin.css
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\favicon.ico
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\css\auth-modern.css
+D:\AEU-YEAR4\ECOMMERCE\ASP\WebApplication_ClothingEcommerce\WebApplication_ClothingEcommerce\wwwroot\css\navbar-modern.css

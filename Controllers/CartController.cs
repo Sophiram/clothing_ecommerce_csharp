@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -146,7 +146,7 @@ namespace WebApplication_ClothingEcommerce.Controllers
             if (variant == null)
             {
                 TempData["Error"] = "Product variant was not found.";
-                return RedirectToAction("Index", "Products");
+                return RedirectToAction("Index", "Shop");
             }
 
             var available =
@@ -155,22 +155,13 @@ namespace WebApplication_ClothingEcommerce.Controllers
             if (available <= 0)
             {
                 TempData["Error"] = "This product is out of stock.";
-
-                return RedirectToAction(
-                    "Details",
-                    "Products",
-                    new { id = variant.ProductId });
+                return RedirectToAction("Details", "Shop", new { id = variant.ProductId });
             }
 
             if (quantity > available)
             {
-                TempData["Error"] =
-                    $"Only {available} item(s) available.";
-
-                return RedirectToAction(
-                    "Details",
-                    "Products",
-                    new { id = variant.ProductId });
+                TempData["Error"] = $"Only {available} item(s) available.";
+                return RedirectToAction("Details", "Shop", new { id = variant.ProductId });
             }
 
             var cart = await _context.Carts
@@ -227,7 +218,42 @@ namespace WebApplication_ClothingEcommerce.Controllers
 
             TempData["Success"] = "Product added to cart.";
 
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                Request.Headers.Accept.ToString().Contains("application/json"))
+            {
+                var totalItems = await _context.CartItems
+                    .Where(ci => ci.Cart.CustomerId == customer.Id)
+                    .SumAsync(ci => (int?)ci.Quantity) ?? 0;
+
+                return Json(new { 
+                    success = true, 
+                    message = "Product added to cart!", 
+                    cartCount = totalItems 
+                });
+            }
+
             return RedirectToAction("Index");
+        }
+
+        // =========================================================
+        // GET CART COUNT (AJAX)
+        // =========================================================
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCount()
+        {
+            if (User.Identity?.IsAuthenticated != true)
+                return Json(new { count = 0 });
+
+            var customer = await GetCustomer();
+            if (customer == null)
+                return Json(new { count = 0 });
+
+            var count = await _context.CartItems
+                .Where(i => i.Cart.CustomerId == customer.Id)
+                .SumAsync(i => (int?)i.Quantity) ?? 0;
+
+            return Json(new { count });
         }
 
         // =========================================================

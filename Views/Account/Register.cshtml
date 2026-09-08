@@ -1,125 +1,337 @@
-﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.RegisterViewModel
+@model WebApplication_ClothingEcommerce.Models.ViewModels.RegisterViewModel
 
 @{
-    ViewData["Title"] = "Create account";
+    ViewData["Title"] = "Create Account";
 }
 
-<!-- Google reCAPTCHA API -->
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<div class="auth-page-modern">
 
-<div class="auth-page">
-    <div class="auth-container auth-container-wide">
-        <div class="auth-card auth-card-register shadow-lg border-0">
+    <div class="auth-split-container auth-container-wide">
 
-            <!-- Brand Logo -->
-            <div class="auth-logo text-center mb-4">
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" class="auth-logo-img" />
+        <!-- =====================================================
+             LEFT PANEL: EDITORIAL HERO SHOWCASE
+        ====================================================== -->
+        <div class="auth-editorial-panel" style="background-image: url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=1200&q=85');">
+            <div class="auth-editorial-content">
+
+                <div class="auth-editorial-tag">
+                    <i class="bi bi-gift-fill text-warning"></i>
+                    <span>MEMBER PRIVILEGES</span>
+                </div>
+
+                <div class="auth-editorial-middle">
+                    <h2>Join the CLOTHÉ Circle. Unlock 10% Off.</h2>
+                    <p>Create your profile to access curated fashion collections, member drops, saved sizes, and streamlined checkout.</p>
+
+                    <ul class="auth-perks-list">
+                        <li>
+                            <i class="bi bi-tag-fill"></i>
+                            <span>Instant 10% discount applied to your first order</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-heart-fill"></i>
+                            <span>Unlimited wishlist & instant back-in-stock alerts</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-bell-fill"></i>
+                            <span>VIP early access to seasonal flash sales & new drops</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-box-seam"></i>
+                            <span>One-tap reordering & real-time delivery status</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- TESTIMONIAL CARD -->
+                <div class="auth-testimonial-card">
+                    <div class="auth-testimonial-stars">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="auth-testimonial-quote">
+                        "Creating an account made shopping effortless. Loved the welcome discount and order tracking!"
+                    </div>
+                    <div class="auth-testimonial-author">
+                        <span>Clara V.</span>
+                        <span class="verified"><i class="bi bi-patch-check-fill"></i> CLOTHÉ Member</span>
+                    </div>
+                </div>
+
             </div>
+        </div>
 
-            <div class="auth-heading text-center">
+        <!-- =====================================================
+             RIGHT PANEL: REGISTER FORM
+        ====================================================== -->
+        <div class="auth-form-panel">
+
+            <div class="auth-header text-center text-lg-start">
+                <a class="auth-brand-logo-link" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" />
+                </a>
                 <h1>Create your account</h1>
-                <p class="auth-subtitle">Join our fashion community and explore top trends</p>
+                <p>Join thousands of fashion enthusiasts today — it only takes a minute</p>
             </div>
 
-            <form asp-action="Register" method="post" novalidate>
+            <form asp-action="Register" method="post" novalidate id="registerForm">
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger modern-alert mb-4" role="alert"></div>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="ModelOnly" class="auth-alert-summary" role="alert">
+                        <i class="bi bi-exclamation-circle-fill fs-6 mt-1"></i>
+                        <div>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    </div>
+                }
 
-                <!-- First & Last Name -->
+                <!-- FIRST & LAST NAME -->
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="auth-field">
-                            <label asp-for="FirstName" class="form-label">First name</label>
-                            <div class="input-group-custom">
-                                <i class="bi bi-person input-icon"></i>
-                                <input asp-for="FirstName" class="form-control" placeholder="John" />
+                    <div class="col-sm-6">
+                        <div class="auth-form-group">
+                            <label asp-for="FirstName">First Name</label>
+                            <div class="auth-input-wrapper">
+                                <i class="bi bi-person auth-field-icon"></i>
+                                <input asp-for="FirstName"
+                                       class="auth-input-control"
+                                       placeholder="e.g. John"
+                                       autocomplete="given-name"
+                                       required />
                             </div>
-                            <span asp-validation-for="FirstName" class="text-danger field-validation-error"></span>
+                            <span asp-validation-for="FirstName" class="auth-error-feedback"></span>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="auth-field">
-                            <label asp-for="LastName" class="form-label">Last name</label>
-                            <div class="input-group-custom">
-                                <i class="bi bi-person input-icon"></i>
-                                <input asp-for="LastName" class="form-control" placeholder="Doe" />
+                    <div class="col-sm-6">
+                        <div class="auth-form-group">
+                            <label asp-for="LastName">Last Name</label>
+                            <div class="auth-input-wrapper">
+                                <i class="bi bi-person auth-field-icon"></i>
+                                <input asp-for="LastName"
+                                       class="auth-input-control"
+                                       placeholder="e.g. Doe"
+                                       autocomplete="family-name"
+                                       required />
                             </div>
-                            <span asp-validation-for="LastName" class="text-danger field-validation-error"></span>
+                            <span asp-validation-for="LastName" class="auth-error-feedback"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Email -->
-                <div class="auth-field">
-                    <label asp-for="Email" class="form-label">Email address</label>
-                    <div class="input-group-custom">
-                        <i class="bi bi-envelope input-icon"></i>
-                        <input asp-for="Email" type="email" class="form-control" placeholder="you@example.com" />
+                <!-- EMAIL -->
+                <div class="auth-form-group">
+                    <label asp-for="Email">Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <i class="bi bi-envelope auth-field-icon"></i>
+                        <input asp-for="Email"
+                               type="email"
+                               class="auth-input-control"
+                               placeholder="you@example.com"
+                               autocomplete="email"
+                               required />
                     </div>
-                    <span asp-validation-for="Email" class="text-danger field-validation-error"></span>
+                    <span asp-validation-for="Email" class="auth-error-feedback"></span>
                 </div>
 
-                <!-- Phone -->
-                <div class="auth-field">
-                    <label asp-for="Phone" class="form-label">Phone number</label>
-                    <div class="input-group-custom">
-                        <i class="bi bi-telephone input-icon"></i>
-                        <input asp-for="Phone" type="tel" class="form-control" placeholder="+855 12 345 678" />
+                <!-- PHONE NUMBER -->
+                <div class="auth-form-group">
+                    <label asp-for="Phone">Phone Number</label>
+                    <div class="auth-input-wrapper">
+                        <i class="bi bi-telephone auth-field-icon"></i>
+                        <input asp-for="Phone"
+                               type="tel"
+                               class="auth-input-control"
+                               placeholder="+855 12 345 678"
+                               autocomplete="tel"
+                               required />
                     </div>
-                    <span asp-validation-for="Phone" class="text-danger field-validation-error"></span>
+                    <span asp-validation-for="Phone" class="auth-error-feedback"></span>
                 </div>
 
-                <!-- Password -->
+                <!-- PASSWORD & CONFIRM PASSWORD -->
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="auth-field">
-                            <label asp-for="Password" class="form-label">Password</label>
-                            <div class="input-group-custom">
-                                <i class="bi bi-lock input-icon"></i>
-                                <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" />
+                    <div class="col-sm-6">
+                        <div class="auth-form-group">
+                            <label asp-for="Password">Password</label>
+                            <div class="auth-input-wrapper has-toggle">
+                                <i class="bi bi-lock auth-field-icon"></i>
+                                <input asp-for="Password"
+                                       id="regPasswordInput"
+                                       type="password"
+                                       class="auth-input-control"
+                                       placeholder="At least 6 chars"
+                                       autocomplete="new-password"
+                                       required />
+                                <button type="button"
+                                        id="toggleRegPassword"
+                                        class="auth-toggle-btn"
+                                        aria-label="Toggle password visibility">
+                                    <i class="bi bi-eye" id="toggleRegPasswordIcon"></i>
+                                </button>
                             </div>
-                            <span asp-validation-for="Password" class="text-danger field-validation-error"></span>
+                            <span asp-validation-for="Password" class="auth-error-feedback"></span>
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <div class="auth-field">
-                            <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
-                            <div class="input-group-custom">
-                                <i class="bi bi-shield-lock input-icon"></i>
-                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••••" />
+                    <div class="col-sm-6">
+                        <div class="auth-form-group">
+                            <label asp-for="ConfirmPassword">Confirm Password</label>
+                            <div class="auth-input-wrapper has-toggle">
+                                <i class="bi bi-shield-lock auth-field-icon"></i>
+                                <input asp-for="ConfirmPassword"
+                                       id="regConfirmPasswordInput"
+                                       type="password"
+                                       class="auth-input-control"
+                                       placeholder="Repeat password"
+                                       autocomplete="new-password"
+                                       required />
+                                <button type="button"
+                                        id="toggleRegConfirmPassword"
+                                        class="auth-toggle-btn"
+                                        aria-label="Toggle confirm password visibility">
+                                    <i class="bi bi-eye" id="toggleRegConfirmPasswordIcon"></i>
+                                </button>
                             </div>
-                            <span asp-validation-for="ConfirmPassword" class="text-danger field-validation-error"></span>
+                            <span asp-validation-for="ConfirmPassword" class="auth-error-feedback"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Google reCAPTCHA -->
-                <div class="auth-captcha-wrapper mt-3 mb-3">
-                    <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE"></div>
+                <!-- DYNAMIC PASSWORD STRENGTH METER -->
+                <div class="auth-strength-meter">
+                    <div class="auth-strength-bar">
+                        <div id="strengthFill" class="auth-strength-fill"></div>
+                    </div>
+                    <div class="auth-strength-label">
+                        <span>Password strength</span>
+                        <span id="strengthText" class="auth-strength-text text-muted">Too short</span>
+                    </div>
                 </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="auth-primary-btn w-100 mt-3">
+                <!-- TERMS CHECKBOX -->
+                <label class="auth-checkbox-group">
+                    <input type="checkbox" id="termsCheck" required checked />
+                    <span>
+                        I agree to the <a asp-controller="Home" asp-action="Privacy" target="_blank" class="text-decoration-underline text-dark fw-bold">Terms of Service</a> & <a asp-controller="Home" asp-action="Privacy" target="_blank" class="text-decoration-underline text-dark fw-bold">Privacy Policy</a>
+                    </span>
+                </label>
+
+                <!-- SUBMIT BUTTON -->
+                <button type="submit" class="auth-btn-submit">
                     <i class="bi bi-person-plus-fill"></i>
-                    <span>Create account</span>
+                    <span>Create Account</span>
                 </button>
+
             </form>
 
+            <!-- SOCIAL LOGIN DIVIDER -->
             <div class="auth-divider">
-                <span>OR</span>
+                <span>Or register with</span>
             </div>
 
-            <p class="auth-bottom">
+            <!-- SOCIAL BUTTONS -->
+            <div class="auth-social-row">
+                <button type="button" class="auth-social-btn" onclick="alert('Google registration is supported. Complete the form above to register.')">
+                    <svg viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                    </svg>
+                    <span>Google</span>
+                </button>
+
+                <button type="button" class="auth-social-btn" onclick="alert('Apple registration is supported. Complete the form above to register.')">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.66-.82 1.11-1.96.99-3.1-.96.04-2.12.64-2.8 1.44-.6.69-1.12 1.83-.98 2.94 1.07.08 2.14-.55 2.79-1.28z"/>
+                    </svg>
+                    <span>Apple</span>
+                </button>
+            </div>
+
+            <!-- LOGIN SWITCH -->
+            <p class="auth-footer-prompt">
                 Already have an account?
-                <a asp-action="Login" class="auth-link">Sign in</a>
+                <a asp-action="Login">Sign in</a>
             </p>
+
         </div>
+
     </div>
+
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Password toggler for Password field
+        document.getElementById('toggleRegPassword')?.addEventListener('click', function () {
+            const input = document.getElementById('regPasswordInput');
+            const icon = document.getElementById('toggleRegPasswordIcon');
+            if (!input || !icon) return;
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+            this.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        });
+
+        // Password toggler for Confirm Password field
+        document.getElementById('toggleRegConfirmPassword')?.addEventListener('click', function () {
+            const input = document.getElementById('regConfirmPasswordInput');
+            const icon = document.getElementById('toggleRegConfirmPasswordIcon');
+            if (!input || !icon) return;
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+            this.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        });
+
+        // Dynamic Password Strength Meter
+        const passInput = document.getElementById('regPasswordInput');
+        const fill = document.getElementById('strengthFill');
+        const text = document.getElementById('strengthText');
+
+        passInput?.addEventListener('input', function () {
+            const val = passInput.value;
+            let score = 0;
+
+            if (val.length >= 6) score++;
+            if (val.length >= 10) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val) || /[A-Z]/.test(val)) score++;
+
+            fill.className = 'auth-strength-fill';
+            text.className = 'auth-strength-text';
+
+            if (val.length === 0) {
+                fill.style.width = '0%';
+                text.textContent = 'Too short';
+                text.classList.add('text-muted');
+            } else if (score <= 1) {
+                fill.classList.add('weak');
+                text.classList.add('weak');
+                text.textContent = 'Weak';
+            } else if (score === 2 || score === 3) {
+                fill.classList.add('medium');
+                text.classList.add('medium');
+                text.textContent = 'Medium';
+            } else {
+                fill.classList.add('strong');
+                text.classList.add('strong');
+                text.textContent = 'Strong';
+            }
+        });
+    </script>
 }

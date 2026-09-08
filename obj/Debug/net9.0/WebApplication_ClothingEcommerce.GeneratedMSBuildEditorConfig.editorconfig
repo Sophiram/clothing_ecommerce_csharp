@@ -431,6 +431,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Cart/Checkout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FydFxDaGVja291dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Cart/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FydFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -467,6 +471,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvZmlsZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Shared/Components/CategoryNav/Default.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXENvbXBvbmVudHNcQ2F0ZWdvcnlOYXZcRGVmYXVsdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Shared/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXFByaXZhY3kuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -485,6 +493,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Shop/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hvcFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Shop/_ShopFiltersPlaceholder.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hvcFxfU2hvcEZpbHRlcnNQbGFjZWhvbGRlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/AEU-YEAR4/ECOMMERCE/ASP/WebApplication_ClothingEcommerce/WebApplication_ClothingEcommerce/Views/Wishlist/Index.cshtml]

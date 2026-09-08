@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models.ViewModels;
@@ -23,7 +23,8 @@ namespace WebApplication_ClothingEcommerce.Controllers
             Guid? categoryId,
             Guid? brandId,
             string? search,
-            string? sort)
+            string? sort,
+            bool? onSale)
         {
             var query = _context.Products
                 .AsNoTracking()
@@ -56,6 +57,19 @@ namespace WebApplication_ClothingEcommerce.Controllers
             {
                 query = query.Where(p =>
                     p.BrandId == brandId.Value);
+            }
+
+
+            // ==========================================
+            // ON SALE
+            // ==========================================
+
+            if (onSale == true)
+            {
+                query = query.Where(p =>
+                    p.Variants.Any(v =>
+                        v.CompareAtPrice != null &&
+                        v.CompareAtPrice > v.Price));
             }
 
 
@@ -128,7 +142,8 @@ namespace WebApplication_ClothingEcommerce.Controllers
                 CategoryId = categoryId,
                 BrandId = brandId,
                 Search = search,
-                Sort = sort
+                Sort = sort,
+                OnSale = onSale
             };
 
 
@@ -143,8 +158,13 @@ namespace WebApplication_ClothingEcommerce.Controllers
         // =====================================================
 
         [HttpGet]
-        public async Task<IActionResult> Details(Guid id)
+        public async Task<IActionResult> Details(Guid? id)
         {
+            if (!id.HasValue || id.Value == Guid.Empty)
+            {
+                return RedirectToAction("Index");
+            }
+
             var product = await _context.Products
                 .AsNoTracking()
 
@@ -167,12 +187,13 @@ namespace WebApplication_ClothingEcommerce.Controllers
                     .ThenInclude(r => r.Customer)
 
                 .FirstOrDefaultAsync(p =>
-                    p.Id == id &&
+                    p.Id == id.Value &&
                     p.Status == Data.Enums.ProductStatus.Active);
 
             if (product == null)
             {
-                return NotFound();
+                TempData["Error"] = "Product was not found or is no longer available.";
+                return RedirectToAction("Index");
             }
 
             return View(product);

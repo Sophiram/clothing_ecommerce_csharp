@@ -17,138 +17,58 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             _context = context;
         }
 
-
-        // =====================================================
-        // CREATE - GET
-        // =====================================================
-
-        [HttpGet]
-        public async Task<IActionResult> Create(Guid productId)
+        private bool IsValidImageUrl(string? url, out string? error)
         {
-            var product = await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == productId);
+            error = null;
 
-            if (product == null)
+            if (string.IsNullOrWhiteSpace(url))
             {
-                TempData["Error"] = "Product not found.";
-
-                return RedirectToAction(
-                    "Index",
-                    "Products",
-                    new { area = "Admin" });
+                error = "Image URL is required.";
+                return false;
             }
 
-            ViewBag.Product = product;
-
-            var image = new ProductImage
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                ProductId = productId
-            };
+                error = "Please enter a valid image URL.";
+                return false;
+            }
 
-            return View(image);
+            return true;
         }
 
-
         // =====================================================
-        // CREATE - POST
+        // CREATE - POST (AJAX)
         // =====================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductImage image)
         {
-            // IMPORTANT:
-            // Product is navigation property.
-            // It is NOT submitted by the form.
             ModelState.Remove(nameof(ProductImage.Product));
 
-            // -------------------------------------------------
-            // FIND PRODUCT
-            // -------------------------------------------------
-
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p =>
-                    p.Id == image.ProductId);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == image.ProductId);
 
             if (product == null)
             {
-                TempData["Error"] = "Product not found.";
-
-                return RedirectToAction(
-                    "Index",
-                    "Products",
-                    new { area = "Admin" });
+                return NotFound(new { success = false, errors = new[] { "Product not found." } });
             }
 
-            // -------------------------------------------------
-            // IMAGE URL VALIDATION
-            // -------------------------------------------------
-
-            if (string.IsNullOrWhiteSpace(image.ImageUrl))
+            if (!IsValidImageUrl(image.ImageUrl, out var urlError))
             {
-                ModelState.AddModelError(
-                    nameof(ProductImage.ImageUrl),
-                    "Image URL is required.");
+                return BadRequest(new { success = false, errors = new[] { urlError } });
             }
-
-            // -------------------------------------------------
-            // VALIDATE URL FORMAT
-            // -------------------------------------------------
-
-            if (!string.IsNullOrWhiteSpace(image.ImageUrl))
-            {
-                if (!Uri.TryCreate(
-                        image.ImageUrl,
-                        UriKind.Absolute,
-                        out var uri) ||
-                    (uri.Scheme != Uri.UriSchemeHttp &&
-                     uri.Scheme != Uri.UriSchemeHttps))
-                {
-                    ModelState.AddModelError(
-                        nameof(ProductImage.ImageUrl),
-                        "Please enter a valid image URL.");
-                }
-            }
-
-            // -------------------------------------------------
-            // MODEL VALIDATION
-            // -------------------------------------------------
-
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Product = product;
-
-                return View(image);
-            }
-
-            // -------------------------------------------------
-            // GET EXISTING IMAGES
-            // -------------------------------------------------
 
             var existingImages = await _context.ProductImages
-                .Where(i =>
-                    i.ProductId == image.ProductId)
+                .Where(i => i.ProductId == image.ProductId)
                 .ToListAsync();
 
-            // -------------------------------------------------
-            // GENERATE ID
-            // -------------------------------------------------
-
             image.Id = Guid.NewGuid();
-
-            // -------------------------------------------------
-            // FIRST IMAGE
-            // -------------------------------------------------
 
             if (!existingImages.Any())
             {
                 image.IsPrimary = true;
             }
-
-            // -------------------------------------------------
-            // SET PRIMARY
-            // -------------------------------------------------
 
             if (image.IsPrimary)
             {
@@ -158,74 +78,103 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 }
             }
 
-            // -------------------------------------------------
-            // ADD IMAGE
-            // -------------------------------------------------
-
             _context.ProductImages.Add(image);
-
-            // -------------------------------------------------
-            // UPDATE PRODUCT
-            // -------------------------------------------------
-
             product.ModifiedAt = DateTime.UtcNow;
-
-            // -------------------------------------------------
-            // SAVE
-            // -------------------------------------------------
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                "Product image added successfully.";
-
-            return RedirectToAction(
-                "Details",
-                "Products",
-                new
-                {
-                    area = "Admin",
-                    id = image.ProductId
-                });
+            return Ok(new { success = true, message = "Product image added successfully." });
         }
 
-
         // =====================================================
-        // SET PRIMARY
+        // EDIT - POST (AJAX)
         // =====================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetPrimary(
-            Guid id,
-            Guid productId)
+        public async Task<IActionResult> Edit(Guid id, Guid productId, string imageUrl, bool isPrimary)
         {
-            var selectedImage =
-                await _context.ProductImages
-                    .FirstOrDefaultAsync(i =>
-                        i.Id == id &&
-                        i.ProductId == productId);
+            var image = await _context.ProductImages
+                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
+
+            if (image == null)
+            {
+                return NotFound(new { success = false, errors = new[] { "Image not found." } });
+            }
+
+            if (!IsValidImageUrl(imageUrl, out var urlError))
+            {
+                return BadRequest(new { success = false, errors = new[] { urlError } });
+            }
+
+            image.ImageUrl = imageUrl;
+
+            if (isPrimary && !image.IsPrimary)
+            {
+                var siblings = await _context.ProductImages
+                    .Where(i => i.ProductId == productId && i.Id != id)
+                    .ToListAsync();
+
+                foreach (var sibling in siblings)
+                {
+                    sibling.IsPrimary = false;
+                }
+
+                image.IsPrimary = true;
+            }
+            else if (!isPrimary && image.IsPrimary)
+            {
+                // Don't allow un-setting primary with nothing else to fall back on
+                var otherCount = await _context.ProductImages
+                    .CountAsync(i => i.ProductId == productId && i.Id != id);
+
+                if (otherCount > 0)
+                {
+                    image.IsPrimary = false;
+
+                    var newPrimary = await _context.ProductImages
+                        .Where(i => i.ProductId == productId && i.Id != id)
+                        .OrderBy(i => i.Id)
+                        .FirstOrDefaultAsync();
+
+                    if (newPrimary != null)
+                    {
+                        newPrimary.IsPrimary = true;
+                    }
+                }
+                // if it's the only image, keep it primary regardless
+            }
+
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            if (product != null)
+            {
+                product.ModifiedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Product image updated successfully." });
+        }
+
+        // =====================================================
+        // SET PRIMARY - POST (AJAX)
+        // =====================================================
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetPrimary(Guid id, Guid productId)
+        {
+            var selectedImage = await _context.ProductImages
+                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
 
             if (selectedImage == null)
             {
-                TempData["Error"] =
-                    "Image not found.";
-
-                return RedirectToAction(
-                    "Details",
-                    "Products",
-                    new
-                    {
-                        area = "Admin",
-                        id = productId
-                    });
+                return NotFound(new { success = false, errors = new[] { "Image not found." } });
             }
 
-            var images =
-                await _context.ProductImages
-                    .Where(i =>
-                        i.ProductId == productId)
-                    .ToListAsync();
+            var images = await _context.ProductImages
+                .Where(i => i.ProductId == productId)
+                .ToListAsync();
 
             foreach (var image in images)
             {
@@ -234,114 +183,60 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 
             selectedImage.IsPrimary = true;
 
-            var product =
-                await _context.Products
-                    .FirstOrDefaultAsync(p =>
-                        p.Id == productId);
-
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
             if (product != null)
             {
-                product.ModifiedAt =
-                    DateTime.UtcNow;
+                product.ModifiedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                "Primary image updated successfully.";
-
-            return RedirectToAction(
-                "Details",
-                "Products",
-                new
-                {
-                    area = "Admin",
-                    id = productId
-                });
+            return Ok(new { success = true, message = "Primary image updated successfully." });
         }
 
-
         // =====================================================
-        // DELETE
+        // DELETE - POST (AJAX)
         // =====================================================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(
-            Guid id,
-            Guid productId)
+        public async Task<IActionResult> Delete(Guid id, Guid productId)
         {
-            var image =
-                await _context.ProductImages
-                    .FirstOrDefaultAsync(i =>
-                        i.Id == id &&
-                        i.ProductId == productId);
+            var image = await _context.ProductImages
+                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
 
             if (image == null)
             {
-                TempData["Error"] =
-                    "Image not found.";
-
-                return RedirectToAction(
-                    "Details",
-                    "Products",
-                    new
-                    {
-                        area = "Admin",
-                        id = productId
-                    });
+                return NotFound(new { success = false, errors = new[] { "Image not found." } });
             }
 
-            bool wasPrimary =
-                image.IsPrimary;
+            bool wasPrimary = image.IsPrimary;
 
             _context.ProductImages.Remove(image);
 
-            var product =
-                await _context.Products
-                    .FirstOrDefaultAsync(p =>
-                        p.Id == productId);
-
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
             if (product != null)
             {
-                product.ModifiedAt =
-                    DateTime.UtcNow;
+                product.ModifiedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
 
-            // -------------------------------------------------
-            // SELECT NEW PRIMARY
-            // -------------------------------------------------
-
             if (wasPrimary)
             {
-                var newPrimary =
-                    await _context.ProductImages
-                        .Where(i =>
-                            i.ProductId == productId)
-                        .OrderBy(i => i.Id)
-                        .FirstOrDefaultAsync();
+                var newPrimary = await _context.ProductImages
+                    .Where(i => i.ProductId == productId)
+                    .OrderBy(i => i.Id)
+                    .FirstOrDefaultAsync();
 
                 if (newPrimary != null)
                 {
                     newPrimary.IsPrimary = true;
-
                     await _context.SaveChangesAsync();
                 }
             }
 
-            TempData["Success"] =
-                "Product image deleted successfully.";
-
-            return RedirectToAction(
-                "Details",
-                "Products",
-                new
-                {
-                    area = "Admin",
-                    id = productId
-                });
+            return Ok(new { success = true, message = "Product image deleted successfully." });
         }
     }
 }

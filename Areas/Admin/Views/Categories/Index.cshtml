@@ -4,83 +4,294 @@
     ViewData["Title"] = "Categories";
 }
 
-<div class="container-fluid py-4">
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="admin-page">
+
+    <div class="page-header">
         <div>
-            <h2 class="fw-bold mb-1">
-                <i class="bi bi-tags me-2"></i>
-                Categories
-            </h2>
-            <p class="text-muted mb-0">Manage product categories</p>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Categories</h1>
+            <p class="page-description">Organize your products into categories.</p>
         </div>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Add Category
-        </a>
+
+        <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+            <i class="bi bi-plus-lg"></i> Add Category
+        </button>
     </div>
 
-    <!-- TABLE -->
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Category Name</th>
-                            <th>Description</th>
-                            <th class="text-center">Total Products</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Any())
-                        {
-                            foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="fw-semibold">@item.Name</td>
-                                    <td>
-                                        <span class="text-muted">
-                                            @(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-info text-dark">
-                                            @(item.Products?.Count ?? 0)
-                                        </span>
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="btn-group">
-                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Details">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
+    <div id="alertPlaceholder"></div>
+
+    <div class="admin-card">
+
+        <div class="admin-card-header">
+            <div>
+                <h3 class="admin-card-title">All Categories</h3>
+                <p class="admin-card-subtitle">Search and manage categories</p>
+            </div>
+            <div class="admin-card-count">
+                <span>@Model.Count()</span>
+                <small>total</small>
+            </div>
+        </div>
+
+        <div class="search-wrapper">
+            <form asp-action="Index" method="get" class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" value="@ViewBag.Search" class="search-input" placeholder="Search categories..." />
+                </div>
+                <button type="submit" class="btn-search"><i class="bi bi-funnel"></i> Filter</button>
+                <a asp-action="Index" class="btn-reset"><i class="bi bi-arrow-repeat"></i> Reset</a>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Products</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var category in Model)
                         {
                             <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <i class="bi bi-tags fs-1 text-muted"></i>
-                                    <h5 class="mt-3">No categories found</h5>
-                                    <p class="text-muted">Start by creating your first category.</p>
-                                    <a asp-action="Create" class="btn btn-primary">
-                                        <i class="bi bi-plus-lg me-1"></i> Add Category
-                                    </a>
+                                <td class="payment-name">@category.Name</td>
+                                <td class="description-text">@(category.Description ?? "—")</td>
+                                <td><span class="payment-count">@category.Products.Count</span></td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" class="action-btn action-warning" title="Edit"
+                                                data-bs-toggle="modal" data-bs-target="#editCategoryModal"
+                                                data-id="@category.Id"
+                                                data-name="@category.Name"
+                                                data-description="@category.Description">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="action-btn action-danger" title="Delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteCategoryModal"
+                                                data-id="@category.Id"
+                                                data-name="@category.Name">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <div class="empty-icon"><i class="bi bi-tags"></i></div>
+                                    <h5>No categories found</h5>
+                                    <p>Create your first category to organize products.</p>
+                                    <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+                                        <i class="bi bi-plus-lg"></i> Add Category
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="createCategoryForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="createErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Name</label>
+                        <input name="Name" class="form-control" placeholder="e.g. Menswear" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Create</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editCategoryForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Name</label>
+                        <input name="Name" id="editName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="Description" id="editDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteCategoryForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete <strong id="deleteName"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAlert(type, message) {
+            const placeholder = document.getElementById('alertPlaceholder');
+            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+        }
+
+        function showErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
+            box.classList.remove('d-none');
+        }
+
+        function hideErrors(boxId) {
+            document.getElementById(boxId).classList.add('d-none');
+        }
+
+        async function postForm(url, form, errorBoxId) {
+            hideErrors(errorBoxId);
+            const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData(form);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token },
+                body: formData
+            });
+
+            let data = {};
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok) {
+                showErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                return null;
+            }
+            return data;
+        }
+
+        // Create
+        document.getElementById('createCategoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postForm('@Url.Action("Create")', this, 'createErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('createCategoryModal')).hide();
+                sessionStorage.setItem('categoryToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Populate + submit Edit
+        document.getElementById('editCategoryModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editName').value = btn.getAttribute('data-name');
+            document.getElementById('editDescription').value = btn.getAttribute('data-description') || '';
+            hideErrors('editErrors');
+        });
+
+        document.getElementById('editCategoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const result = await postForm('@Url.Action("Edit")/' + '?id=' + id, this, 'editErrors');
+            // Simpler: pass id in querystring so route binding works alongside form Id field
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide();
+                sessionStorage.setItem('categoryToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Populate + submit Delete
+        document.getElementById('deleteCategoryModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteId').value = btn.getAttribute('data-id');
+            document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
+            hideErrors('deleteErrors');
+        });
+
+        document.getElementById('deleteCategoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const result = await postForm('@Url.Action("Delete")/' + id, this, 'deleteErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteCategoryModal')).hide();
+                sessionStorage.setItem('categoryToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Show toast after reload
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = sessionStorage.getItem('categoryToast');
+            if (raw) {
+                const toast = JSON.parse(raw);
+                showAlert(toast.type, toast.message);
+                sessionStorage.removeItem('categoryToast');
+            }
+        });
+    </script>
+}

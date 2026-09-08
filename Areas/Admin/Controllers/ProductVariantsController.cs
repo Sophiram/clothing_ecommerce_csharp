@@ -36,8 +36,7 @@ public class ProductVariantsController : Controller
 
         if (productId.HasValue)
         {
-            query = query.Where(v =>
-                v.ProductId == productId.Value);
+            query = query.Where(v => v.ProductId == productId.Value);
         }
 
         var variants = await query
@@ -46,14 +45,16 @@ public class ProductVariantsController : Controller
             .ThenBy(v => v.Color.Name)
             .ToListAsync();
 
+        // Filter dropdown (pre-selected)
         ViewBag.Products = new SelectList(
-            await _context.Products
-                .AsNoTracking()
-                .OrderBy(p => p.Name)
-                .ToListAsync(),
-            "Id",
-            "Name",
-            productId);
+            await _context.Products.AsNoTracking().OrderBy(p => p.Name).ToListAsync(),
+            "Id", "Name", productId);
+
+        // Plain lookup lists for the Create/Edit modals (no pre-selection)
+        ViewBag.AllProducts = await _context.Products.AsNoTracking().OrderBy(p => p.Name).ToListAsync();
+        ViewBag.AllSizes = await _context.Sizes.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+        ViewBag.AllColors = await _context.Colors.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+        ViewBag.StatusValues = Enum.GetValues(typeof(VariantStatus)).Cast<VariantStatus>().ToList();
 
         ViewBag.SelectedProductId = productId;
 
@@ -75,8 +76,7 @@ public class ProductVariantsController : Controller
 
         var variant = await _context.ProductVariants
             .AsNoTracking()
-            .Include(v => v.Product)
-                .ThenInclude(p => p.Images)
+            .Include(v => v.Product).ThenInclude(p => p.Images)
             .Include(v => v.Size)
             .Include(v => v.Color)
             .Include(v => v.Inventory)
@@ -88,208 +88,94 @@ public class ProductVariantsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        return View(variant);
-    }
-
-    // =========================================================
-    // CREATE - GET
-    // =========================================================
-
-    [HttpGet]
-    public async Task<IActionResult> Create(Guid? productId)
-    {
-        await LoadDropdownsAsync(productId);
-
-        var variant = new ProductVariant
-        {
-            Id = Guid.NewGuid(),
-            ProductId = productId ?? Guid.Empty,
-            Status = VariantStatus.Available,
-            Price = 0
-        };
-
-        ViewBag.Quantity = 0;
+        // Needed for the Edit modal dropdowns
+        ViewBag.AllProducts = await _context.Products.AsNoTracking().OrderBy(p => p.Name).ToListAsync();
+        ViewBag.AllSizes = await _context.Sizes.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+        ViewBag.AllColors = await _context.Colors.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+        ViewBag.StatusValues = Enum.GetValues(typeof(VariantStatus)).Cast<VariantStatus>().ToList();
 
         return View(variant);
     }
 
     // =========================================================
-    // CREATE - POST
+    // CREATE - POST (AJAX)
     // =========================================================
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(
-        ProductVariant variant,
-        int quantity = 0)
+    public async Task<IActionResult> Create(ProductVariant variant, int quantity = 0)
     {
-        // -----------------------------------------------------
-        // Remove navigation-property validation
-        // -----------------------------------------------------
-
         ModelState.Remove(nameof(ProductVariant.Product));
         ModelState.Remove(nameof(ProductVariant.Size));
         ModelState.Remove(nameof(ProductVariant.Color));
         ModelState.Remove(nameof(ProductVariant.Inventory));
-
         ModelState.Remove(nameof(ProductVariant.Id));
-
-        // -----------------------------------------------------
-        // Validate Product
-        // -----------------------------------------------------
 
         if (variant.ProductId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.ProductId),
-                "Please select a product.");
+            ModelState.AddModelError(nameof(ProductVariant.ProductId), "Please select a product.");
         }
-        else
+        else if (!await _context.Products.AnyAsync(p => p.Id == variant.ProductId))
         {
-            var productExists =
-                await _context.Products.AnyAsync(
-                    p => p.Id == variant.ProductId);
-
-            if (!productExists)
-            {
-                ModelState.AddModelError(
-                    nameof(ProductVariant.ProductId),
-                    "Selected product does not exist.");
-            }
+            ModelState.AddModelError(nameof(ProductVariant.ProductId), "Selected product does not exist.");
         }
-
-        // -----------------------------------------------------
-        // Validate Size
-        // -----------------------------------------------------
 
         if (variant.SizeId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.SizeId),
-                "Please select a size.");
+            ModelState.AddModelError(nameof(ProductVariant.SizeId), "Please select a size.");
         }
-        else
+        else if (!await _context.Sizes.AnyAsync(s => s.Id == variant.SizeId))
         {
-            var sizeExists =
-                await _context.Sizes.AnyAsync(
-                    s => s.Id == variant.SizeId);
-
-            if (!sizeExists)
-            {
-                ModelState.AddModelError(
-                    nameof(ProductVariant.SizeId),
-                    "Selected size does not exist.");
-            }
+            ModelState.AddModelError(nameof(ProductVariant.SizeId), "Selected size does not exist.");
         }
-
-        // -----------------------------------------------------
-        // Validate Color
-        // -----------------------------------------------------
 
         if (variant.ColorId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.ColorId),
-                "Please select a color.");
+            ModelState.AddModelError(nameof(ProductVariant.ColorId), "Please select a color.");
         }
-        else
+        else if (!await _context.Colors.AnyAsync(c => c.Id == variant.ColorId))
         {
-            var colorExists =
-                await _context.Colors.AnyAsync(
-                    c => c.Id == variant.ColorId);
-
-            if (!colorExists)
-            {
-                ModelState.AddModelError(
-                    nameof(ProductVariant.ColorId),
-                    "Selected color does not exist.");
-            }
+            ModelState.AddModelError(nameof(ProductVariant.ColorId), "Selected color does not exist.");
         }
-
-        // -----------------------------------------------------
-        // Validate SKU
-        // -----------------------------------------------------
 
         if (string.IsNullOrWhiteSpace(variant.SKU))
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.SKU),
-                "SKU is required.");
+            ModelState.AddModelError(nameof(ProductVariant.SKU), "SKU is required.");
         }
-
-        // -----------------------------------------------------
-        // Validate Price
-        // -----------------------------------------------------
 
         if (variant.Price < 0)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.Price),
-                "Price cannot be negative.");
+            ModelState.AddModelError(nameof(ProductVariant.Price), "Price cannot be negative.");
         }
-
-        // -----------------------------------------------------
-        // Validate Quantity
-        // -----------------------------------------------------
 
         if (quantity < 0)
         {
-            ModelState.AddModelError(
-                "quantity",
-                "Inventory quantity cannot be negative.");
+            ModelState.AddModelError("quantity", "Inventory quantity cannot be negative.");
         }
 
-        // -----------------------------------------------------
-        // Check duplicate Size + Color
-        // -----------------------------------------------------
-
-        if (variant.ProductId != Guid.Empty &&
-            variant.SizeId != Guid.Empty &&
-            variant.ColorId != Guid.Empty)
+        if (variant.ProductId != Guid.Empty && variant.SizeId != Guid.Empty && variant.ColorId != Guid.Empty)
         {
-            var duplicate =
-                await _context.ProductVariants.AnyAsync(v =>
-                    v.ProductId == variant.ProductId &&
-                    v.SizeId == variant.SizeId &&
-                    v.ColorId == variant.ColorId);
+            var duplicate = await _context.ProductVariants.AnyAsync(v =>
+                v.ProductId == variant.ProductId &&
+                v.SizeId == variant.SizeId &&
+                v.ColorId == variant.ColorId);
 
             if (duplicate)
             {
-                ModelState.AddModelError(
-                    "",
-                    "This product already has this Size + Color variant.");
+                ModelState.AddModelError("", "This product already has this Size + Color variant.");
             }
         }
 
-        // -----------------------------------------------------
-        // Return View if invalid
-        // -----------------------------------------------------
-
         if (!ModelState.IsValid)
         {
-            await LoadDropdownsAsync(
-                variant.ProductId,
-                variant.SizeId,
-                variant.ColorId);
-
-            ViewBag.Quantity = quantity;
-
-            return View(variant);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return BadRequest(new { success = false, errors });
         }
 
-        // -----------------------------------------------------
-        // Create Variant
-        // -----------------------------------------------------
-
         variant.Id = Guid.NewGuid();
-
         variant.SKU = variant.SKU.Trim();
 
         _context.ProductVariants.Add(variant);
-
-        // -----------------------------------------------------
-        // Create Inventory
-        // -----------------------------------------------------
 
         var inventory = new Inventory
         {
@@ -302,14 +188,7 @@ public class ProductVariantsController : Controller
 
         _context.Inventories.Add(inventory);
 
-        // -----------------------------------------------------
-        // Update Product
-        // -----------------------------------------------------
-
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p =>
-                p.Id == variant.ProductId);
-
+        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == variant.ProductId);
         if (product != null)
         {
             product.ModifiedAt = DateTime.UtcNow;
@@ -317,181 +196,82 @@ public class ProductVariantsController : Controller
 
         await _context.SaveChangesAsync();
 
-        TempData["Success"] =
-            $"Variant '{variant.SKU}' was created successfully.";
-
-        return RedirectToAction(
-            nameof(Details),
-            new { id = variant.Id });
+        return Ok(new { success = true, message = $"Variant '{variant.SKU}' was created successfully." });
     }
 
     // =========================================================
-    // EDIT - GET
-    // =========================================================
-
-    [HttpGet]
-    public async Task<IActionResult> Edit(Guid? id)
-    {
-        if (!id.HasValue)
-        {
-            TempData["Error"] = "Variant ID is missing.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var variant = await _context.ProductVariants
-            .AsNoTracking()
-            .Include(v => v.Inventory)
-            .FirstOrDefaultAsync(v =>
-                v.Id == id.Value);
-
-        if (variant == null)
-        {
-            TempData["Error"] = "Product variant not found.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        await LoadDropdownsAsync(
-            variant.ProductId,
-            variant.SizeId,
-            variant.ColorId);
-
-        ViewBag.Quantity =
-            variant.Inventory?.Quantity ?? 0;
-
-        return View(variant);
-    }
-
-    // =========================================================
-    // EDIT - POST
+    // EDIT - POST (AJAX)
     // =========================================================
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(
-        Guid id,
-        ProductVariant variant,
-        int quantity = 0)
+    public async Task<IActionResult> Edit(Guid id, ProductVariant variant, int quantity = 0)
     {
         if (id != variant.Id)
         {
-            TempData["Error"] = "Invalid variant ID.";
-            return RedirectToAction(nameof(Index));
+            return BadRequest(new { success = false, errors = new[] { "Invalid variant ID." } });
         }
-
-        // -----------------------------------------------------
-        // Remove navigation validation
-        // THIS FIXES:
-        // "The Product field is required"
-        // "The Size field is required"
-        // "The Color field is required"
-        // -----------------------------------------------------
 
         ModelState.Remove(nameof(ProductVariant.Product));
         ModelState.Remove(nameof(ProductVariant.Size));
         ModelState.Remove(nameof(ProductVariant.Color));
         ModelState.Remove(nameof(ProductVariant.Inventory));
 
-        // -----------------------------------------------------
-        // Validate
-        // -----------------------------------------------------
-
         if (variant.ProductId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.ProductId),
-                "Please select a product.");
+            ModelState.AddModelError(nameof(ProductVariant.ProductId), "Please select a product.");
         }
 
         if (variant.SizeId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.SizeId),
-                "Please select a size.");
+            ModelState.AddModelError(nameof(ProductVariant.SizeId), "Please select a size.");
         }
 
         if (variant.ColorId == Guid.Empty)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.ColorId),
-                "Please select a color.");
+            ModelState.AddModelError(nameof(ProductVariant.ColorId), "Please select a color.");
         }
 
         if (string.IsNullOrWhiteSpace(variant.SKU))
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.SKU),
-                "SKU is required.");
+            ModelState.AddModelError(nameof(ProductVariant.SKU), "SKU is required.");
         }
 
         if (variant.Price < 0)
         {
-            ModelState.AddModelError(
-                nameof(ProductVariant.Price),
-                "Price cannot be negative.");
+            ModelState.AddModelError(nameof(ProductVariant.Price), "Price cannot be negative.");
         }
 
         if (quantity < 0)
         {
-            ModelState.AddModelError(
-                "quantity",
-                "Inventory quantity cannot be negative.");
+            ModelState.AddModelError("quantity", "Inventory quantity cannot be negative.");
         }
 
-        // -----------------------------------------------------
-        // Duplicate check
-        // -----------------------------------------------------
-
-        var duplicate =
-            await _context.ProductVariants.AnyAsync(v =>
-                v.Id != id &&
-                v.ProductId == variant.ProductId &&
-                v.SizeId == variant.SizeId &&
-                v.ColorId == variant.ColorId);
+        var duplicate = await _context.ProductVariants.AnyAsync(v =>
+            v.Id != id &&
+            v.ProductId == variant.ProductId &&
+            v.SizeId == variant.SizeId &&
+            v.ColorId == variant.ColorId);
 
         if (duplicate)
         {
-            ModelState.AddModelError(
-                "",
-                "This product already has this Size + Color variant.");
+            ModelState.AddModelError("", "This product already has this Size + Color variant.");
         }
-
-        // -----------------------------------------------------
-        // Return View if invalid
-        // -----------------------------------------------------
 
         if (!ModelState.IsValid)
         {
-            await LoadDropdownsAsync(
-                variant.ProductId,
-                variant.SizeId,
-                variant.ColorId);
-
-            ViewBag.Quantity = quantity;
-
-            return View(variant);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return BadRequest(new { success = false, errors });
         }
 
-        // -----------------------------------------------------
-        // Find existing
-        // -----------------------------------------------------
-
-        var existing =
-            await _context.ProductVariants
-                .Include(v => v.Inventory)
-                .FirstOrDefaultAsync(v =>
-                    v.Id == id);
+        var existing = await _context.ProductVariants
+            .Include(v => v.Inventory)
+            .FirstOrDefaultAsync(v => v.Id == id);
 
         if (existing == null)
         {
-            TempData["Error"] =
-                "Product variant not found.";
-
-            return RedirectToAction(nameof(Index));
+            return NotFound(new { success = false, errors = new[] { "Product variant not found." } });
         }
-
-        // -----------------------------------------------------
-        // Update Variant
-        // -----------------------------------------------------
 
         var oldProductId = existing.ProductId;
 
@@ -501,10 +281,6 @@ public class ProductVariantsController : Controller
         existing.SKU = variant.SKU.Trim();
         existing.Price = variant.Price;
         existing.Status = variant.Status;
-
-        // -----------------------------------------------------
-        // Update Inventory
-        // -----------------------------------------------------
 
         if (existing.Inventory == null)
         {
@@ -525,19 +301,8 @@ public class ProductVariantsController : Controller
             existing.Inventory.UpdatedAt = DateTime.UtcNow;
         }
 
-        // -----------------------------------------------------
-        // Update Product ModifiedAt
-        // -----------------------------------------------------
-
-        var productIds = new[]
-        {
-            oldProductId,
-            existing.ProductId
-        };
-
-        var products = await _context.Products
-            .Where(p => productIds.Contains(p.Id))
-            .ToListAsync();
+        var productIds = new[] { oldProductId, existing.ProductId };
+        var products = await _context.Products.Where(p => productIds.Contains(p.Id)).ToListAsync();
 
         foreach (var product in products)
         {
@@ -546,50 +311,11 @@ public class ProductVariantsController : Controller
 
         await _context.SaveChangesAsync();
 
-        TempData["Success"] =
-            $"Variant '{existing.SKU}' was updated successfully.";
-
-        return RedirectToAction(
-            nameof(Details),
-            new { id = existing.Id });
+        return Ok(new { success = true, message = $"Variant '{existing.SKU}' was updated successfully." });
     }
 
     // =========================================================
-    // DELETE - GET
-    // =========================================================
-
-    [HttpGet]
-    public async Task<IActionResult> Delete(Guid? id)
-    {
-        if (!id.HasValue)
-        {
-            TempData["Error"] = "Variant ID is missing.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var variant = await _context.ProductVariants
-            .AsNoTracking()
-            .Include(v => v.Product)
-                .ThenInclude(p => p.Images)
-            .Include(v => v.Size)
-            .Include(v => v.Color)
-            .Include(v => v.Inventory)
-            .FirstOrDefaultAsync(v =>
-                v.Id == id.Value);
-
-        if (variant == null)
-        {
-            TempData["Error"] =
-                "Product variant not found.";
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        return View(variant);
-    }
-
-    // =========================================================
-    // DELETE - POST
+    // DELETE - POST (AJAX)
     // =========================================================
 
     [HttpPost]
@@ -599,15 +325,11 @@ public class ProductVariantsController : Controller
     {
         var variant = await _context.ProductVariants
             .Include(v => v.Inventory)
-            .FirstOrDefaultAsync(v =>
-                v.Id == id);
+            .FirstOrDefaultAsync(v => v.Id == id);
 
         if (variant == null)
         {
-            TempData["Error"] =
-                "Product variant not found.";
-
-            return RedirectToAction(nameof(Index));
+            return NotFound(new { success = false, errors = new[] { "Product variant not found." } });
         }
 
         var productId = variant.ProductId;
@@ -615,81 +337,29 @@ public class ProductVariantsController : Controller
 
         try
         {
-            // Inventory relationship is 1:1.
-            // Explicitly remove inventory first.
             if (variant.Inventory != null)
             {
-                _context.Inventories.Remove(
-                    variant.Inventory);
+                _context.Inventories.Remove(variant.Inventory);
             }
 
             _context.ProductVariants.Remove(variant);
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p =>
-                    p.Id == productId);
-
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
             if (product != null)
             {
-                product.ModifiedAt =
-                    DateTime.UtcNow;
+                product.ModifiedAt = DateTime.UtcNow;
             }
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                $"Variant '{sku}' was deleted successfully.";
+            return Ok(new { success = true, message = $"Variant '{sku}' was deleted successfully." });
         }
         catch (DbUpdateException)
         {
-            TempData["Error"] =
-                "Cannot delete this variant because it is being used by other records.";
+            return BadRequest(new { success = false, errors = new[] { "Cannot delete this variant because it is being used by other records." } });
         }
-        catch (Exception)
-        {
-            TempData["Error"] =
-                "An unexpected error occurred while deleting the variant.";
-        }
-
-        return RedirectToAction(
-            nameof(Index),
-            new { productId });
     }
 
-    // =========================================================
-    // DROPDOWNS
-    // =========================================================
 
-    private async Task LoadDropdownsAsync(
-        Guid? productId = null,
-        Guid? sizeId = null,
-        Guid? colorId = null)
-    {
-        ViewBag.Products = new SelectList(
-            await _context.Products
-                .AsNoTracking()
-                .OrderBy(p => p.Name)
-                .ToListAsync(),
-            "Id",
-            "Name",
-            productId);
 
-        ViewBag.Sizes = new SelectList(
-            await _context.Sizes
-                .AsNoTracking()
-                .OrderBy(s => s.Name)
-                .ToListAsync(),
-            "Id",
-            "Name",
-            sizeId);
-
-        ViewBag.Colors = new SelectList(
-            await _context.Colors
-                .AsNoTracking()
-                .OrderBy(c => c.Name)
-                .ToListAsync(),
-            "Id",
-            "Name",
-            colorId);
-    }
 }

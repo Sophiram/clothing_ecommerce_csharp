@@ -1,0 +1,135 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Category>
+
+<li class="nav-item dropdown categories-dropdown">
+
+    <a class="clothe-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-grid-fill" style="font-size: 0.85rem;" aria-hidden="true"></i>
+        <span>Categories</span>
+    </a>
+
+    <ul class="dropdown-menu categories-dropdown-menu">
+
+        <li>
+            <a class="dropdown-item categories-dropdown-all"
+               asp-controller="Shop"
+               asp-action="Index">
+                <i class="bi bi-collection-fill" aria-hidden="true"></i>
+                <span>All Collections</span>
+            </a>
+        </li>
+
+        @if (Model != null && Model.Any())
+        {
+            <li><hr class="dropdown-divider" /></li>
+
+            @foreach (var category in Model)
+            {
+                <li>
+                    <a class="dropdown-item categories-dropdown-item"
+                       asp-controller="Shop"
+                       asp-action="Index"
+                       asp-route-categoryId="@category.Id">
+                        <span>@category.Name</span>
+                        <i class="bi bi-chevron-right categories-dropdown-arrow" aria-hidden="true"></i>
+                    </a>
+                </li>
+            }
+        }
+        else
+        {
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <div class="categories-dropdown-empty">
+                    <i class="bi bi-inboxes" aria-hidden="true"></i>
+                    <span>No categories yet</span>
+                </div>
+            </li>
+        }
+
+    </ul>
+
+</li>
+
+<style>
+    .categories-dropdown-menu {
+        min-width: 240px;
+        padding: 10px;
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+        margin-top: 10px !important;
+        animation: menu-slide-down 0.2s ease-out;
+    }
+
+    .categories-dropdown-menu .dropdown-item {
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.15s ease;
+    }
+
+    .categories-dropdown-menu .dropdown-item i {
+        font-size: 0.95rem;
+        color: #64748b;
+        transition: color 0.15s ease;
+    }
+
+    .categories-dropdown-all {
+        font-weight: 600 !important;
+        color: #0f172a !important;
+    }
+
+    .categories-dropdown-item {
+        justify-content: space-between;
+    }
+
+    .categories-dropdown-arrow {
+        opacity: 0;
+        transform: translateX(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        font-size: 0.75rem !important;
+    }
+
+    .categories-dropdown-menu .dropdown-item:hover,
+    .categories-dropdown-menu .dropdown-item:focus-visible {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .categories-dropdown-menu .dropdown-item:hover i,
+    .categories-dropdown-menu .dropdown-item:focus-visible i {
+        color: #0f172a;
+    }
+
+    .categories-dropdown-item:hover .categories-dropdown-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .categories-dropdown-empty {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        color: #94a3b8;
+        font-size: 0.8125rem;
+    }
+
+    .categories-dropdown-menu .dropdown-divider {
+        margin: 6px 0;
+        border-color: #f1f5f9;
+    }
+
+    @@media (min-width: 992px) {
+        .categories-dropdown-menu {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+    }
+</style>

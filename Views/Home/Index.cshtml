@@ -5,8 +5,9 @@
 @{
     ViewData["Title"] = "Home";
 }
+
 <!-- =========================================================
-     HERO - MODERN GOOGLE COLOR STYLE
+     HERO - BOLD & VIBRANT
 ========================================================= -->
 
 <section class="modern-hero">
@@ -74,7 +75,7 @@
                              alt="Fashion Collection" />
                     </div>
 
-                    <!-- FLOATING CARD -->
+                    <!-- FLOATING CARD 1 -->
                     <div class="hero-floating-card">
                         <div class="floating-icon">
                             <i class="bi bi-stars"></i>
@@ -83,6 +84,30 @@
                             <strong>New Season</strong>
                             <small>Fresh styles are here</small>
                         </div>
+                    </div>
+
+                    <!-- FLOATING CARD 2 -->
+                    <div class="hero-floating-card hero-floating-card-alt">
+                        <div class="floating-icon floating-icon-green">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div>
+                            <strong>Free Shipping</strong>
+                            <small>On orders over $50</small>
+                        </div>
+                    </div>
+
+                    <!-- RATING BADGE -->
+                    <div class="hero-rating-badge">
+                        <div class="hero-rating-stars">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <strong>4.9/5</strong>
+                        <span>from 2,300+ reviews</span>
                     </div>
 
                 </div>
@@ -94,179 +119,72 @@
 
 
 <!-- =========================================================
-     CATEGORIES
+     CATEGORIES — SHOP BY STYLE
+     Uses the .category-grid / .category-card / .category-overlay
+     / .category-arrow classes already defined in site.css
 ========================================================= -->
 
-<section class="py-5">
+<section class="categories-section">
 
-    <div class="container py-4">
+    <div class="container">
 
-        <div class="d-flex justify-content-between
-            align-items-end mb-4">
+        <div class="section-heading">
 
             <div>
-
-                <div class="text-uppercase
-                    small fw-bold text-primary mb-2">
-
-                    SHOP BY STYLE
-
-                </div>
-
-                <h2 class="fw-bold mb-0">
-                    Categories
-                </h2>
-
+                <span>SHOP BY STYLE</span>
+                <h2>Categories</h2>
             </div>
 
-            <a asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-outline-dark">
-
+            <a asp-controller="Shop" asp-action="Index">
                 View All
-
-                <i class="bi bi-arrow-right ms-2"></i>
-
+                <i class="bi bi-arrow-right"></i>
             </a>
 
         </div>
 
-
-        <div class="row g-4">
+        <div class="category-grid">
 
             <!-- MEN -->
-            <div class="col-md-4">
-
-                <a asp-controller="Shop"
-                   asp-action="Index"
-                   class="text-decoration-none">
-
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-
-                        <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=800&q=80"
-                             class="card-img-top"
-                             alt="Men"
-                             style="height:320px;object-fit:cover;" />
-
-                        <div class="card-body p-4">
-
-                            <small class="text-secondary">
-                                01
-                            </small>
-
-                            <div class="d-flex
-                                justify-content-between
-                                align-items-center">
-
-                                <h4 class="fw-bold mb-0">
-                                    Men
-                                </h4>
-
-                                <span class="btn btn-dark rounded-circle">
-
-                                    <i class="bi bi-arrow-up-right"></i>
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </a>
-
-            </div>
-
+            <a asp-controller="Shop" asp-action="Index" class="category-card">
+                <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=800&q=80"
+                     alt="Men" class="category-bg-img" />
+                <div class="category-overlay"></div>
+                <div class="category-content">
+                    <span>01 &middot; MENSWEAR</span>
+                    <h3>Men</h3>
+                </div>
+                <span class="category-arrow">
+                    <i class="bi bi-arrow-up-right"></i>
+                </span>
+            </a>
 
             <!-- WOMEN -->
-            <div class="col-md-4">
-
-                <a asp-controller="Shop"
-                   asp-action="Index"
-                   class="text-decoration-none">
-
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-
-                        <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"
-                             class="card-img-top"
-                             alt="Women"
-                             style="height:320px;object-fit:cover;" />
-
-                        <div class="card-body p-4">
-
-                            <small class="text-secondary">
-                                02
-                            </small>
-
-                            <div class="d-flex
-                                justify-content-between
-                                align-items-center">
-
-                                <h4 class="fw-bold mb-0">
-                                    Women
-                                </h4>
-
-                                <span class="btn btn-dark rounded-circle">
-
-                                    <i class="bi bi-arrow-up-right"></i>
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </a>
-
-            </div>
-
+            <a asp-controller="Shop" asp-action="Index" class="category-card">
+                <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"
+                     alt="Women" class="category-bg-img" />
+                <div class="category-overlay"></div>
+                <div class="category-content">
+                    <span>02 &middot; WOMENSWEAR</span>
+                    <h3>Women</h3>
+                </div>
+                <span class="category-arrow">
+                    <i class="bi bi-arrow-up-right"></i>
+                </span>
+            </a>
 
             <!-- ACCESSORIES -->
-            <div class="col-md-4">
-
-                <a asp-controller="Shop"
-                   asp-action="Index"
-                   class="text-decoration-none">
-
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-
-                        <img src="https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=800&q=80"
-                             class="card-img-top"
-                             alt="Accessories"
-                             style="height:320px;object-fit:cover;" />
-
-                        <div class="card-body p-4">
-
-                            <small class="text-secondary">
-                                03
-                            </small>
-
-                            <div class="d-flex
-                                justify-content-between
-                                align-items-center">
-
-                                <h4 class="fw-bold mb-0">
-                                    Accessories
-                                </h4>
-
-                                <span class="btn btn-dark rounded-circle">
-
-                                    <i class="bi bi-arrow-up-right"></i>
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </a>
-
-            </div>
+            <a asp-controller="Shop" asp-action="Index" class="category-card">
+                <img src="https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=800&q=80"
+                     alt="Accessories" class="category-bg-img" />
+                <div class="category-overlay"></div>
+                <div class="category-content">
+                    <span>03 &middot; ACCESSORIES</span>
+                    <h3>Accessories</h3>
+                </div>
+                <span class="category-arrow">
+                    <i class="bi bi-arrow-up-right"></i>
+                </span>
+            </a>
 
         </div>
 
@@ -283,45 +201,27 @@
 
     <div class="container py-4">
 
-        <!-- HEADER -->
-
-        <div class="d-flex justify-content-between
-            align-items-end mb-4">
+        <div class="d-flex justify-content-between align-items-end mb-4">
 
             <div>
-
-                <div class="text-uppercase
-                    small
-                    fw-bold
-                    text-primary
-                    mb-2">
-
+                <div class="text-uppercase small fw-bold text-primary mb-2">
                     SHOP BY BRAND
-
                 </div>
 
                 <h2 class="fw-bold mb-0">
                     Popular Brands
                 </h2>
-
             </div>
 
-            <a asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-outline-dark">
-
+            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-dark">
                 View All
-
                 <i class="bi bi-arrow-right ms-2"></i>
-
             </a>
 
         </div>
 
 
-        <!-- BRAND GRID -->
-        @if (ViewBag.Brands != null &&
-                     ViewBag.Brands.Count > 0)
+        @if (ViewBag.Brands != null && ViewBag.Brands.Count > 0)
         {
             <div class="row g-3">
 
@@ -329,67 +229,35 @@
                 {
                     <div class="col-6 col-md-4 col-lg-3">
 
-                        <a asp-controller="Shop"
-                           asp-action="Index"
-                           asp-route-brandId="@brand.Id"
+                        <a asp-controller="Shop" asp-action="Index" asp-route-brandId="@brand.Id"
                            class="text-decoration-none">
 
-                            <div class="brand-home-card
-                                card
-                                border-0
-                                shadow-sm
-                                rounded-4
-                                h-100">
+                            <div class="brand-home-card card border-0 shadow-sm rounded-4 h-100">
+                                <div class="card-body p-4 text-center">
 
-                                <div class="card-body
-                                    p-4
-                                    text-center">
-
-                                    <!-- LOGO -->
-
-                                    <div class="brand-logo-wrapper
-                                        mx-auto
-                                        mb-3">
-
+                                    <div class="brand-logo-wrapper mx-auto mb-3">
                                         @if (!string.IsNullOrWhiteSpace(brand.Logo))
                                         {
-                                            <img src="@brand.Logo"
-                                                 alt="@brand.Name"
-                                                 class="brand-home-logo" />
+                                            <img src="@brand.Logo" alt="@brand.Name" class="brand-home-logo" />
                                         }
                                         else
                                         {
                                             <div class="brand-logo-placeholder">
-
                                                 <i class="bi bi-award"></i>
-
                                             </div>
                                         }
-
                                     </div>
 
-
-                                    <!-- NAME -->
-
-                                    <h5 class="fw-bold
-                                        text-dark
-                                        mb-1">
-
+                                    <h5 class="fw-bold text-dark mb-1">
                                         @brand.Name
-
                                     </h5>
 
-
                                     <small class="text-secondary">
-
                                         View Products
-
                                         <i class="bi bi-arrow-right ms-1"></i>
-
                                     </small>
 
                                 </div>
-
                             </div>
 
                         </a>
@@ -402,13 +270,8 @@
         else
         {
             <div class="text-center text-secondary py-5">
-
                 <i class="bi bi-award display-5"></i>
-
-                <p class="mt-3 mb-0">
-                    No brands available.
-                </p>
-
+                <p class="mt-3 mb-0">No brands available.</p>
             </div>
         }
 
@@ -417,42 +280,31 @@
 </section>
 
 
-
-
 <!-- =========================================================
      LATEST PRODUCTS
+     Now uses the same _ProductCard partial as the Shop page,
+     so cart, wishlist and sale display behave identically.
 ========================================================= -->
 
 <section class="py-5 bg-light">
 
     <div class="container py-4">
 
-        <div class="d-flex justify-content-between
-            align-items-end mb-4">
+        <div class="d-flex justify-content-between align-items-end mb-4">
 
             <div>
-
-                <div class="text-uppercase
-                    small fw-bold text-primary mb-2">
-
+                <div class="text-uppercase small fw-bold text-primary mb-2">
                     FEATURED
-
                 </div>
 
                 <h2 class="fw-bold mb-0">
                     Latest Products
                 </h2>
-
             </div>
 
-            <a asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-outline-dark">
-
+            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-dark">
                 Shop All
-
                 <i class="bi bi-arrow-right ms-2"></i>
-
             </a>
 
         </div>
@@ -464,189 +316,21 @@
             {
                 foreach (var product in Model.Take(8))
                 {
-                    var primaryImage =
-                        product.Images?
-                            .FirstOrDefault(x => x.IsPrimary)
-                        ?? product.Images?
-                            .FirstOrDefault();
-
-                    var price =
-                        product.Variants?
-                            .Where(v =>
-                                v.Status == VariantStatus.Available)
-                            .Select(v => v.Price)
-                            .DefaultIfEmpty(0)
-                            .Min()
-                        ?? 0;
-
                     <div class="col-6 col-md-4 col-lg-3">
-
-                        <div class="card h-100 border-0
-                            shadow-sm rounded-4 overflow-hidden">
-
-                            <!-- IMAGE -->
-
-                            <div class="position-relative">
-
-                                <a asp-controller="Shop"
-                                   asp-action="Details"
-                                   asp-route-id="@product.Id">
-
-                                    @if (primaryImage != null &&
-                                         !string.IsNullOrWhiteSpace(
-                                             primaryImage.ImageUrl))
-                                    {
-                                        <img src="@primaryImage.ImageUrl"
-                                             class="card-img-top"
-                                             alt="@product.Name"
-                                             style="height:300px;
-                                        object-fit:cover;" />
-                                    }
-                                    else
-                                    {
-                                        <div class="bg-light
-                                            d-flex
-                                            align-items-center
-                                            justify-content-center"
-                                             style="height:300px;">
-
-                                            <i class="bi bi-image
-                                                display-5
-                                                text-secondary">
-                                            </i>
-
-                                        </div>
-                                    }
-
-                                </a>
-
-                                <span class="position-absolute
-                                    top-0 start-0
-                                    m-3 badge text-bg-dark">
-
-                                    NEW
-
-                                </span>
-
-                                <a asp-controller="Shop"
-                                   asp-action="Details"
-                                   asp-route-id="@product.Id"
-                                   class="position-absolute
-                                    top-0 end-0
-                                    m-3 btn btn-light
-                                    rounded-circle shadow-sm">
-
-                                    <i class="bi bi-heart"></i>
-
-                                </a>
-
-                            </div>
-
-
-                            <!-- CONTENT -->
-
-                            <div class="card-body p-3">
-
-                                <div class="d-flex align-items-center gap-2">
-
-                                    @if (!string.IsNullOrWhiteSpace(product.Brand?.Logo))
-                                    {
-                                        <img src="@product.Brand.Logo"
-                                             alt="@product.Brand.Name"
-                                             class="rounded border bg-white"
-                                             style="width:28px;height:28px;object-fit:contain;" />
-                                    }
-                                    else
-                                    {
-                                        <div class="rounded border bg-light d-flex align-items-center justify-content-center"
-                                             style="width:28px;height:28px;">
-
-                                            <i class="bi bi-award text-secondary"
-                                               style="font-size:14px;"></i>
-
-                                        </div>
-                                    }
-
-                                    <small class="text-uppercase text-primary fw-bold">
-                                        @(product.Brand?.Name ?? "CLOTHÉ")
-                                    </small>
-
-                                </div>
-
-                                <a asp-controller="Shop"
-                                   asp-action="Details"
-                                   asp-route-id="@product.Id"
-                                   class="text-decoration-none text-dark">
-
-                                    <h5 class="fw-bold mt-2 mb-2">
-
-                                        @product.Name
-
-                                    </h5>
-
-                                </a>
-
-
-                                <div class="d-flex
-                                    justify-content-between
-                                    align-items-center">
-
-                                    <strong class="fs-5">
-
-                                        @if (price > 0)
-                                        {
-                                            @price.ToString("C")
-                                        }
-                                        else
-                                        {
-                                            @:Contact us
-                                        }
-
-                                    </strong>
-
-                                    <a asp-controller="Shop"
-                                       asp-action="Details"
-                                       asp-route-id="@product.Id"
-                                       class="btn btn-dark rounded-circle">
-
-                                        <i class="bi bi-arrow-up-right"></i>
-
-                                    </a>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
+                        @await Html.PartialAsync("_ProductCard", product)
                     </div>
                 }
             }
             else
             {
                 <div class="col-12">
-
-                    <div class="text-center
-                        bg-white
-                        rounded-4
-                        shadow-sm
-                        p-5">
-
-                        <i class="bi bi-bag
-                            display-4
-                            text-secondary">
-                        </i>
-
-                        <h5 class="fw-bold mt-3">
-                            No products available
-                        </h5>
-
+                    <div class="text-center bg-white rounded-4 shadow-sm p-5">
+                        <i class="bi bi-bag display-4 text-secondary"></i>
+                        <h5 class="fw-bold mt-3">No products available</h5>
                         <p class="text-secondary mb-0">
                             Products will appear here once they are added.
                         </p>
-
                     </div>
-
                 </div>
             }
 
@@ -658,72 +342,53 @@
 
 
 <!-- =========================================================
-     PROMO
+     INSTAGRAM-STYLE GALLERY
 ========================================================= -->
 
-<section class="py-5">
+<section class="py-5 insta-gallery-section">
 
     <div class="container py-4">
 
-        <div class="card border-0 shadow-sm
-            rounded-4 overflow-hidden">
-
-            <div class="row g-0 align-items-center">
-
-                <div class="col-lg-6">
-
-                    <div class="p-4 p-lg-5">
-
-                        <div class="text-uppercase
-                            small fw-bold
-                            text-primary mb-3">
-
-                            CLOTHÉ ESSENTIALS
-
-                        </div>
-
-                        <h2 class="display-6 fw-bold mb-3">
-
-                            Simple.
-                            <span class="text-primary">
-                                Modern.
-                            </span>
-                            You.
-
-                        </h2>
-
-                        <p class="text-secondary mb-4">
-
-                            Build your everyday wardrobe with timeless
-                            pieces designed to work together.
-
-                        </p>
-
-                        <a asp-controller="Shop"
-                           asp-action="Index"
-                           class="btn btn-dark btn-lg px-4">
-
-                            Explore Collection
-
-                            <i class="bi bi-arrow-right ms-2"></i>
-
-                        </a>
-
-                    </div>
-
-                </div>
-
-
-                <div class="col-lg-6">
-
-                    <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1000&q=85"
-                         class="img-fluid w-100"
-                         alt="Clothing Collection"
-                         style="height:420px;object-fit:cover;" />
-
-                </div>
-
+        <div class="text-center mb-4">
+            <div class="text-uppercase small fw-bold text-primary mb-2">
+                #WEARCLOTHE
             </div>
+
+            <h2 class="fw-bold mb-2">
+                Shop Our Instagram
+            </h2>
+
+            <p class="text-secondary mb-0">
+                Tag <strong>@@clothe.official</strong> for a chance to be featured.
+            </p>
+        </div>
+
+        <div class="row g-3">
+
+            @{
+                var instaImages = new[]
+                {
+                    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&w=500&q=80"
+                };
+            }
+
+            @for (int i = 0; i < instaImages.Length; i++)
+            {
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a asp-controller="Shop" asp-action="Index" class="insta-tile">
+                        <img src="@instaImages[i]" alt="Instagram post @(i + 1)" />
+                        <div class="insta-tile-overlay">
+                            <i class="bi bi-instagram"></i>
+                            <span><i class="bi bi-heart-fill"></i> @((i + 1) * 137)</span>
+                        </div>
+                    </a>
+                </div>
+            }
 
         </div>
 
@@ -732,6 +397,400 @@
 </section>
 
 
+<!-- =========================================================
+     PROMO — CLOTHÉ ESSENTIALS
+========================================================= -->
+
+<section class="py-5">
+    <div class="container py-4">
+
+        <div class="promo-banner position-relative overflow-hidden rounded-4">
+
+            <!-- BACKGROUND IMAGE -->
+            <div class="promo-image">
+                <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1600&q=85"
+                     alt="Clothé Fashion Collection" />
+            </div>
+
+            <!-- DARK OVERLAY -->
+            <div class="promo-overlay"></div>
+
+            <!-- CONTENT -->
+            <div class="promo-content">
+
+                <div class="promo-label">
+                    <span></span>
+                    CLOTHÉ ESSENTIALS
+                </div>
+
+                <h2>
+                    Elevate your
+                    <span>everyday style.</span>
+                </h2>
+
+                <p>
+                    Discover timeless essentials, modern silhouettes,
+                    and effortless pieces made for your everyday wardrobe.
+                </p>
+
+                <!-- BUTTONS -->
+                <div class="promo-buttons">
+
+                    <a asp-controller="Shop"
+                       asp-action="Index"
+                       class="btn btn-light btn-lg px-4">
+                        Shop Collection
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </a>
+
+                    <a asp-controller="Shop"
+                       asp-action="Index"
+                       class="promo-outline-btn">
+                        Explore More
+                        <i class="bi bi-arrow-up-right ms-2"></i>
+                    </a>
+
+                </div>
+
+                <!-- MINI FEATURES -->
+                <div class="promo-features">
+
+                    <div class="promo-feature">
+                        <i class="bi bi-stars"></i>
+                        <div>
+                            <strong>Premium Quality</strong>
+                            <small>Made to last</small>
+                        </div>
+                    </div>
+
+                    <div class="promo-feature">
+                        <i class="bi bi-truck"></i>
+                        <div>
+                            <strong>Fast Delivery</strong>
+                            <small>To your doorstep</small>
+                        </div>
+                    </div>
+
+                    <div class="promo-feature">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <div>
+                            <strong>Easy Returns</strong>
+                            <small>Shop with confidence</small>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- DECORATIVE TEXT -->
+            <div class="promo-side-text">
+                CLOTHÉ
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<style>
+
+    /* =========================================================
+           PROMO BANNER
+        ========================================================= */
+
+    .promo-banner {
+        min-height: 520px;
+        background: #111;
+        position: relative;
+        isolation: isolate;
+    }
+
+    /* IMAGE */
+
+    .promo-image {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+    }
+
+        .promo-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            transition: transform 0.8s ease;
+        }
+
+    .promo-banner:hover .promo-image img {
+        transform: scale(1.04);
+    }
+
+    /* OVERLAY */
+
+    .promo-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: linear-gradient( 90deg, rgba(0, 0, 0, 0.90) 0%, rgba(0, 0, 0, 0.72) 42%, rgba(0, 0, 0, 0.25) 75%, rgba(0, 0, 0, 0.05) 100% );
+    }
+
+    /* CONTENT */
+
+    .promo-content {
+        position: relative;
+        z-index: 2;
+        max-width: 650px;
+        padding: 70px 60px;
+        color: #fff;
+    }
+
+    /* LABEL */
+
+    .promo-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        margin-bottom: 22px;
+    }
+
+        .promo-label span {
+            width: 32px;
+            height: 2px;
+            background: #fff;
+            display: inline-block;
+        }
+
+    /* TITLE */
+
+    .promo-content h2 {
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+        line-height: 1.02;
+        font-weight: 800;
+        letter-spacing: -2px;
+        margin-bottom: 22px;
+    }
+
+        .promo-content h2 span {
+            display: block;
+            color: #fff;
+            font-style: italic;
+            font-weight: 500;
+        }
+
+    /* DESCRIPTION */
+
+    .promo-content > p {
+        max-width: 540px;
+        color: rgba(255,255,255,0.78);
+        font-size: 16px;
+        line-height: 1.7;
+        margin-bottom: 30px;
+    }
+
+    /* BUTTONS */
+
+    .promo-buttons {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 45px;
+    }
+
+        .promo-buttons .btn {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+    .promo-outline-btn {
+        display: inline-flex;
+        align-items: center;
+        color: #fff;
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.45);
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.25s ease;
+    }
+
+        .promo-outline-btn:hover {
+            color: #111;
+            background: #fff;
+            border-color: #fff;
+        }
+
+    /* FEATURES */
+
+    .promo-features {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    .promo-feature {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .promo-feature > i {
+            font-size: 20px;
+        }
+
+        .promo-feature strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .promo-feature small {
+            display: block;
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+    /* DECORATIVE SIDE TEXT */
+
+    .promo-side-text {
+        position: absolute;
+        right: -55px;
+        bottom: 80px;
+        font-size: 100px;
+        font-weight: 900;
+        letter-spacing: 8px;
+        color: rgba(255,255,255,0.07);
+        transform: rotate(-90deg);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+    @@media (max-width: 991px) {
+
+        .promo-banner {
+            min-height: 560px;
+        }
+
+        .promo-content {
+            padding: 60px 40px;
+        }
+
+        .promo-side-text {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 575px) {
+
+        .promo-banner {
+            min-height: 650px;
+        }
+
+        .promo-content {
+            padding: 45px 25px;
+        }
+
+            .promo-content h2 {
+                font-size: 2.7rem;
+                letter-spacing: -1px;
+            }
+
+            .promo-content > p {
+                font-size: 14px;
+            }
+
+        .promo-features {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 18px;
+        }
+
+        .promo-buttons {
+            margin-bottom: 35px;
+        }
+    }
+
+</style>
+
+
+ 
+<!-- =========================================================
+     TESTIMONIALS
+========================================================= -->
+
+<section class="py-5 testimonials-section">
+
+    <div class="container py-4">
+
+        <div class="text-center mb-5">
+            <div class="text-uppercase small fw-bold text-primary mb-2">
+                CUSTOMER LOVE
+            </div>
+
+            <h2 class="fw-bold mb-0">
+                What people are saying
+            </h2>
+        </div>
+
+        <div class="row g-4">
+
+            @{
+                var testimonials = new[]
+                {
+                    new { Name = "Sophea L.", Role = "Verified Buyer", Text = "The fit is perfect and the fabric feels premium. Delivery was faster than expected too.", Accent = "blue" },
+                    new { Name = "Marc T.", Role = "Verified Buyer", Text = "Best online clothing store I've used. Easy returns and the sizing chart is spot on.", Accent = "red" },
+                    new { Name = "Dara K.", Role = "Verified Buyer", Text = "I've reordered three times already. Quality and style never disappoint.", Accent = "yellow" },
+                    new { Name = "Alice W.", Role = "Verified Buyer", Text = "Customer support helped me swap sizes within minutes. Genuinely great experience.", Accent = "green" }
+                };
+            }
+
+            @foreach (var t in testimonials)
+            {
+                <div class="col-md-6 col-lg-3">
+                    <div class="testimonial-card testimonial-@t.Accent">
+
+                        <div class="testimonial-stars">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+
+                        <p class="testimonial-text">"@t.Text"</p>
+
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">
+                                @t.Name.Substring(0, 1)
+                            </div>
+                            <div>
+                                <strong>@t.Name</strong>
+                                <small>@t.Role</small>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</section>
+
+ 
 <!-- =========================================================
      FEATURES
 ========================================================= -->
@@ -741,143 +800,64 @@
     <div class="container py-4">
 
         <div class="mb-4">
-
-            <div class="text-uppercase
-                small fw-bold text-primary mb-2">
-
+            <div class="text-uppercase small fw-bold text-primary mb-2">
                 WHY CLOTHÉ
-
             </div>
 
             <h2 class="fw-bold">
                 Made for you
             </h2>
-
         </div>
 
-
+ 
         <div class="row g-4">
 
             <!-- DELIVERY -->
             <div class="col-md-4">
-
-                <div class="card border-0
-                    shadow-sm
-                    rounded-4
-                    h-100">
-
+                <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body p-4">
-
-                        <div class="rounded-circle
-                            bg-primary-subtle
-                            text-primary
-                            d-flex
-                            align-items-center
-                            justify-content-center
-                            mb-3"
+                        <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center mb-3"
                              style="width:55px;height:55px;">
-
                             <i class="bi bi-truck fs-4"></i>
-
                         </div>
-
-                        <h5 class="fw-bold">
-                            Fast Delivery
-                        </h5>
-
+                        <h5 class="fw-bold">Fast Delivery</h5>
                         <p class="text-secondary mb-0">
-
-                            Reliable delivery directly
-                            to your door.
-
+                            Reliable delivery directly to your door.
                         </p>
-
                     </div>
-
                 </div>
-
             </div>
-
 
             <!-- SECURITY -->
             <div class="col-md-4">
-
-                <div class="card border-0
-                    shadow-sm
-                    rounded-4
-                    h-100">
-
+                <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body p-4">
-
-                        <div class="rounded-circle
-                            bg-primary-subtle
-                            text-primary
-                            d-flex
-                            align-items-center
-                            justify-content-center
-                            mb-3"
+                        <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center mb-3"
                              style="width:55px;height:55px;">
-
                             <i class="bi bi-shield-check fs-4"></i>
-
                         </div>
-
-                        <h5 class="fw-bold">
-                            Secure Shopping
-                        </h5>
-
+                        <h5 class="fw-bold">Secure Shopping</h5>
                         <p class="text-secondary mb-0">
-
-                            Your account and orders
-                            are protected.
-
+                            Your account and orders are protected.
                         </p>
-
                     </div>
-
                 </div>
-
             </div>
-
 
             <!-- RETURNS -->
             <div class="col-md-4">
-
-                <div class="card border-0
-                    shadow-sm
-                    rounded-4
-                    h-100">
-
+                <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body p-4">
-
-                        <div class="rounded-circle
-                            bg-primary-subtle
-                            text-primary
-                            d-flex
-                            align-items-center
-                            justify-content-center
-                            mb-3"
+                        <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center mb-3"
                              style="width:55px;height:55px;">
-
                             <i class="bi bi-arrow-repeat fs-4"></i>
-
                         </div>
-
-                        <h5 class="fw-bold">
-                            Easy Returns
-                        </h5>
-
+                        <h5 class="fw-bold">Easy Returns</h5>
                         <p class="text-secondary mb-0">
-
-                            Simple and convenient
-                            return experience.
-
+                            Simple and convenient return experience.
                         </p>
-
                     </div>
-
                 </div>
-
             </div>
 
         </div>

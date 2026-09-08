@@ -17,133 +17,109 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             _context = context;
         }
 
-        // GET: Categories
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index(string? search)
         {
-            var categories = await _context.Categories
+            var query = _context.Categories
+                .AsNoTracking()
                 .Include(c => c.Products)
-                .ToListAsync();
+                .AsQueryable();
 
-            return View(categories);
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+                query = query.Where(c => c.Name.Contains(search));
+            }
+
+            ViewBag.Search = search;
+
+            var result = await query.OrderBy(c => c.Name).ToListAsync();
+            return View(result);
         }
 
-        // GET: Categories/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var category = await _context.Categories
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (category == null)
-                return NotFound();
-
-            return View(category);
-        }
-
-        // GET: Categories/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Categories/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Category category)
         {
-            if (ModelState.IsValid)
+            ModelState.Remove(nameof(Category.Products));
+            ModelState.Remove(nameof(Category.Id));
+
+            if (!ModelState.IsValid)
             {
-                category.Id = Guid.NewGuid();
-
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction(nameof(Index));
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { success = false, errors });
             }
 
-            return View(category);
+            category.Id = Guid.NewGuid();
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = $"Category '{category.Name}' was created successfully." });
         }
 
-        // GET: Categories/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var category = await _context.Categories.FindAsync(id);
-
-            if (category == null)
-                return NotFound();
-
-            return View(category);
-        }
-
-        // POST: Categories/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, Category category)
         {
             if (id != category.Id)
-                return NotFound();
-
-            if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Categories.Update(category);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CategoryExists(category.Id))
-                        return NotFound();
-
-                    throw;
-                }
-
-                return RedirectToAction(nameof(Index));
+                return BadRequest(new { success = false, errors = new[] { "Invalid category ID." } });
             }
 
-            return View(category);
+            ModelState.Remove(nameof(Category.Products));
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { success = false, errors });
+            }
+
+            try
+            {
+                var existing = await _context.Categories.FindAsync(id);
+
+                if (existing == null)
+                {
+                    return NotFound(new { success = false, errors = new[] { "Category not found." } });
+                }
+
+                existing.Name = category.Name;
+                existing.Description = category.Description;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = $"Category '{existing.Name}' was updated successfully." });
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { success = false, errors = new[] { ex.InnerException?.Message ?? ex.Message } });
+            }
         }
 
-        // GET: Categories/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (category == null)
-                return NotFound();
-
-            return View(category);
-        }
-
-        // POST: Categories/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            try
+            {
+                var category = await _context.Categories.FindAsync(id);
 
-            if (category == null)
-                return NotFound();
+                if (category == null)
+                {
+                    return NotFound(new { success = false, errors = new[] { "Category not found." } });
+                }
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+                var name = category.Name;
+                _context.Categories.Remove(category);
+                await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool CategoryExists(Guid id)
-        {
-            return _context.Categories.Any(c => c.Id == id);
+                return Ok(new { success = true, message = $"Category '{name}' was deleted successfully." });
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest(new { success = false, errors = new[] { "Cannot delete this category because it has products assigned to it." } });
+            }
         }
     }
 }

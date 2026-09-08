@@ -646,6 +646,9 @@ namespace WebApplication_ClothingEcommerce.Migrations
                     b.Property<Guid>("ColorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("CompareAtPrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");

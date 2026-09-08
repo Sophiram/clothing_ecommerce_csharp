@@ -13,6 +13,11 @@ namespace WebApplication_ClothingEcommerce.Controllers
             _context = context;
         }
 
+        // =====================================================
+        // HOME
+        // GET: /
+        // =====================================================
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             // ==========================================
@@ -24,6 +29,7 @@ namespace WebApplication_ClothingEcommerce.Controllers
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
+
             // ==========================================
             // BRANDS
             // ==========================================
@@ -33,20 +39,41 @@ namespace WebApplication_ClothingEcommerce.Controllers
                 .OrderBy(b => b.Name)
                 .ToListAsync();
 
+
             // ==========================================
             // LATEST PRODUCTS
+            // Reviews (star ratings) and Variants -> Inventory
+            // (so quick "Add to Cart" can find an in-stock
+            // variant without a second query per card).
             // ==========================================
 
             var products = await _context.Products
                 .AsNoTracking()
+
                 .Include(p => p.Brand)
+
                 .Include(p => p.Category)
+
                 .Include(p => p.Images)
+
                 .Include(p => p.Variants)
-                .Where(p => p.Status == Data.Enums.ProductStatus.Active)
+                    .ThenInclude(v => v.Inventory)
+
+                .Include(p => p.Reviews)
+
+                .Where(p =>
+                    p.Status == Data.Enums.ProductStatus.Active)
+
                 .OrderByDescending(p => p.CreatedAt)
+
                 .Take(8)
+
                 .ToListAsync();
+
+
+            // ==========================================
+            // VIEWBAG
+            // ==========================================
 
             ViewBag.Categories = categories;
             ViewBag.Brands = brands;

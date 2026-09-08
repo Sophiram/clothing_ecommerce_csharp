@@ -1,3 +1,71 @@
+@inject WebApplication_ClothingEcommerce.Data.AppDbContext DbContext
+
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    int userCartCount = 0;
+    int userWishlistCount = 0;
+    string userDisplayName = "My Account";
+    string userFirstName = "";
+    string userFirstLetter = "U";
+    string userEmail = "";
+    bool isAdmin = false;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        userEmail = User.Identity.Name ?? "";
+        isAdmin = User.IsInRole("Admin");
+
+        try
+        {
+            var customer = DbContext.Customers.FirstOrDefault(c => c.Email == userEmail);
+            if (customer != null)
+            {
+                if (!string.IsNullOrWhiteSpace(customer.FirstName))
+                {
+                    userFirstName = customer.FirstName;
+                    userDisplayName = $"{customer.FirstName} {customer.LastName}".Trim();
+                    userFirstLetter = customer.FirstName.Substring(0, 1).ToUpper();
+                }
+                else
+                {
+                    userFirstName = userEmail.Split('@')[0];
+                    userDisplayName = userFirstName;
+                    userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "U";
+                }
+
+                userCartCount = DbContext.CartItems
+                    .Where(ci => ci.Cart.CustomerId == customer.Id)
+                    .Sum(ci => (int?)ci.Quantity) ?? 0;
+
+                userWishlistCount = DbContext.WishlistItems
+                    .Count(wi => wi.Wishlist.CustomerId == customer.Id);
+            }
+            else
+            {
+                userFirstName = userEmail.Split('@')[0];
+                userDisplayName = userFirstName;
+                userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "U";
+            }
+        }
+        catch
+        {
+            userFirstName = userEmail.Split('@')[0];
+            userDisplayName = userFirstName;
+            userFirstLetter = "U";
+        }
+    }
+
+    if (ViewBag.CartCount != null)
+    {
+        int parsedCount = 0;
+        if (int.TryParse(Convert.ToString(ViewBag.CartCount), out parsedCount) && parsedCount > 0)
+        {
+            userCartCount = parsedCount;
+        }
+    }
+}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,7 +87,7 @@
           href="https://fonts.gstatic.com"
           crossorigin />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
           rel="stylesheet">
 
     <link rel="stylesheet"
@@ -32,261 +100,355 @@
           href="~/css/site.css"
           asp-append-version="true" />
 
+    <!-- CLOTHÉ Modern Navbar & Authentication Stylesheets -->
+    <link rel="stylesheet"
+          href="~/css/navbar-modern.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/auth-modern.css"
+          asp-append-version="true" />
+
 </head>
 
 <body>
 
     <!-- =====================================================
-         NAVBAR
+         PROMO / COUNTDOWN BAR
     ====================================================== -->
-    <!-- =====================================================
-     NAVBAR
-====================================================== -->
+    <div class="clothe-promo-bar" id="promoBar">
+        <div class="container clothe-promo-inner">
+            <div class="clothe-promo-text">
+                <span class="clothe-promo-tag">Flash Sale</span>
+                <span>Season Collection — Up to <strong>40% OFF</strong> essentials & trending styles!</span>
+            </div>
 
-    <nav class="google-navbar navbar navbar-expand-lg">
+            <div class="clothe-promo-countdown" id="promoCountdown" aria-label="Sale countdown">
+                <div class="clothe-countdown-unit">
+                    <span id="cd-h">00</span>
+                    <small>H</small>
+                </div>
+                <div class="clothe-countdown-unit">
+                    <span id="cd-m">00</span>
+                    <small>M</small>
+                </div>
+                <div class="clothe-countdown-unit">
+                    <span id="cd-s">00</span>
+                    <small>S</small>
+                </div>
+            </div>
 
-        <div class="container navbar-inner">
-
-            <!-- LOGO -->
-            <a class="google-brand d-flex align-items-center gap-2"
-               asp-controller="Home"
-               asp-action="Index">
-
-                <!-- ប្រើរូបភាព Logo ជំនួស icon ដើម -->
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="height: 40px; width: auto; object-fit: contain;" />
-
-                @* <div class="google-brand-text">
-                    <strong>CLOTHÉ</strong>
-                    <small>CLOTHING STORE</small>
-                </div> *@
+            <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="clothe-promo-cta">
+                Shop Now <i class="bi bi-arrow-right-short"></i>
             </a>
 
-            <!-- TOGGLER -->
-            <button class="navbar-toggler google-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#mainNavbar">
-                <i class="bi bi-list"></i>
+            <button class="clothe-promo-close" id="promoBarClose" type="button" aria-label="Dismiss promo bar">
+                <i class="bi bi-x-lg"></i>
             </button>
+        </div>
+    </div>
 
-            <!-- NAV -->
-            <div class="collapse navbar-collapse" id="mainNavbar">
+    <!-- =====================================================
+         CLOTHÉ MODERN NAVBAR
+    ====================================================== -->
+    <nav class="clothe-navbar">
+        <div class="container clothe-nav-container">
 
-                <ul class="navbar-nav google-nav">
+            <!-- BRAND LOGO -->
+            <a class="clothe-brand" asp-controller="Home" asp-action="Index">
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" class="clothe-brand-logo" />
+            </a>
 
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a asp-controller="Shop"
-                           asp-action="Index"
-                           class="nav-link">
-                            Shop
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-controller="Shop"
-                           asp-action="Index">
-                            Categories
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-controller="Home"
-                           asp-action="About">
-                            About
-                        </a>
-                    </li>
-
-                    <!-- ADMIN MENU LINK (បង្ហាញតែពេល user ជា Admin) -->
-                    @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link text-danger font-weight-bold"
-                               asp-area="Admin"
-                               asp-controller="Dashboard"
-                               asp-action="Index">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                    }
-
-                </ul>
-
-                <!-- ACTIONS -->
-                <div class="google-actions">
-
-                    <!-- SEARCH -->
-                    <a asp-controller="Shop"
-                       asp-action="Index"
-                       class="google-icon-button"
-                       title="Search">
-                        <i class="bi bi-search"></i>
+            <!-- DESKTOP NAVIGATION LINKS -->
+            <ul class="clothe-nav-links d-none d-lg-flex">
+                <li>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="clothe-nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                        Home
                     </a>
+                </li>
+                <li>
+                    <a asp-controller="Shop" asp-action="Index"
+                       class="clothe-nav-link @(currentController == "Shop" ? "active" : "")">
+                        Shop
+                    </a>
+                </li>
 
-                    <!-- WISHLIST -->
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <a asp-controller="Wishlist"
-                           asp-action="Index"
-                           class="google-icon-button"
-                           title="Wishlist">
-                            <i class="bi bi-heart"></i>
+                <!-- Live category dropdown -->
+                @await Component.InvokeAsync("CategoryNav")
+
+                <li>
+                    <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true"
+                       class="clothe-nav-link clothe-nav-link-sale">
+                        Sale
+                        <span class="clothe-sale-pill">HOT</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Home" asp-action="About"
+                       class="clothe-nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")">
+                        About
+                    </a>
+                </li>
+
+                @if (isAdmin)
+                {
+                    <li>
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                           class="clothe-admin-badge" title="Access Admin Control Panel">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
                         </a>
-                    }
+                    </li>
+                }
+            </ul>
 
-                    <!-- CART -->
-                    <a asp-controller="Cart"
+            <!-- LIVE SEARCH BAR (DESKTOP) -->
+            <div class="clothe-nav-search d-none d-lg-block">
+                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form">
+                    <i class="bi bi-search clothe-search-icon"></i>
+                    <input type="text"
+                           name="search"
+                           class="clothe-search-input"
+                           placeholder="Search styles, brands..."
+                           autocomplete="off" />
+                    <button type="submit" class="clothe-search-submit" title="Search">
+                        <i class="bi bi-arrow-right-short"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ACTION BUTTONS & USER PROFILE -->
+            <div class="clothe-nav-actions">
+
+                <!-- WISHLIST -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Wishlist"
                        asp-action="Index"
-                       class="google-icon-button cart-button"
-                       title="Cart">
-                        <i class="bi bi-bag"></i>
-
-                        @if (ViewBag.CartCount != null && ViewBag.CartCount > 0)
+                       class="clothe-action-btn"
+                       title="My Wishlist">
+                        <i class="bi bi-heart"></i>
+                        @if (userWishlistCount > 0)
                         {
-                            <span class="google-cart-count">
-                                @ViewBag.CartCount
-                            </span>
+                            <span class="clothe-badge-count">@userWishlistCount</span>
                         }
                     </a>
+                }
 
-                    @if (User.Identity?.IsAuthenticated == true)
+                <!-- CART -->
+                <a asp-controller="Cart"
+                   asp-action="Index"
+                   class="clothe-action-btn"
+                   title="Shopping Bag">
+                    <i class="bi bi-bag"></i>
+                    @if (userCartCount > 0)
                     {
-                        <!-- ACCOUNT -->
-                        <div class="dropdown">
+                        <span class="clothe-badge-count badge-sale">@userCartCount</span>
+                    }
+                </a>
 
-                            <button class="google-account"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                    type="button">
+                <!-- USER ACCOUNT -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="dropdown">
+                        <button class="clothe-user-trigger"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                type="button"
+                                title="Account settings">
+                            <span class="clothe-user-avatar">@userFirstLetter</span>
+                            <span class="clothe-user-name d-none d-xl-inline">@(string.IsNullOrEmpty(userFirstName) ? "Account" : userFirstName)</span>
+                            <i class="bi bi-chevron-down clothe-user-chevron"></i>
+                        </button>
 
-                                <span class="google-avatar">
-                                    @{
-                                        var firstLetter = User.Identity?.Name?.Substring(0, 1).ToUpper();
-                                    }
-
-                                    @(firstLetter ?? "U")
-                                </span>
-
-                            </button>
-
-                            <ul class="dropdown-menu dropdown-menu-end google-account-menu">
-
-                                <li>
-                                    <div class="account-header">
-
-                                        <div class="google-avatar large">
-                                            @(firstLetter ?? "U")
-                                        </div>
-
-                                        <div>
-                                            <strong>My Account</strong>
-                                            <small>@User.Identity?.Name</small>
-                                        </div>
-
+                        <ul class="dropdown-menu dropdown-menu-end clothe-dropdown-menu">
+                            <li>
+                                <div class="clothe-user-header">
+                                    <div class="clothe-user-header-avatar">@userFirstLetter</div>
+                                    <div class="clothe-user-meta">
+                                        <strong>@userDisplayName</strong>
+                                        <small>@userEmail</small>
+                                        @if (isAdmin)
+                                        {
+                                            <span class="clothe-user-role-badge role-admin">
+                                                <i class="bi bi-shield-check"></i> Admin
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="clothe-user-role-badge role-member">
+                                                <i class="bi bi-stars"></i> Member
+                                            </span>
+                                        }
                                     </div>
-                                </li>
+                                </div>
+                            </li>
+
+                            <li><div class="clothe-dropdown-section-title">My Account</div></li>
+
+                            <li>
+                                <a class="dropdown-item" asp-controller="Profile" asp-action="Index">
+                                    <i class="bi bi-person"></i>
+                                    <span>Profile Overview</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" asp-controller="Orders" asp-action="Index">
+                                    <i class="bi bi-box-seam"></i>
+                                    <span>My Orders</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">
+                                    <i class="bi bi-heart"></i>
+                                    <span>Wishlist</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" asp-controller="Cart" asp-action="Index">
+                                    <i class="bi bi-bag"></i>
+                                    <span>Shopping Bag</span>
+                                </a>
+                            </li>
+
+                            @if (isAdmin)
+                            {
+                                <li><hr class="clothe-dropdown-divider" /></li>
+                                <li><div class="clothe-dropdown-section-title">Administration</div></li>
 
                                 <li>
-                                    <hr class="dropdown-divider" />
-                                </li>
-
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item text-primary fw-bold"
-                                           asp-area="Admin"
-                                           asp-controller="Dashboard"
-                                           asp-action="Index">
-                                            <i class="bi bi-shield-lock"></i>
-                                            Admin Dashboard
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-area="Admin"
-                                           asp-controller="Products"
-                                           asp-action="Index">
-                                            <i class="bi bi-box-seam-fill"></i>
-                                            Manage Products
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
-                                }
-
-                                <li>
-                                    <a class="dropdown-item"
-                                       asp-controller="Profile"
-                                       asp-action="Index">
-                                        <i class="bi bi-person"></i>
-                                        Profile
+                                    <a class="dropdown-item admin-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                        <i class="bi bi-speedometer2"></i>
+                                        <span>Admin Dashboard</span>
                                     </a>
                                 </li>
 
                                 <li>
-                                    <a class="dropdown-item"
-                                       asp-controller="Orders"
-                                       asp-action="Index">
-                                        <i class="bi bi-box-seam"></i>
-                                        My Orders
+                                    <a class="dropdown-item admin-item" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                                        <i class="bi bi-box-seam-fill"></i>
+                                        <span>Manage Products</span>
                                     </a>
                                 </li>
+                            }
 
-                                <li>
-                                    <hr class="dropdown-divider" />
-                                </li>
+                            <li><hr class="clothe-dropdown-divider" /></li>
 
-                                <li>
-                                    <form asp-controller="Account"
-                                          asp-action="Logout"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="dropdown-item logout">
-
-                                            <i class="bi bi-box-arrow-right"></i>
-                                            Sign out
-
-                                        </button>
-
-                                    </form>
-                                </li>
-
-                            </ul>
-
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- LOGIN -->
-                        <a asp-controller="Account"
-                           asp-action="Login"
-                           class="google-login">
-                            Sign in
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="clothe-logout-btn">
+                                        <i class="bi bi-box-arrow-right"></i>
+                                        <span>Sign out</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-none d-sm-flex align-items-center gap-2">
+                        <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
+                            <i class="bi bi-person"></i>
+                            <span>Sign in</span>
                         </a>
 
-                        <!-- REGISTER -->
-                        <a asp-controller="Account"
-                           asp-action="Register"
-                           class="google-register">
-                            Get started
+                        <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
+                            <span>Get started</span>
                         </a>
-                    }
+                    </div>
+                }
 
-                </div>
+                <!-- MOBILE HAMBURGER TOGGLER -->
+                <button class="clothe-mobile-toggler d-lg-none"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#clotheMobileNav"
+                        aria-controls="clotheMobileNav"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <i class="bi bi-list"></i>
+                </button>
 
             </div>
 
+        </div>
+
+        <!-- MOBILE MENU DRAWER (COLLAPSIBLE) -->
+        <div class="collapse d-lg-none" id="clotheMobileNav">
+            <div class="container clothe-mobile-menu">
+
+                <!-- Mobile Search Bar -->
+                <div class="clothe-mobile-search-wrap">
+                    <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form">
+                        <i class="bi bi-search clothe-search-icon"></i>
+                        <input type="text"
+                               name="search"
+                               class="clothe-search-input"
+                               placeholder="Search styles, brands..."
+                               autocomplete="off" />
+                        <button type="submit" class="clothe-search-submit" title="Search">
+                            <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Mobile Navigation List -->
+                <ul class="clothe-mobile-nav-list">
+                    <li class="clothe-mobile-nav-item">
+                        <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                            <span><i class="bi bi-house me-2"></i> Home</span>
+                            <i class="bi bi-chevron-right text-muted small"></i>
+                        </a>
+                    </li>
+                    <li class="clothe-mobile-nav-item">
+                        <a asp-controller="Shop" asp-action="Index" class="@(currentController == "Shop" ? "active" : "")">
+                            <span><i class="bi bi-shop me-2"></i> Shop All</span>
+                            <i class="bi bi-chevron-right text-muted small"></i>
+                        </a>
+                    </li>
+                    <li class="clothe-mobile-nav-item">
+                        <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="sale-item">
+                            <span><i class="bi bi-lightning-charge-fill me-2"></i> Sale & Promotions</span>
+                            <span class="clothe-sale-pill">HOT</span>
+                        </a>
+                    </li>
+                    <li class="clothe-mobile-nav-item">
+                        <a asp-controller="Home" asp-action="About" class="@(currentController == "Home" && currentAction == "About" ? "active" : "")">
+                            <span><i class="bi bi-info-circle me-2"></i> About Us</span>
+                            <i class="bi bi-chevron-right text-muted small"></i>
+                        </a>
+                    </li>
+
+                    @if (isAdmin)
+                    {
+                        <li class="clothe-mobile-nav-item">
+                            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-danger fw-bold">
+                                <span><i class="bi bi-speedometer2 me-2"></i> Admin Dashboard</span>
+                                <i class="bi bi-chevron-right text-muted small"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+
+                <!-- Mobile Auth Buttons (if guest) -->
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div class="clothe-mobile-auth-block">
+                        <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Sign in</span>
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
+                            <span>Create Account</span>
+                        </a>
+                    </div>
+                }
+            </div>
         </div>
 
     </nav>
@@ -298,6 +460,40 @@
     <main>
         @RenderBody()
     </main>
+
+
+    <!-- =====================================================
+         NEWSLETTER STRIP (site-wide, sits above footer)
+    ====================================================== -->
+
+    <section class="newsletter-strip">
+
+        <div class="container">
+
+            <div class="newsletter-strip-inner">
+
+                <div class="newsletter-strip-text">
+                    <span class="newsletter-strip-label">STAY IN THE LOOP</span>
+                    <h3>Get 10% off your first order</h3>
+                    <p>Sign up for drops, deals and style tips. No spam, ever.</p>
+                </div>
+
+                <form class="newsletter-strip-form" id="newsletterForm">
+                    <div class="newsletter-input-wrap">
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" class="newsletter-input" placeholder="Enter your email" required />
+                    </div>
+                    <button type="submit" class="newsletter-submit-btn">
+                        Subscribe
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+
+    </section>
 
 
     <!-- =====================================================
@@ -314,7 +510,6 @@
 
                     <div class="footer-google-logo d-flex align-items-center gap-2 mb-3">
                         <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="height: 35px; width: auto; object-fit: contain;" />
-                        @* <strong>CLOTHÉ</strong> *@
                     </div>
 
                     <p>
@@ -354,16 +549,10 @@
                     </a>
 
                     <a asp-controller="Shop"
-                       asp-action="Index">
+                       asp-action="Index"
+                       asp-route-onSale="true">
 
-                        New Arrivals
-
-                    </a>
-
-                    <a asp-controller="Shop"
-                       asp-action="Index">
-
-                        Best Sellers
+                        Sale
 
                     </a>
 
@@ -393,23 +582,40 @@
 
                     </a>
 
+                    <a asp-controller="Cart"
+                       asp-action="Index">
+
+                        My Cart
+
+                    </a>
+
                 </div>
 
 
                 <div class="footer-column">
 
-                    <h6>HELP</h6>
+                    <h6>COMPANY</h6>
 
-                    <a href="#">
+                    <a asp-controller="Home"
+                       asp-action="About">
+
+                        About Us
+
+                    </a>
+
+                    <a asp-controller="Home"
+                       asp-action="About"
+                       asp-fragment="contact">
+
                         Contact Us
+
                     </a>
 
-                    <a href="#">
-                        Shipping
-                    </a>
+                    <a asp-controller="Home"
+                       asp-action="Privacy">
 
-                    <a href="#">
-                        Returns
+                        Privacy Policy
+
                     </a>
 
                 </div>
@@ -440,6 +646,167 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- =====================================================
+         PROMO BAR: countdown + dismiss (resets daily)
+    ====================================================== -->
+    <script>
+            (function () {
+                var bar = document.getElementById('promoBar');
+                var closeBtn = document.getElementById('promoBarClose');
+
+                // Hide for the rest of the browser session if dismissed
+                if (sessionStorage.getItem('promoBarDismissed') === '1') {
+                    if (bar) bar.style.display = 'none';
+                }
+
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function () {
+                        bar.style.display = 'none';
+                        sessionStorage.setItem('promoBarDismissed', '1');
+                    });
+                }
+
+                // Countdown to the next midnight (rolls over daily)
+                function updateCountdown() {
+                    var now = new Date();
+                    var midnight = new Date(now);
+                    midnight.setHours(24, 0, 0, 0);
+
+                    var diff = midnight - now;
+                    var hours = Math.floor(diff / (1000 * 60 * 60));
+                    var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    var hEl = document.getElementById('cd-h');
+                    var mEl = document.getElementById('cd-m');
+                    var sEl = document.getElementById('cd-s');
+
+                    if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+                    if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+                    if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
+                }
+
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+            })();
+    </script>
+
+    <!-- =====================================================
+         NEWSLETTER FORM (placeholder handler — wire up to your
+         real endpoint / controller action when ready)
+    ====================================================== -->
+    <script>
+            (function () {
+                var form = document.getElementById('newsletterForm');
+                if (!form) return;
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var input = form.querySelector('.newsletter-input');
+                    var btn = form.querySelector('.newsletter-submit-btn');
+
+                    if (!input || !input.value) return;
+
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Subscribed!';
+                    btn.disabled = true;
+                    input.value = '';
+
+                    setTimeout(function () {
+                        btn.innerHTML = 'Subscribe <i class="bi bi-arrow-right"></i>';
+                        btn.disabled = false;
+                    }, 2500);
+                });
+            })();
+    </script>
+
+    <!-- =====================================================
+         NAVBAR SCROLL LISTENER
+    ====================================================== -->
+    <script>
+        (function() {
+            var navbar = document.querySelector('.clothe-navbar');
+            if (!navbar) return;
+
+            function handleScroll() {
+                if (window.scrollY > 15) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            handleScroll();
+        })();
+    </script>
+
+    <!-- =====================================================
+         GLOBAL CART TOAST NOTIFICATION
+    ====================================================== -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 2050;">
+        <div id="cartToast" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 14px; background: #0f172a; color: white;">
+            <div class="d-flex p-2 align-items-center">
+                <div class="toast-body d-flex align-items-center gap-3">
+                    <span class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+                        <i class="bi bi-check-lg"></i>
+                    </span>
+                    <div>
+                        <div class="fw-bold small" id="cartToastTitle">Added to bag!</div>
+                        <div class="text-white-50 small" id="cartToastMsg">Item has been added to your shopping bag.</div>
+                    </div>
+                </div>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-light rounded-pill ms-auto me-2 px-3 fw-semibold">View Bag</a>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         CART EVENT LISTENER & REAL-TIME BADGE UPDATER
+    ====================================================== -->
+    <script>
+        window.showCartToast = function(title, message) {
+            const toastEl = document.getElementById('cartToast');
+            if (!toastEl) return;
+            if (title) document.getElementById('cartToastTitle').textContent = title;
+            if (message) document.getElementById('cartToastMsg').textContent = message;
+            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3500 });
+            toast.show();
+        };
+
+        document.addEventListener('cart:updated', async function(e) {
+            if (e && e.detail && e.detail.toast) {
+                window.showCartToast(e.detail.title || "Added to bag!", e.detail.message || "Item was successfully added.");
+            }
+
+            try {
+                const res = await fetch('/Cart/GetCount');
+                if (res.ok) {
+                    const data = await res.json();
+                    const cartBtns = document.querySelectorAll('.clothe-action-btn[title="Shopping Bag"]');
+                    cartBtns.forEach(btn => {
+                        let badge = btn.querySelector('.clothe-badge-count');
+                        if (data.count > 0) {
+                            if (badge) {
+                                badge.textContent = data.count;
+                                badge.classList.remove('d-none');
+                            } else {
+                                badge = document.createElement('span');
+                                badge.className = 'clothe-badge-count badge-sale';
+                                badge.textContent = data.count;
+                                btn.appendChild(badge);
+                            }
+                        } else if (badge) {
+                            badge.classList.add('d-none');
+                        }
+                    });
+                }
+            } catch(err) {
+                console.error('Failed to refresh cart count', err);
+            }
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 

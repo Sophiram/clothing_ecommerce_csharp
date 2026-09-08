@@ -11,369 +11,1914 @@
         Model.Images?.FirstOrDefault(x => x.IsPrimary)
         ?? Model.Images?.FirstOrDefault();
 
-    var images =
-        Model.Images?.ToList()
+    var images = Model.Images?.ToList()
         ?? new List<WebApplication_ClothingEcommerce.Models.ProductImage>();
 
-    var variants =
-        Model.Variants?
-            .Where(v => v.Status == VariantStatus.Available)
-            .ToList()
+    var variants = Model.Variants?
+        .Where(v => v.Status == VariantStatus.Available)
+        .ToList()
         ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
 
-    var minPrice =
-        variants
-            .Select(v => v.Price)
-            .DefaultIfEmpty(0)
-            .Min();
+    var minPrice = variants
+        .Select(v => v.Price)
+        .DefaultIfEmpty(0)
+        .Min();
 
-    var totalStock =
-        variants.Sum(v => v.Inventory?.AvailableQuantity ?? 0);
+    var maxPrice = variants
+        .Select(v => v.Price)
+        .DefaultIfEmpty(0)
+        .Max();
+
+    var totalStock = variants.Sum(v => v.Inventory?.AvailableQuantity ?? 0);
+
+    var reviews = Model.Reviews?
+        .OrderByDescending(x => x.CreatedAt)
+        .ToList()
+        ?? new List<WebApplication_ClothingEcommerce.Models.Review>();
+
+    var averageRating = reviews.Any()
+        ? reviews.Average(x => x.Rating)
+        : 0;
+
+    var fullStars = (int)Math.Floor(averageRating);
+    var hasHalfStar = averageRating - fullStars >= 0.5;
+
+    var isSignedIn = SignInManager.IsSignedIn(User);
 }
 
-<!-- =========================================================
-     BREADCRUMB & TOP HEADER
-========================================================= -->
-<section class="py-3 bg-light border-bottom">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item">
-                    <a asp-controller="Shop" asp-action="Index" class="text-decoration-none text-secondary">
-                        <i class="bi bi-shop me-1"></i> Shop
-                    </a>
-                </li>
-                <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">
-                    @Model.Name
-                </li>
-            </ol>
-        </nav>
-    </div>
-</section>
+<style>
+    /* =========================================
+               PRODUCT DETAILS — BOLD & VIBRANT THEME
+               (re-themed to use the site-wide Google color
+               system instead of a standalone black/gray palette)
+            ========================================== */
 
-<!-- =========================================================
-     PRODUCT DETAILS
-========================================================= -->
-<section class="py-5 bg-light">
-    <div class="container py-lg-3">
+    .product-page {
+        background: #fff;
+        color: var(--text, #202124);
+    }
 
-        <div class="row g-4 g-lg-5">
+    .product-breadcrumb {
+        border-bottom: 1px solid var(--border, #eeeeee);
+    }
 
-            <!-- =================================================
-                 PRODUCT IMAGES GALLERY
-            ================================================== -->
-            <div class="col-lg-6">
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
-                    <div class="bg-white d-flex align-items-center justify-content-center p-3">
-                        @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
-                        {
-                            <img id="mainProductImage"
-                                 src="@primaryImage.ImageUrl"
-                                 alt="@Model.Name"
-                                 class="img-fluid rounded-3 w-100"
-                                 style="height: 500px; object-fit: cover; transition: all 0.3s ease;" />
-                        }
-                        else
-                        {
-                            <div class="d-flex align-items-center justify-content-center bg-light w-100 rounded-3"
-                                 style="height: 500px;">
-                                <i class="bi bi-image display-1 text-secondary"></i>
+        .product-breadcrumb a {
+            color: var(--gray, #777);
+            transition: color .2s ease;
+        }
+
+            .product-breadcrumb a:hover {
+                color: var(--google-blue, #4285F4);
+            }
+
+    /* Gallery */
+
+    .product-gallery {
+        position: sticky;
+        top: 90px;
+    }
+
+    .main-image-wrapper {
+        position: relative;
+        background: #f7f7f5;
+        border-radius: 24px;
+        overflow: hidden;
+        aspect-ratio: 4 / 5;
+    }
+
+    .main-product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .5s ease, opacity .2s ease;
+    }
+
+    .main-image-wrapper:hover .main-product-image {
+        transform: scale(1.025);
+    }
+
+    .gallery-badge {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 2;
+        background: linear-gradient(90deg, var(--google-blue), var(--google-green));
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        box-shadow: 0 6px 16px rgba(66,133,244,.25);
+    }
+
+    .gallery-actions {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        z-index: 2;
+    }
+
+    .gallery-action-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 0;
+        background: rgba(255,255,255,.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: var(--black, #202124);
+        transition: all .2s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,.08);
+    }
+
+        .gallery-action-btn:hover {
+            transform: translateY(-2px);
+            background: var(--google-blue, #4285F4);
+            color: #fff;
+        }
+
+    .thumbnail-strip {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 4px 2px;
+        scrollbar-width: none;
+    }
+
+        .thumbnail-strip::-webkit-scrollbar {
+            display: none;
+        }
+
+    .product-thumbnail {
+        flex: 0 0 78px;
+        height: 96px;
+        border: 1px solid #e5e5e5;
+        border-radius: 12px;
+        padding: 0;
+        overflow: hidden;
+        background: #f7f7f5;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+
+        .product-thumbnail:hover {
+            border-color: var(--google-blue, #4285F4);
+        }
+
+        .product-thumbnail.active {
+            border: 2px solid var(--google-blue, #4285F4);
+        }
+
+        .product-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    /* Information */
+
+    .product-info {
+        padding-left: 15px;
+    }
+
+    .brand-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--black, #202124);
+        margin-bottom: 18px;
+    }
+
+    .brand-logo {
+        width: 38px;
+        height: 38px;
+        border: 1px solid #e5e5e5;
+        border-radius: 50%;
+        object-fit: contain;
+        background: #fff;
+    }
+
+    .brand-name {
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        color: var(--google-blue, #4285F4);
+    }
+
+    .product-title {
+        font-size: clamp(2rem, 4vw, 3.3rem);
+        line-height: 1.05;
+        font-weight: 700;
+        letter-spacing: -.04em;
+        margin-bottom: 18px;
+        color: var(--black, #202124);
+    }
+
+    .product-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        color: var(--gray, #777);
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .rating-stars {
+        color: var(--google-yellow-dark, #F9AB00);
+        letter-spacing: 2px;
+    }
+
+    .price-block {
+        padding: 22px 0;
+        border-top: 1px solid var(--border, #eeeeee);
+        border-bottom: 1px solid var(--border, #eeeeee);
+        margin-bottom: 25px;
+    }
+
+    .current-price {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -.03em;
+        color: var(--black, #202124);
+    }
+
+    .price-range {
+        color: var(--gray, #777);
+        font-size: 14px;
+    }
+
+    .product-description {
+        color: var(--gray, #666);
+        line-height: 1.8;
+        font-size: 15px;
+        margin-bottom: 28px;
+    }
+
+    /* Product facts */
+
+    .product-facts {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 28px;
+    }
+
+    .product-fact {
+        background: var(--light-gray, #f8f8f6);
+        border-radius: 14px;
+        padding: 15px;
+        border-left: 3px solid transparent;
+    }
+
+        .product-fact:nth-child(1) {
+            border-left-color: var(--google-blue);
+        }
+
+        .product-fact:nth-child(2) {
+            border-left-color: var(--google-red);
+        }
+
+        .product-fact:nth-child(3) {
+            border-left-color: var(--google-green);
+        }
+
+        .product-fact:nth-child(4) {
+            border-left-color: var(--google-yellow-dark);
+        }
+
+    .product-fact-label {
+        display: block;
+        color: #888;
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: .1em;
+        margin-bottom: 5px;
+    }
+
+    .product-fact-value {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--black, #202124);
+    }
+
+    /* Variant */
+
+    .variant-section {
+        margin-top: 10px;
+    }
+
+    .variant-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+        .variant-label strong {
+            font-size: 13px;
+        }
+
+        .variant-label span {
+            font-size: 12px;
+            color: var(--gray, #777);
+        }
+
+    .variant-select {
+        height: 54px;
+        border: 1px solid #dcdcdc;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-size: 14px;
+        width: 100%;
+        background-color: #fff;
+    }
+
+        .variant-select:focus {
+            border-color: var(--google-blue, #4285F4);
+            box-shadow: 0 0 0 3px rgba(66,133,244,.12);
+            outline: none;
+        }
+
+    .stock-status {
+        margin-top: 9px;
+        font-size: 13px;
+    }
+
+    .stock-available {
+        color: var(--google-green-dark, #188038);
+    }
+
+    .stock-low {
+        color: var(--google-yellow-dark, #F9AB00);
+    }
+
+    .stock-empty {
+        color: var(--google-red-dark, #C5221F);
+    }
+
+    /* Purchase */
+
+    .purchase-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        height: 56px;
+        border: 1px solid #dcdcdc;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .quantity-btn {
+        width: 42px;
+        height: 100%;
+        border: 0;
+        background: #fff;
+        font-size: 18px;
+        color: var(--black, #202124);
+    }
+
+        .quantity-btn:hover {
+            background: var(--blue-soft, #eaf2ff);
+            color: var(--google-blue, #4285F4);
+        }
+
+    .quantity-input {
+        width: 45px;
+        height: 100%;
+        border: 0;
+        text-align: center;
+        font-weight: 600;
+        outline: none;
+    }
+
+    .add-cart-btn {
+        height: 56px;
+        flex: 1;
+        border: 0;
+        border-radius: 12px;
+        background: var(--google-blue, #4285F4);
+        color: #fff;
+        font-weight: 700;
+        transition: all .2s ease;
+        box-shadow: 0 8px 20px rgba(66,133,244,.25);
+    }
+
+        .add-cart-btn:hover:not(:disabled) {
+            background: var(--google-blue-dark, #3367D6);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 26px rgba(66,133,244,.32);
+        }
+
+        .add-cart-btn:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+    .wishlist-btn {
+        height: 56px;
+        width: 56px;
+        flex: 0 0 56px;
+        border: 1px solid #dcdcdc;
+        background: #fff;
+        border-radius: 12px;
+        font-size: 19px;
+        color: var(--black, #202124);
+        transition: all .2s ease;
+    }
+
+        .wishlist-btn:hover {
+            border-color: var(--google-red, #EA4335);
+            background: var(--google-red, #EA4335);
+            color: #fff;
+        }
+
+    /* Service */
+
+    .service-list {
+        margin-top: 28px;
+        border-top: 1px solid var(--border, #eeeeee);
+    }
+
+    .service-item {
+        display: flex;
+        gap: 14px;
+        padding: 17px 0;
+        border-bottom: 1px solid var(--border, #eeeeee);
+    }
+
+    .service-icon {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .service-item:nth-child(1) .service-icon {
+        background: var(--blue-soft, #eaf2ff);
+        color: var(--google-blue, #4285F4);
+    }
+
+    .service-item:nth-child(2) .service-icon {
+        background: var(--green-soft, #edf8f1);
+        color: var(--google-green, #34A853);
+    }
+
+    .service-item:nth-child(3) .service-icon {
+        background: var(--yellow-soft, #fff8e1);
+        color: var(--google-yellow-dark, #F9AB00);
+    }
+
+    .service-item strong {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 2px;
+        color: var(--black, #202124);
+    }
+
+    .service-item span {
+        color: var(--gray, #777);
+        font-size: 12px;
+    }
+
+    /* Modern Variant Chips */
+    .variant-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .variant-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 13px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #1e293b;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .variant-chip:hover {
+        border-color: #0f172a;
+        background: #f8fafc;
+    }
+
+    .variant-chip.active {
+        border-color: #0f172a;
+        background: #0f172a;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    }
+
+    .variant-chip.disabled {
+        opacity: 0.4;
+        text-decoration: line-through;
+        pointer-events: none;
+        background: #f1f5f9;
+    }
+
+    .variant-chip .chip-stock-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22c55e;
+        flex-shrink: 0;
+    }
+
+    .variant-chip.active .chip-stock-dot {
+        background: #4ade80;
+    }
+
+    /* Review Breakdown */
+    .review-breakdown-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .review-breakdown-bar {
+        flex: 1;
+        height: 7px;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+
+    .review-breakdown-fill {
+        height: 100%;
+        background: #f59e0b;
+        border-radius: 9999px;
+        transition: width 0.4s ease;
+    }
+
+    .star-picker-item {
+        transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    .star-picker-item:hover {
+        transform: scale(1.2);
+    }
+
+    /* Lower content */
+
+    .detail-section {
+        border-top: 1px solid var(--border, #eeeeee);
+        margin-top: 80px;
+        padding-top: 60px;
+    }
+
+    .section-eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .15em;
+        font-weight: 800;
+        color: var(--google-blue, #4285F4);
+        margin-bottom: 8px;
+    }
+
+    .section-title {
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -.03em;
+        color: var(--black, #202124);
+    }
+
+    .review-summary {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 24px;
+        background: linear-gradient(120deg, var(--yellow-soft, #fff8e1), #fff);
+        border-radius: 18px;
+        margin-bottom: 28px;
+        border: 1px solid var(--border, #eeeeee);
+    }
+
+    .review-score {
+        font-size: 42px;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--black, #202124);
+    }
+
+    .review-card {
+        padding: 22px 0;
+        border-bottom: 1px solid var(--border, #eeeeee);
+    }
+
+    .review-author {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--black, #202124);
+    }
+
+    .review-date {
+        color: #999;
+        font-size: 12px;
+    }
+
+    .review-comment {
+        color: var(--gray, #666);
+        line-height: 1.7;
+        margin: 10px 0 0;
+    }
+
+    /* Sticky mobile add-to-cart bar (NEW) */
+
+    .sticky-mobile-cta {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1050;
+        background: #fff;
+        border-top: 1px solid var(--border, #eeeeee);
+        box-shadow: 0 -8px 24px rgba(0,0,0,.08);
+        padding: 12px 16px;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        transform: translateY(100%);
+        transition: transform .3s ease;
+    }
+
+        .sticky-mobile-cta.visible {
+            transform: translateY(0);
+        }
+
+        .sticky-mobile-cta .sticky-price {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--black, #202124);
+            white-space: nowrap;
+        }
+
+        .sticky-mobile-cta button {
+            flex: 1;
+            height: 46px;
+            border: 0;
+            border-radius: 30px;
+            background: var(--google-blue, #4285F4);
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+            .sticky-mobile-cta button:disabled {
+                opacity: .5;
+            }
+
+    /* Mobile */
+
+    @@media (max-width: 991.98px) {
+        .product-gallery {
+            position: static;
+        }
+
+        .product-info {
+            padding-left: 0;
+        }
+
+        .main-image-wrapper {
+            border-radius: 18px;
+        }
+
+        .detail-section {
+            margin-top: 50px;
+            padding-top: 40px;
+        }
+
+        .sticky-mobile-cta {
+            display: flex;
+        }
+        /* leave room so the sticky bar doesn't cover content */
+        .product-page {
+            padding-bottom: 76px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .product-title {
+            font-size: 2rem;
+        }
+
+        .purchase-row {
+            flex-wrap: wrap;
+        }
+
+        .quantity-control {
+            flex: 0 0 100%;
+        }
+
+        .add-cart-btn {
+            flex: 1;
+        }
+
+        .wishlist-btn {
+            flex: 0 0 56px;
+        }
+
+        .product-facts {
+            gap: 8px;
+        }
+
+        .product-fact {
+            padding: 12px;
+        }
+    }
+</style>
+
+<div class="product-page">
+
+    <!-- =========================================
+         BREADCRUMB
+    ========================================== -->
+
+    <section class="product-breadcrumb py-3">
+        <div class="container">
+
+            <nav aria-label="breadcrumb">
+
+                <ol class="breadcrumb mb-0 small">
+
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Home"
+                           asp-action="Index"
+                           class="text-decoration-none">
+                            Home
+                        </a>
+                    </li>
+
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Shop"
+                           asp-action="Index"
+                           class="text-decoration-none">
+                            Shop
+                        </a>
+                    </li>
+
+                    @if (Model.Category != null)
+                    {
+                        <li class="breadcrumb-item">
+                            <a asp-controller="Shop"
+                               asp-action="Index"
+                               asp-route-categoryId="@Model.Category.Id"
+                               class="text-decoration-none">
+                                @Model.Category.Name
+                            </a>
+                        </li>
+                    }
+
+                    <li class="breadcrumb-item active text-dark fw-semibold"
+                        aria-current="page">
+                        @Model.Name
+                    </li>
+
+                </ol>
+
+            </nav>
+
+        </div>
+    </section>
+
+
+    <!-- =========================================
+         PRODUCT
+    ========================================== -->
+
+    <section class="py-4 py-lg-5">
+
+        <div class="container">
+
+            <div class="row g-5">
+
+                <!-- =================================
+                     GALLERY
+                ================================== -->
+
+                <div class="col-lg-7">
+
+                    <div class="product-gallery">
+
+                        <div class="main-image-wrapper">
+
+                            <span class="gallery-badge">
+                                CLOTHÉ
+                            </span>
+
+                            <div class="gallery-actions">
+
+                                <button type="button"
+                                        class="gallery-action-btn"
+                                        onclick="toggleFullscreen()"
+                                        aria-label="View image fullscreen">
+
+                                    <i class="bi bi-arrows-fullscreen"></i>
+
+                                </button>
+
                             </div>
-                        }
-                    </div>
-                </div>
 
-                <!-- THUMBNAILS -->
-                @if (images.Count > 1)
-                {
-                    <div class="row g-2">
-                        @foreach (var image in images)
-                        {
-                            if (!string.IsNullOrWhiteSpace(image.ImageUrl))
+                            @if (primaryImage != null &&
+                                 !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
                             {
-                                <div class="col-3">
-                                    <button type="button"
-                                            class="btn p-0 w-100 border-0 rounded-3 overflow-hidden shadow-sm thumbnail-btn"
-                                            onclick="changeImage('@image.ImageUrl')">
-                                        <img src="@image.ImageUrl"
-                                             class="img-fluid border"
-                                             alt="@Model.Name"
-                                             style="height: 90px; width: 100%; object-fit: cover;" />
-                                    </button>
+                                <img id="mainProductImage"
+                                     src="@primaryImage.ImageUrl"
+                                     alt="@Model.Name"
+                                     class="main-product-image" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center h-100">
+
+                                    <i class="bi bi-image display-1 text-secondary"></i>
+
                                 </div>
                             }
-                        }
-                    </div>
-                }
-            </div>
 
-            <!-- =================================================
-                 PRODUCT INFORMATION & PURCHASE
-            ================================================== -->
-            <div class="col-lg-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-between">
-                        <div>
-                            <!-- BRAND & STATUS -->
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2 mb-3">
+                        </div>
 
-                                    @if (!string.IsNullOrWhiteSpace(Model.Brand?.Logo))
+
+                        @if (images.Count > 0)
+                        {
+                            <div class="thumbnail-strip mt-3">
+
+                                @foreach (var image in images)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(image.ImageUrl))
                                     {
-                                        <img src="@Model.Brand.Logo"
-                                             alt="@Model.Brand.Name"
-                                             class="rounded border bg-white"
-                                             style="width:42px;height:42px;object-fit:contain;" />
+                                        <button type="button"
+                                                class="product-thumbnail @(image == primaryImage ? "active" : "")"
+                                                onclick="changeImage(this, '@image.ImageUrl')">
+
+                                            <img src="@image.ImageUrl"
+                                                 alt="@Model.Name" />
+
+                                        </button>
+                                    }
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================
+                     PRODUCT INFORMATION
+                ================================== -->
+
+                <div class="col-lg-5">
+
+                    <div class="product-info">
+
+                        <!-- BRAND -->
+
+                        <a asp-controller="Shop"
+                           asp-action="Index"
+                           asp-route-brandId="@Model.Brand?.Id"
+                           class="brand-link">
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Brand?.Logo))
+                            {
+                                <img src="@Model.Brand.Logo"
+                                     alt="@Model.Brand.Name"
+                                     class="brand-logo" />
+                            }
+                            else
+                            {
+                                <span class="brand-logo d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-award"></i>
+                                </span>
+                            }
+
+                            <span class="brand-name">
+                                @(Model.Brand?.Name ?? "CLOTHÉ")
+                            </span>
+
+                        </a>
+
+
+                        <!-- TITLE -->
+
+                        <h1 class="product-title">
+                            @Model.Name
+                        </h1>
+
+
+                        <!-- META -->
+
+                        <div class="product-meta">
+
+                            @if (reviews.Any())
+                            {
+                                <span class="d-flex align-items-center gap-2">
+
+                                    <span class="rating-stars">
+
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= fullStars)
+                                            {
+                                                <i class="bi bi-star-fill"></i>
+                                            }
+                                            else if (i == fullStars + 1 && hasHalfStar)
+                                            {
+                                                <i class="bi bi-star-half"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star"></i>
+                                            }
+                                        }
+
+                                    </span>
+
+                                    <strong class="text-dark">
+                                        @averageRating.ToString("0.0")
+                                    </strong>
+
+                                    <span>
+                                        (@reviews.Count reviews)
+                                    </span>
+
+                                </span>
+                            }
+
+                            @if (Model.Category != null)
+                            {
+                                <span>
+                                    <i class="bi bi-dot"></i>
+                                    @Model.Category.Name
+                                </span>
+                            }
+
+                        </div>
+
+
+                        <!-- PRICE -->
+
+                        <div class="price-block">
+
+                            <div id="productPrice"
+                                 class="current-price">
+
+                                @if (minPrice > 0)
+                                {
+                                    @if (minPrice == maxPrice)
+                                    {
+                                        @:$@minPrice.ToString("0.00")
                                     }
                                     else
                                     {
-                                        <div class="rounded border bg-light d-flex align-items-center justify-content-center"
-                                             style="width:42px;height:42px;">
-
-                                            <i class="bi bi-award text-secondary"></i>
-
-                                        </div>
+                                        @:$@minPrice.ToString("0.00")
                                     }
-
-                                    <div>
-
-                                        <div class="text-uppercase small fw-bold text-primary">
-                                            @(Model.Brand?.Name ?? "CLOTHÉ")
-                                        </div>
-
-                                        <small class="text-muted">
-                                            Official Brand
-                                        </small>
-
-                                    </div>
-
-                                </div>
-
-                                @if (totalStock > 0)
-                                {
-                                    <span class="badge rounded-pill text-bg-success px-3 py-2">
-                                        <i class="bi bi-check-circle-fill me-1"></i> In Stock
-                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge rounded-pill text-bg-danger px-3 py-2">
-                                        <i class="bi bi-x-circle-fill me-1"></i> Out of Stock
+                                    <span class="text-secondary">
+                                        Contact us
                                     </span>
                                 }
+
                             </div>
 
-                            <!-- NAME -->
-                            <h1 class="fw-bold display-6 mb-3">
-                                @Model.Name
-                            </h1>
-
-                            <!-- PRICE -->
-                            <div class="fs-2 fw-bold text-dark mb-3">
-                                @if (minPrice > 0)
-                                {
-                                    <span class="text-secondary fs-5 fw-normal">From</span>
-                                    <span>$@minPrice.ToString("0.00")</span>
-                                }
-                                else
-                                {
-                                    <span class="text-secondary fs-4">Contact us</span>
-                                }
-                            </div>
-
-                            <!-- DESCRIPTION -->
-                            <p class="text-secondary lh-lg mb-4">
-                                @(Model.Description ?? "No description available for this product.")
-                            </p>
-
-                            <!-- MATERIAL & GENDER HIGHLIGHTS -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="bg-light rounded-3 p-3 border border-1 border-light-subtle">
-                                        <small class="text-secondary fw-bold d-block text-uppercase mb-1">
-                                            <i class="bi bi-layers me-1 text-primary"></i> Material
-                                        </small>
-                                        <span class="fw-semibold text-dark">
-                                            @(Model.Material ?? "N/A")
-                                        </span>
-                                    </div>
+                            @if (minPrice > 0 && minPrice != maxPrice)
+                            {
+                                <div id="priceRange"
+                                     class="price-range mt-1">
+                                    Price varies by option
                                 </div>
-                                <div class="col-6">
-                                    <div class="bg-light rounded-3 p-3 border border-1 border-light-subtle">
-                                        <small class="text-secondary fw-bold d-block text-uppercase mb-1">
-                                            <i class="bi bi-gender-ambiguous me-1 text-primary"></i> Gender
-                                        </small>
-                                        <span class="fw-semibold text-dark">
-                                            @Model.Gender
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                            }
+
                         </div>
 
-                        <!-- =================================================
-                             ADD TO CART & ACTIONS
-                        ================================================== -->
-                        <div>
-                            <hr class="my-4" />
 
-                            @if (variants.Count > 0)
-                            {
-                                <form asp-controller="Cart" asp-action="Add" method="post">
-                                    @Html.AntiForgeryToken()
+                        <!-- DESCRIPTION -->
 
-                                    <!-- VARIANT SELECT -->
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">
-                                            Select Option (Size / Color)
-                                        </label>
-                                        <select name="variantId" class="form-select form-select-lg rounded-3 fs-6" required>
-                                            <option value="">Choose a variant...</option>
-                                            @foreach (var variant in variants)
-                                            {
-                                                var stock = variant.Inventory?.AvailableQuantity ?? 0;
-                                                <option value="@variant.Id" disabled="@(stock <= 0)">
-                                                    @(variant.Size?.Name ?? "One Size") / @(variant.Color?.Name ?? "Default") - $@variant.Price.ToString("0.00") @(stock <= 0 ? "(Out of Stock)" : $"({stock} available)")
-                                                </option>
-                                            }
-                                        </select>
+                        <p class="product-description">
+                            @(Model.Description ??
+                              "Designed with comfort, quality and everyday style in mind.")
+                        </p>
+
+
+                        <!-- PRODUCT FACTS -->
+
+                        <div class="product-facts">
+
+                            <div class="product-fact">
+
+                                <span class="product-fact-label">
+                                    Material
+                                </span>
+
+                                <span class="product-fact-value">
+                                    @(Model.Material ?? "Premium")
+                                </span>
+
+                            </div>
+
+                            <div class="product-fact">
+
+                                <span class="product-fact-label">
+                                    Gender
+                                </span>
+
+                                <span class="product-fact-value">
+                                    @Model.Gender
+                                </span>
+
+                            </div>
+
+                            <div class="product-fact">
+
+                                <span class="product-fact-label">
+                                    Availability
+                                </span>
+
+                                <span id="productAvailability"
+                                      class="product-fact-value">
+
+                                    @if (totalStock > 0)
+                                    {
+                                        <span class="text-success">
+                                            In Stock
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">
+                                            Out of Stock
+                                        </span>
+                                    }
+
+                                </span>
+
+                            </div>
+
+                            <div class="product-fact">
+
+                                <span class="product-fact-label">
+                                    Collection
+                                </span>
+
+                                <span class="product-fact-value">
+                                    CLOTHÉ
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- =================================
+                             CART
+                        ================================== -->
+                        @if (variants.Count > 0)
+                        {
+                            <form asp-controller="Cart"
+                                  asp-action="Add"
+                                  method="post"
+                                  id="addToCartForm">
+
+                                @Html.AntiForgeryToken()
+
+                                <div class="variant-section">
+
+                                    <div class="variant-label">
+
+                                        <strong>
+                                            Select option
+                                        </strong>
+
+                                        <span>
+                                            Size / Color
+                                        </span>
+
                                     </div>
 
-                                    <!-- QUANTITY & ADD TO CART ROW -->
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-4 col-md-3">
-                                            <label class="form-label fw-semibold">Qty</label>
+                                    <select name="variantId"
+                                            id="variantSelect"
+                                            class="variant-select"
+                                            required>
+
+                                        <option value="">
+                                            Choose your option
+                                        </option>
+
+                                        @foreach (var variant in variants)
+                                        {
+                                            var stock = variant.Inventory?.AvailableQuantity ?? 0;
+
+                                            <option value="@variant.Id"
+                                                    data-price="@variant.Price"
+                                                    data-stock="@stock"
+                                                    disabled="@(stock <= 0)">
+
+                                                @(variant.Size?.Name ?? "One Size")
+                                                /
+                                                @(variant.Color?.Name ?? "Default")
+                                                — $@variant.Price.ToString("0.00")
+
+                                                @if (stock <= 0)
+                                                {
+                                                    @: — Out of Stock
+                                                }
+
+                                            </option>
+                                        }
+
+                                    </select>
+
+
+                                    <div id="stockMessage"
+                                         class="stock-status">
+
+                                        @if (totalStock > 0)
+                                        {
+                                            <span class="stock-available">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                In stock — select an option
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="stock-empty">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                Currently unavailable
+                                            </span>
+                                        }
+
+                                    </div>
+
+
+                                    <div class="purchase-row">
+
+                                        <div class="quantity-control">
+
+                                            <button type="button"
+                                                    class="quantity-btn"
+                                                    onclick="changeQuantity(-1)">
+                                                −
+                                            </button>
+
                                             <input type="number"
                                                    name="quantity"
+                                                   id="quantityInput"
                                                    value="1"
                                                    min="1"
-                                                   max="10"
-                                                   class="form-control form-control-lg rounded-3 fs-6 text-center" />
-                                        </div>
-                                        <div class="col-8 col-md-9 d-flex align-items-end">
-                                            <button type="submit"
-                                                    class="btn btn-dark btn-lg rounded-3 w-100 shadow-sm"
-                                                    disabled="@(totalStock <= 0)">
-                                                <i class="bi bi-bag-plus me-2"></i> Add to Cart
+                                                   max="1"
+                                                   class="quantity-input"
+                                                   readonly />
+
+                                            <button type="button"
+                                                    class="quantity-btn"
+                                                    onclick="changeQuantity(1)">
+                                                +
                                             </button>
+
                                         </div>
+
+
+                                        <button type="submit"
+                                                id="addCartButton"
+                                                class="add-cart-btn"
+                                                disabled="@(isSignedIn ? "disabled" : null)">
+
+                                            @if (isSignedIn)
+                                            {
+                                                <i class="bi bi-bag-plus me-2"></i>
+                                                @:Add to Cart
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                                @:Sign in to Add to Cart
+                                            }
+
+                                        </button>
+
+
+                                        <!-- WISHLIST -->
+                                        @if (SignInManager.IsSignedIn(User))
+                                        {
+                                            <button type="button"
+                                                    class="wishlist-btn"
+                                                    onclick="document.getElementById('wishlistForm').submit()"
+                                                    title="Add to wishlist">
+
+                                                <i class="bi bi-heart"></i>
+
+                                            </button>
+                                        }
+
                                     </div>
+
+                                </div>
+
+                            </form>
+
+
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                                <form id="wishlistForm"
+                                      asp-controller="Wishlist"
+                                      asp-action="Add"
+                                      method="post"
+                                      class="d-none">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           id="wishlistVariantId"
+                                           name="variantId"
+                                           value="" />
+
                                 </form>
                             }
                             else
                             {
-                                <div class="alert alert-warning rounded-3 border-0 shadow-sm mb-3">
-                                    <i class="bi bi-exclamation-triangle me-2"></i> No available variants for this product.
-                                </div>
-                            }
+                                <a asp-controller="Account"
+                                   asp-action="Login"
+                                   class="d-block text-center text-secondary small mt-3 text-decoration-none">
 
-                            <!-- WISHLIST ACTION -->
-                            @if (SignInManager.IsSignedIn(User) && variants.Count > 0)
-                            {
-                                <form asp-controller="Wishlist" asp-action="Add" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="variantId" value="@variants.First().Id" />
-                                    <button type="submit" class="btn btn-outline-dark btn-lg rounded-3 w-100">
-                                        <i class="bi bi-heart me-2"></i> Add to Wishlist
-                                    </button>
-                                </form>
-                            }
-                            else if (!SignInManager.IsSignedIn(User))
-                            {
-                                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-dark btn-lg rounded-3 w-100">
-                                    <i class="bi bi-heart me-2"></i> Sign in to add wishlist
+                                    <i class="bi bi-heart me-1"></i>
+                                    Sign in to add this product to your wishlist
+
                                 </a>
                             }
+                        }
+                        else
+                        {
+                            <div class="alert alert-light border rounded-3">
+
+                                <i class="bi bi-info-circle me-2"></i>
+
+                                This product currently has no available options.
+
+                            </div>
+                        }
+
+
+                        <!-- =================================
+                             SERVICES
+                        ================================== -->
+
+                        <div class="service-list">
+
+                            <div class="service-item">
+
+                                <div class="service-icon">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+
+                                <div>
+                                    <strong>Fast delivery</strong>
+                                    <span>Reliable delivery for your order.</span>
+                                </div>
+
+                            </div>
+
+
+                            <div class="service-item">
+
+                                <div class="service-icon">
+                                    <i class="bi bi-shield-check"></i>
+                                </div>
+
+                                <div>
+                                    <strong>Secure checkout</strong>
+                                    <span>Your purchase is protected.</span>
+                                </div>
+
+                            </div>
+
+
+                            <div class="service-item">
+
+                                <div class="service-icon">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+
+                                <div>
+                                    <strong>Easy returns</strong>
+                                    <span>Simple return experience.</span>
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>
+
                 </div>
+
+            </div>
+
+
+            <!-- =========================================
+                 PRODUCT DETAILS
+            ========================================== -->
+
+            <div class="detail-section">
+
+                <div class="row">
+
+                    <div class="col-lg-8">
+
+                        <div class="section-eyebrow">
+                            Product information
+                        </div>
+
+                        <h2 class="section-title mb-4">
+                            Details & Description
+                        </h2>
+
+                        <p class="text-secondary lh-lg">
+
+                            @(Model.Description ??
+                              "This product is designed for everyday wear with a balance of comfort, quality and modern style.")
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================================
+                 REVIEWS
+            ========================================== -->
+
+            <div class="detail-section">
+
+                <div class="row">
+
+                    <div class="col-lg-8">
+
+                        <div class="section-eyebrow">
+                            Customer feedback
+                        </div>
+
+                        <h2 class="section-title mb-4">
+                            Reviews
+                        </h2>
+
+
+                        @if (reviews.Any())
+                        {
+                            <div class="review-summary">
+
+                                <div class="review-score">
+                                    @averageRating.ToString("0.0")
+                                </div>
+
+                                <div>
+
+                                    <div class="rating-stars mb-1">
+
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= fullStars)
+                                            {
+                                                <i class="bi bi-star-fill"></i>
+                                            }
+                                            else if (i == fullStars + 1 && hasHalfStar)
+                                            {
+                                                <i class="bi bi-star-half"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star"></i>
+                                            }
+                                        }
+
+                                    </div>
+
+                                    <div class="small text-secondary">
+                                        Based on @reviews.Count customer review@(reviews.Count == 1 ? "" : "s")
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            @foreach (var review in reviews)
+                            {
+                                <div class="review-card">
+
+                                    <div class="d-flex justify-content-between align-items-start">
+
+                                        <div>
+
+                                            <div class="review-author">
+
+                                                @(review.Customer?.FirstName ?? "Customer")
+                                                @(review.Customer?.LastName ?? "")
+
+                                            </div>
+
+                                            <div class="review-date mt-1">
+                                                @review.CreatedAt.ToString("MMM dd, yyyy")
+                                            </div>
+
+                                        </div>
+
+                                        <div class="rating-stars">
+
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= review.Rating)
+                                                {
+                                                    <i class="bi bi-star-fill"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-star"></i>
+                                                }
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                    {
+                                        <p class="review-comment">
+                                            @review.Comment
+                                        </p>
+                                    }
+
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5 bg-light rounded-4">
+
+                                <div class="mb-3">
+
+                                    <i class="bi bi-chat-square-heart display-5 text-secondary"></i>
+
+                                </div>
+
+                                <h5 class="fw-bold">
+                                    No reviews yet
+                                </h5>
+
+                                <p class="text-secondary small mb-0">
+                                    Be the first customer to review this product.
+                                </p>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
 
-        <!-- =========================================================
-             REVIEWS SECTION
-        ========================================================== -->
-        <section class="mt-5">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4 p-lg-5">
+    </section>
 
-                    <!-- SECTION HEADER -->
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 border-bottom pb-3">
-                        <div>
-                            <div class="text-uppercase small fw-bold text-primary mb-1">
-                                CUSTOMER FEEDBACK
-                            </div>
-                            <h3 class="fw-bold mb-0">
-                                Customer Reviews
-                            </h3>
-                        </div>
+</div>
 
-                        <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2 rounded-pill">
-                            <i class="bi bi-chat-left-text me-1"></i>
-                            @(Model.Reviews?.Count ?? 0) reviews
-                        </span>
-                    </div>
 
-                    <!-- REVIEWS LIST -->
-                    @if (Model.Reviews != null && Model.Reviews.Any())
-                    {
-                        <div class="row g-3">
-                            @foreach (var review in Model.Reviews.OrderByDescending(x => x.CreatedAt))
-                            {
-                                <div class="col-12">
-                                    <div class="card border-0 bg-light rounded-3 p-3">
-                                        <div class="card-body p-2">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <h6 class="fw-bold mb-0">
-                                                    @(review.Customer?.FirstName ?? "Customer") @(review.Customer?.LastName ?? "")
-                                                </h6>
-                                                <div class="text-warning">
-                                                    @for (int i = 0; i < review.Rating; i++)
-                                                    {
-                                                        <i class="bi bi-star-fill"></i>
-                                                    }
-                                                </div>
-                                            </div>
-
-                                            @if (!string.IsNullOrWhiteSpace(review.Comment))
-                                            {
-                                                <p class="text-secondary mb-0">
-                                                    @review.Comment
-                                                </p>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center text-secondary py-5">
-                            <div class="rounded-circle bg-light text-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
-                                <i class="bi bi-chat-square-text fs-2"></i>
-                            </div>
-                            <h5 class="fw-semibold">No reviews yet</h5>
-                            <p class="text-muted small mb-0">Be the first to review this product after purchasing!</p>
-                        </div>
-                    }
-
-                </div>
-            </div>
-        </section>
-
+<!-- =========================================
+     STICKY MOBILE ADD-TO-CART BAR (NEW)
+========================================== -->
+@if (variants.Count > 0)
+{
+    <div class="sticky-mobile-cta" id="stickyMobileCta">
+        <span class="sticky-price" id="stickyPrice">
+            @if (minPrice > 0)
+            {
+                @:$@minPrice.ToString("0.00")
+            }
+            else
+            {
+                @:Contact us
+            }
+        </span>
+        <button type="button" id="stickyAddCartButton" disabled="@(isSignedIn ? "disabled" : null)">
+            @if (isSignedIn)
+            {
+                <i class="bi bi-bag-plus me-2"></i>
+                @:Add to Cart
+            }
+            else
+            {
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                @:Sign in to Add
+            }
+        </button>
     </div>
-</section>
+}
+
 
 @section Scripts {
+
     <script>
-        function changeImage(src) {
+
+        /* =========================================
+           IMAGE GALLERY
+        ========================================== */
+
+        function changeImage(button, src) {
+
             const image = document.getElementById("mainProductImage");
-            if (image) {
+
+            if (!image) return;
+
+            document.querySelectorAll(".product-thumbnail")
+                .forEach(x => x.classList.remove("active"));
+
+            button.classList.add("active");
+
+            image.style.opacity = "0";
+
+            setTimeout(() => {
+
                 image.src = src;
-            }
+
+                image.onload = () => {
+                    image.style.opacity = "1";
+                };
+
+            }, 120);
         }
+
+
+        function toggleFullscreen() {
+
+            const image = document.getElementById("mainProductImage");
+
+            if (!image) return;
+
+            if (image.requestFullscreen) {
+                image.requestFullscreen();
+            }
+
+        }
+
+
+        /* =========================================
+           VARIANT
+        ========================================== */
+
+        const variantSelect =
+            document.getElementById("variantSelect");
+
+        const priceElement =
+            document.getElementById("productPrice");
+
+        const stockMessage =
+            document.getElementById("stockMessage");
+
+        const availability =
+            document.getElementById("productAvailability");
+
+        const addCartButton =
+            document.getElementById("addCartButton");
+
+        const quantityInput =
+            document.getElementById("quantityInput");
+
+        const wishlistVariant =
+            document.getElementById("wishlistVariantId");
+
+        const stickyPrice =
+            document.getElementById("stickyPrice");
+
+        const stickyAddCartButton =
+            document.getElementById("stickyAddCartButton");
+
+
+        if (variantSelect) {
+
+            variantSelect.addEventListener("change", function () {
+
+                const selected =
+                    this.options[this.selectedIndex];
+
+                if (!selected || !selected.value) {
+
+                    if (addCartButton) {
+                        addCartButton.disabled = true;
+                    }
+
+                    if (stickyAddCartButton) {
+                        stickyAddCartButton.disabled = true;
+                    }
+
+                    if (priceElement) {
+                        priceElement.innerHTML =
+                            "@(minPrice > 0 ? "$" + minPrice.ToString("0.00") : "Contact us")";
+                    }
+
+                    if (stockMessage) {
+                        stockMessage.innerHTML =
+                            '<span class="text-secondary">' +
+                            '<i class="bi bi-info-circle me-1"></i>' +
+                            'Select an option to continue' +
+                            '</span>';
+                    }
+
+                    return;
+                }
+
+                const price =
+                    parseFloat(selected.dataset.price);
+
+                const stock =
+                    parseInt(selected.dataset.stock);
+
+
+                /* PRICE */
+
+                if (priceElement && !isNaN(price)) {
+
+                    priceElement.textContent =
+                        "$" + price.toFixed(2);
+
+                }
+
+                if (stickyPrice && !isNaN(price)) {
+
+                    stickyPrice.textContent =
+                        "$" + price.toFixed(2);
+
+                }
+
+
+                /* STOCK */
+
+                if (quantityInput) {
+
+                    quantityInput.max =
+                        Math.max(stock, 1);
+
+                    quantityInput.value = 1;
+
+                }
+
+
+                if (stockMessage) {
+
+                    if (stock <= 0) {
+
+                        stockMessage.innerHTML =
+                            '<span class="stock-empty">' +
+                            '<i class="bi bi-x-circle me-1"></i>' +
+                            'Out of stock' +
+                            '</span>';
+
+                    }
+                    else if (stock <= 5) {
+
+                        stockMessage.innerHTML =
+                            '<span class="stock-low">' +
+                            '<i class="bi bi-exclamation-circle me-1"></i>' +
+                            'Only ' + stock + ' left in stock' +
+                            '</span>';
+
+                    }
+                    else {
+
+                        stockMessage.innerHTML =
+                            '<span class="stock-available">' +
+                            '<i class="bi bi-check-circle me-1"></i>' +
+                            stock + ' available' +
+                            '</span>';
+
+                    }
+
+                }
+
+
+                /* AVAILABILITY */
+
+                if (availability) {
+
+                    availability.innerHTML =
+                        stock > 0
+                            ? '<span class="text-success">In Stock</span>'
+                            : '<span class="text-danger">Out of Stock</span>';
+
+                }
+
+
+                /* ADD TO CART */
+
+                if (addCartButton) {
+
+                    addCartButton.disabled =
+                        stock <= 0;
+
+                }
+
+                if (stickyAddCartButton) {
+
+                    stickyAddCartButton.disabled =
+                        stock <= 0;
+
+                }
+
+
+                /* WISHLIST */
+
+                if (wishlistVariant) {
+
+                    wishlistVariant.value =
+                        selected.value;
+
+                }
+
+            });
+
+        }
+
+
+        /* =========================================
+           QUANTITY
+        ========================================== */
+
+        function changeQuantity(amount) {
+
+            if (!quantityInput) return;
+
+            let current =
+                parseInt(quantityInput.value) || 1;
+
+            const max =
+                parseInt(quantityInput.max) || 1;
+
+            current += amount;
+
+            if (current < 1) {
+                current = 1;
+            }
+
+            if (current > max) {
+                current = max;
+            }
+
+            quantityInput.value = current;
+        }
+
+
+        /* =========================================
+           ADD TO CART VALIDATION
+           IMPORTANT: /Cart/Add requires an authenticated
+           user AND only accepts POST. If a signed-out user
+           submits this form, the [Authorize] challenge sends
+           them to /Account/Login?ReturnUrl=%2FCart%2FAdd, but
+           after logging in the return trip is a GET to an
+           action that only accepts POST — a dead end, and the
+           original variant/quantity selection is lost anyway.
+           So instead, if the user isn't signed in, we redirect
+           them to login with THIS page as the return URL. Once
+           they're back and authenticated, they can submit the
+           real POST themselves.
+        ========================================== */
+
+        const isSignedIn = @(isSignedIn ? "true" : "false");
+
+        function redirectToLoginThenBack() {
+            window.location.href = "/Account/Login?ReturnUrl=" + encodeURIComponent("/Cart");
+        }
+
+        const cartForm =
+            document.getElementById("addToCartForm");
+
+        if (addCartButton && !isSignedIn) {
+
+            addCartButton.addEventListener("click", function (event) {
+
+                event.preventDefault();
+
+                redirectToLoginThenBack();
+
+            });
+
+        }
+
+        if (cartForm) {
+
+            cartForm.addEventListener("submit", function (event) {
+
+                if (!isSignedIn) {
+
+                    event.preventDefault();
+
+                    redirectToLoginThenBack();
+
+                    return false;
+                }
+
+                if (!variantSelect || !variantSelect.value) {
+
+                    event.preventDefault();
+
+                    alert("Please select a product option first.");
+
+                    return false;
+                }
+
+            });
+
+        }
+
+
+        /* =========================================
+           STICKY MOBILE CTA (NEW)
+           Shows once the main purchase row scrolls
+           out of view; clicking it submits the real form.
+        ========================================== */
+
+        const stickyBar =
+            document.getElementById("stickyMobileCta");
+
+        const purchaseRow =
+            document.querySelector(".purchase-row");
+
+        if (stickyBar && purchaseRow && "IntersectionObserver" in window) {
+
+            const observer = new IntersectionObserver(function (entries) {
+
+                entries.forEach(function (entry) {
+
+                    if (entry.isIntersecting) {
+                        stickyBar.classList.remove("visible");
+                    } else if (entry.boundingClientRect.top < 0) {
+                        stickyBar.classList.add("visible");
+                    } else {
+                        stickyBar.classList.remove("visible");
+                    }
+
+                });
+
+            }, { threshold: 0 });
+
+            observer.observe(purchaseRow);
+
+        }
+
+        if (stickyAddCartButton && cartForm) {
+
+            stickyAddCartButton.addEventListener("click", function () {
+
+                if (!isSignedIn) {
+                    redirectToLoginThenBack();
+                    return;
+                }
+
+                if (!variantSelect || !variantSelect.value) {
+                    alert("Please select a product option first.");
+                    return;
+                }
+
+                cartForm.requestSubmit
+                    ? cartForm.requestSubmit()
+                    : cartForm.submit();
+
+            });
+
+        }
+
     </script>
+
 }

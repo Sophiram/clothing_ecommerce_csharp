@@ -91,39 +91,30 @@ public class ProductsController : Controller
         if (!id.HasValue)
         {
             TempData["Error"] = "Product ID is missing.";
-
             return RedirectToAction(nameof(Index));
         }
 
         var product = await _context.Products
             .AsNoTracking()
-
             .Include(p => p.Category)
-
             .Include(p => p.Brand)
-
             .Include(p => p.Images)
-
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Color)
-
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Size)
-
-            .Include(p => p.Variants)
-                .ThenInclude(v => v.Inventory)
-
-            .Include(p => p.Reviews)
-                .ThenInclude(r => r.Customer)
-
+            .Include(p => p.Variants).ThenInclude(v => v.Color)
+            .Include(p => p.Variants).ThenInclude(v => v.Size)
+            .Include(p => p.Variants).ThenInclude(v => v.Inventory)
+            .Include(p => p.Reviews).ThenInclude(r => r.Customer)
             .FirstOrDefaultAsync(p => p.Id == id.Value);
 
         if (product == null)
         {
             TempData["Error"] = "Product not found.";
-
             return RedirectToAction(nameof(Index));
         }
+
+        // Needed for the Add/Edit Variant modals
+        ViewBag.AllSizes = await _context.Sizes.AsNoTracking().OrderBy(s => s.Name).ToListAsync();
+        ViewBag.AllColors = await _context.Colors.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+        ViewBag.StatusValues = Enum.GetValues(typeof(VariantStatus)).Cast<VariantStatus>().ToList();
 
         return View(product);
     }
