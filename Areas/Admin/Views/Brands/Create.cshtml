@@ -86,18 +86,51 @@
                             Brand Logo
                         </label>
 
-                        <input type="file"
-                               name="logo"
-                               class="form-control"
-                               accept=".jpg,.jpeg,.png,.webp" />
-
-                        <div class="form-text">
-                            JPG, JPEG, PNG or WEBP. Maximum 5 MB.
+                        <!-- TAB TOGGLE -->
+                        <div class="img-input-tabs">
+                            <button type="button" class="img-input-tab-btn active" data-tab="upload" onclick="switchImgTab('create','upload')">
+                                <i class="bi bi-upload"></i> Upload File
+                            </button>
+                            <button type="button" class="img-input-tab-btn" data-tab="url" onclick="switchImgTab('create','url')">
+                                <i class="bi bi-link-45deg"></i> Paste URL
+                            </button>
                         </div>
 
-                        <span asp-validation-for="Logo"
-                              class="text-danger small">
-                        </span>
+                        <!-- UPLOAD PANEL -->
+                        <div class="img-input-panel active" id="createPanel-upload">
+                            <input type="file"
+                                   name="logo"
+                                   id="createLogoFile"
+                                   class="form-control"
+                                   accept=".jpg,.jpeg,.png,.webp,.svg"
+                                   onchange="previewImgFile(this,'createPreviewImg','createPreviewEmpty')" />
+                            <div class="form-text">JPG, JPEG, PNG, WEBP or SVG. Maximum 5 MB.</div>
+                        </div>
+
+                        <!-- URL PANEL -->
+                        <div class="img-input-panel" id="createPanel-url">
+                            <div class="img-url-group">
+                                <input type="text"
+                                       name="logoUrl"
+                                       id="createLogoUrl"
+                                       class="form-control"
+                                       placeholder="https://example.com/logo.png"
+                                       oninput="previewImgUrl(this.value,'createPreviewImg','createPreviewEmpty')" />
+                                <button type="button" class="img-clipboard-btn" onclick="pasteFromClipboard('createLogoUrl','createPreviewImg','createPreviewEmpty',this)" title="Paste from clipboard">
+                                    <i class="bi bi-clipboard"></i> Paste
+                                </button>
+                            </div>
+                            <div class="form-text">Paste a direct link to the brand logo.</div>
+                        </div>
+
+                        <!-- PREVIEW -->
+                        <div class="img-preview-box">
+                            <div class="img-preview-empty" id="createPreviewEmpty">
+                                <i class="bi bi-image"></i>
+                                Logo preview
+                            </div>
+                            <img id="createPreviewImg" src="" alt="Preview" />
+                        </div>
 
                     </div>
 
@@ -158,4 +191,69 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        function switchImgTab(prefix, tab) {
+            const btns = document.querySelectorAll(`[onclick*="switchImgTab('${prefix}'"]`);
+            btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
+            ['upload','url'].forEach(t => {
+                const p = document.getElementById(`${prefix}Panel-${t}`);
+                if (p) p.classList.toggle('active', t === tab);
+            });
+            const prevImg = document.getElementById(`${prefix}PreviewImg`);
+            const prevEmpty = document.getElementById(`${prefix}PreviewEmpty`);
+            if (prevImg) { prevImg.src = ''; prevImg.classList.remove('visible'); }
+            if (prevEmpty) prevEmpty.style.display = '';
+            if (tab === 'upload') {
+                const u = document.getElementById(`${prefix}LogoUrl`);
+                if (u) u.value = '';
+            } else {
+                const f = document.getElementById(`${prefix}LogoFile`);
+                if (f) f.value = '';
+            }
+        }
+
+        function previewImgFile(input, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.classList.add('visible');
+                    empty.style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.src = ''; preview.classList.remove('visible'); empty.style.display = '';
+            }
+        }
+
+        function previewImgUrl(url, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (!url || !url.trim()) {
+                preview.src = ''; preview.classList.remove('visible'); empty.style.display = ''; return;
+            }
+            preview.onload = () => { preview.classList.add('visible'); empty.style.display = 'none'; };
+            preview.onerror = () => { preview.classList.remove('visible'); empty.style.display = ''; };
+            preview.src = url.trim();
+        }
+
+        async function pasteFromClipboard(inputId, previewId, emptyId, btn) {
+            try {
+                const text = await navigator.clipboard.readText();
+                const input = document.getElementById(inputId);
+                if (input) { input.value = text; previewImgUrl(text, previewId, emptyId); }
+                if (btn) {
+                    btn.classList.add('pasted');
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Pasted!';
+                    setTimeout(() => { btn.classList.remove('pasted'); btn.innerHTML = '<i class="bi bi-clipboard"></i> Paste'; }, 2000);
+                }
+            } catch (e) {
+                if (window.__notyf) window.__notyf.error('Clipboard access denied. Please paste manually (Ctrl+V).');
+            }
+        }
+    </script>
 }

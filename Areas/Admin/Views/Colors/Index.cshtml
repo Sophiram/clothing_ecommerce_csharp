@@ -57,24 +57,36 @@
                                     </div>
                                 </td>
                                 <td><span class="payment-count">@(item.Variants?.Count ?? 0)</span></td>
-                                <td>
-                                    <div class="table-actions">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="action-btn" title="Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <button type="button" class="action-btn action-warning" title="Edit"
-                                                data-bs-toggle="modal" data-bs-target="#editColorModal"
-                                                data-id="@item.Id"
-                                                data-name="@item.Name"
-                                                data-hex="@item.HexCode">
-                                            <i class="bi bi-pencil"></i>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
                                         </button>
-                                        <button type="button" class="action-btn action-danger" title="Delete"
-                                                data-bs-toggle="modal" data-bs-target="#deleteColorModal"
-                                                data-id="@item.Id"
-                                                data-name="@item.Name">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
+                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        data-bs-toggle="modal" data-bs-target="#editColorModal"
+                                                        data-id="@item.Id"
+                                                        data-name="@item.Name"
+                                                        data-hex="@item.HexCode">
+                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Color</span>
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1" /></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteColorModal"
+                                                        data-id="@item.Id"
+                                                        data-name="@item.Name">
+                                                    <i class="bi bi-trash"></i> <span>Delete Color</span>
+                                                </button>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </td>
                             </tr>

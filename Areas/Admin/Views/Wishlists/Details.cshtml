@@ -1,0 +1,125 @@
+@model WebApplication_ClothingEcommerce.Models.Wishlist
+
+@{
+    ViewData["Title"] = "Wishlist Details";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">CUSTOMERS & ENGAGEMENT</div>
+            <h1 class="page-title">Customer Wishlist</h1>
+            <p class="page-description">Saved favorites for @(Model.Customer != null ? $"{Model.Customer.FirstName} {Model.Customer.LastName}".Trim() : "Customer").</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Wishlists
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Saved Products (@Model.Items.Count)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Variant</th>
+                                <th>Unit Price</th>
+                                <th>Stock Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Items.Any())
+                            {
+                                @foreach (var item in Model.Items)
+                                {
+                                    var img = item.Variant?.Product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                            ?? item.Variant?.Product?.Images?.FirstOrDefault()?.ImageUrl;
+                                    var available = item.Variant?.Inventory?.AvailableQuantity ?? 0;
+
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if (!string.IsNullOrEmpty(img))
+                                                {
+                                                    <img src="@img" alt="@item.Variant?.Product?.Name" class="rounded border" style="width: 44px; height: 44px; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="rounded border bg-light d-flex align-items-center justify-content-center text-muted" style="width: 44px; height: 44px;">
+                                                        <i class="bi bi-image"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold">@item.Variant?.Product?.Name</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><code>@(item.Variant?.SKU ?? "—")</code></td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                @(item.Variant?.Size?.Name ?? "—") / @(item.Variant?.Color?.Name ?? "—")
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold">$@(item.Variant?.Price.ToString("N2") ?? "0.00")</td>
+                                        <td>
+                                            @if (available > 0)
+                                            {
+                                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                                    In Stock (@available)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">
+                                                    Out of Stock
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">This customer has no saved items in their wishlist.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold mb-1">
+                        @(Model.Customer != null ? $"{Model.Customer.FirstName} {Model.Customer.LastName}".Trim() : "Customer")
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-envelope me-1"></i> @(Model.Customer?.Email ?? "N/A")<br />
+                        <i class="bi bi-telephone me-1"></i> @(Model.Customer?.Phone ?? "N/A")
+                    </p>
+
+                    @if (Model.Customer != null)
+                    {
+                        <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.Customer.Id" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-person me-1"></i> View Customer Profile
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

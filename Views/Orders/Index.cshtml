@@ -1,18 +1,45 @@
-﻿@model IEnumerable<WebApplication_ClothingEcommerce.Models.Order>
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Order>
 
 @{
     ViewData["Title"] = "My Orders";
+    ViewData["AccountActiveSection"] = "Orders";
+    var currentStatus = ViewBag.CurrentStatus as WebApplication_ClothingEcommerce.Data.Enums.OrderStatus?;
+    int allCount = ViewBag.AllCount ?? 0;
+    int pendingCount = ViewBag.PendingCount ?? 0;
+    int processingCount = ViewBag.ProcessingCount ?? 0;
+    int shippedCount = ViewBag.ShippedCount ?? 0;
+    int deliveredCount = ViewBag.DeliveredCount ?? 0;
+    int cancelledCount = ViewBag.CancelledCount ?? 0;
+    int currentPage = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
 }
 
 <style>
     .orders-page {
-        background: #fff;
+        background-color: #f8fafc;
+        min-height: 85vh;
     }
 
+    /* Hero Banner */
     .orders-hero {
-        background: linear-gradient(120deg, var(--blue-soft, #eaf2ff), #fff 60%);
-        border-bottom: 1px solid var(--border, #eeeeee);
-        padding: 40px 0;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 28px;
+        position: relative;
+        overflow: hidden;
+        color: #ffffff;
+        box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.25);
+        padding: 2.25rem 2.5rem;
+    }
+
+    .orders-hero::before {
+        content: "";
+        position: absolute;
+        top: -60%;
+        right: -10%;
+        width: 380px;
+        height: 380px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
+        pointer-events: none;
     }
 
     .orders-hero-eyebrow {
@@ -20,379 +47,504 @@
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: .12em;
-        color: var(--google-blue, #4285F4);
+        color: #93c5fd;
         margin-bottom: 6px;
-    }
-
-    .orders-hero h1 {
-        font-size: clamp(1.8rem, 3vw, 2.6rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: var(--black, #202124);
-        margin-bottom: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .orders-hero-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--google-blue, #4285F4), var(--google-green, #34A853));
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        box-shadow: 0 10px 24px rgba(66,133,244,.28);
-    }
-
-    .orders-empty-card {
-        border-radius: 24px;
-        border: 1px solid var(--border, #eeeeee);
-    }
-
-    .orders-empty-icon {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
-        background: var(--blue-soft, #eaf2ff);
-        color: var(--google-blue, #4285F4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-    }
-
-    .orders-empty-btn {
-        display: inline-block;
-        border: 0;
-        border-radius: 12px;
-        padding: 14px 28px;
-        background: var(--google-blue, #4285F4);
-        color: #fff;
-        font-weight: 700;
-        text-decoration: none;
-        box-shadow: 0 10px 24px rgba(66,133,244,.28);
-        transition: all .2s ease;
-    }
-
-        .orders-empty-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
-    .order-card {
-        border: 1px solid var(--border, #eeeeee);
+        width: 68px;
+        height: 68px;
         border-radius: 20px;
-        transition: box-shadow .25s ease, transform .25s ease;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
-        .order-card:hover {
-            box-shadow: 0 14px 30px rgba(0,0,0,.06);
-            transform: translateY(-2px);
-        }
-
-    .order-code {
-        background: var(--light-gray, #f8f8f6);
-        border-radius: 8px;
-        padding: 4px 10px;
-        font-size: 13px;
+    /* Status Filters */
+    .status-filters-wrap {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 6px;
     }
 
-    .order-status-badge {
+    .status-filters-wrap::-webkit-scrollbar {
+        display: none;
+    }
+
+    .status-filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 18px;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        background: #ffffff;
+        color: #4b5563;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .status-filter-pill:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        transform: translateY(-1px);
+    }
+
+    .status-filter-pill.active {
+        background: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.22);
+    }
+
+    .status-count-badge {
+        font-size: 11px;
         font-weight: 700;
-        font-size: 12px;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        background: rgba(0, 0, 0, 0.06);
+        color: inherit;
     }
 
-    .order-item-image {
-        width: 100%;
-        height: 120px;
+    .status-filter-pill.active .status-count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+
+    /* Order Card */
+    .order-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02);
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+    }
+
+    .order-card-header {
+        padding: 1.25rem 1.75rem;
+        background: #fafbfc;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .order-code-badge {
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 0.875rem;
+        background: #f1f5f9;
+        color: #0f172a;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .order-card-body {
+        padding: 1.5rem 1.75rem;
+    }
+
+    /* Product Thumbnail */
+    .order-thumb {
+        width: 88px;
+        height: 104px;
         object-fit: cover;
         border-radius: 14px;
-        border: 1px solid var(--border, #eeeeee);
+        border: 1px solid #f1f5f9;
+        background: #f8fafc;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
     }
 
-    .order-item-image-placeholder {
-        height: 120px;
+    .order-thumb:hover {
+        transform: scale(1.03);
+    }
+
+    .order-thumb-placeholder {
+        width: 88px;
+        height: 104px;
         border-radius: 14px;
-        border: 1px solid var(--border, #eeeeee);
-        background: var(--light-gray, #f8f8f6);
+        border: 1px solid #f1f5f9;
+        background: #f8fafc;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--gray, #999);
+        color: #94a3b8;
+        font-size: 26px;
+        flex-shrink: 0;
     }
 
-    .order-brand-label {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .08em;
-        color: var(--google-blue, #4285F4);
-    }
-
-    .order-total-value {
-        color: var(--google-blue, #4285F4);
-        font-weight: 800;
-    }
-
-    .order-view-btn {
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 18px;
-        background: var(--google-blue, #4285F4);
-        color: #fff;
+    /* Status Pills */
+    .order-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
         font-weight: 700;
-        font-size: 13px;
-        text-decoration: none;
-        transition: all .2s ease;
+        padding: 5px 14px;
+        border-radius: 9999px;
     }
 
-        .order-view-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            color: #fff;
+    .pill-pending { background: #fef3c7; color: #92400e; }
+    .pill-processing { background: #e0f2fe; color: #075985; }
+    .pill-shipped { background: #e0e7ff; color: #3730a3; }
+    .pill-delivered { background: #dcfce7; color: #166534; }
+    .pill-cancelled { background: #fee2e2; color: #991b1b; }
+
+    /* Button */
+    .btn-view-order {
+        background: #0f172a;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 13.5px;
+        padding: 10px 22px;
+        border-radius: 9999px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        border: 0;
+    }
+
+    .btn-view-order:hover {
+        background: #1e293b;
+        color: #ffffff;
+        transform: translateX(2px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    /* Empty State */
+    .orders-empty-box {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 28px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Pagination */
+    .orders-pagination .page-link {
+        border-radius: 9999px !important;
+        margin: 0 3px;
+        border: 1px solid #e2e8f0;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 8px 16px;
+        transition: all 0.2s ease;
+    }
+
+    .orders-pagination .page-item.active .page-link {
+        background: #0f172a;
+        border-color: #0f172a;
+        color: #ffffff;
+    }
+
+    @@media (max-width: 768px) {
+        .orders-hero {
+            padding: 1.5rem;
+            border-radius: 20px;
         }
+
+        .order-card-header, .order-card-body {
+            padding: 1.25rem;
+        }
+
+        .order-thumb, .order-thumb-placeholder {
+            width: 72px;
+            height: 88px;
+        }
+    }
 </style>
 
-<div class="orders-page">
+<div class="orders-page py-4 py-lg-5">
+    <div class="container">
+        <partial name="_AccountNav" />
 
-    <!-- =========================================================
-         BREADCRUMB
-    ========================================================= -->
-
-    <section class="py-3 border-bottom">
-        <div class="container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 small">
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Home" asp-action="Index" class="text-decoration-none text-secondary">
-                            <i class="bi bi-house me-1"></i> Home
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active fw-semibold" aria-current="page" style="color: var(--google-blue, #4285F4);">
-                        My Orders
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </section>
-
-    <!-- =========================================================
-         HERO
-    ========================================================= -->
-
-    <section class="orders-hero">
-        <div class="container">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <!-- HERO BANNER -->
+        <div class="orders-hero mb-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 position-relative" style="z-index: 1;">
                 <div>
                     <div class="orders-hero-eyebrow">
-                        <i class="bi bi-person-circle me-1"></i> ACCOUNT
+                        <i class="bi bi-shield-check"></i> ORDER HISTORY & TRACKING
                     </div>
-                    <h1>My Orders</h1>
-                    <p class="text-secondary mb-0">Track and view all your previous orders.</p>
+                    <h1 class="h3 fw-bold mb-1 text-white">My Orders</h1>
+                    <p class="text-white-50 mb-0 small">
+                        Track current shipments, review previous purchases, and manage order receipts.
+                    </p>
                 </div>
+
                 <div class="d-none d-md-flex orders-hero-icon">
                     <i class="bi bi-box-seam"></i>
                 </div>
             </div>
         </div>
-    </section>
 
-    <section class="py-5">
-        <div class="container">
+        <!-- ALERTS -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 d-flex align-items-center gap-2 mb-4" role="alert">
+                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                <span class="fw-medium">@TempData["Success"]</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            <!-- ALERTS -->
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4">
-                    <i class="bi bi-check-circle-fill fs-5"></i>
-                    <span>@TempData["Success"]</span>
-                </div>
-            }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 d-flex align-items-center gap-2 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+                <span class="fw-medium">@TempData["Error"]</span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4">
-                    <i class="bi bi-exclamation-circle-fill fs-5"></i>
-                    <span>@TempData["Error"]</span>
-                </div>
-            }
+        <!-- STATUS FILTER BAR -->
+        <div class="status-filters-wrap mb-4">
+            <a asp-controller="Orders" asp-action="Index" class="status-filter-pill @(currentStatus == null ? "active" : "")">
+                <i class="bi bi-grid"></i>
+                <span>All Orders</span>
+                <span class="status-count-badge">@allCount</span>
+            </a>
 
-            <!-- EMPTY ORDERS -->
-            @if (Model == null || !Model.Any())
-            {
-                <div class="orders-empty-card text-center py-5 bg-white">
-                    <div class="p-4">
-                        <div class="orders-empty-icon mb-4">
-                            <i class="bi bi-bag-x display-6"></i>
-                        </div>
-                        <h3 class="fw-bold mb-2">No orders yet</h3>
-                        <p class="text-secondary mx-auto mb-4" style="max-width:500px;">
-                            You haven't placed any orders yet. Start shopping and your orders will appear here.
-                        </p>
-                        <a asp-controller="Shop" asp-action="Index" class="orders-empty-btn">
-                            <i class="bi bi-bag me-2"></i> Start Shopping
-                        </a>
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending" class="status-filter-pill @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending ? "active" : "")">
+                <i class="bi bi-clock"></i>
+                <span>Pending</span>
+                <span class="status-count-badge">@pendingCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing" class="status-filter-pill @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing ? "active" : "")">
+                <i class="bi bi-gear"></i>
+                <span>Processing</span>
+                <span class="status-count-badge">@processingCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped" class="status-filter-pill @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped ? "active" : "")">
+                <i class="bi bi-truck"></i>
+                <span>Shipped</span>
+                <span class="status-count-badge">@shippedCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered" class="status-filter-pill @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered ? "active" : "")">
+                <i class="bi bi-check-circle"></i>
+                <span>Delivered</span>
+                <span class="status-count-badge">@deliveredCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled" class="status-filter-pill @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled ? "active" : "")">
+                <i class="bi bi-x-circle"></i>
+                <span>Cancelled</span>
+                <span class="status-count-badge">@cancelledCount</span>
+            </a>
+        </div>
+
+        <!-- ORDERS LIST OR EMPTY STATE -->
+        @if (Model == null || !Model.Any())
+        {
+            <div class="orders-empty-box text-center py-5 px-4 my-2">
+                <div class="py-4">
+                    <div class="rounded-circle bg-light text-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 84px; height: 84px;">
+                        <i class="bi bi-box-seam display-6"></i>
                     </div>
+                    <h4 class="fw-bold mb-2 text-dark">No orders found</h4>
+                    <p class="text-secondary mx-auto mb-4" style="max-width: 440px;">
+                        @(currentStatus != null ? $"You have no orders currently in '{currentStatus}' status." : "You haven't placed any orders yet. Discover our fresh clothing drops today.")
+                    </p>
+                    <a asp-controller="Shop" asp-action="Index" class="btn btn-dark rounded-pill px-4 py-2 fw-semibold">
+                        <i class="bi bi-bag me-1"></i> Start Shopping
+                    </a>
                 </div>
-            }
-            else
-            {
-                <!-- ORDER COUNT -->
-                <div class="d-flex justify-content-between align-items-end mb-4">
-                    <div>
-                        <h5 class="fw-bold mb-1">Your Orders</h5>
-                        <div class="small text-secondary">
-                            <i class="bi bi-receipt me-1"></i>
-                            @Model.Count() @(Model.Count() == 1 ? "order" : "orders")
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ORDER LIST -->
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-4">
                 @foreach (var order in Model)
                 {
-                    var statusClass = order.Status.ToString() switch
+                    var statusPillClass = order.Status.ToString() switch
                     {
-                        "Pending" => "bg-warning-subtle text-warning-emphasis",
-                        "Processing" => "bg-info-subtle text-info-emphasis",
-                        "Shipped" => "bg-primary-subtle text-primary",
-                        "Delivered" => "bg-success-subtle text-success",
-                        "Cancelled" => "bg-danger-subtle text-danger",
-                        _ => "bg-secondary-subtle text-secondary"
+                        "Pending" => "pill-pending",
+                        "Processing" => "pill-processing",
+                        "Shipped" => "pill-shipped",
+                        "Delivered" => "pill-delivered",
+                        "Cancelled" => "pill-cancelled",
+                        _ => "pill-pending"
+                    };
+
+                    var statusIcon = order.Status.ToString() switch
+                    {
+                        "Pending" => "bi-clock",
+                        "Processing" => "bi-gear",
+                        "Shipped" => "bi-truck",
+                        "Delivered" => "bi-check-circle",
+                        "Cancelled" => "bi-x-circle",
+                        _ => "bi-dot"
                     };
 
                     var firstItem = order.Items?.FirstOrDefault();
-
-                    var image =
-                        firstItem?.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
-                        ?? firstItem?.Variant?.Product?.Images?.FirstOrDefault();
-
+                    var image = firstItem?.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
+                                ?? firstItem?.Variant?.Product?.Images?.FirstOrDefault();
                     var itemCount = order.Items?.Count ?? 0;
-
                     var productName = firstItem?.Variant?.Product?.Name ?? "Order Items";
-
                     var brandName = firstItem?.Variant?.Product?.Brand?.Name ?? "CLOTHÉ";
 
-                    <div class="order-card bg-white mb-4">
-                        <div class="p-4">
-
-                            <!-- ORDER HEADER -->
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                                <div>
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <span class="fw-bold">Order</span>
-                                        <code class="order-code">#@order.Id.ToString()[..8].ToUpper()</code>
-                                    </div>
-                                    <div class="small text-secondary">
-                                        <i class="bi bi-calendar3 me-1"></i>
-                                        @order.OrderDate
-                                    </div>
+                    <div class="order-card">
+                        <!-- Card Header -->
+                        <div class="order-card-header">
+                            <div class="d-flex flex-wrap align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small text-secondary fw-semibold">Order</span>
+                                    <code class="order-code-badge">#@order.Id.ToString()[..8].ToUpper()</code>
                                 </div>
-
-                                <div>
-                                    <span class="badge rounded-pill px-3 py-2 order-status-badge @statusClass">
-                                        @order.Status
-                                    </span>
-                                </div>
+                                <span class="text-secondary small">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    @order.OrderDate.ToString("MMM dd, yyyy")
+                                </span>
                             </div>
 
-                            <hr class="my-4" />
+                            <span class="order-pill @statusPillClass">
+                                <i class="bi @statusIcon"></i> @order.Status
+                            </span>
+                        </div>
 
-                            <!-- ORDER PRODUCT -->
-                            <div class="row align-items-center g-4">
-
-                                <!-- PRODUCT IMAGE -->
-                                <div class="col-4 col-sm-3 col-md-2">
+                        <!-- Card Body -->
+                        <div class="order-card-body">
+                            <div class="row align-items-center g-3 g-md-4">
+                                <!-- Thumbnail -->
+                                <div class="col-auto">
                                     @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
                                     {
-                                        <img src="@image.ImageUrl"
-                                             alt="@productName"
-                                             class="order-item-image"
+                                        <img src="@image.ImageUrl" alt="@productName" class="order-thumb"
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                                        <div class="order-item-image-placeholder" style="display:none;">
-                                            <i class="bi bi-image fs-2"></i>
+                                        <div class="order-thumb-placeholder" style="display:none;">
+                                            <i class="bi bi-image"></i>
                                         </div>
                                     }
                                     else
                                     {
-                                        <div class="order-item-image-placeholder">
-                                            <i class="bi bi-image fs-2"></i>
+                                        <div class="order-thumb-placeholder">
+                                            <i class="bi bi-image"></i>
                                         </div>
                                     }
                                 </div>
 
-                                <!-- PRODUCT INFO -->
-                                <div class="col-8 col-md-5">
-                                    <div class="order-brand-label mb-1">@brandName</div>
-                                    <h5 class="fw-bold mb-2">@productName</h5>
+                                <!-- Details -->
+                                <div class="col">
+                                    <span class="small fw-bold text-uppercase text-primary tracking-wider" style="font-size: 11px;">
+                                        @brandName
+                                    </span>
+                                    <h6 class="fw-bold mb-1 mt-1 text-dark">
+                                        @productName
+                                    </h6>
 
                                     @if (firstItem?.Variant != null)
                                     {
-                                        <div class="small text-secondary mb-2">
+                                        <div class="d-flex flex-wrap gap-2 small text-secondary mb-2">
                                             @if (firstItem.Variant.Color != null)
                                             {
-                                                <span class="me-3">
-                                                    <i class="bi bi-palette me-1"></i>
-                                                    @firstItem.Variant.Color.Name
+                                                <span class="badge bg-light text-secondary border">
+                                                    Color: @firstItem.Variant.Color.Name
                                                 </span>
                                             }
                                             @if (firstItem.Variant.Size != null)
                                             {
-                                                <span>
-                                                    <i class="bi bi-rulers me-1"></i>
-                                                    @firstItem.Variant.Size.Name
+                                                <span class="badge bg-light text-secondary border">
+                                                    Size: @firstItem.Variant.Size.Name
                                                 </span>
                                             }
                                         </div>
                                     }
 
                                     <div class="small text-secondary">
-                                        @if (itemCount == 1)
+                                        @if (itemCount <= 1)
                                         {
-                                            <span>1 item</span>
+                                            <span>1 item in this order</span>
                                         }
                                         else
                                         {
-                                            <span>@itemCount items</span>
+                                            <span>@itemCount items total <span class="text-primary fw-semibold">(+ @(itemCount - 1) more)</span></span>
                                         }
                                     </div>
-
-                                    @if (itemCount > 1)
-                                    {
-                                        <div class="small text-secondary mt-1">
-                                            + @(itemCount - 1) more @(itemCount - 1 == 1 ? "item" : "items")
-                                        </div>
-                                    }
                                 </div>
 
-                                <!-- TOTAL -->
-                                <div class="col-6 col-md-2">
-                                    <small class="text-secondary d-block mb-1">Total</small>
-                                    <strong class="fs-5 order-total-value">
-                                        $@order.TotalAmount.ToString("0.00")
-                                    </strong>
-                                </div>
+                                <!-- Financials & Action -->
+                                <div class="col-12 col-md-auto text-md-end pt-3 pt-md-0 border-top border-md-0 d-flex flex-md-column justify-content-between align-items-center align-items-md-end gap-2">
+                                    <div>
+                                        <small class="text-secondary d-block" style="font-size: 11px;">Order Total</small>
+                                        <strong class="fs-5 text-dark fw-bold">
+                                            $@order.TotalAmount.ToString("N2")
+                                        </strong>
+                                    </div>
 
-                                <!-- ACTION -->
-                                <div class="col-6 col-md-3 text-md-end">
-                                    <a asp-controller="Orders"
-                                       asp-action="Details"
-                                       asp-route-id="@order.Id"
-                                       class="order-view-btn">
-                                        View Order
-                                        <i class="bi bi-arrow-right ms-1"></i>
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" class="btn-view-order">
+                                        <span>View Details</span>
+                                        <i class="bi bi-arrow-right"></i>
                                     </a>
                                 </div>
-
                             </div>
-
                         </div>
                     </div>
                 }
+            </div>
+
+            <!-- PAGINATION -->
+            @if (totalPages > 1)
+            {
+                <nav class="d-flex justify-content-center mt-5" aria-label="Order pagination">
+                    <ul class="pagination orders-pagination">
+                        @if (currentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-controller="Orders" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-status="@currentStatus">
+                                    <i class="bi bi-chevron-left me-1"></i> Prev
+                                </a>
+                            </li>
+                        }
+
+                        @for (int p = 1; p <= totalPages; p++)
+                        {
+                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                <a class="page-link" asp-controller="Orders" asp-action="Index" asp-route-page="@p" asp-route-status="@currentStatus">
+                                    @p
+                                </a>
+                            </li>
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-controller="Orders" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-status="@currentStatus">
+                                    Next <i class="bi bi-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
             }
-
-        </div>
-    </section>
-
+        }
+    </div>
 </div>

@@ -1,36 +1,37 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
+
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers;
+
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class CartItemsController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly ICartService _cartService;
 
-    public CartItemsController(AppDbContext context)
+    public CartItemsController(ICartService cartService)
     {
-        _context = context;
+        _cartService = cartService;
     }
 
     // GET: CARTITEMS
     public async Task<IActionResult> Index()    
     {
-        return View(await _context.CartItems.ToListAsync());
+        return View(await _cartService.GetAllCartItemsAsync());
     }
 
     // GET: CARTITEMS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
+    public async Task<IActionResult> Details(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var cartitem = await _context.CartItems
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var cartitem = await _cartService.GetCartItemByIdAsync(id.Value);
         if (cartitem == null)
         {
             return NotFound();
@@ -46,30 +47,27 @@ public class CartItemsController : Controller
     }
 
     // POST: CARTITEMS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,CartId,VariantId,Quantity,Cart,Variant")] CartItem cartitem)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(cartitem);
-            await _context.SaveChangesAsync();
+            await _cartService.CreateCartItemAsync(cartitem);
             return RedirectToAction(nameof(Index));
         }
         return View(cartitem);
     }
 
     // GET: CARTITEMS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
+    public async Task<IActionResult> Edit(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var cartitem = await _context.CartItems.FindAsync(id);
+        var cartitem = await _cartService.GetCartItemByIdAsync(id.Value);
         if (cartitem == null)
         {
             return NotFound();
@@ -78,11 +76,9 @@ public class CartItemsController : Controller
     }
 
     // POST: CARTITEMS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,CartId,VariantId,Quantity,Cart,Variant")] CartItem cartitem)
+    public async Task<IActionResult> Edit(Guid id, [Bind("Id,CartId,VariantId,Quantity,Cart,Variant")] CartItem cartitem)
     {
         if (id != cartitem.Id)
         {
@@ -91,21 +87,10 @@ public class CartItemsController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var result = await _cartService.UpdateCartItemAsync(id, cartitem);
+            if (!result.Success)
             {
-                _context.Update(cartitem);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CartItemExists(cartitem.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
             return RedirectToAction(nameof(Index));
         }
@@ -113,15 +98,14 @@ public class CartItemsController : Controller
     }
 
     // GET: CARTITEMS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
+    public async Task<IActionResult> Delete(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var cartitem = await _context.CartItems
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var cartitem = await _cartService.GetCartItemByIdAsync(id.Value);
         if (cartitem == null)
         {
             return NotFound();
@@ -133,20 +117,9 @@ public class CartItemsController : Controller
     // POST: CARTITEMS/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
-        var cartitem = await _context.CartItems.FindAsync(id);
-        if (cartitem != null)
-        {
-            _context.CartItems.Remove(cartitem);
-        }
-
-        await _context.SaveChangesAsync();
+        await _cartService.DeleteCartItemAsync(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool CartItemExists(System.Guid? id)
-    {
-        return _context.CartItems.Any(e => e.Id == id);
     }
 }

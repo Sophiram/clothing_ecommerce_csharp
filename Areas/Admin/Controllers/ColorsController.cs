@@ -1,37 +1,33 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class ColorsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IColorService _colorService;
 
-        public ColorsController(AppDbContext context)
+        public ColorsController(IColorService colorService)
         {
-            _context = context;
+            _colorService = colorService;
         }
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Colors.Include(c => c.Variants).AsNoTracking().ToListAsync());
+            return View(await _colorService.GetAllAsync());
         }
 
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null) return NotFound();
 
-            var color = await _context.Colors
-                .Include(c => c.Variants)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
+            var color = await _colorService.GetByIdAsync(id.Value);
             if (color == null) return NotFound();
+
             return View(color);
         }
 
@@ -48,11 +44,8 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 return BadRequest(new { success = false, errors });
             }
 
-            color.Id = Guid.NewGuid();
-            _context.Add(color);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Color '{color.Name}' was created successfully." });
+            var result = await _colorService.CreateAsync(color);
+            return Ok(new { success = true, message = result.Message });
         }
 
         // POST: Admin/Colors/Edit/5 (AJAX)
@@ -73,19 +66,13 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 return BadRequest(new { success = false, errors });
             }
 
-            try
+            var result = await _colorService.UpdateAsync(id, color);
+            if (!result.Success)
             {
-                _context.Update(color);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ColorExists(color.Id))
-                    return NotFound(new { success = false, errors = new[] { "Color not found." } });
-                throw;
+                return NotFound(new { success = false, errors = result.Errors });
             }
 
-            return Ok(new { success = true, message = $"Color '{color.Name}' was updated successfully." });
+            return Ok(new { success = true, message = result.Message });
         }
 
         // POST: Admin/Colors/Delete/5 (AJAX)
@@ -93,27 +80,13 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var color = await _context.Colors.FindAsync(id);
-
-            if (color == null)
+            var result = await _colorService.DeleteAsync(id);
+            if (!result.Success)
             {
-                return NotFound(new { success = false, errors = new[] { "Color not found." } });
+                return BadRequest(new { success = false, errors = result.Errors });
             }
 
-            try
-            {
-                var name = color.Name;
-                _context.Colors.Remove(color);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { success = true, message = $"Color '{name}' was deleted successfully." });
-            }
-            catch (DbUpdateException)
-            {
-                return BadRequest(new { success = false, errors = new[] { "Cannot delete this color because it has variants assigned to it." } });
-            }
+            return Ok(new { success = true, message = result.Message });
         }
-
-        private bool ColorExists(Guid id) => _context.Colors.Any(e => e.Id == id);
     }
 }

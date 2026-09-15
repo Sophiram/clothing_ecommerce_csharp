@@ -3,49 +3,64 @@
     ViewData["Title"] = "Create Order";
 }
 
-<div class="container py-4">
-    <div class="mb-4">
-        <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Orders</a>
-        <h2 class="fw-bold mt-3 mb-1">Create New Order</h2>
+<div class="admin-page">
+    <!-- PAGE HEADER -->
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="page-eyebrow">
+                <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Orders</a>
+            </div>
+            <h1 class="page-title">Create Manual Order</h1>
+            <p class="page-description">Generate a customer order directly from the store administration portal.</p>
+        </div>
     </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Order Information</h3>
+                </div>
+                <div class="p-4">
                     <form asp-action="Create" method="post">
                         @Html.AntiForgeryToken()
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <div asp-validation-summary="ModelOnly" class="admin-alert admin-alert-danger mb-3"></div>
 
                         <div class="mb-3">
-                            <label asp-for="CustomerId" class="form-label fw-semibold">Customer</label>
+                            <label asp-for="CustomerId" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Customer Account</label>
                             <select asp-for="CustomerId" class="form-select" asp-items="ViewBag.CustomerId">
                                 <option value="">-- Select Customer --</option>
                             </select>
-                            <span asp-validation-for="CustomerId" class="text-danger"></span>
+                            <span asp-validation-for="CustomerId" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AddressId" class="form-label fw-semibold">Shipping Address</label>
+                            <label asp-for="AddressId" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Shipping Destination</label>
                             <select asp-for="AddressId" class="form-select" asp-items="ViewBag.AddressId">
-                                <option value="">-- Select Address --</option>
+                                <option value="">-- Select Shipping Address --</option>
                             </select>
-                            <span asp-validation-for="AddressId" class="text-danger"></span>
+                            <span asp-validation-for="AddressId" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Status" class="form-label fw-semibold">Order Status</label>
+                            <label asp-for="Status" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Initial Order Status</label>
                             <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<WebApplication_ClothingEcommerce.Data.Enums.OrderStatus>()"></select>
                         </div>
 
                         <div class="mb-4">
-                            <label asp-for="TotalAmount" class="form-label fw-semibold">Total Amount ($)</label>
-                            <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" />
+                            <label asp-for="TotalAmount" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Total Amount ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="TotalAmount" class="text-danger small"></span>
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Create Order</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn-primary-custom px-4">
+                                <i class="bi bi-check-lg me-1"></i> Create Order
+                            </button>
+                            <a asp-action="Index" class="btn btn-light border rounded-pill px-4">Cancel</a>
                         </div>
                     </form>
                 </div>

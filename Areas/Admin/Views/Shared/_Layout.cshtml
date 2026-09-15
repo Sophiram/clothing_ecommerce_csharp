@@ -1,5 +1,54 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @using WebApplication_ClothingEcommerce.Models
+@inject WebApplication_ClothingEcommerce.Data.AppDbContext DbContext
+@{
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var roleTitle = isSuperAdmin ? "Super Administrator" : "Store Administrator";
+
+    string userEmail = User.Identity?.Name ?? "";
+    string userDisplayName = userEmail.Split('@')[0];
+    string userFirstName = "";
+    string userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "A";
+    string? userAvatarUrl = null;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        try
+        {
+            var appUser = DbContext.Users.FirstOrDefault(u => u.UserName == userEmail || u.Email == userEmail);
+            if (appUser != null)
+            {
+                userEmail = appUser.Email ?? userEmail;
+                if (!string.IsNullOrWhiteSpace(appUser.FullName))
+                {
+                    userDisplayName = appUser.FullName;
+                    userFirstName = appUser.FirstName;
+                    userFirstLetter = !string.IsNullOrWhiteSpace(appUser.FirstName) 
+                        ? appUser.FirstName.Substring(0, 1).ToUpper() 
+                        : appUser.FullName.Substring(0, 1).ToUpper();
+                }
+                else if (!string.IsNullOrWhiteSpace(appUser.FirstName))
+                {
+                    userDisplayName = appUser.FirstName;
+                    userFirstName = appUser.FirstName;
+                    userFirstLetter = appUser.FirstName.Substring(0, 1).ToUpper();
+                }
+
+                var avatarFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                if (System.IO.Directory.Exists(avatarFolder))
+                {
+                    var files = System.IO.Directory.GetFiles(avatarFolder, $"{appUser.Id}.*");
+                    if (files.Length > 0)
+                    {
+                        var fi = new System.IO.FileInfo(files[0]);
+                        userAvatarUrl = $"/uploads/avatars/{System.IO.Path.GetFileName(files[0])}?v={fi.LastWriteTimeUtc.Ticks}";
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+}
 
 <!DOCTYPE html>
 
@@ -55,6 +104,7 @@
     <link rel="stylesheet"
           href="~/css/admin.css"
           asp-append-version="true" />
+
 
 </head>
 
@@ -421,69 +471,70 @@
 
 
             <!-- =================================================
-                 SYSTEM
+                 SYSTEM (SUPERADMIN ONLY)
             ================================================== -->
 
-            <div class="sidebar-section-title">
-                SYSTEM
-            </div>
+            @if (isSuperAdmin)
+            {
+                <div class="sidebar-section-title d-flex align-items-center justify-content-between">
+                    <span>SYSTEM</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 9px; font-weight: 800; letter-spacing: 0.05em; padding: 2px 6px;">PRO</span>
+                </div>
 
-            <ul class="sidebar-menu">
+                <ul class="sidebar-menu">
 
-                <li>
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Users"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                            <i class="bi bi-person-gear"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
 
-                    <a asp-area="Admin"
-                       asp-controller="Users"
-                       asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Admins"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Admins" ? "active" : "")">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            <span>Admins</span>
+                        </a>
+                    </li>
 
-                        <i class="bi bi-person-gear"></i>
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Roles"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Roles</span>
+                        </a>
+                    </li>
 
-                        <span>
-                            Users
-                        </span>
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Settings"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
 
-                    </a>
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="AuditLogs"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AuditLogs" ? "active" : "")">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Audit Logs</span>
+                        </a>
+                    </li>
 
-                </li>
-
-
-                <li>
-
-                    <a asp-area="Admin"
-                       asp-controller="Roles"
-                       asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")">
-
-                        <i class="bi bi-shield-lock"></i>
-
-                        <span>
-                            Roles
-                        </span>
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a asp-area="Admin"
-                       asp-controller="Settings"
-                       asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")">
-
-                        <i class="bi bi-gear"></i>
-
-                        <span>
-                            Settings
-                        </span>
-
-                    </a>
-
-                </li>
-
-            </ul>
+                </ul>
+            }
 
 
             <!-- =================================================
@@ -654,23 +705,25 @@
                             data-bs-toggle="dropdown"
                             aria-expanded="false">
 
-                        <div class="profile-icon">
-
-                            <i class="bi bi-person"></i>
-
+                        <div class="profile-icon @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis" : "") p-0 overflow-hidden position-relative flex-shrink-0">
+                            @if (!string.IsNullOrEmpty(userAvatarUrl))
+                            {
+                                <img src="@userAvatarUrl" alt="@userDisplayName" class="w-100 h-100 rounded-circle" style="object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="fw-bold">@userFirstLetter</span>
+                            }
                         </div>
 
-
-                        <div class="profile-info">
+                        <div class="profile-info d-none d-sm-flex">
 
                             <span class="profile-name">
-
-                                @(User.Identity?.Name ?? "Administrator")
-
+                                @userDisplayName
                             </span>
 
-                            <small>
-                                Administrator
+                            <small class="@(isSuperAdmin ? "fw-bold text-warning-emphasis" : "")">
+                                <i class="bi @(isSuperAdmin ? "bi-shield-check text-warning" : "bi-shop text-success") me-1"></i>@roleTitle
                             </small>
 
                         </div>
@@ -678,76 +731,123 @@
                     </button>
 
 
-                    <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
+                    <ul class="dropdown-menu dropdown-menu-end admin-dropdown shadow-lg border-0" style="min-width: 260px; border-radius: 14px;">
 
                         <li>
-
-                            <div class="dropdown-user">
-
-                                <div class="profile-icon large">
-
-                                    <i class="bi bi-person"></i>
-
+                            <div class="dropdown-user p-3 bg-light rounded-top-3 border-bottom mb-2">
+                                <div class="profile-icon large @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis" : "") p-0 overflow-hidden flex-shrink-0">
+                                    @if (!string.IsNullOrEmpty(userAvatarUrl))
+                                    {
+                                        <img src="@userAvatarUrl" alt="@userDisplayName" class="w-100 h-100 rounded-circle" style="object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="fs-5 fw-bold">@userFirstLetter</span>
+                                    }
                                 </div>
-
-                                <div>
-
-                                    <strong>
-                                        @(User.Identity?.Name ?? "Administrator")
+                                <div class="overflow-hidden" style="min-width: 0;">
+                                    <strong class="text-truncate d-block text-dark">
+                                        @userDisplayName
                                     </strong>
-
-                                    <small>
-                                        Administrator
-                                    </small>
-
+                                    <div class="text-muted small text-truncate" style="font-size: 0.75rem;">
+                                        @userEmail
+                                    </div>
+                                    <span class="badge @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis border border-warning-subtle" : "bg-primary-subtle text-primary border border-primary-subtle") rounded-pill px-2 py-0 mt-1" style="font-size: 0.68rem;">
+                                        @roleTitle
+                                    </span>
                                 </div>
-
                             </div>
-
                         </li>
 
-
                         <li>
-                            <hr class="dropdown-divider" />
-                        </li>
-
-
-                        <li>
-
-                            <a class="dropdown-item"
-                               asp-area="Admin"
-                               asp-controller="Settings"
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Profile"
                                asp-action="Index">
-
-                                <i class="bi bi-gear"></i>
-
-                                Settings
-
+                                <i class="bi bi-person-circle text-primary fs-6"></i>
+                                <span>My Account Profile</span>
                             </a>
-
                         </li>
 
+                        <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Profile"
+                               asp-action="Index"
+                               asp-route-tab="security">
+                                <i class="bi bi-shield-lock text-success fs-6"></i>
+                                <span>Security &amp; Password</span>
+                            </a>
+                        </li>
 
                         <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Home"
+                               asp-action="Index"
+                               target="_blank">
+                                <i class="bi bi-shop text-info fs-6"></i>
+                                <span>View Storefront</span>
+                                <i class="bi bi-box-arrow-up-right ms-auto text-muted small"></i>
+                            </a>
+                        </li>
 
+                        @if (isSuperAdmin)
+                        {
+                            <li>
+                                <hr class="dropdown-divider my-2" />
+                            </li>
+                            <li>
+                                <div class="px-3 py-1 text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Administration</div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="Admins"
+                                   asp-action="Index">
+                                    <i class="bi bi-people-fill text-primary"></i>
+                                    <span>Administrator Accounts</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="Settings"
+                                   asp-action="Index">
+                                    <i class="bi bi-gear-fill text-secondary"></i>
+                                    <span>System Settings</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="AuditLogs"
+                                   asp-action="Index">
+                                    <i class="bi bi-journal-text text-teal"></i>
+                                    <span>Audit Logs</span>
+                                </a>
+                            </li>
+                        }
+
+                        <li>
+                            <hr class="dropdown-divider my-2" />
+                        </li>
+
+                        <li>
                             <form asp-area=""
                                   asp-controller="Account"
                                   asp-action="Logout"
-                                  method="post">
-
+                                  method="post"
+                                  class="m-0 p-0">
                                 @Html.AntiForgeryToken()
-
                                 <button type="submit"
-                                        class="dropdown-item text-danger">
-
-                                    <i class="bi bi-box-arrow-right"></i>
-
-                                    Logout
-
+                                        class="dropdown-item py-2 text-danger d-flex align-items-center gap-2">
+                                    <i class="bi bi-box-arrow-right fs-6"></i>
+                                    <span>Sign Out</span>
                                 </button>
-
                             </form>
-
                         </li>
 
                     </ul>
@@ -802,6 +902,180 @@
 <script src="~/js/admin.js"
         asp-append-version="true"></script>
 
+<!-- =====================================================
+     SWEETALERT2 (Toast Notifications)
+====================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    window.showToast = function(type, message) {
+        if (type === 'error') {
+            Toast.fire({
+                icon: 'error',
+                title: message,
+                timer: 5000 // longer duration for error
+            });
+        } else {
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>showToast('success', '@TempData["Success"]');</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>showToast('error', '@TempData["Error"]');</text>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <text>showToast('warning', '@TempData["Warning"]');</text>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <text>showToast('info', '@TempData["Info"]');</text>
+        }
+    });
+</script>
+
+@Html.AntiForgeryToken()
+<!-- =====================================================
+     GLOBAL AJAX MODAL
+====================================================== -->
+<div class="modal fade" id="globalAjaxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="globalAjaxModalBody">
+            <!-- Content will be loaded here via AJAX -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modalEl = document.getElementById('globalAjaxModal');
+        const modalBody = document.getElementById('globalAjaxModalBody');
+        const ajaxModal = new bootstrap.Modal(modalEl);
+
+        document.addEventListener('click', function (e) {
+            // Find if a relevant link was clicked
+            const a = e.target.closest('a[href]');
+            if (!a) return;
+
+            if (a.hasAttribute('data-no-ajax')) return;
+
+            // Use URL object to reliably get the pathname
+            let url;
+            try {
+                url = new URL(a.href, window.location.origin);
+            } catch (err) {
+                return; // Invalid URL, let browser handle it
+            }
+
+            const path = url.pathname.toLowerCase();
+            
+            // Only intercept links within the Admin area
+            if (!path.startsWith('/admin/')) return;
+
+            const isCreateOrEdit = path.includes('/create') || path.includes('/edit');
+            const isDelete = path.includes('/delete');
+
+            if (isDelete) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ea4335',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'post';
+                        form.action = a.href; // Use full href for the form action
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        if (token) {
+                            form.appendChild(token.cloneNode());
+                        }
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+                return;
+            }
+
+            if (isCreateOrEdit) {
+                e.preventDefault();
+                modalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div></div>';
+                ajaxModal.show();
+
+                fetch(a.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => res.text())
+                    .then(html => {
+                        modalBody.innerHTML = html;
+                    })
+                    .catch(() => {
+                        modalBody.innerHTML = '<div class="p-4 text-danger">Failed to load content.</div>';
+                    });
+            }
+        });
+
+        // Intercept form submissions inside the modal
+        document.addEventListener('submit', function (e) {
+            if (!modalBody.contains(e.target)) return;
+
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(form.action, {
+                method: form.method || 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (res.redirected) {
+                    window.location.href = res.url;
+                } else if (res.ok) {
+                    return res.text();
+                } else {
+                    window.showToast('error', 'An error occurred.');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            })
+            .then(html => {
+                if (html) {
+                    modalBody.innerHTML = html;
+                }
+            })
+            .catch(() => {
+                window.showToast('error', 'Network error.');
+                if (submitBtn) submitBtn.disabled = false;
+            });
+        });
+    });
+</script>
 
 @await RenderSectionAsync("Scripts", required: false)
 

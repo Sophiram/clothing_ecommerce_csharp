@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Models;
 
@@ -35,6 +35,7 @@ namespace WebApplication_ClothingEcommerce.Data
 
 
         public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

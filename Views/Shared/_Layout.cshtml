@@ -10,15 +10,31 @@
     string userFirstName = "";
     string userFirstLetter = "U";
     string userEmail = "";
+    string? userAvatarUrl = null;
     bool isAdmin = false;
 
     if (User.Identity?.IsAuthenticated == true)
     {
         userEmail = User.Identity.Name ?? "";
-        isAdmin = User.IsInRole("Admin");
+        isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 
         try
         {
+            var appUser = DbContext.Users.FirstOrDefault(u => u.Email == userEmail);
+            if (appUser != null)
+            {
+                var avatarFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                if (System.IO.Directory.Exists(avatarFolder))
+                {
+                    var files = System.IO.Directory.GetFiles(avatarFolder, $"{appUser.Id}.*");
+                    if (files.Length > 0)
+                    {
+                        var fi = new System.IO.FileInfo(files[0]);
+                        userAvatarUrl = $"/uploads/avatars/{System.IO.Path.GetFileName(files[0])}?v={fi.LastWriteTimeUtc.Ticks}";
+                    }
+                }
+            }
+
             var customer = DbContext.Customers.FirstOrDefault(c => c.Email == userEmail);
             if (customer != null)
             {
@@ -65,6 +81,13 @@
             userCartCount = parsedCount;
         }
     }
+
+    var navCategories = new List<WebApplication_ClothingEcommerce.Models.Category>();
+    try
+    {
+        navCategories = DbContext.Categories.OrderBy(c => c.Name).ToList();
+    }
+    catch { }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -149,14 +172,14 @@
     </div>
 
     <!-- =====================================================
-         CLOTHÉ MODERN NAVBAR
+         CLOTHÉ REFINED NAVBAR
     ====================================================== -->
     <nav class="clothe-navbar">
         <div class="container clothe-nav-container">
 
             <!-- BRAND LOGO -->
-            <a class="clothe-brand" asp-controller="Home" asp-action="Index">
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" class="clothe-brand-logo" />
+            <a class="clothe-brand" asp-controller="Home" asp-action="Index" aria-label="CLOTHÉ — Go to homepage">
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-brand-logo" />
             </a>
 
             <!-- DESKTOP NAVIGATION LINKS -->
@@ -177,11 +200,13 @@
                 <!-- Live category dropdown -->
                 @await Component.InvokeAsync("CategoryNav")
 
+
+
                 <li>
                     <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true"
                        class="clothe-nav-link clothe-nav-link-sale">
                         Sale
-                        <span class="clothe-sale-pill">HOT</span>
+                        <span class="clothe-sale-pill" aria-hidden="true">HOT</span>
                     </a>
                 </li>
                 <li>
@@ -195,8 +220,8 @@
                 {
                     <li>
                         <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
-                           class="clothe-admin-badge" title="Access Admin Control Panel">
-                            <i class="bi bi-speedometer2"></i>
+                           class="clothe-admin-badge" aria-label="Open Admin Dashboard">
+                            <i class="bi bi-speedometer2" aria-hidden="true"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
@@ -205,15 +230,20 @@
 
             <!-- LIVE SEARCH BAR (DESKTOP) -->
             <div class="clothe-nav-search d-none d-lg-block">
-                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form">
-                    <i class="bi bi-search clothe-search-icon"></i>
+                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form" id="desktopSearchForm" role="search">
+                    <i class="bi bi-search clothe-search-icon" aria-hidden="true"></i>
                     <input type="text"
                            name="search"
+                           id="navSearchInput"
                            class="clothe-search-input"
-                           placeholder="Search styles, brands..."
-                           autocomplete="off" />
-                    <button type="submit" class="clothe-search-submit" title="Search">
-                        <i class="bi bi-arrow-right-short"></i>
+                           placeholder="Search styles, brands, collections…"
+                           autocomplete="off"
+                           aria-label="Search products" />
+                    <button type="button" class="clothe-search-clear d-none" id="navSearchClear" aria-label="Clear search">
+                        <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+                    </button>
+                    <button type="submit" class="clothe-search-submit" aria-label="Submit search">
+                        <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
                     </button>
                 </form>
             </div>
@@ -227,26 +257,30 @@
                     <a asp-controller="Wishlist"
                        asp-action="Index"
                        class="clothe-action-btn"
-                       title="My Wishlist">
-                        <i class="bi bi-heart"></i>
+                       title="My Wishlist"
+                       aria-label="My Wishlist">
+                        <i class="bi bi-heart" aria-hidden="true"></i>
                         @if (userWishlistCount > 0)
                         {
-                            <span class="clothe-badge-count">@userWishlistCount</span>
+                            <span class="clothe-badge-count" aria-hidden="true">@userWishlistCount</span>
                         }
                     </a>
                 }
 
                 <!-- CART -->
-                <a asp-controller="Cart"
-                   asp-action="Index"
-                   class="clothe-action-btn"
-                   title="Shopping Bag">
-                    <i class="bi bi-bag"></i>
+                <button type="button"
+                        class="clothe-action-btn"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#cartSidebarDrawer"
+                        aria-controls="cartSidebarDrawer"
+                        title="Shopping Bag"
+                        aria-label="Shopping Bag">
+                    <i class="bi bi-bag" aria-hidden="true"></i>
                     @if (userCartCount > 0)
                     {
-                        <span class="clothe-badge-count badge-sale">@userCartCount</span>
+                        <span class="clothe-badge-count badge-sale" aria-hidden="true">@userCartCount</span>
                     }
-                </a>
+                </button>
 
                 <!-- USER ACCOUNT -->
                 @if (User.Identity?.IsAuthenticated == true)
@@ -256,29 +290,53 @@
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                                 type="button"
-                                title="Account settings">
-                            <span class="clothe-user-avatar">@userFirstLetter</span>
-                            <span class="clothe-user-name d-none d-xl-inline">@(string.IsNullOrEmpty(userFirstName) ? "Account" : userFirstName)</span>
-                            <i class="bi bi-chevron-down clothe-user-chevron"></i>
+                                aria-label="Account menu">
+                            <span class="clothe-user-avatar">
+                                @if (!string.IsNullOrEmpty(userAvatarUrl))
+                                {
+                                    <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
+                                }
+                                else
+                                {
+                                    @userFirstLetter
+                                }
+                            </span>
+                            <span class="clothe-user-name d-none d-lg-inline">@(string.IsNullOrEmpty(userFirstName) ? "Account" : userFirstName)</span>
+                            <i class="bi bi-chevron-down clothe-user-chevron d-none d-lg-inline" aria-hidden="true"></i>
                         </button>
 
                         <ul class="dropdown-menu dropdown-menu-end clothe-dropdown-menu">
                             <li>
                                 <div class="clothe-user-header">
-                                    <div class="clothe-user-header-avatar">@userFirstLetter</div>
+                                    <div class="clothe-user-header-avatar">
+                                        @if (!string.IsNullOrEmpty(userAvatarUrl))
+                                        {
+                                            <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
+                                        }
+                                        else
+                                        {
+                                            @userFirstLetter
+                                        }
+                                    </div>
                                     <div class="clothe-user-meta">
                                         <strong>@userDisplayName</strong>
                                         <small>@userEmail</small>
-                                        @if (isAdmin)
+                                        @if (User.IsInRole("SuperAdmin"))
                                         {
                                             <span class="clothe-user-role-badge role-admin">
-                                                <i class="bi bi-shield-check"></i> Admin
+                                                <i class="bi bi-shield-fill-check" aria-hidden="true"></i> SuperAdmin
+                                            </span>
+                                        }
+                                        else if (isAdmin)
+                                        {
+                                            <span class="clothe-user-role-badge role-admin">
+                                                <i class="bi bi-shield-check" aria-hidden="true"></i> Admin
                                             </span>
                                         }
                                         else
                                         {
                                             <span class="clothe-user-role-badge role-member">
-                                                <i class="bi bi-stars"></i> Member
+                                                <i class="bi bi-stars" aria-hidden="true"></i> Member
                                             </span>
                                         }
                                     </div>
@@ -366,92 +424,206 @@
                 <!-- MOBILE HAMBURGER TOGGLER -->
                 <button class="clothe-mobile-toggler d-lg-none"
                         type="button"
-                        data-bs-toggle="collapse"
+                        data-bs-toggle="offcanvas"
                         data-bs-target="#clotheMobileNav"
                         aria-controls="clotheMobileNav"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
-                    <i class="bi bi-list"></i>
+                        aria-label="Open navigation menu"
+                        id="clotheMobileToggler">
+                    <i class="bi bi-list" aria-hidden="true"></i>
                 </button>
 
             </div>
 
         </div>
 
-        <!-- MOBILE MENU DRAWER (COLLAPSIBLE) -->
-        <div class="collapse d-lg-none" id="clotheMobileNav">
-            <div class="container clothe-mobile-menu">
+     
+    </nav>
+    <!-- MOBILE MENU DRAWER (OFFCANVAS) -->
+    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="clotheMobileNav" aria-labelledby="clotheMobileNavLabel">
+        <div class="offcanvas-header" style="border-bottom: 1px solid #f3f4f6;">
+            <a class="clothe-brand" asp-controller="Home" asp-action="Index" id="clotheMobileNavLabel">
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-brand-logo" style="height:30px;" />
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
+        </div>
+        <div class="offcanvas-body clothe-mobile-menu">
 
-                <!-- Mobile Search Bar -->
-                <div class="clothe-mobile-search-wrap">
-                    <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form">
-                        <i class="bi bi-search clothe-search-icon"></i>
-                        <input type="text"
-                               name="search"
-                               class="clothe-search-input"
-                               placeholder="Search styles, brands..."
-                               autocomplete="off" />
-                        <button type="submit" class="clothe-search-submit" title="Search">
-                            <i class="bi bi-arrow-right-short"></i>
+            <!-- Logged In User Mobile Card -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="clothe-mobile-user-card mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="clothe-user-avatar">
+                            @if (!string.IsNullOrEmpty(userAvatarUrl))
+                            {
+                                <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
+                            }
+                            else
+                            {
+                                @userFirstLetter
+                            }
+                        </span>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <strong class="d-block text-truncate" style="font-size:0.9375rem;color:#0f172a;">@userDisplayName</strong>
+                            <small class="text-muted text-truncate d-block" style="font-size:0.8rem;">@userEmail</small>
+                            @if (User.IsInRole("SuperAdmin"))
+                            {
+                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#fef3c7;color:#92400e;">SuperAdmin</span>
+                            }
+                            else if (isAdmin)
+                            {
+                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#fee2e2;color:#b91c1c;">Admin</span>
+                            }
+                            else
+                            {
+                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#dbeafe;color:#1d4ed8;">Member</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="clothe-mobile-user-grid mt-3">
+                        <a asp-controller="Profile" asp-action="Index" class="clothe-mobile-user-tile">
+                            <i class="bi bi-person"></i>
+                            <span>Profile</span>
+                        </a>
+                        <a asp-controller="Orders" asp-action="Index" class="clothe-mobile-user-tile">
+                            <i class="bi bi-box-seam"></i>
+                            <span>Orders</span>
+                        </a>
+                        <a asp-controller="Wishlist" asp-action="Index" class="clothe-mobile-user-tile position-relative">
+                            <i class="bi bi-heart"></i>
+                            <span>Wishlist</span>
+                            @if (userWishlistCount > 0)
+                            {
+                                <span class="badge bg-dark rounded-pill">@userWishlistCount</span>
+                            }
+                        </a>
+                        <button type="button"
+                                class="clothe-mobile-user-tile position-relative border-0 bg-transparent text-start"
+                                data-bs-toggle="offcanvas"
+                                data-bs-target="#cartSidebarDrawer"
+                                aria-controls="cartSidebarDrawer">
+                            <i class="bi bi-bag"></i>
+                            <span>Bag</span>
+                            @if (userCartCount > 0)
+                            {
+                                <span class="badge bg-danger rounded-pill">@userCartCount</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Mobile Search Bar -->
+            <div class="clothe-mobile-search-wrap">
+                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form" id="mobileSearchForm">
+                    <i class="bi bi-search clothe-search-icon"></i>
+                    <input type="text"
+                           name="search"
+                           id="mobileSearchInput"
+                           class="clothe-search-input"
+                           placeholder="Search styles, brands, collections..."
+                           autocomplete="off" />
+                    <button type="button" class="clothe-search-clear d-none" id="mobileSearchClear" title="Clear search">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                    <button type="submit" class="clothe-search-submit" title="Search">
+                        <i class="bi bi-arrow-right-short"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mobile Navigation List -->
+            <ul class="clothe-mobile-nav-list">
+                <li class="clothe-mobile-nav-item">
+                    <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                        <span><i class="bi bi-house me-2"></i> Home</span>
+                        <i class="bi bi-chevron-right text-muted small"></i>
+                    </a>
+                </li>
+                <li class="clothe-mobile-nav-item">
+                    <a asp-controller="Shop" asp-action="Index" class="@(currentController == "Shop" && currentAction == "Index" && string.IsNullOrEmpty(Context.Request.Query["onSale"]) && string.IsNullOrEmpty(Context.Request.Query["categoryId"]) ? "active" : "")">
+                        <span><i class="bi bi-shop me-2"></i> Shop All</span>
+                        <i class="bi bi-chevron-right text-muted small"></i>
+                    </a>
+                </li>
+
+                <!-- Categories Expandable Accordion in Mobile -->
+                <li class="clothe-mobile-nav-item">
+                    <a href="#mobileCategoriesCollapse" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mobileCategoriesCollapse" class="d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-grid me-2"></i> Categories</span>
+                        <i class="bi bi-chevron-down text-muted small transition-chevron"></i>
+                    </a>
+                    <div class="collapse ps-3 pe-2 py-1" id="mobileCategoriesCollapse">
+                        <div class="d-flex flex-column gap-1 my-1">
+                            <a asp-controller="Shop" asp-action="Index" class="clothe-mobile-sublink fw-semibold">
+                                <i class="bi bi-collection-fill me-2 text-primary"></i> All Collections
+                            </a>
+                            @if (navCategories != null && navCategories.Any())
+                            {
+                                @foreach (var cat in navCategories)
+                                {
+                                    <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@cat.Id" class="clothe-mobile-sublink">
+                                        <span>@cat.Name</span>
+                                    </a>
+                                }
+                            }
+                        </div>
+                    </div>
+                </li>
+
+                <li class="clothe-mobile-nav-item">
+                    <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="sale-item @(!string.IsNullOrEmpty(Context.Request.Query["onSale"]) ? "active" : "")">
+                        <span><i class="bi bi-lightning-charge-fill me-2"></i> Sale & Promotions</span>
+                        <span class="clothe-sale-pill">HOT</span>
+                    </a>
+                </li>
+                <li class="clothe-mobile-nav-item">
+                    <a asp-controller="Home" asp-action="About" class="@(currentController == "Home" && currentAction == "About" ? "active" : "")">
+                        <span><i class="bi bi-info-circle me-2"></i> About Us</span>
+                        <i class="bi bi-chevron-right text-muted small"></i>
+                    </a>
+                </li>
+
+                @if (isAdmin)
+                {
+                    <li class="clothe-mobile-nav-item">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-danger fw-bold">
+                            <span><i class="bi bi-speedometer2 me-2"></i> Admin Dashboard</span>
+                            <i class="bi bi-chevron-right text-muted small"></i>
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <!-- Mobile Auth Buttons or Logout -->
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="clothe-mobile-auth-block">
+                    <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>Sign in</span>
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
+                        <span>Create Account</span>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="mt-3 pt-2" style="border-top: 1px solid #f3f4f6;">
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="clothe-logout-btn w-100 justify-content-center" style="padding: 10px 14px;">
+                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                            <span>Sign out</span>
                         </button>
                     </form>
                 </div>
-
-                <!-- Mobile Navigation List -->
-                <ul class="clothe-mobile-nav-list">
-                    <li class="clothe-mobile-nav-item">
-                        <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">
-                            <span><i class="bi bi-house me-2"></i> Home</span>
-                            <i class="bi bi-chevron-right text-muted small"></i>
-                        </a>
-                    </li>
-                    <li class="clothe-mobile-nav-item">
-                        <a asp-controller="Shop" asp-action="Index" class="@(currentController == "Shop" ? "active" : "")">
-                            <span><i class="bi bi-shop me-2"></i> Shop All</span>
-                            <i class="bi bi-chevron-right text-muted small"></i>
-                        </a>
-                    </li>
-                    <li class="clothe-mobile-nav-item">
-                        <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="sale-item">
-                            <span><i class="bi bi-lightning-charge-fill me-2"></i> Sale & Promotions</span>
-                            <span class="clothe-sale-pill">HOT</span>
-                        </a>
-                    </li>
-                    <li class="clothe-mobile-nav-item">
-                        <a asp-controller="Home" asp-action="About" class="@(currentController == "Home" && currentAction == "About" ? "active" : "")">
-                            <span><i class="bi bi-info-circle me-2"></i> About Us</span>
-                            <i class="bi bi-chevron-right text-muted small"></i>
-                        </a>
-                    </li>
-
-                    @if (isAdmin)
-                    {
-                        <li class="clothe-mobile-nav-item">
-                            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-danger fw-bold">
-                                <span><i class="bi bi-speedometer2 me-2"></i> Admin Dashboard</span>
-                                <i class="bi bi-chevron-right text-muted small"></i>
-                            </a>
-                        </li>
-                    }
-                </ul>
-
-                <!-- Mobile Auth Buttons (if guest) -->
-                @if (User.Identity?.IsAuthenticated != true)
-                {
-                    <div class="clothe-mobile-auth-block">
-                        <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
-                            <i class="bi bi-box-arrow-in-right"></i>
-                            <span>Sign in</span>
-                        </a>
-                        <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
-                            <span>Create Account</span>
-                        </a>
-                    </div>
-                }
-            </div>
+            }
         </div>
+    </div>
 
-    </nav>
+
 
     <!-- =====================================================
          MAIN
@@ -807,6 +979,63 @@
             }
         });
     </script>
+
+    <!-- =====================================================
+         NAVBAR INTERACTIVE ENHANCEMENTS: SEARCH & MOBILE DRAWER
+    ====================================================== -->
+    <script>
+        (function() {
+            // Search input clear buttons (Desktop & Mobile)
+            function setupSearchClear(inputId, clearBtnId) {
+                var input = document.getElementById(inputId);
+                var btn = document.getElementById(clearBtnId);
+                if (!input || !btn) return;
+
+                function toggleClear() {
+                    if (input.value.trim().length > 0) {
+                        btn.classList.remove('d-none');
+                    } else {
+                        btn.classList.add('d-none');
+                    }
+                }
+
+                input.addEventListener('input', toggleClear);
+                btn.addEventListener('click', function() {
+                    input.value = '';
+                    toggleClear();
+                    input.focus();
+                });
+                toggleClear();
+            }
+
+            setupSearchClear('navSearchInput', 'navSearchClear');
+            setupSearchClear('mobileSearchInput', 'mobileSearchClear');
+
+            // Global shortcut Ctrl+K or / to focus search
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey && e.key.toLowerCase() === 'k') || (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+                    var desktopSearch = document.getElementById('navSearchInput');
+                    var mobileSearch = document.getElementById('mobileSearchInput');
+                    if (desktopSearch && window.innerWidth >= 992) {
+                        e.preventDefault();
+                        desktopSearch.focus();
+                    } else if (mobileSearch) {
+                        e.preventDefault();
+                        var mobileOffcanvas = document.getElementById('clotheMobileNav');
+                        if (mobileOffcanvas && !mobileOffcanvas.classList.contains('show')) {
+                            var bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(mobileOffcanvas);
+                            bsOffcanvas.show();
+                        }
+                        // Focus might need a slight delay to allow offcanvas to open
+                        setTimeout(() => mobileSearch.focus(), 300);
+                    }
+                }
+            });
+        })();
+    </script>
+
+    <!-- CART SIDEBAR DRAWER (GLOBAL) -->
+    <partial name="_CartSidebar" />
 
     @await RenderSectionAsync("Scripts", required: false)
 

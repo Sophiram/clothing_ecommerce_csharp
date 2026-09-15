@@ -1,40 +1,46 @@
-﻿/* =========================================================
+/* =========================================================
    CLOTHÉ ADMIN PORTAL
    Bold & Vibrant Google-Color Admin Theme
 ========================================================= */
 
 :root {
+    /* CLOTH� Admin Original Palette */
     --google-blue: #4285F4;
     --google-blue-dark: #3367D6;
     --google-red: #EA4335;
-    --google-red-dark: #C5221F;
+    --google-red-dark: #D32F2F;
     --google-green: #34A853;
-    --google-green-dark: #188038;
+    --google-green-dark: #2E7D32;
     --google-yellow: #FBBC04;
-    --google-yellow-dark: #F9AB00;
-    --admin-bg: #f6f8fc;
-    --admin-sidebar: #14171f;
-    --admin-sidebar-hover: #1f2430;
-    --admin-sidebar-text: #9aa1b1;
+    --google-yellow-dark: #F57F17;
+    
+    --admin-bg: #f4f6f9;
+    --admin-sidebar: #1a1e29;
+    --admin-sidebar-hover: #2c3142;
+    --admin-sidebar-text: #a1a5b7;
     --admin-sidebar-active: #ffffff;
-    --admin-text: #171717;
-    --admin-muted: #767b87;
-    --admin-border: #e8ecf3;
-    --admin-border-dark: #d7dde8;
-    --admin-card: #ffffff;
-    --success: var(--google-green);
-    --danger: var(--google-red);
-    --warning: var(--google-yellow-dark);
+    --admin-text: #333333;
+    --admin-muted: #888888;
+    --admin-border: #e5e5e5;
+    --admin-border-dark: #CCCCCC;
+    --admin-card: #FFFFFF;
+    
+    --success: #34A853;
+    --danger: #EA4335;
+    --warning: #FBBC04;
+    
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 78px;
     --navbar-height: 72px;
-    --radius-xs: 8px;
-    --radius-sm: 12px;
-    --radius-md: 16px;
-    --radius-lg: 22px;
-    --shadow-sm: 0 2px 10px rgba(66, 133, 244, .06);
-    --shadow-md: 0 14px 38px rgba(66, 133, 244, .12);
-    --transition: all .2s ease;
+    
+    --radius-xs: 6px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
@@ -451,7 +457,7 @@ button {
     border: 1px solid var(--admin-border);
     border-radius: 50px;
     background: white;
-    color: var(--admin-text);
+    color: var(--admin-muted);
     font-size: 11px;
     font-weight: 700;
     transition: var(--transition);
@@ -905,6 +911,7 @@ button {
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    min-height: 180px;
 }
 
 
@@ -1154,6 +1161,90 @@ button {
     background: #fdecea;
     border-color: var(--google-red);
     color: var(--google-red-dark);
+}
+
+
+/* =========================================================
+   MEATBALL ACTION DROPDOWN
+========================================================= */
+
+.action-meatball-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+    color: var(--admin-muted);
+    font-size: 15px;
+    line-height: 1;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.action-meatball-btn:hover,
+.action-meatball-btn:focus,
+.action-meatball-btn[aria-expanded="true"] {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: var(--admin-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-menu-meatball {
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+    padding: 6px;
+    min-width: 175px;
+    z-index: 1060;
+}
+
+.dropdown-menu-meatball .dropdown-item {
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #334155;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.dropdown-menu-meatball .dropdown-item i {
+    font-size: 0.95rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.dropdown-menu-meatball .dropdown-item:hover,
+.dropdown-menu-meatball .dropdown-item:focus {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.dropdown-menu-meatball .dropdown-item.text-danger {
+    color: #ef4444 !important;
+}
+
+.dropdown-menu-meatball .dropdown-item.text-danger:hover,
+.dropdown-menu-meatball .dropdown-item.text-danger:focus {
+    background: #fef2f2;
+    color: #dc2626 !important;
+}
+
+.dropdown-menu-meatball .dropdown-divider {
+    margin: 4px 0;
+    border-top: 1px solid #f1f5f9;
 }
 
 
@@ -1511,3 +1602,186 @@ body.sidebar-open {
         animation-duration: .01ms !important;
     }
 }
+
+/* =========================================================
+   SIDEBAR USER PROFILE CARD & COLLAPSED BEHAVIOR
+========================================================= */
+.sidebar-user-card {
+    transition: all 0.25s ease;
+}
+
+.admin-sidebar.collapsed .sidebar-user-card {
+    padding: 8px 4px !important;
+    margin: 10px 8px !important;
+    display: flex;
+    justify-content: center;
+}
+
+.admin-sidebar.collapsed .sidebar-user-info,
+.admin-sidebar.collapsed .sidebar-user-actions {
+    display: none !important;
+}
+
+.admin-sidebar.collapsed .sidebar-user-card .d-flex {
+    justify-content: center;
+}
+
+/* =========================================================
+   DUAL IMAGE INPUT (Upload / Paste URL)
+========================================================= */
+
+.img-input-tabs {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid var(--admin-border-dark);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.img-input-tab-btn {
+    flex: 1;
+    background: #f8f9fa;
+    border: none;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--admin-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.img-input-tab-btn:first-child {
+    border-right: 1.5px solid var(--admin-border-dark);
+}
+
+.img-input-tab-btn.active {
+    background: var(--google-blue);
+    color: #fff;
+}
+
+.img-input-tab-btn:hover:not(.active) {
+    background: #e8ecf3;
+    color: var(--admin-text);
+}
+
+.img-input-panel {
+    display: none;
+}
+
+.img-input-panel.active {
+    display: block;
+}
+
+.img-preview-box {
+    width: 100%;
+    min-height: 130px;
+    border: 1.5px dashed var(--admin-border-dark);
+    border-radius: var(--radius-xs);
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-top: 10px;
+    position: relative;
+}
+
+.img-preview-box img {
+    max-width: 100%;
+    max-height: 130px;
+    object-fit: contain;
+    display: none;
+}
+
+.img-preview-box img.visible {
+    display: block;
+}
+
+.img-preview-empty {
+    text-align: center;
+    color: #adb5bd;
+    font-size: 13px;
+    padding: 20px;
+}
+
+.img-preview-empty i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* Clipboard paste button in URL panel */
+.img-url-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.img-url-group input {
+    flex: 1;
+}
+
+.img-clipboard-btn {
+    flex-shrink: 0;
+    background: #f8f9fa;
+    border: 1.5px solid var(--admin-border-dark);
+    border-radius: var(--radius-xs);
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--admin-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.img-clipboard-btn:hover {
+    background: #e8ecf3;
+    color: var(--google-blue);
+    border-color: var(--google-blue);
+}
+
+.img-clipboard-btn.pasted {
+    background: #e8f5e9;
+    color: var(--google-green);
+    border-color: var(--google-green);
+}
+
+/* =========================================================
+   NOTYF CUSTOM OVERRIDES
+========================================================= */
+
+.notyf__toast {
+    border-radius: var(--radius-sm) !important;
+    font-family: "Inter", sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    min-width: 260px !important;
+    max-width: 380px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15) !important;
+    padding: 14px 20px !important;
+}
+
+.notyf__icon {
+    font-size: 16px !important;
+    margin-right: 4px;
+}
+
+.notyf__dismiss {
+    background: transparent !important;
+    opacity: .6;
+}
+
+.notyf__dismiss:hover {
+    opacity: 1;
+}
+
+
+

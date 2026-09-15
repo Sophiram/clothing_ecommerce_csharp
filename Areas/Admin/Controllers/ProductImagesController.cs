@@ -1,40 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class ProductImagesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IProductImageService _imageService;
+        private readonly IWebHostEnvironment _environment;
 
-        public ProductImagesController(AppDbContext context)
+        private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+        private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+
+        public ProductImagesController(IProductImageService imageService, IWebHostEnvironment environment)
         {
-            _context = context;
-        }
-
-        private bool IsValidImageUrl(string? url, out string? error)
-        {
-            error = null;
-
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                error = "Image URL is required.";
-                return false;
-            }
-
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
-                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
-                error = "Please enter a valid image URL.";
-                return false;
-            }
-
-            return true;
+            _imageService = imageService;
+            _environment = environment;
         }
 
         // =====================================================
@@ -43,47 +27,47 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductImage image)
+        public async Task<IActionResult> Create(ProductImage image, IFormFile? imageFile, string? imageUrl)
         {
             ModelState.Remove(nameof(ProductImage.Product));
+            ModelState.Remove(nameof(ProductImage.ImageUrl));
 
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == image.ProductId);
-
-            if (product == null)
+            // Resolve the image URL: prefer uploaded file, then pasted URL
+            if (imageFile != null && imageFile.Length > 0)
             {
-                return NotFound(new { success = false, errors = new[] { "Product not found." } });
+                var fileError = ValidateImageFile(imageFile);
+                if (fileError != null)
+                    return BadRequest(new { success = false, errors = new[] { fileError } });
+
+                var savedPath = await SaveProductImageAsync(imageFile);
+                image.ImageUrl = savedPath;
             }
-
-            if (!IsValidImageUrl(image.ImageUrl, out var urlError))
+            else if (!string.IsNullOrWhiteSpace(imageUrl))
             {
-                return BadRequest(new { success = false, errors = new[] { urlError } });
-            }
-
-            var existingImages = await _context.ProductImages
-                .Where(i => i.ProductId == image.ProductId)
-                .ToListAsync();
-
-            image.Id = Guid.NewGuid();
-
-            if (!existingImages.Any())
-            {
-                image.IsPrimary = true;
-            }
-
-            if (image.IsPrimary)
-            {
-                foreach (var existingImage in existingImages)
+                if (!Uri.TryCreate(imageUrl.Trim(), UriKind.Absolute, out var uri) ||
+                    (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
                 {
-                    existingImage.IsPrimary = false;
+                    return BadRequest(new { success = false, errors = new[] { "Please enter a valid image URL (must start with http:// or https://)." } });
                 }
+                image.ImageUrl = imageUrl.Trim();
+            }
+            else
+            {
+                return BadRequest(new { success = false, errors = new[] { "Please upload an image file or paste an image URL." } });
             }
 
-            _context.ProductImages.Add(image);
-            product.ModifiedAt = DateTime.UtcNow;
+            var result = await _imageService.AddImageAsync(image);
 
-            await _context.SaveChangesAsync();
+            if (!result.Success)
+            {
+                if (result.ErrorMessage == "Product not found.")
+                {
+                    return NotFound(new { success = false, errors = new[] { result.ErrorMessage } });
+                }
+                return BadRequest(new { success = false, errors = result.Errors });
+            }
 
-            return Ok(new { success = true, message = "Product image added successfully." });
+            return Ok(new { success = true, message = result.SuccessMessage });
         }
 
         // =====================================================
@@ -94,66 +78,18 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, Guid productId, string imageUrl, bool isPrimary)
         {
-            var image = await _context.ProductImages
-                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
+            var result = await _imageService.UpdateImageAsync(id, productId, imageUrl, isPrimary);
 
-            if (image == null)
+            if (!result.Success)
             {
-                return NotFound(new { success = false, errors = new[] { "Image not found." } });
-            }
-
-            if (!IsValidImageUrl(imageUrl, out var urlError))
-            {
-                return BadRequest(new { success = false, errors = new[] { urlError } });
-            }
-
-            image.ImageUrl = imageUrl;
-
-            if (isPrimary && !image.IsPrimary)
-            {
-                var siblings = await _context.ProductImages
-                    .Where(i => i.ProductId == productId && i.Id != id)
-                    .ToListAsync();
-
-                foreach (var sibling in siblings)
+                if (result.ErrorMessage == "Image not found.")
                 {
-                    sibling.IsPrimary = false;
+                    return NotFound(new { success = false, errors = new[] { result.ErrorMessage } });
                 }
-
-                image.IsPrimary = true;
-            }
-            else if (!isPrimary && image.IsPrimary)
-            {
-                // Don't allow un-setting primary with nothing else to fall back on
-                var otherCount = await _context.ProductImages
-                    .CountAsync(i => i.ProductId == productId && i.Id != id);
-
-                if (otherCount > 0)
-                {
-                    image.IsPrimary = false;
-
-                    var newPrimary = await _context.ProductImages
-                        .Where(i => i.ProductId == productId && i.Id != id)
-                        .OrderBy(i => i.Id)
-                        .FirstOrDefaultAsync();
-
-                    if (newPrimary != null)
-                    {
-                        newPrimary.IsPrimary = true;
-                    }
-                }
-                // if it's the only image, keep it primary regardless
+                return BadRequest(new { success = false, errors = result.Errors });
             }
 
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
-            if (product != null)
-            {
-                product.ModifiedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = "Product image updated successfully." });
+            return Ok(new { success = true, message = result.SuccessMessage });
         }
 
         // =====================================================
@@ -164,34 +100,14 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetPrimary(Guid id, Guid productId)
         {
-            var selectedImage = await _context.ProductImages
-                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
+            var result = await _imageService.SetPrimaryImageAsync(id, productId);
 
-            if (selectedImage == null)
+            if (!result.Success)
             {
-                return NotFound(new { success = false, errors = new[] { "Image not found." } });
+                return NotFound(new { success = false, errors = new[] { result.ErrorMessage } });
             }
 
-            var images = await _context.ProductImages
-                .Where(i => i.ProductId == productId)
-                .ToListAsync();
-
-            foreach (var image in images)
-            {
-                image.IsPrimary = false;
-            }
-
-            selectedImage.IsPrimary = true;
-
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
-            if (product != null)
-            {
-                product.ModifiedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = "Primary image updated successfully." });
+            return Ok(new { success = true, message = result.SuccessMessage });
         }
 
         // =====================================================
@@ -202,41 +118,46 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id, Guid productId)
         {
-            var image = await _context.ProductImages
-                .FirstOrDefaultAsync(i => i.Id == id && i.ProductId == productId);
+            var result = await _imageService.DeleteImageAsync(id, productId);
 
-            if (image == null)
+            if (!result.Success)
             {
-                return NotFound(new { success = false, errors = new[] { "Image not found." } });
+                return NotFound(new { success = false, errors = new[] { result.ErrorMessage } });
             }
 
-            bool wasPrimary = image.IsPrimary;
+            return Ok(new { success = true, message = result.SuccessMessage });
+        }
 
-            _context.ProductImages.Remove(image);
+        // =====================================================
+        // HELPERS
+        // =====================================================
 
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
-            if (product != null)
-            {
-                product.ModifiedAt = DateTime.UtcNow;
-            }
+        private static string? ValidateImageFile(IFormFile file)
+        {
+            if (file.Length > MaxFileSize)
+                return "Image file must be smaller than 5 MB.";
 
-            await _context.SaveChangesAsync();
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedExtensions.Contains(ext))
+                return "Only JPG, JPEG, PNG, WEBP and GIF images are allowed.";
 
-            if (wasPrimary)
-            {
-                var newPrimary = await _context.ProductImages
-                    .Where(i => i.ProductId == productId)
-                    .OrderBy(i => i.Id)
-                    .FirstOrDefaultAsync();
+            return null;
+        }
 
-                if (newPrimary != null)
-                {
-                    newPrimary.IsPrimary = true;
-                    await _context.SaveChangesAsync();
-                }
-            }
+        private async Task<string> SaveProductImageAsync(IFormFile file)
+        {
+            var folder = Path.Combine(_environment.WebRootPath, "images", "products");
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
 
-            return Ok(new { success = true, message = "Product image deleted successfully." });
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            var filePath = Path.Combine(folder, fileName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            return $"/images/products/{fileName}";
         }
     }
 }

@@ -1,30 +1,55 @@
 @model WebApplication_ClothingEcommerce.Models.Order
 @{
-    ViewData["Title"] = "Edit Order Status";
+    ViewData["Title"] = "Update Order Status";
 }
 
-<div class="container py-4">
-    <div class="mb-4">
-        <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Orders</a>
-        <h2 class="fw-bold mt-3 mb-1">Update Status for Order #@Model.Id.ToString()[..8]</h2>
+<div class="admin-page">
+    <!-- PAGE HEADER -->
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="page-eyebrow">
+                <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Orders</a>
+            </div>
+            <h1 class="page-title">Update Status #@Model.Id.ToString()[..8].ToUpper()</h1>
+            <p class="page-description">Modify order progression and fulfillment state</p>
+        </div>
     </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title"><i class="bi bi-pencil-square me-2 text-primary"></i>Status Configuration</h3>
+                </div>
+                <div class="p-4">
                     <form asp-action="Edit" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="Id" />
 
                         <div class="mb-4">
-                            <label asp-for="Status" class="form-label fw-semibold">Order Status</label>
-                            <select asp-for="Status" class="form-select" asp-items="ViewBag.StatusList"></select>
+                            <label asp-for="Status" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Order Status</label>
+                            <select asp-for="Status" class="form-select form-select-lg" asp-items="ViewBag.StatusList"></select>
+                            <div class="form-text small text-muted mt-2">
+                                Updating this status will adjust the fulfillment state and customer order timeline.
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 mb-4 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Order Date:</span>
+                                <strong class="text-dark">@Model.OrderDate.ToLocalTime().ToString("f")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total Amount:</span>
+                                <strong class="text-success">@Model.TotalAmount.ToString("C")</strong>
+                            </div>
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Update Status</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn-primary-custom px-4">
+                                <i class="bi bi-check-lg me-1"></i> Update Status
+                            </button>
+                            <a asp-action="Index" class="btn btn-light border rounded-pill px-4">Cancel</a>
                         </div>
                     </form>
                 </div>

@@ -1,505 +1,135 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
-using WebApplication_ClothingEcommerce.Data.Enums;
 using WebApplication_ClothingEcommerce.Models;
 using WebApplication_ClothingEcommerce.Models.ViewModels;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Controllers
 {
     [Authorize]
     public class CheckoutController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IOrderService _orderService;
+        private readonly ICartService _cartService;
+        private readonly IPaymentService _paymentService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        private const decimal DeliveryFee = 3.00m;
-
         public CheckoutController(
-            AppDbContext context,
+            IOrderService orderService,
+            ICartService cartService,
+            IPaymentService paymentService,
             UserManager<ApplicationUser> userManager)
         {
-            _context = context;
+            _orderService = orderService;
+            _cartService = cartService;
+            _paymentService = paymentService;
             _userManager = userManager;
         }
 
+        private async Task<Customer?> GetCurrentCustomerAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return null;
+
+            return await _cartService.GetCustomerByUserIdOrEmailAsync(user.Id, user.Email);
+        }
+
+        private async Task LoadPaymentMethodsAsync()
+        {
+            ViewBag.PaymentMethods = await _paymentService.GetActivePaymentMethodsAsync();
+        }
 
         // =========================================================
-        // GET: /Checkout/Index
+        // GET: /Checkout, /Checkout/Index, /Checkout/Checkout
         // =========================================================
-
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var customer = await GetCustomerAsync();
-
+            var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
                 TempData["Error"] = "Customer profile was not found.";
                 return RedirectToAction("Index", "Home");
             }
 
-            var cart = await GetCartAsync(customer.Id);
-
-            if (cart == null || cart.Items.Count == 0)
+            var model = await _orderService.PrepareCheckoutAsync(customer.Id);
+            if (model == null || !model.Items.Any())
             {
                 TempData["Error"] = "Your cart is empty.";
                 return RedirectToAction("Index", "Cart");
             }
 
-            var address = await GetCustomerAddressAsync(customer.Id);
-
-            var paymentMethods = await _context.PaymentMethods
-                .Where(x => x.IsActive)
-                .OrderBy(x => x.DisplayOrder)
-                .ThenBy(x => x.Name)
-                .ToListAsync();
-
-            var model = new CheckoutViewModel
-            {
-                FirstName = customer.FirstName,
-                LastName = customer.LastName,
-                Phone = customer.Phone,
-                Email = customer.Email,
-
-                Province = address?.Province ?? string.Empty,
-                City = address?.City ?? string.Empty,
-                Street = address?.Street ?? string.Empty,
-                PostalCode = address?.PostalCode ?? string.Empty
-            };
-
-            // Select first active payment method by default
-            if (paymentMethods.Count > 0)
-            {
-                model.PaymentMethodId = paymentMethods[0].Id;
-            }
-
-            ViewBag.PaymentMethods = paymentMethods;
-
-            BuildCheckoutItems(model, cart);
-
-            return View(model);
+            await LoadPaymentMethodsAsync();
+            return View("Index", model);
         }
 
+        [HttpGet]
+        [ActionName("Checkout")]
+        public async Task<IActionResult> CheckoutGet()
+        {
+            return await Index();
+        }
 
         // =========================================================
-        // POST: /Checkout/Index
+        // POST: /Checkout, /Checkout/Index, /Checkout/Checkout
         // =========================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(CheckoutViewModel model)
         {
-            var customer = await GetCustomerAsync();
-
+            var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
                 TempData["Error"] = "Customer profile was not found.";
                 return RedirectToAction("Index", "Home");
             }
 
-            var cart = await GetCartAsync(customer.Id);
-
-            if (cart == null || cart.Items.Count == 0)
-            {
-                TempData["Error"] = "Your cart is empty.";
-                return RedirectToAction("Index", "Cart");
-            }
-
-
-            // =====================================================
-            // BUILD CHECKOUT SUMMARY
-            // =====================================================
-
-            BuildCheckoutItems(model, cart);
-
-            model.DeliveryFee =
-                model.Items.Count > 0
-                    ? DeliveryFee
-                    : 0m;
-
-            model.SubTotal =
-                model.Items.Sum(i => i.Subtotal);
-
-            model.Total =
-                model.SubTotal + model.DeliveryFee;
-
-
-            // =====================================================
-            // CHECK STOCK
-            // =====================================================
-
-            foreach (var cartItem in cart.Items)
-            {
-                if (cartItem.Variant == null)
-                {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        "One of the products in your cart is no longer available.");
-
-                    continue;
-                }
-
-                var available =
-                    cartItem.Variant.Inventory?.AvailableQuantity ?? 0;
-
-                if (available < cartItem.Quantity)
-                {
-                    ModelState.AddModelError(
-                        string.Empty,
-                        $"Not enough stock for {cartItem.Variant.Product?.Name ?? "a product"}.");
-                }
-            }
-
-
-            // =====================================================
-            // PAYMENT METHOD
-            // =====================================================
-
-            PaymentMethod? paymentMethod = null;
-
-            if (model.PaymentMethodId.HasValue)
-            {
-                paymentMethod = await _context.PaymentMethods
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == model.PaymentMethodId.Value &&
-                        x.IsActive);
-            }
-
-            if (paymentMethod == null)
-            {
-                ModelState.AddModelError(
-                    nameof(model.PaymentMethodId),
-                    "Please select a valid payment method.");
-            }
-
-
-            // =====================================================
-            // VALIDATION
-            // =====================================================
-
             if (!ModelState.IsValid)
             {
-                ViewBag.PaymentMethods = await _context.PaymentMethods
-                    .Where(x => x.IsActive)
-                    .OrderBy(x => x.DisplayOrder)
-                    .ThenBy(x => x.Name)
-                    .ToListAsync();
-
-                return View(model);
-            }
-
-
-            // =====================================================
-            // ADDRESS
-            // =====================================================
-
-            var address = await _context.Addresses
-                .FirstOrDefaultAsync(a =>
-                    a.CustomerId == customer.Id &&
-                    a.Province == model.Province &&
-                    a.City == model.City &&
-                    a.Street == model.Street);
-
-            if (address == null)
-            {
-                var hasExistingAddress =
-                    await _context.Addresses
-                        .AnyAsync(a =>
-                            a.CustomerId == customer.Id);
-
-                address = new Address
+                var prep = await _orderService.PrepareCheckoutAsync(customer.Id);
+                if (prep != null)
                 {
-                    Id = Guid.NewGuid(),
-
-                    CustomerId = customer.Id,
-
-                    Province = model.Province,
-                    City = model.City,
-                    Street = model.Street,
-                    PostalCode = model.PostalCode,
-
-                    IsDefault = !hasExistingAddress
-                };
-
-                _context.Addresses.Add(address);
-            }
-            else
-            {
-                address.PostalCode = model.PostalCode;
+                    model.Items = prep.Items;
+                    model.SubTotal = prep.SubTotal;
+                    model.DeliveryFee = prep.DeliveryFee;
+                    model.Total = prep.Total;
+                }
+                await LoadPaymentMethodsAsync();
+                return View("Index", model);
             }
 
+            var result = await _orderService.PlaceOrderAsync(customer.Id, model);
 
-            // =====================================================
-            // UPDATE CUSTOMER
-            // =====================================================
-
-            customer.FirstName = model.FirstName;
-            customer.LastName = model.LastName;
-            customer.Phone = model.Phone;
-            customer.Email = model.Email;
-
-
-            // =====================================================
-            // CREATE ORDER
-            // =====================================================
-
-            var order = new Order
+            if (!result.Success)
             {
-                Id = Guid.NewGuid(),
-
-                CustomerId = customer.Id,
-
-                AddressId = address.Id,
-
-                OrderDate = DateTime.UtcNow,
-
-                Status = OrderStatus.Pending,
-
-                TotalAmount = model.Total
-            };
-
-            _context.Orders.Add(order);
-
-
-            // =====================================================
-            // CREATE ORDER ITEMS
-            // =====================================================
-
-            foreach (var cartItem in cart.Items)
-            {
-                if (cartItem.Variant == null)
-                    continue;
-
-                var orderItem = new OrderItem
+                foreach (var err in result.Errors)
                 {
-                    Id = Guid.NewGuid(),
+                    ModelState.AddModelError(string.Empty, err);
+                }
 
-                    OrderId = order.Id,
-
-                    VariantId = cartItem.VariantId,
-
-                    Quantity = cartItem.Quantity,
-
-                    UnitPrice = cartItem.Variant.Price
-                };
-
-                _context.OrderItems.Add(orderItem);
-            }
-
-
-            // =====================================================
-            // CREATE PAYMENT
-            // =====================================================
-
-            var payment = new Payment
-            {
-                Id = Guid.NewGuid(),
-
-                OrderId = order.Id,
-
-                PaymentMethodId = paymentMethod!.Id,
-
-                PaymentStatus = PaymentStatus.Pending,
-
-                Amount = model.Total,
-
-                PaidAt = null
-            };
-
-            _context.Payments.Add(payment);
-
-
-            // =====================================================
-            // CREATE SHIPMENT
-            // =====================================================
-
-            var shipment = new Shipment
-            {
-                Id = Guid.NewGuid(),
-
-                OrderId = order.Id,
-
-                ShippingCompany = "J&T Express",
-
-                TrackingNumber = string.Empty,
-
-                ShipmentStatus = ShipmentStatus.Pending,
-
-                ShippedAt = null,
-
-                DeliveredAt = null
-            };
-
-            _context.Shipments.Add(shipment);
-
-
-            // =====================================================
-            // CLEAR CART
-            // =====================================================
-
-            _context.CartItems.RemoveRange(cart.Items);
-
-
-            // =====================================================
-            // SAVE
-            // =====================================================
-
-            await _context.SaveChangesAsync();
-
-
-            // =====================================================
-            // SUCCESS
-            // =====================================================
-
-            TempData["Success"] =
-                "Your order has been placed successfully.";
-
-            return RedirectToAction(
-                "Details",
-                "Orders",
-                new { id = order.Id });
-        }
-
-
-        // =========================================================
-        // GET CUSTOMER
-        // =========================================================
-
-        private async Task<Customer?> GetCustomerAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null ||
-                string.IsNullOrWhiteSpace(user.Email))
-            {
-                return null;
-            }
-
-            return await _context.Customers
-                .FirstOrDefaultAsync(c =>
-                    c.Email == user.Email);
-        }
-
-
-        // =========================================================
-        // GET CART
-        // =========================================================
-
-        private async Task<Cart?> GetCartAsync(Guid customerId)
-        {
-            return await _context.Carts
-
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Product)
-                            .ThenInclude(p => p.Images)
-
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Product)
-                            .ThenInclude(p => p.Brand)
-
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Size)
-
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Color)
-
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Inventory)
-
-                .FirstOrDefaultAsync(c =>
-                    c.CustomerId == customerId);
-        }
-
-
-        // =========================================================
-        // GET CUSTOMER ADDRESS
-        // =========================================================
-
-        private async Task<Address?> GetCustomerAddressAsync(
-            Guid customerId)
-        {
-            return await _context.Addresses
-                .Where(a =>
-                    a.CustomerId == customerId)
-                .OrderByDescending(a =>
-                    a.IsDefault)
-                .FirstOrDefaultAsync();
-        }
-
-
-        // =========================================================
-        // BUILD CHECKOUT ITEMS
-        // =========================================================
-
-        private static void BuildCheckoutItems(
-            CheckoutViewModel model,
-            Cart cart)
-        {
-            model.Items.Clear();
-
-            foreach (var item in cart.Items)
-            {
-                var variant = item.Variant;
-
-                if (variant == null)
-                    continue;
-
-                var product = variant.Product;
-
-                if (product == null)
-                    continue;
-
-                var image =
-                    product.Images?
-                        .FirstOrDefault(i => i.IsPrimary)
-                    ??
-                    product.Images?
-                        .FirstOrDefault();
-
-                model.Items.Add(new CheckoutItem
+                var prep = await _orderService.PrepareCheckoutAsync(customer.Id);
+                if (prep != null)
                 {
-                    VariantId = variant.Id,
-
-                    ProductName = product.Name,
-
-                    SKU = variant.SKU,
-
-                    Size = variant.Size?.Name
-                        ?? string.Empty,
-
-                    Color = variant.Color?.Name
-                        ?? string.Empty,
-
-                    ImageUrl =
-                        image?.ImageUrl
-                        ??
-                        "https://via.placeholder.com/600x700?text=No+Image",
-
-                    UnitPrice = variant.Price,
-
-                    Quantity = item.Quantity
-                });
+                    model.Items = prep.Items;
+                    model.SubTotal = prep.SubTotal;
+                    model.DeliveryFee = prep.DeliveryFee;
+                    model.Total = prep.Total;
+                }
+                await LoadPaymentMethodsAsync();
+                return View("Index", model);
             }
 
-            model.SubTotal =
-                model.Items.Sum(i => i.Subtotal);
+            TempData["Success"] = result.Message;
+            return RedirectToAction("Details", "Orders", new { id = result.OrderId });
+        }
 
-            model.DeliveryFee =
-                model.Items.Count > 0
-                    ? DeliveryFee
-                    : 0m;
-
-            model.Total =
-                model.SubTotal +
-                model.DeliveryFee;
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("Checkout")]
+        public async Task<IActionResult> CheckoutPost(CheckoutViewModel model)
+        {
+            return await Index(model);
         }
     }
 }

@@ -1,59 +1,35 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class ShopController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IShopService _shopService;
 
-        public ShopController(AppDbContext context)
+        public ShopController(IShopService shopService)
         {
-            _context = context;
+            _shopService = shopService;
         }
 
-        // GET: /Shop
+        // GET: /Admin/Shop
         public async Task<IActionResult> Index(Guid? categoryId, Guid? brandId, string? search)
         {
-            var query = _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Images)
-                .Include(p => p.Variants)
-                .AsQueryable();
+            var (products, categories, brands) = await _shopService.GetAdminShopDataAsync(categoryId, brandId, search);
 
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId.Value);
+            ViewBag.Categories = categories;
+            ViewBag.Brands = brands;
 
-            if (brandId.HasValue)
-                query = query.Where(p => p.BrandId == brandId.Value);
-
-            if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.Name.Contains(search) || p.Description.Contains(search));
-
-            ViewBag.Categories = await _context.Categories.ToListAsync();
-            ViewBag.Brands = await _context.Brands.ToListAsync();
-
-            return View(await query.ToListAsync());
+            return View(products);
         }
 
-        // GET: /Shop/Details/{id}
+        // GET: /Admin/Shop/Details/{id}
         public async Task<IActionResult> Details(Guid id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Images)
-                .Include(p => p.Variants).ThenInclude(v => v.Size)
-                .Include(p => p.Variants).ThenInclude(v => v.Color)
-                .Include(p => p.Variants).ThenInclude(v => v.Inventory)
-                .Include(p => p.Reviews).ThenInclude(r => r.Customer)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var product = await _shopService.GetAdminProductDetailsAsync(id);
             if (product == null) return NotFound();
 
             return View(product);

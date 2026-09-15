@@ -1,0 +1,850 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.ViewModels.AdminListItemViewModel>
+
+@{
+    ViewData["Title"] = "Administrators";
+    var currentUserId = ViewBag.CurrentUserId as string ?? "";
+    var totalAdmins = ViewBag.TotalAdmins ?? Model.Count();
+    var superAdminCount = ViewBag.SuperAdminCount ?? Model.Count(m => m.IsSuperAdmin);
+    var adminCount = ViewBag.AdminCount ?? Model.Count(m => !m.IsSuperAdmin);
+}
+
+<style>
+    .admin-avatar-sm {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .admin-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .admin-badge-self {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        background: #e8f0fe;
+        color: #1a73e8;
+        border: 1px solid rgba(26, 115, 232, 0.3);
+        border-radius: 50px;
+        padding: 2px 8px;
+    }
+
+    .admin-badge-role {
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 50px;
+        padding: 3px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .admin-stat-card {
+        background: #fff;
+        border: 1px solid #ebebeb;
+        border-radius: 14px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .admin-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .admin-stat-icon.primary {
+        background: #e8f0fe;
+        color: #1a73e8;
+    }
+
+    .admin-stat-icon.warning {
+        background: #fef7e0;
+        color: #b06000;
+    }
+
+    .admin-stat-icon.success {
+        background: #e6f4ea;
+        color: #137333;
+    }
+
+    .table-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e0e0;
+        background: #fff;
+        color: #495057;
+        font-size: 0.85rem;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+
+    .action-btn:hover {
+        background: #f8f9fa;
+        color: #000;
+    }
+
+    .action-btn.action-primary:hover {
+        background: #e8f0fe;
+        color: #1a73e8;
+        border-color: #1a73e8;
+    }
+
+    .action-btn.action-warning:hover {
+        background: #fff8e1;
+        color: #f57f17;
+        border-color: #f57f17;
+    }
+
+    .action-btn.action-danger:hover {
+        background: #fce8e6;
+        color: #d93025;
+        border-color: #d93025;
+    }
+
+    .action-btn.action-success:hover {
+        background: #e6f4ea;
+        color: #137333;
+        border-color: #137333;
+    }
+</style>
+
+<div class="admin-page container-fluid px-4 py-3">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 text-uppercase" style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em;">
+                    <i class="bi bi-shield-lock-fill me-1"></i> SuperAdmin Control
+                </span>
+                <span class="text-muted small">System Security &amp; Access Hierarchy</span>
+            </div>
+            <h1 class="h3 fw-bold mb-0 text-dark">Administrators Management</h1>
+            <p class="text-muted small mb-0">Manage privileged administrative accounts, hierarchy levels, status, and security credentials.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#assignAdminModal">
+                <i class="bi bi-person-up me-1"></i> Assign Admin Role
+            </button>
+            <a asp-action="Create" class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm d-none d-sm-inline-flex align-items-center">
+                <i class="bi bi-plus-lg me-1"></i> Full Form
+            </a>
+            <button type="button" class="btn btn-dark btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createAdminModal">
+                <i class="bi bi-person-plus-fill me-1"></i> Quick Add Admin
+            </button>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span>@TempData["Success"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span>@TempData["Error"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- STATS ROW -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <span class="text-secondary small fw-semibold d-block">Total Admins</span>
+                    <strong class="h4 fw-bold text-dark mb-0">@totalAdmins</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon warning">
+                    <i class="bi bi-shield-shaded"></i>
+                </div>
+                <div>
+                    <span class="text-secondary small fw-semibold d-block">Super Administrators</span>
+                    <strong class="h4 fw-bold text-dark mb-0">@superAdminCount</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon success">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div>
+                    <span class="text-secondary small fw-semibold d-block">Store Administrators</span>
+                    <strong class="h4 fw-bold text-dark mb-0">@adminCount</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon" style="background: #f1f3f4; color: #3c4043;">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <span class="text-secondary small fw-semibold d-block">Your Account</span>
+                    <strong class="small fw-bold text-truncate d-block" style="max-width: 150px;">@(User.Identity?.Name ?? "SuperAdmin")</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+        <form method="get" asp-action="Index" class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="d-flex flex-grow-1 gap-2" style="max-width: 500px;">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control bg-light border-start-0" placeholder="Search by name, email, phone..." />
+                </div>
+                <button type="submit" class="btn btn-dark rounded-pill px-3">Search</button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill" title="Clear Search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-sm rounded-pill @(string.IsNullOrEmpty(ViewBag.RoleFilter as string) ? "btn-dark" : "btn-light border")">All</a>
+                <a asp-action="Index" asp-route-roleFilter="SuperAdmin" class="btn btn-sm rounded-pill @(ViewBag.RoleFilter == "SuperAdmin" ? "btn-dark" : "btn-light border")">SuperAdmins</a>
+                <a asp-action="Index" asp-route-roleFilter="Admin" class="btn btn-sm rounded-pill @(ViewBag.RoleFilter == "Admin" ? "btn-dark" : "btn-light border")">Admins</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover">
+                <thead class="bg-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4 py-3">Administrator</th>
+                        <th>Email &amp; Status</th>
+                        <th>Phone</th>
+                        <th>Hierarchy / Role</th>
+                        <th>Account State</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var admin in Model)
+                        {
+                            var initial = !string.IsNullOrEmpty(admin.FirstName) ? admin.FirstName.Substring(0, 1).ToUpper() : "A";
+
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="admin-avatar-sm">
+                                            @if (!string.IsNullOrEmpty(admin.AvatarUrl))
+                                            {
+                                                <img src="@admin.AvatarUrl" alt="@admin.FullName" class="admin-avatar-img" />
+                                            }
+                                            else
+                                            {
+                                                <span>@initial</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <a asp-action="Details" asp-route-id="@admin.Id" class="text-dark fw-bold text-decoration-none hover-underline">
+                                                    @(string.IsNullOrEmpty(admin.FullName) ? "Administrator" : admin.FullName)
+                                                </a>
+                                                @if (admin.IsCurrentAdmin)
+                                                {
+                                                    <span class="admin-badge-self">You</span>
+                                                }
+                                            </div>
+                                            <small class="text-secondary font-monospace" style="font-size: 11px;">ID: @admin.Id.Substring(0, Math.Min(admin.Id.Length, 8))...</small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="text-dark fw-semibold small">@admin.Email</div>
+                                    @if (admin.EmailConfirmed)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small py-0 px-2 mt-1">
+                                            <i class="bi bi-check-circle me-1"></i>Verified
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill small py-0 px-2 mt-1">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Unconfirmed
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="small">
+                                    @(string.IsNullOrEmpty(admin.PhoneNumber) ? "—" : admin.PhoneNumber)
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach (var role in admin.Roles)
+                                        {
+                                            if (role == "SuperAdmin")
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 small fw-bold">
+                                                    <i class="bi bi-shield-fill-check me-1"></i> SuperAdmin
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                                                    <i class="bi bi-shield-check me-1"></i> Admin
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @if (admin.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small fw-semibold">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small fw-semibold">
+                                            <i class="bi bi-slash-circle-fill me-1"></i> Deactivated
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="pe-4 text-end">
+                                    <div class="dropdown">
+                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                                            <!-- View Details -->
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@admin.Id">
+                                                    <i class="bi bi-eye text-primary"></i> <span>View Profile</span>
+                                                </a>
+                                            </li>
+
+                                            <!-- Edit Admin -->
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        data-bs-toggle="modal" data-bs-target="#editAdminModal"
+                                                        data-id="@admin.Id"
+                                                        data-firstname="@admin.FirstName"
+                                                        data-lastname="@admin.LastName"
+                                                        data-email="@admin.Email"
+                                                        data-phone="@admin.PhoneNumber"
+                                                        data-role="@(admin.IsSuperAdmin ? "SuperAdmin" : "Admin")"
+                                                        data-active="@admin.IsActive.ToString().ToLower()"
+                                                        data-confirmed="@admin.EmailConfirmed.ToString().ToLower()">
+                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Admin</span>
+                                                </button>
+                                            </li>
+
+                                            <!-- Toggle Status (Activate / Deactivate) -->
+                                            @if (!admin.IsCurrentAdmin)
+                                            {
+                                                <li>
+                                                    <form method="post" asp-action="ToggleStatus" asp-route-id="@admin.Id" class="m-0">
+                                                        @Html.AntiForgeryToken()
+                                                        @if (admin.IsActive)
+                                                        {
+                                                            <button type="submit" class="dropdown-item text-secondary" onclick="return confirm('Are you sure you want to deactivate @admin.FullName?');">
+                                                                <i class="bi bi-slash-circle text-danger"></i> <span>Deactivate</span>
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="submit" class="dropdown-item text-secondary">
+                                                                <i class="bi bi-check2-circle text-success"></i> <span>Activate</span>
+                                                            </button>
+                                                        }
+                                                    </form>
+                                                </li>
+                                            }
+
+                                            <!-- Reset Password Trigger -->
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                                        data-id="@admin.Id"
+                                                        data-name="@admin.FullName">
+                                                    <i class="bi bi-key text-info"></i> <span>Reset Password</span>
+                                                </button>
+                                            </li>
+
+                                            <!-- Revoke Admin Role -->
+                                            @if (!admin.IsCurrentAdmin && !admin.IsSuperAdmin)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item"
+                                                            data-bs-toggle="modal" data-bs-target="#revokeAdminModal"
+                                                            data-id="@admin.Id"
+                                                            data-name="@admin.FullName"
+                                                            data-email="@admin.Email">
+                                                        <i class="bi bi-person-dash text-warning"></i> <span>Revoke Admin</span>
+                                                    </button>
+                                                </li>
+                                            }
+
+                                            <li><hr class="dropdown-divider my-1" /></li>
+
+                                            <!-- Delete Trigger -->
+                                            @if (admin.IsCurrentAdmin)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-muted disabled opacity-50" disabled>
+                                                        <i class="bi bi-trash"></i> <span>Delete (Self)</span>
+                                                    </button>
+                                                </li>
+                                            }
+                                            else if (admin.IsSuperAdmin)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-muted disabled opacity-50" disabled>
+                                                        <i class="bi bi-shield-lock-fill"></i> <span>Delete Protected</span>
+                                                    </button>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item text-danger"
+                                                            data-bs-toggle="modal" data-bs-target="#deleteAdminModal"
+                                                            data-id="@admin.Id"
+                                                            data-name="@admin.FullName"
+                                                            data-email="@admin.Email">
+                                                        <i class="bi bi-trash"></i> <span>Delete Admin</span>
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="text-center py-5">
+                                    <i class="bi bi-shield-x fs-1 text-muted d-block mb-2"></i>
+                                    <h5>No administrators found</h5>
+                                    <p class="text-muted small">Try adjusting your search criteria or create a new administrator account.</p>
+                                    <button type="button" class="btn btn-dark btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#createAdminModal">
+                                        <i class="bi bi-person-plus-fill me-1"></i> Add Administrator
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     1. CREATE ADMIN MODAL
+====================================================== -->
+<div class="modal fade" id="createAdminModal" tabindex="-1" aria-labelledby="createAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="createAdminModalLabel">Create Administrator</h5>
+                    <small class="text-secondary">Provision a new administrator or super administrator</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">First Name *</label>
+                            <input type="text" name="FirstName" class="form-control" required placeholder="John" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Last Name *</label>
+                            <input type="text" name="LastName" class="form-control" required placeholder="Doe" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Email Address *</label>
+                            <input type="email" name="Email" class="form-control" required placeholder="admin@clothe.com" />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Phone Number</label>
+                            <input type="tel" name="PhoneNumber" class="form-control" placeholder="+855 ..." />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Role *</label>
+                            <select name="Role" class="form-select">
+                                <option value="Admin">Admin</option>
+                                <option value="SuperAdmin">SuperAdmin</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Password *</label>
+                            <input type="password" name="Password" class="form-control" required minlength="6" placeholder="Min 6 characters" />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Confirm Password *</label>
+                            <input type="password" name="ConfirmPassword" class="form-control" required minlength="6" placeholder="Confirm password" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     2. EDIT ADMIN MODAL
+====================================================== -->
+<div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="editAdminModalLabel">Edit Administrator</h5>
+                    <small class="text-secondary">Update administrative account details and permissions</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editAdminId" />
+
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">First Name *</label>
+                            <input type="text" name="FirstName" id="editAdminFirstName" class="form-control" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Last Name *</label>
+                            <input type="text" name="LastName" id="editAdminLastName" class="form-control" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Email Address *</label>
+                            <input type="email" name="Email" id="editAdminEmail" class="form-control" required />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Phone Number</label>
+                            <input type="tel" name="PhoneNumber" id="editAdminPhone" class="form-control" />
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Role *</label>
+                            <select name="Role" id="editAdminRole" class="form-select">
+                                <option value="Admin">Admin</option>
+                                <option value="SuperAdmin">SuperAdmin</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="bg-light p-3 rounded-3">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editAdminActive" />
+                                    <label class="form-check-label small fw-semibold" for="editAdminActive">
+                                        Account Active (Can log in)
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="EmailConfirmed" value="true" id="editAdminConfirmed" />
+                                    <label class="form-check-label small fw-semibold" for="editAdminConfirmed">
+                                        Email Confirmed
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     3. RESET PASSWORD MODAL
+====================================================== -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="resetPasswordModalLabel">Reset Administrator Password</h5>
+                    <small class="text-secondary" id="resetAdminNameLabel">Set a new password for administrator</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="ResetPassword" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="resetPasswordAdminId" />
+
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">New Password *</label>
+                        <input type="password" name="NewPassword" class="form-control" required minlength="6" placeholder="Min 6 characters" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary">Confirm New Password *</label>
+                        <input type="password" name="ConfirmPassword" class="form-control" required minlength="6" placeholder="Repeat new password" />
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     4. DELETE ADMIN MODAL
+====================================================== -->
+<div class="modal fade" id="deleteAdminModal" tabindex="-1" aria-labelledby="deleteAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-danger mb-0" id="deleteAdminModalLabel">Delete Administrator</h5>
+                    <small class="text-secondary">This action cannot be undone</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteAdminId" />
+
+                <div class="modal-body p-4">
+                    <p class="mb-2 text-dark">Are you sure you want to permanently delete administrator <strong id="deleteAdminName"></strong> (<span id="deleteAdminEmail" class="text-muted"></span>)?</p>
+                    <div class="alert alert-warning small rounded-3 border-0 d-flex align-items-center gap-2 mb-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>System protection will prevent deletion if this is the only remaining administrator or SuperAdmin.</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Confirm Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     5. ASSIGN ADMIN ROLE MODAL
+====================================================== -->
+<div class="modal fade" id="assignAdminModal" tabindex="-1" aria-labelledby="assignAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="assignAdminModalLabel">Assign Administrative Role</h5>
+                    <small class="text-secondary">Promote an existing customer/user to administrative staff</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="AssignAdminRole" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">User Email Address *</label>
+                        <input type="email" name="email" class="form-control" required placeholder="user@domain.com" />
+                        <div class="form-text small">Enter the email of an existing registered user to grant administrative privileges.</div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary">Target Role *</label>
+                        <select name="role" class="form-select">
+                            <option value="Admin" selected>Admin (Operations &amp; Catalog Management)</option>
+                            <option value="SuperAdmin">SuperAdmin (Full Platform &amp; Governance)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Grant Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     6. REVOKE ADMIN ROLE MODAL
+====================================================== -->
+<div class="modal fade" id="revokeAdminModal" tabindex="-1" aria-labelledby="revokeAdminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-warning-emphasis mb-0" id="revokeAdminModalLabel">Revoke Administrator Role</h5>
+                    <small class="text-secondary">Demote account to standard User</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form asp-action="RevokeAdminRole" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="revokeAdminId" />
+
+                <div class="modal-body p-4">
+                    <p class="mb-2 text-dark">Are you sure you want to remove administrative privileges from <strong id="revokeAdminName"></strong> (<span id="revokeAdminEmail" class="text-muted"></span>)?</p>
+                    <div class="alert alert-info small rounded-3 border-0 d-flex align-items-center gap-2 mb-0">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>This user will be demoted to standard <strong>User</strong> (Customer). Their account, order history, and reviews will be preserved.</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold">Revoke Admin Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Populate Edit Modal
+        const editModal = document.getElementById('editAdminModal');
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('editAdminId').value = button.getAttribute('data-id') || '';
+                document.getElementById('editAdminFirstName').value = button.getAttribute('data-firstname') || '';
+                document.getElementById('editAdminLastName').value = button.getAttribute('data-lastname') || '';
+                document.getElementById('editAdminEmail').value = button.getAttribute('data-email') || '';
+                document.getElementById('editAdminPhone').value = button.getAttribute('data-phone') || '';
+                document.getElementById('editAdminRole').value = button.getAttribute('data-role') || 'Admin';
+                document.getElementById('editAdminActive').checked = (button.getAttribute('data-active') === 'true');
+                document.getElementById('editAdminConfirmed').checked = (button.getAttribute('data-confirmed') === 'true');
+            });
+        }
+
+        // Populate Reset Password Modal
+        const resetModal = document.getElementById('resetPasswordModal');
+        if (resetModal) {
+            resetModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('resetPasswordAdminId').value = button.getAttribute('data-id') || '';
+                const name = button.getAttribute('data-name') || 'Administrator';
+                document.getElementById('resetAdminNameLabel').textContent = 'Set a new password for ' + name;
+            });
+        }
+
+        // Populate Delete Modal
+        const deleteModal = document.getElementById('deleteAdminModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('deleteAdminId').value = button.getAttribute('data-id') || '';
+                document.getElementById('deleteAdminName').textContent = button.getAttribute('data-name') || '';
+                document.getElementById('deleteAdminEmail').textContent = button.getAttribute('data-email') || '';
+            });
+        }
+
+        // Populate Revoke Admin Modal
+        const revokeModal = document.getElementById('revokeAdminModal');
+        if (revokeModal) {
+            revokeModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                document.getElementById('revokeAdminId').value = button.getAttribute('data-id') || '';
+                document.getElementById('revokeAdminName').textContent = button.getAttribute('data-name') || '';
+                document.getElementById('revokeAdminEmail').textContent = button.getAttribute('data-email') || '';
+            });
+        }
+    </script>
+}

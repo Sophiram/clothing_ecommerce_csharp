@@ -1,36 +1,37 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
+
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers;
+
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class OrderItemsController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly IOrderService _orderService;
 
-    public OrderItemsController(AppDbContext context)
+    public OrderItemsController(IOrderService orderService)
     {
-        _context = context;
+        _orderService = orderService;
     }
 
     // GET: ORDERITEMS
     public async Task<IActionResult> Index()    
     {
-        return View(await _context.OrderItems.ToListAsync());
+        return View(await _orderService.GetAllOrderItemsAsync());
     }
 
     // GET: ORDERITEMS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
+    public async Task<IActionResult> Details(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var orderitem = await _context.OrderItems
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var orderitem = await _orderService.GetOrderItemByIdAsync(id.Value);
         if (orderitem == null)
         {
             return NotFound();
@@ -46,30 +47,27 @@ public class OrderItemsController : Controller
     }
 
     // POST: ORDERITEMS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,OrderId,VariantId,Quantity,UnitPrice,Order,Variant")] OrderItem orderitem)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(orderitem);
-            await _context.SaveChangesAsync();
+            await _orderService.CreateOrderItemAsync(orderitem);
             return RedirectToAction(nameof(Index));
         }
         return View(orderitem);
     }
 
     // GET: ORDERITEMS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
+    public async Task<IActionResult> Edit(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var orderitem = await _context.OrderItems.FindAsync(id);
+        var orderitem = await _orderService.GetOrderItemByIdAsync(id.Value);
         if (orderitem == null)
         {
             return NotFound();
@@ -78,11 +76,9 @@ public class OrderItemsController : Controller
     }
 
     // POST: ORDERITEMS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,OrderId,VariantId,Quantity,UnitPrice,Order,Variant")] OrderItem orderitem)
+    public async Task<IActionResult> Edit(Guid id, [Bind("Id,OrderId,VariantId,Quantity,UnitPrice,Order,Variant")] OrderItem orderitem)
     {
         if (id != orderitem.Id)
         {
@@ -91,21 +87,10 @@ public class OrderItemsController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var result = await _orderService.UpdateOrderItemAsync(id, orderitem);
+            if (!result.Success)
             {
-                _context.Update(orderitem);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderItemExists(orderitem.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
             return RedirectToAction(nameof(Index));
         }
@@ -113,15 +98,14 @@ public class OrderItemsController : Controller
     }
 
     // GET: ORDERITEMS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
+    public async Task<IActionResult> Delete(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var orderitem = await _context.OrderItems
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var orderitem = await _orderService.GetOrderItemByIdAsync(id.Value);
         if (orderitem == null)
         {
             return NotFound();
@@ -133,20 +117,9 @@ public class OrderItemsController : Controller
     // POST: ORDERITEMS/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
-        var orderitem = await _context.OrderItems.FindAsync(id);
-        if (orderitem != null)
-        {
-            _context.OrderItems.Remove(orderitem);
-        }
-
-        await _context.SaveChangesAsync();
+        await _orderService.DeleteOrderItemAsync(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool OrderItemExists(System.Guid? id)
-    {
-        return _context.OrderItems.Any(e => e.Id == id);
     }
 }

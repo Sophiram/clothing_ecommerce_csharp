@@ -1,26 +1,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class SizesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ISizeService _sizeService;
 
-        public SizesController(AppDbContext context)
+        public SizesController(ISizeService sizeService)
         {
-            _context = context;
+            _sizeService = sizeService;
         }
 
         // GET: Admin/Sizes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Sizes.Include(s => s.Variants).AsNoTracking().ToListAsync());
+            return View(await _sizeService.GetAllAsync());
         }
 
         // GET: Admin/Sizes/Details/5
@@ -28,12 +27,9 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         {
             if (id == null) return NotFound();
 
-            var size = await _context.Sizes
-                .Include(s => s.Variants)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
+            var size = await _sizeService.GetByIdAsync(id.Value);
             if (size == null) return NotFound();
+
             return View(size);
         }
 
@@ -50,11 +46,8 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 return BadRequest(new { success = false, errors });
             }
 
-            size.Id = Guid.NewGuid();
-            _context.Add(size);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Size '{size.Name}' was created successfully." });
+            var result = await _sizeService.CreateAsync(size);
+            return Ok(new { success = true, message = result.Message });
         }
 
         // POST: Admin/Sizes/Edit/5 (AJAX)
@@ -75,19 +68,13 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 return BadRequest(new { success = false, errors });
             }
 
-            try
+            var result = await _sizeService.UpdateAsync(id, size);
+            if (!result.Success)
             {
-                _context.Update(size);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SizeExists(size.Id))
-                    return NotFound(new { success = false, errors = new[] { "Size not found." } });
-                throw;
+                return NotFound(new { success = false, errors = result.Errors });
             }
 
-            return Ok(new { success = true, message = $"Size '{size.Name}' was updated successfully." });
+            return Ok(new { success = true, message = result.Message });
         }
 
         // POST: Admin/Sizes/Delete/5 (AJAX)
@@ -95,27 +82,13 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var size = await _context.Sizes.FindAsync(id);
-
-            if (size == null)
+            var result = await _sizeService.DeleteAsync(id);
+            if (!result.Success)
             {
-                return NotFound(new { success = false, errors = new[] { "Size not found." } });
+                return BadRequest(new { success = false, errors = result.Errors });
             }
 
-            try
-            {
-                var name = size.Name;
-                _context.Sizes.Remove(size);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { success = true, message = $"Size '{name}' was deleted successfully." });
-            }
-            catch (DbUpdateException)
-            {
-                return BadRequest(new { success = false, errors = new[] { "Cannot delete this size because it has variants assigned to it." } });
-            }
+            return Ok(new { success = true, message = result.Message });
         }
-
-        private bool SizeExists(Guid id) => _context.Sizes.Any(e => e.Id == id);
     }
 }

@@ -60,10 +60,30 @@
             <td>
                 @Html.DisplayFor(model => item.Order)
             </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            <td class="text-end">
+                <div class="dropdown">
+                    <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                        <li>
+                            <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
+                                <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id">
+                                <i class="bi bi-pencil text-warning"></i> <span>Edit</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1" /></li>
+                        <li>
+                            <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.Id">
+                                <i class="bi bi-trash"></i> <span>Delete</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </td>
         </tr>
 }

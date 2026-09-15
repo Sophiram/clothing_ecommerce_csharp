@@ -1,219 +1,193 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Controllers
 {
     [Authorize]
     public class WishlistController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IWishlistService _wishlistService;
+        private readonly ICartService _cartService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public WishlistController(
-            AppDbContext context,
+            IWishlistService wishlistService,
+            ICartService cartService,
             UserManager<ApplicationUser> userManager)
         {
-            _context = context;
+            _wishlistService = wishlistService;
+            _cartService = cartService;
             _userManager = userManager;
         }
 
-        // =====================================================
-        // GET CUSTOMER
-        // =====================================================
-
-        private async Task<Customer?> GetCustomer()
+        private async Task<Customer?> GetCurrentCustomerAsync()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return null;
 
-            if (user == null)
-            {
-                return null;
-            }
-
-            return await _context.Customers
-                .FirstOrDefaultAsync(c =>
-                    c.ApplicationUserId == user.Id);
+            return await _cartService.GetCustomerByUserIdOrEmailAsync(user.Id, user.Email);
         }
 
+        private bool IsAjaxRequest() =>
+            Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+            Request.Headers.Accept.ToString().Contains("application/json");
 
         // =====================================================
         // WISHLIST INDEX
+        // GET: /Wishlist
         // =====================================================
-
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var customer = await GetCustomer();
-
+            var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
                 TempData["Error"] = "Customer profile not found.";
-
-                return RedirectToAction(
-                    "Index",
-                    "Home");
+                return RedirectToAction("Index", "Home");
             }
 
-
-            var wishlist = await _context.Wishlists
-
-                .Include(w => w.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Product)
-                            .ThenInclude(p => p.Images)
-
-                .Include(w => w.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Size)
-
-                .Include(w => w.Items)
-                    .ThenInclude(i => i.Variant)
-                        .ThenInclude(v => v.Color)
-
-                .FirstOrDefaultAsync(w =>
-                    w.CustomerId == customer.Id);
-
-
-            // Create wishlist if user doesn't have one
-            if (wishlist == null)
-            {
-                wishlist = new Wishlist
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerId = customer.Id
-                };
-
-                _context.Wishlists.Add(wishlist);
-
-                await _context.SaveChangesAsync();
-            }
-
-
+            var wishlist = await _wishlistService.GetOrCreateCustomerWishlistAsync(customer.Id);
             return View(wishlist);
         }
 
-
         // =====================================================
         // ADD TO WISHLIST
+        // POST: /Wishlist/Add
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(Guid variantId)
         {
-            var customer = await GetCustomer();
-
+            var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
-                return RedirectToAction(
-                    "Index",
-                    "Home");
+                if (IsAjaxRequest()) return Unauthorized();
+                return RedirectToAction("Index", "Home");
             }
 
+            var (success, message) = await _wishlistService.AddToWishlistAsync(customer.Id, variantId);
 
-            var variant = await _context.ProductVariants
-                .FirstOrDefaultAsync(v =>
-                    v.Id == variantId);
-
-            if (variant == null)
+            if (success)
             {
-                return NotFound();
-            }
-
-
-            var wishlist = await _context.Wishlists
-                .FirstOrDefaultAsync(w =>
-                    w.CustomerId == customer.Id);
-
-
-            if (wishlist == null)
-            {
-                wishlist = new Wishlist
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerId = customer.Id
-                };
-
-                _context.Wishlists.Add(wishlist);
-
-                await _context.SaveChangesAsync();
-            }
-
-
-            var exists = await _context.WishlistItems
-                .AnyAsync(i =>
-                    i.WishlistId == wishlist.Id &&
-                    i.VariantId == variantId);
-
-
-            if (!exists)
-            {
-                var item = new WishlistItem
-                {
-                    Id = Guid.NewGuid(),
-                    WishlistId = wishlist.Id,
-                    VariantId = variantId
-                };
-
-                _context.WishlistItems.Add(item);
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] =
-                    "Product added to wishlist.";
+                TempData["Success"] = message;
             }
             else
             {
-                TempData["Error"] =
-                    "Product is already in your wishlist.";
+                TempData["Error"] = message;
             }
 
+            if (IsAjaxRequest())
+            {
+                return Json(new { success, isWishlisted = success, message });
+            }
 
             return RedirectToAction(nameof(Index));
         }
 
-
         // =====================================================
-        // REMOVE
-        // =====================================================
-
+        // REMOVE FROM WISHLIST
+        // POST: /Wishlist/Remove
+        // =========================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Remove(Guid id)
+        public async Task<IActionResult> Remove(Guid? id, Guid? variantId)
         {
-            var customer = await GetCustomer();
-
+            var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
-                return RedirectToAction(
-                    "Index",
-                    "Home");
+                if (IsAjaxRequest()) return Unauthorized();
+                return RedirectToAction("Index", "Home");
             }
 
-
-            var item = await _context.WishlistItems
-
-                .Include(i => i.Wishlist)
-
-                .FirstOrDefaultAsync(i =>
-                    i.Id == id &&
-                    i.Wishlist.CustomerId == customer.Id);
-
-
-            if (item != null)
+            var (success, message) = await _wishlistService.RemoveFromWishlistAsync(customer.Id, id, variantId);
+            if (success)
             {
-                _context.WishlistItems.Remove(item);
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] =
-                    "Product removed from wishlist.";
+                TempData["Success"] = message;
             }
 
+            if (IsAjaxRequest())
+            {
+                return Json(new { success, isWishlisted = false, message });
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =====================================================
+        // TOGGLE WISHLIST
+        // POST: /Wishlist/Toggle
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Toggle(Guid variantId)
+        {
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                if (IsAjaxRequest()) return Unauthorized();
+                return RedirectToAction("Index", "Home");
+            }
+
+            var (success, isWishlisted, message) = await _wishlistService.ToggleWishlistAsync(customer.Id, variantId);
+            TempData["Success"] = message;
+
+            if (IsAjaxRequest())
+            {
+                return Json(new { success, isWishlisted, message });
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =====================================================
+        // MOVE WISHLIST ITEM TO CART
+        // POST: /Wishlist/MoveToCart
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveToCart(Guid id)
+        {
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                TempData["Error"] = "Customer profile not found.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var (success, message) = await _wishlistService.MoveToCartAsync(customer.Id, id);
+
+            if (success)
+            {
+                TempData["Success"] = message;
+            }
+            else
+            {
+                TempData["Error"] = message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =====================================================
+        // CLEAR WISHLIST
+        // POST: /Wishlist/Clear
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Clear()
+        {
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                TempData["Error"] = "Customer profile not found.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            await _wishlistService.ClearWishlistAsync(customer.Id);
+            TempData["Success"] = "Your wishlist has been cleared.";
 
             return RedirectToAction(nameof(Index));
         }

@@ -4,599 +4,725 @@
 
 @{
     ViewData["Title"] = "Shop";
+
+    var selectedCategory = Model.CategoryId.HasValue ? Model.Categories.FirstOrDefault(c => c.Id == Model.CategoryId) : null;
+    var selectedBrand = Model.BrandId.HasValue ? Model.Brands.FirstOrDefault(b => b.Id == Model.BrandId) : null;
+    var selectedSize = Model.SizeId.HasValue ? Model.Sizes.FirstOrDefault(s => s.Id == Model.SizeId) : null;
+    var selectedColor = Model.ColorId.HasValue ? Model.Colors.FirstOrDefault(c => c.Id == Model.ColorId) : null;
+
+    bool hasAnyFilter = selectedCategory != null ||
+                        selectedBrand != null ||
+                        selectedSize != null ||
+                        selectedColor != null ||
+                        (Model.MinPrice.HasValue && Model.MinPrice > 0) ||
+                        (Model.MaxPrice.HasValue && Model.MaxPrice > 0) ||
+                        Model.InStock == true ||
+                        Model.OnSale == true ||
+                        !string.IsNullOrWhiteSpace(Model.Search);
+
+    int startItem = Model.TotalProducts == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int endItem = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalProducts);
 }
 
 <style>
     .shop-page {
-        background: #fff;
+        background: #fdfdfc;
+        min-height: 85vh;
     }
 
     .shop-hero {
-        background: linear-gradient(120deg, #1a1a1a, #2d2d2d 60%);
+        background: linear-gradient(135deg, #18191b 0%, #2b2d31 100%);
         border-radius: 24px;
         position: relative;
         overflow: hidden;
+        color: #ffffff;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
-        .shop-hero::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, rgba(66,133,244,.25), transparent 60%);
-        }
-
-    .shop-hero-content {
-        position: relative;
-        z-index: 1;
+    .shop-hero::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle, rgba(66, 133, 244, 0.25) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
     }
 
-    .shop-hero-badge {
-        background: var(--google-yellow-dark, #F9AB00);
-        color: #202124;
-        font-weight: 800;
-        font-size: 11px;
-        letter-spacing: .06em;
-    }
-
-    .shop-hero h1 {
-        font-weight: 800;
-        letter-spacing: -0.02em;
-    }
-
-    .shop-filter-toggle-btn {
-        border: 0;
-        border-radius: 50px;
-        background: #fff;
-        color: var(--black, #202124);
-        font-weight: 700;
-        padding: 10px 20px;
-    }
-
-    .shop-filter-card {
+    .shop-sidebar-card {
+        background: #ffffff;
         border: 1px solid var(--border, #eeeeee);
         border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.02);
     }
 
-    .shop-filter-title {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .1em;
-        color: var(--google-blue, #4285F4);
-    }
-
-    .shop-active-label {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--gray, #666);
-    }
-
-    .shop-filter-badge {
-        border: 1px solid var(--border, #eeeeee);
-        background: var(--light-gray, #f8f8f6);
-        border-radius: 50px;
-        padding: 8px 14px;
-        font-size: 13px;
+    /* ACTIVE FILTER CHIP */
+    .active-filter-chip {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        background: #fff;
+        border: 1px solid #dadce0;
+        border-radius: 50px;
+        padding: 5px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #3c4043;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
 
-        .shop-filter-badge a {
-            color: var(--gray, #777);
-            text-decoration: none;
-        }
+    .active-filter-chip a {
+        color: #70757a;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: color .15s ease;
+    }
 
-            .shop-filter-badge a:hover {
-                color: var(--google-red, #EA4335);
-            }
+    .active-filter-chip a:hover {
+        color: var(--google-red, #EA4335);
+    }
 
-    .shop-clear-btn {
-        border: 1px solid #f4c7c3;
-        border-radius: 50px;
-        color: var(--google-red-dark, #C5221F);
+    /* TOOLBAR CONTROLS */
+    .shop-toolbar {
+        background: #ffffff;
+        border: 1px solid var(--border, #eeeeee);
+        border-radius: 16px;
+        padding: 14px 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .view-mode-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid #dadce0;
         background: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        padding: 8px 16px;
+        color: #5f6368;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         text-decoration: none;
         transition: all .2s ease;
     }
 
-        .shop-clear-btn:hover {
-            background: var(--google-red, #EA4335);
-            border-color: var(--google-red, #EA4335);
-            color: #fff;
-        }
-
-    .shop-sort-select {
-        border: 1px solid #dcdcdc;
-        border-radius: 10px;
-    }
-
-        .shop-sort-select:focus {
-            border-color: var(--google-blue, #4285F4);
-            box-shadow: 0 0 0 3px rgba(66,133,244,.12);
-        }
-
-    .shop-empty-card {
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 24px;
-    }
-
-    .shop-empty-icon {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: var(--blue-soft, #eaf2ff);
+    .view-mode-btn:hover {
+        border-color: var(--google-blue, #4285F4);
         color: var(--google-blue, #4285F4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
     }
 
-    .shop-clear-filters-btn {
-        display: inline-block;
-        border: 0;
-        border-radius: 50px;
-        padding: 12px 26px;
+    .view-mode-btn.active {
         background: var(--google-blue, #4285F4);
+        border-color: var(--google-blue, #4285F4);
         color: #fff;
-        font-weight: 700;
-        text-decoration: none;
     }
 
-        .shop-clear-filters-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            color: #fff;
-        }
-
-    .shop-product-card {
+    /* LIST VIEW PRODUCT CARD */
+    .shop-list-card {
+        background: #fff;
         border: 1px solid var(--border, #eeeeee);
         border-radius: 20px;
         overflow: hidden;
-        transition: box-shadow .25s ease, transform .25s ease;
-        height: 100%;
+        transition: transform .2s ease, box-shadow .2s ease;
     }
 
-        .shop-product-card:hover {
-            box-shadow: 0 14px 30px rgba(0,0,0,.08);
-            transform: translateY(-3px);
-        }
+    .shop-list-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+    }
 
-    .shop-product-image-wrap {
+    .shop-list-media {
+        width: 220px;
+        min-width: 220px;
+        height: 220px;
         position: relative;
-        background: #f7f7f5;
+        background: #f8f9fa;
+        overflow: hidden;
     }
 
-    .shop-badge-instock {
-        background: var(--google-green, #34A853);
-        color: #fff;
-        font-weight: 700;
-        font-size: 11px;
+    .shop-list-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .4s ease;
     }
 
-    .shop-badge-outofstock {
-        background: var(--google-red, #EA4335);
-        color: #fff;
-        font-weight: 700;
-        font-size: 11px;
+    .shop-list-card:hover .shop-list-media img {
+        transform: scale(1.05);
     }
 
-    .shop-badge-sale {
-        background: linear-gradient(90deg, var(--google-red, #EA4335), var(--google-yellow-dark, #F9AB00));
-        color: #fff;
-        font-weight: 800;
-        font-size: 11px;
-        letter-spacing: .06em;
-    }
-
-    .shop-view-btn {
-        background: #fff;
-        color: var(--black, #202124);
-        border: 0;
+    /* PAGINATION */
+    .shop-pagination .page-link {
+        color: #3c4043;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        margin: 0 3px;
+        font-weight: 600;
+        font-size: 13.5px;
+        padding: 8px 14px;
         transition: all .2s ease;
     }
 
-        .shop-view-btn:hover {
-            background: var(--google-blue, #4285F4);
-            color: #fff;
-        }
-
-    .shop-product-brand {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .08em;
+    .shop-pagination .page-link:hover {
+        background: #f1f3f4;
         color: var(--google-blue, #4285F4);
-        text-decoration: none;
+        border-color: var(--google-blue, #4285F4);
     }
 
-    .shop-product-name {
-        color: var(--black, #202124);
-        text-decoration: none;
-    }
-
-        .shop-product-name:hover h5 {
-            color: var(--google-blue, #4285F4);
-        }
-
-    .shop-product-price {
-        color: var(--black, #202124);
-    }
-
-    .shop-add-btn {
+    .shop-pagination .page-item.active .page-link {
         background: var(--google-blue, #4285F4);
+        border-color: var(--google-blue, #4285F4);
         color: #fff;
-        border: 0;
-        transition: all .2s ease;
+        box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3);
     }
 
-        .shop-add-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            color: #fff;
-        }
+    .shop-pagination .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 </style>
 
-<div class="shop-page">
+<div class="shop-page py-4 py-lg-5">
+    <div class="container">
 
-    <section class="py-4 py-lg-5">
-
-        <div class="container">
-
-            <!-- =================================================
-             PAGE HEADER + SALE STRIP
-        ================================================== -->
-
-            <div class="shop-hero text-white p-4 p-md-5 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-
-                <div class="shop-hero-content">
-                    <span class="badge shop-hero-badge rounded-pill mb-2">
-                        <i class="bi bi-lightning-charge-fill me-1"></i> LIMITED TIME
+        <!-- =========================================================
+             HERO HEADER
+        ========================================================== -->
+        <div class="shop-hero p-4 p-md-5 mb-4">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 position-relative" style="z-index: 1;">
+                <div>
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: .06em;">
+                        <i class="bi bi-stars me-1"></i>CURATED COLLECTION
                     </span>
-                    <h1 class="fw-bold mb-1">Shop the Collection</h1>
-                    <p class="mb-0 text-white-50">
-                        @(Model.Products?.Count() ?? 0) products found — new arrivals added weekly.
+                    <h1 class="h2 fw-bold mb-1 text-white">
+                        @(selectedCategory != null ? selectedCategory.Name : (selectedBrand != null ? selectedBrand.Name : "Shop All Styles"))
+                    </h1>
+                    <p class="mb-0 text-white-50 small">
+                        Showing @Model.TotalProducts products — premium garments crafted for everyday elegance.
                     </p>
                 </div>
 
-                <button class="shop-filter-toggle-btn d-lg-none" type="button"
-                        data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" style="position: relative; z-index: 1;">
-                    <i class="bi bi-sliders me-2"></i>Filters
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-light rounded-pill px-4 py-2 fw-bold d-lg-none" type="button"
+                            data-bs-toggle="offcanvas" data-bs-target="#shopFilterOffcanvas">
+                        <i class="bi bi-sliders me-2"></i>Filters
+                        @if (hasAnyFilter)
+                        {
+                            <span class="badge bg-primary rounded-pill ms-1">Active</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
 
+        <div class="row g-4">
+
+            <!-- =========================================================
+                 SIDEBAR FILTERS (DESKTOP)
+            ========================================================== -->
+            <div class="col-lg-3 d-none d-lg-block">
+                <div class="shop-sidebar-card">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-sliders me-2 text-primary"></i>Filters
+                        </h5>
+                        @if (hasAnyFilter)
+                        {
+                            <a asp-controller="Shop" asp-action="Index" class="small text-danger text-decoration-none fw-semibold">
+                                Clear All
+                            </a>
+                        }
+                    </div>
+
+                    @await Html.PartialAsync("_ShopFiltersPlaceholder", Model)
+                </div>
             </div>
 
+            <!-- =========================================================
+                 MAIN PRODUCTS AREA
+            ========================================================== -->
+            <div class="col-lg-9">
 
-            <div class="row g-4">
+                <!-- TOOLBAR (Active chips, Sort, View mode) -->
+                <div class="shop-toolbar mb-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
 
-                <!-- =================================================
-                 SIDEBAR (DESKTOP)
-            ================================================== -->
+                        <!-- Left: Item count & active filter summary -->
+                        <div class="small text-secondary">
+                            Showing <strong class="text-dark">@startItem–@endItem</strong> of <strong class="text-dark">@Model.TotalProducts</strong> results
+                        </div>
 
-                <div class="col-lg-3 d-none d-lg-block">
+                        <!-- Right: Sort, PageSize, View Mode -->
+                        <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
 
-                    <div class="shop-filter-card bg-white">
-                        <div class="p-3">
+                            <!-- Sort Form -->
+                            <form asp-controller="Shop" asp-action="Index" method="get" class="d-flex align-items-center gap-1">
+                                <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                <input type="hidden" name="brandId" value="@Model.BrandId" />
+                                <input type="hidden" name="sizeId" value="@Model.SizeId" />
+                                <input type="hidden" name="colorId" value="@Model.ColorId" />
+                                <input type="hidden" name="minPrice" value="@Model.MinPrice" />
+                                <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+                                <input type="hidden" name="inStock" value="@Model.InStock" />
+                                <input type="hidden" name="onSale" value="@Model.OnSale" />
+                                <input type="hidden" name="search" value="@Model.Search" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                                <input type="hidden" name="viewMode" value="@Model.ViewMode" />
 
-                            <h6 class="shop-filter-title mb-3">
-                                <i class="bi bi-sliders me-1"></i> Filter
-                            </h6>
+                                <label class="text-muted small text-nowrap me-1">Sort:</label>
+                                <select name="sort" class="form-select form-select-sm rounded-pill" style="min-width: 150px; font-size: 13px;" onchange="this.form.submit()">
+                                    <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Latest Arrivals</option>
+                                    <option value="price-low" selected="@(Model.Sort == "price-low")">Price: Low to High</option>
+                                    <option value="price-high" selected="@(Model.Sort == "price-high")">Price: High to Low</option>
+                                    <option value="name" selected="@(Model.Sort == "name")">Name: A to Z</option>
+                                    <option value="name-desc" selected="@(Model.Sort == "name-desc")">Name: Z to A</option>
+                                    <option value="rating" selected="@(Model.Sort == "rating")">Highest Rated</option>
+                                    <option value="oldest" selected="@(Model.Sort == "oldest")">Oldest</option>
+                                </select>
+                            </form>
 
-                            @await Html.PartialAsync("_ShopFiltersPlaceholder")
+                            <!-- View Mode Switch -->
+                            <div class="d-flex align-items-center gap-1 border-start ps-2 ms-1">
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-brandId="@Model.BrandId"
+                                   asp-route-sizeId="@Model.SizeId"
+                                   asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock"
+                                   asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-sort="@Model.Sort"
+                                   asp-route-page="@Model.CurrentPage"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-viewMode="grid"
+                                   class="view-mode-btn @(Model.ViewMode == "grid" ? "active" : "")"
+                                   title="Grid View">
+                                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                                </a>
+
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-brandId="@Model.BrandId"
+                                   asp-route-sizeId="@Model.SizeId"
+                                   asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock"
+                                   asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-sort="@Model.Sort"
+                                   asp-route-page="@Model.CurrentPage"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   asp-route-viewMode="list"
+                                   class="view-mode-btn @(Model.ViewMode == "list" ? "active" : "")"
+                                   title="List View">
+                                    <i class="bi bi-list-ul"></i>
+                                </a>
+                            </div>
 
                         </div>
                     </div>
 
-                </div>
+                    <!-- ACTIVE FILTER BADGES ROW -->
+                    @if (hasAnyFilter)
+                    {
+                        <div class="d-flex flex-wrap align-items-center gap-2 pt-3 mt-3 border-top">
+                            <span class="small text-muted fw-bold">Active:</span>
 
-
-                <!-- =================================================
-                 OFFCANVAS (MOBILE)
-            ================================================== -->
-
-                <div class="offcanvas offcanvas-start" tabindex="-1" id="filterOffcanvas">
-                    <div class="offcanvas-header">
-                        <h5 class="offcanvas-title fw-bold">Filters</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                    </div>
-                    <div class="offcanvas-body">
-                        @await Html.PartialAsync("_ShopFiltersPlaceholder")
-                    </div>
-                </div>
-
-
-                <!-- =================================================
-                 PRODUCTS AREA
-            ================================================== -->
-
-                <div class="col-lg-9">
-
-                    <!-- ACTIVE FILTERS + SORT -->
-
-                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
-
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-
-                            @if (Model.CategoryId.HasValue || Model.BrandId.HasValue || Model.OnSale == true || !string.IsNullOrWhiteSpace(Model.Search))
+                            @if (selectedCategory != null)
                             {
-                                <span class="shop-active-label">Active:</span>
-
-                                @if (Model.CategoryId.HasValue)
-                                {
-                                    var selectedCategory = Model.Categories.FirstOrDefault(x => x.Id == Model.CategoryId);
-                                    if (selectedCategory != null)
-                                    {
-                                        <span class="shop-filter-badge">
-                                            <i class="bi bi-tag" style="color: var(--google-blue, #4285F4);"></i> @selectedCategory.Name
-                                            <a asp-controller="Shop" asp-action="Index"
-                                               asp-route-brandId="@Model.BrandId"
-                                               asp-route-search="@Model.Search"
-                                               asp-route-sort="@Model.Sort"
-                                               asp-route-onSale="@Model.OnSale">
-                                                <i class="bi bi-x-lg"></i>
-                                            </a>
-                                        </span>
-                                    }
-                                }
-
-                                @if (Model.BrandId.HasValue)
-                                {
-                                    var selectedBrand = Model.Brands.FirstOrDefault(x => x.Id == Model.BrandId);
-                                    if (selectedBrand != null)
-                                    {
-                                        <span class="shop-filter-badge">
-                                            @if (!string.IsNullOrWhiteSpace(selectedBrand.Logo))
-                                            {
-                                                <img src="@selectedBrand.Logo" alt="@selectedBrand.Name" style="width:18px;height:18px;object-fit:contain;" />
-                                            }
-                                            @selectedBrand.Name
-                                            <a asp-controller="Shop" asp-action="Index"
-                                               asp-route-categoryId="@Model.CategoryId"
-                                               asp-route-search="@Model.Search"
-                                               asp-route-sort="@Model.Sort"
-                                               asp-route-onSale="@Model.OnSale">
-                                                <i class="bi bi-x-lg"></i>
-                                            </a>
-                                        </span>
-                                    }
-                                }
-
-                                @if (Model.OnSale == true)
-                                {
-                                    <span class="shop-filter-badge">
-                                        <i class="bi bi-lightning-charge-fill" style="color: var(--google-red, #EA4335);"></i> On Sale
-                                        <a asp-controller="Shop" asp-action="Index"
-                                           asp-route-categoryId="@Model.CategoryId"
-                                           asp-route-brandId="@Model.BrandId"
-                                           asp-route-search="@Model.Search"
-                                           asp-route-sort="@Model.Sort">
-                                            <i class="bi bi-x-lg"></i>
-                                        </a>
-                                    </span>
-                                }
-
-                                @if (!string.IsNullOrWhiteSpace(Model.Search))
-                                {
-                                    <span class="shop-filter-badge">
-                                        <i class="bi bi-search"></i> @Model.Search
-                                        <a asp-controller="Shop" asp-action="Index"
-                                           asp-route-categoryId="@Model.CategoryId"
-                                           asp-route-brandId="@Model.BrandId"
-                                           asp-route-sort="@Model.Sort"
-                                           asp-route-onSale="@Model.OnSale">
-                                            <i class="bi bi-x-lg"></i>
-                                        </a>
-                                    </span>
-                                }
-
-                                <a asp-controller="Shop" asp-action="Index" class="shop-clear-btn">
-                                    Clear all
-                                </a>
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-tag text-primary"></i> @selectedCategory.Name
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
                             }
 
-                        </div>
+                            @if (selectedBrand != null)
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-award text-primary"></i> @selectedBrand.Name
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                        <form asp-controller="Shop" asp-action="Index" method="get" class="d-flex align-items-center gap-2">
+                            @if (selectedSize != null)
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-rulers text-secondary"></i> Size: @selectedSize.Name
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
-                            <input type="hidden" name="brandId" value="@Model.BrandId" />
-                            <input type="hidden" name="search" value="@Model.Search" />
-                            <input type="hidden" name="onSale" value="@Model.OnSale" />
+                            @if (selectedColor != null)
+                            {
+                                <span class="active-filter-chip">
+                                    <span class="rounded-circle d-inline-block" style="width:10px;height:10px;background-color:@selectedColor.HexCode;border:1px solid #ccc;"></span> @selectedColor.Name
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                            <label class="text-secondary small text-nowrap mb-0">Sort by</label>
+                            @if (Model.MinPrice.HasValue || Model.MaxPrice.HasValue)
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-currency-dollar text-success"></i>
+                                    @(Model.MinPrice.HasValue ? $"${Model.MinPrice}" : "$0") – @(Model.MaxPrice.HasValue ? $"${Model.MaxPrice}" : "Any")
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                            <select name="sort" class="form-select form-select-sm shop-sort-select" style="min-width:170px;" onchange="this.form.submit()">
-                                <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Latest</option>
-                                <option value="price-low" selected="@(Model.Sort == "price-low")">Price: Low to High</option>
-                                <option value="price-high" selected="@(Model.Sort == "price-high")">Price: High to Low</option>
-                                <option value="name" selected="@(Model.Sort == "name")">Name</option>
-                                <option value="oldest" selected="@(Model.Sort == "oldest")">Oldest</option>
-                            </select>
+                            @if (Model.InStock == true)
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-box-seam text-success"></i> In Stock
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                        </form>
+                            @if (Model.OnSale == true)
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-lightning-charge-fill text-danger"></i> On Sale
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-                    </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.Search))
+                            {
+                                <span class="active-filter-chip">
+                                    <i class="bi bi-search text-secondary"></i> "@Model.Search"
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
+                                </span>
+                            }
 
-
-                    <!-- PRODUCT GRID -->
-                    @if (Model.Products == null || !Model.Products.Any())
-                    {
-                        <div class="shop-empty-card bg-white">
-                            <div class="text-center p-5">
-
-                                <div class="shop-empty-icon mb-4">
-                                    <i class="bi bi-bag-x fs-2"></i>
-                                </div>
-
-                                <h3 class="fw-bold">No Products Found</h3>
-                                <p class="text-secondary mb-4">Try another brand, category or search.</p>
-
-                                <a asp-controller="Shop" asp-action="Index" class="shop-clear-filters-btn">
-                                    <i class="bi bi-arrow-repeat me-2"></i>Clear Filters
-                                </a>
-
-                            </div>
+                            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill py-0 px-2 fw-semibold" style="font-size:12px;">
+                                Clear All
+                            </a>
                         </div>
                     }
-                    else
-                    {
-                        <div class="row row-cols-2 row-cols-md-3 g-4">
+                </div>
 
-                            @foreach (var product in Model.Products)
-                            {
-                                var image = product.Images?.FirstOrDefault(x => x.IsPrimary) ?? product.Images?.FirstOrDefault();
+                <!-- PRODUCTS DISPLAY -->
+                @if (Model.Products == null || !Model.Products.Any())
+                {
+                    <div class="shop-sidebar-card text-center py-5">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:72px;height:72px;">
+                            <i class="bi bi-search text-secondary display-6"></i>
+                        </div>
+                        <h4 class="fw-bold mb-2">No Products Match Your Criteria</h4>
+                        <p class="text-secondary small mb-4">Try broadening your filters or searching for another garment style or brand.</p>
+                        <a asp-controller="Shop" asp-action="Index" class="btn btn-primary rounded-pill px-4 fw-bold">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
+                        </a>
+                    </div>
+                }
+                else if (Model.ViewMode == "list")
+                {
+                    <!-- LIST VIEW -->
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        @foreach (var product in Model.Products)
+                        {
+                            var primaryImg = product.Images?.FirstOrDefault(x => x.IsPrimary) ?? product.Images?.FirstOrDefault();
+                            var availableVariants = product.Variants?.Where(v => v.Status == VariantStatus.Available).ToList() ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
+                            var minPrice = availableVariants.Select(v => v.Price).DefaultIfEmpty(0).Min();
+                            var compareAt = availableVariants.Where(v => v.CompareAtPrice.HasValue && v.CompareAtPrice > v.Price).Select(v => v.CompareAtPrice).FirstOrDefault();
+                            var inStock = availableVariants.Sum(v => v.Inventory?.AvailableQuantity ?? 0) > 0;
+                            var reviews = product.Reviews ?? new List<WebApplication_ClothingEcommerce.Models.Review>();
+                            var avgRating = reviews.Any() ? reviews.Average(x => x.Rating) : 0;
+                            var fullStars = (int)Math.Floor(avgRating);
 
-                                var availableVariants = product.Variants?
-                                    .Where(v => v.Status == VariantStatus.Available)
-                                    .ToList()
-                                    ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
+                            <div class="shop-list-card d-flex flex-column flex-md-row">
+                                <div class="shop-list-media position-relative">
+                                    <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="d-block w-100 h-100">
+                                        @if (primaryImg != null && !string.IsNullOrWhiteSpace(primaryImg.ImageUrl))
+                                        {
+                                            <img src="@primaryImg.ImageUrl" alt="@product.Name" loading="lazy" />
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex align-items-center justify-content-center h-100 text-secondary">
+                                                <i class="bi bi-image display-6"></i>
+                                            </div>
+                                        }
+                                    </a>
+                                    @if (compareAt != null)
+                                    {
+                                        <span class="position-absolute top-0 start-0 m-2 badge bg-danger rounded-pill fw-bold" style="font-size:10px;">SALE</span>
+                                    }
+                                </div>
 
-                                var minPrice = availableVariants.Select(v => v.Price).DefaultIfEmpty(0).Min();
-                                var stock = availableVariants.Sum(v => v.Inventory?.AvailableQuantity ?? 0);
-
-                                var isOnSale = availableVariants.Any(v =>
-                                    v.CompareAtPrice != null && v.CompareAtPrice > v.Price);
-
-                                var bestVariant = availableVariants
-                                    .Where(v => v.CompareAtPrice != null && v.CompareAtPrice > v.Price)
-                                    .OrderByDescending(v => v.CompareAtPrice - v.Price)
-                                    .FirstOrDefault();
-
-                                <div class="col">
-
-                                    <div class="shop-product-card bg-white">
-
-                                        <!-- IMAGE -->
-                                        <div class="shop-product-image-wrap">
-
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id">
-                                                @if (image != null && !string.IsNullOrWhiteSpace(image.ImageUrl))
-                                                {
-                                                    <img src="@image.ImageUrl" class="card-img-top" alt="@product.Name" loading="lazy"
-                                                         style="height:280px;object-fit:cover;" />
-                                                }
-                                                else
-                                                {
-                                                    <div class="d-flex align-items-center justify-content-center" style="height:280px;">
-                                                        <i class="bi bi-image display-5 text-secondary"></i>
-                                                    </div>
-                                                }
-                                            </a>
-
-                                            @if (stock > 0)
-                                            {
-                                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill shop-badge-instock">
-                                                    <i class="bi bi-check-circle me-1"></i>In Stock
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill shop-badge-outofstock">
-                                                    <i class="bi bi-x-circle me-1"></i>Out of Stock
-                                                </span>
-                                            }
-
-                                            @if (isOnSale)
-                                            {
-                                                <span class="position-absolute top-0 start-50 translate-middle-x mt-2 badge rounded-pill shop-badge-sale">
-                                                    SALE
-                                                </span>
-                                            }
-
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id"
-                                               class="position-absolute top-0 end-0 m-3 shop-view-btn btn btn-sm rounded-circle shadow-sm">
-                                                <i class="bi bi-arrow-up-right"></i>
-                                            </a>
-
+                                <div class="p-3 p-md-4 flex-grow-1 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="small fw-bold text-primary text-uppercase" style="letter-spacing: .06em;">
+                                                @(product.Brand?.Name ?? "CLOTHÉ")
+                                            </span>
+                                            <span class="text-muted small">•</span>
+                                            <span class="small text-secondary">@(product.Category?.Name ?? "Apparel")</span>
                                         </div>
 
-
-                                        <!-- CONTENT -->
-                                        <div class="p-3">
-
-                                            <div class="d-flex align-items-center gap-2 mb-2">
-
-                                                <span class="rounded bg-white border d-inline-flex align-items-center justify-content-center overflow-hidden"
-                                                      style="width:26px;height:26px;">
-                                                    @if (!string.IsNullOrWhiteSpace(product.Brand?.Logo))
-                                                    {
-                                                        <img src="@product.Brand.Logo" alt="@product.Brand.Name" class="w-100 h-100" style="object-fit:contain;" />
-                                                    }
-                                                    else
-                                                    {
-                                                        <i class="bi bi-award text-secondary small"></i>
-                                                    }
-                                                </span>
-
-                                                @if (product.Brand != null)
-                                                {
-                                                    <a asp-controller="Shop" asp-action="Index" asp-route-brandId="@product.Brand.Id"
-                                                       class="shop-product-brand">
-                                                        @product.Brand.Name
-                                                    </a>
-                                                }
-                                                else
-                                                {
-                                                    <span class="shop-product-brand">CLOTHÉ</span>
-                                                }
-
-                                            </div>
-
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="shop-product-name">
-                                                <h5 class="fw-bold mb-1">@product.Name</h5>
+                                        <h5 class="fw-bold mb-2">
+                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="text-dark text-decoration-none">
+                                                @product.Name
                                             </a>
+                                        </h5>
 
-                                            <div class="small text-secondary mb-3">
-                                                <i class="bi bi-tag me-1"></i>@(product.Category?.Name ?? "Fashion")
-                                            </div>
+                                        <p class="text-secondary small mb-3 text-truncate-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                            @(string.IsNullOrWhiteSpace(product.Description) ? "Contemporary style crafted from premium materials for all-day comfort." : product.Description)
+                                        </p>
 
-                                            <div class="d-flex justify-content-between align-items-center">
-
-                                                <div class="d-flex align-items-baseline gap-2">
-                                                    <strong class="fs-5 shop-product-price">
-                                                        @if (minPrice > 0)
-                                                        {
-                                                            @:$@minPrice.ToString("0.00")
-                                                        }
-                                                        else
-                                                        {
-                                                            @:Contact us
-                                                        }
-                                                    </strong>
-
-                                                    @if (bestVariant != null)
-                                                    {
-                                                        <del class="text-secondary small">
-                                                            $@bestVariant.CompareAtPrice?.ToString("0.00")
-                                                        </del>
-                                                    }
+                                        <!-- Reviews & Stock -->
+                                        <div class="d-flex flex-wrap align-items-center gap-3 mb-2 small">
+                                            @if (reviews.Any())
+                                            {
+                                                <div class="text-warning">
+                                                    @for (int i = 0; i < fullStars; i++) { <i class="bi bi-star-fill"></i> }
+                                                    @if (avgRating - fullStars >= 0.5) { <i class="bi bi-star-half"></i> }
+                                                    <span class="text-secondary ms-1">(@reviews.Count)</span>
                                                 </div>
-
-                                                <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id"
-                                                   class="shop-add-btn btn btn-sm rounded-circle">
-                                                    <i class="bi bi-arrow-up-right"></i>
-                                                </a>
-
+                                            }
+                                            <div>
+                                                @if (inStock)
+                                                {
+                                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>In Stock</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-danger fw-semibold"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>
+                                                }
                                             </div>
-
                                         </div>
-
                                     </div>
 
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-2">
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <strong class="fs-4 fw-bold text-dark">
+                                                @(minPrice > 0 ? $"${minPrice:0.00}" : "Price on request")
+                                            </strong>
+                                            @if (compareAt != null)
+                                            {
+                                                <del class="text-secondary small">$@compareAt.Value.ToString("0.00")</del>
+                                            }
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="btn btn-dark rounded-pill px-4 btn-sm fw-semibold">
+                                                View Product <i class="bi bi-arrow-right ms-1"></i>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
-                            }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- GRID VIEW -->
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 mb-4">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col">
+                                @await Html.PartialAsync("_ProductCard", product)
+                            </div>
+                        }
+                    </div>
+                }
 
+                <!-- =========================================================
+                     PAGINATION
+                ========================================================== -->
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 pt-3">
+                        <div class="small text-secondary">
+                            Page <strong class="text-dark">@Model.CurrentPage</strong> of <strong class="text-dark">@Model.TotalPages</strong>
                         </div>
-                    }
 
-                </div>
+                        <nav aria-label="Shop catalog pagination">
+                            <ul class="pagination shop-pagination mb-0">
+                                <!-- Previous -->
+                                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"
+                                       asp-route-page="@(Model.CurrentPage - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+
+                                @for (int p = 1; p <= Model.TotalPages; p++)
+                                {
+                                    if (p == 1 || p == Model.TotalPages || (p >= Model.CurrentPage - 2 && p <= Model.CurrentPage + 2))
+                                    {
+                                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link" asp-controller="Shop" asp-action="Index"
+                                               asp-route-categoryId="@Model.CategoryId"
+                                               asp-route-brandId="@Model.BrandId"
+                                               asp-route-sizeId="@Model.SizeId"
+                                               asp-route-colorId="@Model.ColorId"
+                                               asp-route-minPrice="@Model.MinPrice"
+                                               asp-route-maxPrice="@Model.MaxPrice"
+                                               asp-route-inStock="@Model.InStock"
+                                               asp-route-onSale="@Model.OnSale"
+                                               asp-route-search="@Model.Search"
+                                               asp-route-sort="@Model.Sort"
+                                               asp-route-pageSize="@Model.PageSize"
+                                               asp-route-viewMode="@Model.ViewMode"
+                                               asp-route-page="@p">
+                                                @p
+                                            </a>
+                                        </li>
+                                    }
+                                    else if (p == Model.CurrentPage - 3 || p == Model.CurrentPage + 3)
+                                    {
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    }
+                                }
+
+                                <!-- Next -->
+                                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       asp-route-pageSize="@Model.PageSize"
+                                       asp-route-viewMode="@Model.ViewMode"
+                                       asp-route-page="@(Model.CurrentPage + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
 
             </div>
 
         </div>
 
-    </section>
+    </div>
+</div>
 
+<!-- =========================================================
+     OFFCANVAS: MOBILE FILTERS DRAWER
+========================================================== -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="shopFilterOffcanvas" aria-labelledby="shopFilterOffcanvasLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="shopFilterOffcanvasLabel">
+            <i class="bi bi-sliders me-2 text-primary"></i>Filters
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        @await Html.PartialAsync("_ShopFiltersPlaceholder", Model)
+    </div>
 </div>

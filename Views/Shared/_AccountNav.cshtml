@@ -1,0 +1,119 @@
+@{
+    var active = (ViewData["AccountActiveSection"] as string) ?? "";
+}
+
+<style>
+    .account-hub-nav-wrapper {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .account-hub-nav-scroll {
+        display: flex;
+        justify-content: center;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 4px 6px;
+    }
+
+    .account-hub-nav-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .account-hub-nav {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 9999px;
+        padding: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+        max-width: 100%;
+    }
+
+    .account-hub-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+        text-decoration: none;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .account-hub-pill i {
+        font-size: 1.05rem;
+        transition: transform 0.2s ease;
+    }
+
+    .account-hub-pill:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .account-hub-pill:hover i {
+        transform: scale(1.1);
+    }
+
+    .account-hub-pill.active {
+        background: #111827;
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(17, 24, 39, 0.25);
+    }
+
+    .account-hub-pill.active i {
+        color: #60a5fa;
+    }
+
+    @@media (max-width: 576px) {
+        .account-hub-nav-scroll {
+            justify-content: flex-start;
+            padding: 2px;
+        }
+
+        .account-hub-nav {
+            padding: 4px;
+            gap: 4px;
+            width: max-content;
+        }
+
+        .account-hub-pill {
+            padding: 8px 16px;
+            font-size: 0.8125rem;
+            gap: 6px;
+        }
+    }
+</style>
+
+<div class="account-hub-nav-wrapper">
+    <div class="account-hub-nav-scroll">
+        <nav class="account-hub-nav" aria-label="Customer Account Hub Navigation">
+            <a asp-controller="Profile" asp-action="Index" class="account-hub-pill @(active == "Profile" ? "active" : "")">
+                <i class="bi bi-person-circle"></i>
+                <span>Profile Overview</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" class="account-hub-pill @(active == "Orders" ? "active" : "")">
+                <i class="bi bi-box-seam"></i>
+                <span>My Orders</span>
+            </a>
+
+            <a asp-controller="Wishlist" asp-action="Index" class="account-hub-pill @(active == "Wishlist" ? "active" : "")">
+                <i class="bi bi-heart"></i>
+                <span>Wishlist</span>
+            </a>
+
+            <a asp-controller="Cart" asp-action="Index" class="account-hub-pill @(active == "Bag" ? "active" : "")">
+                <i class="bi bi-bag"></i>
+                <span>Shopping Bag</span>
+            </a>
+        </nav>
+    </div>
+</div>

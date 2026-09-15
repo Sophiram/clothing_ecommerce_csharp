@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebApplication_ClothingEcommerce.Models.Product>
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Product>
 
 @using WebApplication_ClothingEcommerce.Data.Enums
 
@@ -143,49 +143,55 @@
         </div>
 
         <div class="category-grid">
+            @if (ViewBag.Categories != null)
+            {
+                int catIndex = 1;
+                foreach (var category in (IEnumerable<WebApplication_ClothingEcommerce.Models.Category>)ViewBag.Categories)
+                {
+                    if (catIndex > 3) break; // Display top 3 categories
 
-            <!-- MEN -->
-            <a asp-controller="Shop" asp-action="Index" class="category-card">
-                <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=800&q=80"
-                     alt="Men" class="category-bg-img" />
-                <div class="category-overlay"></div>
-                <div class="category-content">
-                    <span>01 &middot; MENSWEAR</span>
-                    <h3>Men</h3>
+                    // Dynamic image assignment based on category name
+                    string bgImage = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=800&q=80"; // Default
+                    var catNameLower = category.Name.ToLower();
+
+                    if (catNameLower.Contains("women"))
+                    {
+                        bgImage = "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80";
+                    }
+                    else if (catNameLower.Contains("men"))
+                    {
+                        bgImage = "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=800&q=80";
+                    }
+                    else if (catNameLower.Contains("accessori") || catNameLower.Contains("jewel"))
+                    {
+                        bgImage = "https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=800&q=80";
+                    }
+                    else if (catNameLower.Contains("shoe") || catNameLower.Contains("foot"))
+                    {
+                        bgImage = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
+                    }
+
+                    <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@category.Id" class="category-card">
+                        <img src="@bgImage" alt="@category.Name" class="category-bg-img" />
+                        <div class="category-overlay"></div>
+                        <div class="category-content">
+                            <span>0@(catIndex) &middot; @category.Name.ToUpper()</span>
+                            <h3>@category.Name</h3>
+                        </div>
+                        <span class="category-arrow">
+                            <i class="bi bi-arrow-up-right"></i>
+                        </span>
+                    </a>
+                    
+                    catIndex++;
+                }
+            }
+            else
+            {
+                <div class="text-center w-100 py-5">
+                    <p class="text-muted">No categories available.</p>
                 </div>
-                <span class="category-arrow">
-                    <i class="bi bi-arrow-up-right"></i>
-                </span>
-            </a>
-
-            <!-- WOMEN -->
-            <a asp-controller="Shop" asp-action="Index" class="category-card">
-                <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"
-                     alt="Women" class="category-bg-img" />
-                <div class="category-overlay"></div>
-                <div class="category-content">
-                    <span>02 &middot; WOMENSWEAR</span>
-                    <h3>Women</h3>
-                </div>
-                <span class="category-arrow">
-                    <i class="bi bi-arrow-up-right"></i>
-                </span>
-            </a>
-
-            <!-- ACCESSORIES -->
-            <a asp-controller="Shop" asp-action="Index" class="category-card">
-                <img src="https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=800&q=80"
-                     alt="Accessories" class="category-bg-img" />
-                <div class="category-overlay"></div>
-                <div class="category-content">
-                    <span>03 &middot; ACCESSORIES</span>
-                    <h3>Accessories</h3>
-                </div>
-                <span class="category-arrow">
-                    <i class="bi bi-arrow-up-right"></i>
-                </span>
-            </a>
-
+            }
         </div>
 
     </div>
@@ -221,21 +227,23 @@
         </div>
 
 
-        @if (ViewBag.Brands != null && ViewBag.Brands.Count > 0)
+        @{
+            var brandList = ViewBag.Brands != null 
+                ? ((IEnumerable<WebApplication_ClothingEcommerce.Models.Brand>)ViewBag.Brands).Take(8).ToList() 
+                : new List<WebApplication_ClothingEcommerce.Models.Brand>();
+        }
+
+        @if (brandList.Any())
         {
             <div class="row g-3">
-
-                @foreach (var brand in ViewBag.Brands)
+                @foreach (var brand in brandList)
                 {
                     <div class="col-6 col-md-4 col-lg-3">
-
                         <a asp-controller="Shop" asp-action="Index" asp-route-brandId="@brand.Id"
                            class="text-decoration-none">
-
-                            <div class="brand-home-card card border-0 shadow-sm rounded-4 h-100">
-                                <div class="card-body p-4 text-center">
-
-                                    <div class="brand-logo-wrapper mx-auto mb-3">
+                            <div class="brand-home-card card border-0 rounded-4 h-100">
+                                <div class="card-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                                    <div class="brand-logo-wrapper mb-3">
                                         @if (!string.IsNullOrWhiteSpace(brand.Logo))
                                         {
                                             <img src="@brand.Logo" alt="@brand.Name" class="brand-home-logo" />
@@ -247,24 +255,18 @@
                                             </div>
                                         }
                                     </div>
-
-                                    <h5 class="fw-bold text-dark mb-1">
+                                    <h5 class="fw-bold text-dark mb-1 brand-name">
                                         @brand.Name
                                     </h5>
-
-                                    <small class="text-secondary">
+                                    <div class="brand-view-link mt-2">
                                         View Products
                                         <i class="bi bi-arrow-right ms-1"></i>
-                                    </small>
-
+                                    </div>
                                 </div>
                             </div>
-
                         </a>
-
                     </div>
                 }
-
             </div>
         }
         else
@@ -719,6 +721,87 @@
         .promo-buttons {
             margin-bottom: 35px;
         }
+    }
+
+    /* =========================================================
+           BRAND CARD
+        ========================================================= */
+
+    .brand-home-card {
+        transition: all 0.3s ease;
+        background: #fff;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .brand-home-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-md) !important;
+        border-color: var(--google-blue) !important;
+    }
+
+    .brand-logo-wrapper {
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+        background: var(--light-gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 12px;
+        border: 1px solid var(--border);
+        transition: all 0.3s ease;
+    }
+
+    .brand-home-card:hover .brand-logo-wrapper {
+        background: var(--blue-soft);
+        border-color: rgba(66, 133, 244, 0.3);
+        transform: scale(1.05);
+    }
+
+    .brand-home-logo {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .brand-logo-placeholder {
+        font-size: 32px;
+        color: var(--gray-light);
+        transition: color 0.3s ease;
+    }
+
+    .brand-home-card:hover .brand-logo-placeholder {
+        color: var(--google-blue);
+    }
+
+    .brand-name {
+        font-size: 16px;
+        transition: color 0.3s ease;
+    }
+
+    .brand-home-card:hover .brand-name {
+        color: var(--google-blue) !important;
+    }
+
+    .brand-view-link {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--google-blue);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .brand-home-card:hover .brand-view-link {
+        opacity: 1;
+        transform: translateY(0);
+        height: 20px; /* Expand slightly */
     }
 
 </style>

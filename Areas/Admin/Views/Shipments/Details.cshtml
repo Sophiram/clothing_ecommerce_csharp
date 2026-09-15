@@ -1,0 +1,177 @@
+@model WebApplication_ClothingEcommerce.Models.Shipment
+@using WebApplication_ClothingEcommerce.Data.Enums
+
+@{
+    ViewData["Title"] = $"Shipment #{Model.Id.ToString()[..8].ToUpper()}";
+}
+
+<div class="admin-page">
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">SALES & FULFILLMENT</div>
+            <h1 class="page-title">Shipment Details</h1>
+            <p class="page-description">Order #@Model.OrderId.ToString()[..8].ToUpper() parcel delivery status.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                <i class="bi bi-pencil me-1"></i> Edit Shipment
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Shipment Info -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Delivery Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Shipping Carrier</label>
+                            <div class="fw-bold fs-6 mt-1">
+                                <i class="bi bi-truck me-1 text-primary"></i>
+                                @(string.IsNullOrWhiteSpace(Model.ShippingCompany) ? "Standard Courier" : Model.ShippingCompany)
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Tracking Number</label>
+                            <div class="mt-1">
+                                @if (!string.IsNullOrWhiteSpace(Model.TrackingNumber))
+                                {
+                                    <span class="badge bg-light text-dark border font-monospace fs-6 px-3 py-2">
+                                        @Model.TrackingNumber
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No tracking code assigned yet</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Current Status</label>
+                            <div class="mt-1">
+                                <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill">
+                                    @Model.ShipmentStatus
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Shipped Timestamp</label>
+                            <div class="fw-semibold mt-1">
+                                @(Model.ShippedAt?.ToLocalTime().ToString("f") ?? "Not dispatched yet")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Delivered Timestamp</label>
+                            <div class="fw-semibold mt-1">
+                                @(Model.DeliveredAt?.ToLocalTime().ToString("f") ?? "Not delivered yet")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ordered Items in this Shipment -->
+            @if (Model.Order?.Items != null && Model.Order.Items.Any())
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0">Items Included (@Model.Order.Items.Count)</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Order.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@item.Variant?.Product?.Name</div>
+                                            <small class="text-muted">Size: @(item.Variant?.Size?.Name ?? "—"), Color: @(item.Variant?.Color?.Name ?? "—")</small>
+                                        </td>
+                                        <td><code>@(item.Variant?.SKU ?? "—")</code></td>
+                                        <td><span class="badge bg-secondary rounded-pill">@item.Quantity</span></td>
+                                        <td class="text-end fw-bold">$@item.UnitPrice.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Order & Customer Info -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Customer & Destination</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold mb-1">
+                        @(Model.Order?.Customer != null ? $"{Model.Order.Customer.FirstName} {Model.Order.Customer.LastName}".Trim() : "Customer")
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-envelope me-1"></i> @(Model.Order?.Customer?.Email ?? "N/A")<br />
+                        <i class="bi bi-telephone me-1"></i> @(Model.Order?.Customer?.Phone ?? "N/A")
+                    </p>
+
+                    <hr />
+
+                    <label class="text-muted small text-uppercase fw-semibold">Delivery Address</label>
+                    @if (Model.Order?.Address != null)
+                    {
+                        <p class="mb-0 mt-1">
+                            @Model.Order.Address.Street<br />
+                            @Model.Order.Address.City, @Model.Order.Address.Province<br />
+                            @Model.Order.Address.PostalCode
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No address specified</p>
+                    }
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Order Reference</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Order ID:</span>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="fw-bold font-monospace">
+                            #@Model.OrderId.ToString()[..8].ToUpper()
+                        </a>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Order Date:</span>
+                        <span>@(Model.Order?.OrderDate.ToLocalTime().ToString("MMM dd, yyyy") ?? "—")</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Order Total:</span>
+                        <span class="fw-bold text-success">$@(Model.Order?.TotalAmount.ToString("N2") ?? "0.00")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

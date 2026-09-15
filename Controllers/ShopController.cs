@@ -1,17 +1,21 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
-using WebApplication_ClothingEcommerce.Models.ViewModels;
+using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Controllers
 {
     public class ShopController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IShopService _shopService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ShopController(AppDbContext context)
+        public ShopController(
+            IShopService shopService,
+            UserManager<ApplicationUser> userManager)
         {
-            _context = context;
+            _shopService = shopService;
+            _userManager = userManager;
         }
 
         // =====================================================
@@ -22,141 +26,64 @@ namespace WebApplication_ClothingEcommerce.Controllers
         public async Task<IActionResult> Index(
             Guid? categoryId,
             Guid? brandId,
+            Guid? sizeId,
+            Guid? colorId,
+            decimal? minPrice,
+            decimal? maxPrice,
+            bool? inStock,
+            bool? onSale,
             string? search,
             string? sort,
-            bool? onSale)
+            int page = 1,
+            int pageSize = 12,
+            string viewMode = "grid")
         {
-            var query = _context.Products
-                .AsNoTracking()
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.Images)
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Inventory)
-                .Where(p =>
-                    p.Status == Data.Enums.ProductStatus.Active)
-                .AsQueryable();
+            string? userId = null;
+            string? userEmail = null;
 
-
-            // ==========================================
-            // CATEGORY
-            // ==========================================
-
-            if (categoryId.HasValue)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                query = query.Where(p =>
-                    p.CategoryId == categoryId.Value);
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    userId = user.Id;
+                    userEmail = user.Email;
+                }
             }
 
-
-            // ==========================================
-            // BRAND
-            // ==========================================
-
-            if (brandId.HasValue)
+            var filter = new ShopFilterParameters
             {
-                query = query.Where(p =>
-                    p.BrandId == brandId.Value);
-            }
-
-
-            // ==========================================
-            // ON SALE
-            // ==========================================
-
-            if (onSale == true)
-            {
-                query = query.Where(p =>
-                    p.Variants.Any(v =>
-                        v.CompareAtPrice != null &&
-                        v.CompareAtPrice > v.Price));
-            }
-
-
-            // ==========================================
-            // SEARCH
-            // ==========================================
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                search = search.Trim();
-
-                query = query.Where(p =>
-                    p.Name.Contains(search) ||
-                    (p.Description != null &&
-                     p.Description.Contains(search)) ||
-                    (p.Brand != null &&
-                     p.Brand.Name.Contains(search)) ||
-                    (p.Category != null &&
-                     p.Category.Name.Contains(search)));
-            }
-
-
-            // ==========================================
-            // SORT
-            // ==========================================
-
-            query = sort switch
-            {
-                "price-low" =>
-                    query.OrderBy(p =>
-                        p.Variants
-                            .Select(v => (decimal?)v.Price)
-                            .Min() ?? 0),
-
-                "price-high" =>
-                    query.OrderByDescending(p =>
-                        p.Variants
-                            .Select(v => (decimal?)v.Price)
-                            .Max() ?? 0),
-
-                "name" =>
-                    query.OrderBy(p => p.Name),
-
-                "oldest" =>
-                    query.OrderBy(p => p.CreatedAt),
-
-                _ =>
-                    query.OrderByDescending(p => p.CreatedAt)
-            };
-
-
-            // ==========================================
-            // VIEW MODEL
-            // ==========================================
-
-            var model = new ShopViewModel
-            {
-                Products = await query.ToListAsync(),
-
-                Categories = await _context.Categories
-                    .AsNoTracking()
-                    .OrderBy(c => c.Name)
-                    .ToListAsync(),
-
-                Brands = await _context.Brands
-                    .AsNoTracking()
-                    .OrderBy(b => b.Name)
-                    .ToListAsync(),
-
                 CategoryId = categoryId,
                 BrandId = brandId,
+                SizeId = sizeId,
+                ColorId = colorId,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                InStock = inStock,
+                OnSale = onSale,
                 Search = search,
                 Sort = sort,
-                OnSale = onSale
+                Page = page,
+                PageSize = pageSize,
+                ViewMode = viewMode,
+                UserId = userId,
+                UserEmail = userEmail
             };
 
+            var (model, wishlistedVariantIds) = await _shopService.GetShopViewModelAsync(filter);
+
+            if (wishlistedVariantIds != null)
+            {
+                ViewData["WishlistedVariantIds"] = wishlistedVariantIds;
+            }
 
             return View(model);
         }
-
-
 
         // =====================================================
         // PRODUCT DETAILS
         // GET: /Shop/Details/{id}
         // =====================================================
-
         [HttpGet]
         public async Task<IActionResult> Details(Guid? id)
         {
@@ -165,38 +92,15 @@ namespace WebApplication_ClothingEcommerce.Controllers
                 return RedirectToAction("Index");
             }
 
-            var product = await _context.Products
-                .AsNoTracking()
-
-                .Include(p => p.Brand)
-
-                .Include(p => p.Category)
-
-                .Include(p => p.Images)
-
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Size)
-
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Color)
-
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Inventory)
-
-                .Include(p => p.Reviews)
-                    .ThenInclude(r => r.Customer)
-
-                .FirstOrDefaultAsync(p =>
-                    p.Id == id.Value &&
-                    p.Status == Data.Enums.ProductStatus.Active);
-
-            if (product == null)
+            var result = await _shopService.GetProductDetailsAsync(id.Value);
+            if (result.Product == null)
             {
                 TempData["Error"] = "Product was not found or is no longer available.";
                 return RedirectToAction("Index");
             }
 
-            return View(product);
+            ViewBag.RelatedProducts = result.RelatedProducts;
+            return View(result.Product);
         }
     }
 }

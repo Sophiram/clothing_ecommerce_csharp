@@ -18,7 +18,6 @@
         </button>
     </div>
 
-    <div id="alertPlaceholder"></div>
 
     <div class="admin-card">
 
@@ -74,25 +73,37 @@
                                 <td class="payment-name">@brand.Name</td>
                                 <td class="description-text">@(brand.Description ?? "—")</td>
                                 <td><span class="payment-count">@(brand.Products?.Count ?? 0)</span></td>
-                                <td>
-                                    <div class="table-actions">
-                                        <a asp-action="Details" asp-route-id="@brand.Id" class="action-btn" title="Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <button type="button" class="action-btn action-warning" title="Edit"
-                                                data-bs-toggle="modal" data-bs-target="#editBrandModal"
-                                                data-id="@brand.Id"
-                                                data-name="@brand.Name"
-                                                data-description="@brand.Description"
-                                                data-logo="@brand.Logo">
-                                            <i class="bi bi-pencil"></i>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
                                         </button>
-                                        <button type="button" class="action-btn action-danger" title="Delete"
-                                                data-bs-toggle="modal" data-bs-target="#deleteBrandModal"
-                                                data-id="@brand.Id"
-                                                data-name="@brand.Name">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@brand.Id">
+                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        data-bs-toggle="modal" data-bs-target="#editBrandModal"
+                                                        data-id="@brand.Id"
+                                                        data-name="@brand.Name"
+                                                        data-description="@brand.Description"
+                                                        data-logo="@brand.Logo">
+                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Brand</span>
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1" /></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteBrandModal"
+                                                        data-id="@brand.Id"
+                                                        data-name="@brand.Name">
+                                                    <i class="bi bi-trash"></i> <span>Delete Brand</span>
+                                                </button>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </td>
                             </tr>
@@ -143,8 +154,38 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Logo</label>
-                        <input type="file" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg" />
-                        <small class="text-muted">JPG, PNG, WEBP or SVG. Max 5MB.</small>
+                        <!-- TAB TOGGLE -->
+                        <div class="img-input-tabs" id="createLogoTabs">
+                            <button type="button" class="img-input-tab-btn active" data-tab="upload" onclick="switchImgTab('create','upload')">
+                                <i class="bi bi-upload"></i> Upload File
+                            </button>
+                            <button type="button" class="img-input-tab-btn" data-tab="url" onclick="switchImgTab('create','url')">
+                                <i class="bi bi-link-45deg"></i> Paste URL
+                            </button>
+                        </div>
+                        <!-- UPLOAD PANEL -->
+                        <div class="img-input-panel active" id="createPanel-upload">
+                            <input type="file" name="logo" id="createLogoFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg" onchange="previewImgFile(this,'createPreviewImg','createPreviewEmpty')" />
+                            <small class="text-muted">JPG, PNG, WEBP or SVG. Max 5MB.</small>
+                        </div>
+                        <!-- URL PANEL -->
+                        <div class="img-input-panel" id="createPanel-url">
+                            <div class="img-url-group">
+                                <input type="text" name="logoUrl" id="createLogoUrl" class="form-control" placeholder="https://example.com/logo.png" oninput="previewImgUrl(this.value,'createPreviewImg','createPreviewEmpty')" />
+                                <button type="button" class="img-clipboard-btn" onclick="pasteFromClipboard('createLogoUrl','createPreviewImg','createPreviewEmpty',this)" title="Paste from clipboard">
+                                    <i class="bi bi-clipboard"></i> Paste
+                                </button>
+                            </div>
+                            <small class="text-muted">Paste a direct link to the logo image.</small>
+                        </div>
+                        <!-- PREVIEW -->
+                        <div class="img-preview-box">
+                            <div class="img-preview-empty" id="createPreviewEmpty">
+                                <i class="bi bi-image"></i>
+                                Image preview
+                            </div>
+                            <img id="createPreviewImg" src="" alt="Preview" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -174,7 +215,7 @@
                         <img id="editLogoPreview" src="" alt="" class="brand-logo-thumb d-none" />
                         <div id="editLogoPlaceholder" class="brand-logo-placeholder"><i class="bi bi-award"></i></div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="removeLogo" id="editRemoveLogo" value="true" />
+                            <input class="form-check-input" type="checkbox" name="removeLogo" id="editRemoveLogo" value="true" onchange="toggleEditRemove(this)" />
                             <label class="form-check-label small" for="editRemoveLogo">Remove current logo</label>
                         </div>
                     </div>
@@ -187,9 +228,40 @@
                         <label class="form-label fw-semibold">Description</label>
                         <textarea name="Description" id="editDescription" class="form-control" rows="3"></textarea>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" id="editLogoSection">
                         <label class="form-label fw-semibold">Replace Logo</label>
-                        <input type="file" name="logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg" />
+                        <!-- TAB TOGGLE -->
+                        <div class="img-input-tabs">
+                            <button type="button" class="img-input-tab-btn active" data-tab="upload" onclick="switchImgTab('edit','upload')">
+                                <i class="bi bi-upload"></i> Upload File
+                            </button>
+                            <button type="button" class="img-input-tab-btn" data-tab="url" onclick="switchImgTab('edit','url')">
+                                <i class="bi bi-link-45deg"></i> Paste URL
+                            </button>
+                        </div>
+                        <!-- UPLOAD PANEL -->
+                        <div class="img-input-panel active" id="editPanel-upload">
+                            <input type="file" name="logo" id="editLogoFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg" onchange="previewImgFile(this,'editPreviewImg','editPreviewEmpty')" />
+                            <small class="text-muted">JPG, PNG, WEBP or SVG. Max 5MB. Leave empty to keep current.</small>
+                        </div>
+                        <!-- URL PANEL -->
+                        <div class="img-input-panel" id="editPanel-url">
+                            <div class="img-url-group">
+                                <input type="text" name="logoUrl" id="editLogoUrl" class="form-control" placeholder="https://example.com/logo.png" oninput="previewImgUrl(this.value,'editPreviewImg','editPreviewEmpty')" />
+                                <button type="button" class="img-clipboard-btn" onclick="pasteFromClipboard('editLogoUrl','editPreviewImg','editPreviewEmpty',this)" title="Paste from clipboard">
+                                    <i class="bi bi-clipboard"></i> Paste
+                                </button>
+                            </div>
+                            <small class="text-muted">Paste a new URL to replace the current logo.</small>
+                        </div>
+                        <!-- PREVIEW -->
+                        <div class="img-preview-box">
+                            <div class="img-preview-empty" id="editPreviewEmpty">
+                                <i class="bi bi-image"></i>
+                                New image preview
+                            </div>
+                            <img id="editPreviewImg" src="" alt="Preview" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -253,11 +325,117 @@
 
 @section Scripts {
     <script>
+        // =========================================================
+        // DUAL IMAGE INPUT - Shared Helpers
+        // =========================================================
+
+        function switchImgTab(prefix, tab) {
+            // Toggle tab buttons
+            const tabs = document.querySelectorAll(`#${prefix}Panel-upload, #${prefix}Panel-url`);
+            const btns = document.querySelectorAll(`[onclick*="switchImgTab('${prefix}'"]`);
+            btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
+            tabs.forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById(`${prefix}Panel-${tab}`);
+            if (panel) panel.classList.add('active');
+
+            // Clear opposite input
+            if (tab === 'upload') {
+                const urlInput = document.getElementById(`${prefix}LogoUrl`) || document.getElementById(`${prefix}ImgUrl`);
+                if (urlInput) urlInput.value = '';
+                const prevImg = document.getElementById(`${prefix}PreviewImg`);
+                const prevEmpty = document.getElementById(`${prefix}PreviewEmpty`);
+                if (prevImg) { prevImg.src = ''; prevImg.classList.remove('visible'); }
+                if (prevEmpty) prevEmpty.style.display = '';
+            } else {
+                const fileInput = document.getElementById(`${prefix}LogoFile`) || document.getElementById(`${prefix}ImgFile`);
+                if (fileInput) fileInput.value = '';
+                const prevImg = document.getElementById(`${prefix}PreviewImg`);
+                const prevEmpty = document.getElementById(`${prefix}PreviewEmpty`);
+                if (prevImg) { prevImg.src = ''; prevImg.classList.remove('visible'); }
+                if (prevEmpty) prevEmpty.style.display = '';
+            }
+        }
+
+        function previewImgFile(input, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('visible');
+                    empty.style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.src = '';
+                preview.classList.remove('visible');
+                empty.style.display = '';
+            }
+        }
+
+        function previewImgUrl(url, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (!url || !url.trim()) {
+                preview.src = '';
+                preview.classList.remove('visible');
+                empty.style.display = '';
+                return;
+            }
+            preview.onload = function() {
+                preview.classList.add('visible');
+                empty.style.display = 'none';
+            };
+            preview.onerror = function() {
+                preview.classList.remove('visible');
+                empty.style.display = '';
+            };
+            preview.src = url.trim();
+        }
+
+        function toggleEditRemove(cb) {
+            const section = document.getElementById('editLogoSection');
+            if (section) section.style.opacity = cb.checked ? '0.4' : '1';
+        }
+
+        function resetImgTabState(prefix) {
+            // Reset to upload tab
+            switchImgTab(prefix, 'upload');
+        }
+
+        async function pasteFromClipboard(inputId, previewId, emptyId, btn) {
+            try {
+                const text = await navigator.clipboard.readText();
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.value = text;
+                    previewImgUrl(text, previewId, emptyId);
+                }
+                if (btn) {
+                    btn.classList.add('pasted');
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Pasted!';
+                    setTimeout(() => {
+                        btn.classList.remove('pasted');
+                        btn.innerHTML = '<i class="bi bi-clipboard"></i> Paste';
+                    }, 2000);
+                }
+            } catch (e) {
+                if (window.__notyf) window.__notyf.error('Clipboard access denied. Please paste manually (Ctrl+V).');
+            }
+        }
+
+        // =========================================================
+        // PAGE HELPERS
+        // =========================================================
+
         function showAlert(type, message) {
-            const placeholder = document.getElementById('alertPlaceholder');
-            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
-            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+            if (window.__notyf) {
+                if (type === 'success') window.__notyf.success(message);
+                else window.__notyf.error(message);
+            }
         }
 
         function showErrors(boxId, errors) {
@@ -290,6 +468,11 @@
         }
 
         // ---------- CREATE ----------
+        document.getElementById('createBrandModal').addEventListener('show.bs.modal', function() {
+            resetImgTabState('create');
+            hideErrors('createErrors');
+        });
+
         document.getElementById('createBrandForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const result = await postForm('@Url.Action("Create")', this, 'createErrors');
@@ -307,6 +490,8 @@
             document.getElementById('editName').value = btn.getAttribute('data-name');
             document.getElementById('editDescription').value = btn.getAttribute('data-description') || '';
             document.getElementById('editRemoveLogo').checked = false;
+            const section = document.getElementById('editLogoSection');
+            if (section) section.style.opacity = '1';
 
             const logo = btn.getAttribute('data-logo');
             const preview = document.getElementById('editLogoPreview');
@@ -321,6 +506,7 @@
                 placeholder.classList.remove('d-none');
             }
 
+            resetImgTabState('edit');
             hideErrors('editErrors');
         });
 
@@ -364,4 +550,4 @@
             }
         });
     </script>
-}
+}

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "About Us";
 }
 
@@ -8,16 +8,13 @@
          HERO
     ========================================== -->
     <div class="about-hero">
-
         <div class="container">
-
             <div class="row align-items-center g-5">
-
                 <div class="col-lg-6">
-
-                    <span class="about-label">
-                        ABOUT CLOTHÉ
-                    </span>
+                    <div class="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill bg-light border">
+                        <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">EST. 2023</span>
+                        <span class="text-muted small fw-semibold">Modern Minimalist Fashion</span>
+                    </div>
 
                     <h1>
                         Style that feels
@@ -27,43 +24,47 @@
                     </h1>
 
                     <p class="about-hero-text">
-                        CLOTHÉ is a modern clothing store built around
-                        simple design, quality materials, and effortless
-                        everyday fashion.
+                        CLOTHÉ is a contemporary fashion atelier built around conscious design,
+                        exceptional fabrics, and effortless everyday elegance. We believe style should be
+                        an authentic expression of who you are—refined, comfortable, and timeless.
                     </p>
 
-                    <div class="about-buttons">
-
+                    <div class="about-buttons mb-4">
                         <!-- REDIRECT TO SHOP -->
                         <a asp-controller="Shop"
                            asp-action="Index"
-                           class="about-primary-btn">
-
+                           class="about-primary-btn shadow-sm">
                             Explore Collection
-
                             <i class="bi bi-arrow-right"></i>
-
                         </a>
 
                         <!-- CONTACT -->
                         <a href="#contact"
-                           class="about-secondary-btn">
-
-                            Contact Us
-
+                           class="about-secondary-btn shadow-sm">
+                            Get in Touch
                             <i class="bi bi-arrow-down ms-1"></i>
-
                         </a>
-
                     </div>
 
+                    <!-- Trust indicators -->
+                    <div class="d-flex flex-wrap align-items-center gap-4 pt-3 border-top text-muted small">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-shield-check text-success fs-5"></i>
+                            <span>Premium Quality</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-truck text-primary fs-5"></i>
+                            <span>Fast Dispatch</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-arrow-repeat text-warning fs-5"></i>
+                            <span>30-Day Returns</span>
+                        </div>
+                    </div>
                 </div>
 
-
                 <div class="col-lg-6">
-
                     <div class="about-image-wrapper">
-
                         <div class="about-color-dot dot-blue"></div>
                         <div class="about-color-dot dot-red"></div>
                         <div class="about-color-dot dot-yellow"></div>
@@ -71,16 +72,11 @@
 
                         <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop"
                              alt="CLOTHÉ Fashion Store"
-                             class="about-main-image" />
-
+                             class="about-main-image shadow-lg" />
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
 
 
@@ -88,100 +84,117 @@
          INTRODUCTION
     ========================================== -->
     <div class="about-introduction">
-
         <div class="container">
-
             <div class="about-section-heading">
-
                 <span>OUR STORY</span>
-
-                <h2>
-                    Fashion doesn't have to be complicated.
-                </h2>
-
+                <h2>Fashion doesn't have to be complicated.</h2>
                 <p>
-                    We created CLOTHÉ with one simple idea:
-                    everyday clothing should be comfortable,
-                    stylish, and easy to choose.
+                    We created CLOTHÉ with one simple idea: everyday clothing should feel liberating.
+                    No stiff cuts, no synthetic compromises, and no confusing trends that fade by next season.
+                    Just pure, intentional design that fits seamlessly into your daily life.
                 </p>
-
             </div>
 
-
             <div class="row g-4 mt-4">
-
                 <!-- SIMPLE -->
                 <div class="col-md-4">
-
-                    <div class="about-story-card">
-
+                    <div class="about-story-card shadow-sm">
                         <div class="about-icon blue-icon">
                             <i class="bi bi-stars"></i>
                         </div>
-
-                        <h3>
-                            Simple
-                        </h3>
-
+                        <h3>Pure &amp; Simple</h3>
                         <p>
-                            Clean designs that fit naturally
-                            into your everyday wardrobe.
+                            Clean lines, neutral foundations, and versatile palettes that naturally integrate
+                            into your existing wardrobe for effortless morning styling.
                         </p>
-
                     </div>
-
                 </div>
-
 
                 <!-- COMFORTABLE -->
                 <div class="col-md-4">
-
-                    <div class="about-story-card">
-
+                    <div class="about-story-card shadow-sm">
                         <div class="about-icon red-icon">
                             <i class="bi bi-heart"></i>
                         </div>
-
-                        <h3>
-                            Comfortable
-                        </h3>
-
+                        <h3>All-Day Comfort</h3>
                         <p>
-                            We believe looking good should
-                            never mean sacrificing comfort.
+                            We obsess over breathable fits, ergonomic draping, and soft tactile textures
+                            so you feel as confident in your outfit at 9 PM as you did at 9 AM.
                         </p>
-
                     </div>
-
                 </div>
-
 
                 <!-- QUALITY -->
                 <div class="col-md-4">
-
-                    <div class="about-story-card">
-
+                    <div class="about-story-card shadow-sm">
                         <div class="about-icon green-icon">
                             <i class="bi bi-gem"></i>
                         </div>
-
-                        <h3>
-                            Quality
-                        </h3>
-
+                        <h3>Enduring Quality</h3>
                         <p>
-                            Carefully selected materials made
-                            to become part of your wardrobe.
+                            Reinforced seams, color-fast dyeing techniques, and resilient natural fibers
+                            crafted to endure hundreds of washes without losing their signature silhouette.
                         </p>
-
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- =========================================
+         CRAFTSMANSHIP & SUSTAINABILITY
+    ========================================== -->
+    <div class="py-5" style="background: #ffffff;">
+        <div class="container py-4">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6 order-lg-2">
+                    <span class="about-label text-success">OUR COMMITMENT</span>
+                    <h2 class="fw-bold mb-3" style="font-size: clamp(2rem, 3.5vw, 2.8rem); letter-spacing: -0.02em;">
+                        Thoughtfully crafted.<br />
+                        <span class="text-success">Consciously made.</span>
+                    </h2>
+                    <p class="text-muted mb-4" style="line-height: 1.8;">
+                        We partner exclusively with certified, ethical manufacturers who share our dedication
+                        to fair wages, safe atelier conditions, and environmental stewardship. Every garment
+                        is produced in limited batches to prevent overproduction and textile waste.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded-4 bg-light border h-100">
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2 mb-1">
+                                    <i class="bi bi-flower1 text-success fs-5"></i>
+                                    <span>Eco-Conscious Fabrics</span>
+                                </div>
+                                <small class="text-muted">100% natural organic cotton, linen, and OEKO-TEX certified dyes.</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-3 rounded-4 bg-light border h-100">
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2 mb-1">
+                                    <i class="bi bi-box-seam text-primary fs-5"></i>
+                                    <span>Plastic-Free Packing</span>
+                                </div>
+                                <small class="text-muted">All orders ship in 100% biodegradable, recycled paper packaging.</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <div class="col-lg-6 order-lg-1">
+                    <div class="position-relative">
+                        <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1200&auto=format&fit=crop"
+                             alt="CLOTHÉ Craftsmanship"
+                             class="w-100 rounded-4 shadow-sm"
+                             style="max-height: 440px; object-fit: cover;" />
+                        <div class="position-absolute bottom-0 start-0 m-4 p-3 bg-white bg-opacity-95 rounded-3 shadow border" style="max-width: 260px;">
+                            <div class="fw-bold small text-dark"><i class="bi bi-patch-check-fill text-primary me-1"></i> Ethical Certification</div>
+                            <small class="text-muted">Fair trade compliant atelier partnerships across Asia &amp; Europe.</small>
+                        </div>
+                    </div>
+                </div>
             </div>
-
         </div>
-
     </div>
 
 
@@ -398,318 +411,232 @@
 
 
     <!-- =========================================
-     CONTACT US
-========================================= -->
-    <section id="contact" class="about-contact">
-
-        <div class="container">
-
-            <!-- SECTION HEADER -->
-            <div class="contact-section-header text-center">
-
-                <span class="about-label">
-                    CONTACT CLOTHÉ
-                </span>
-
-                <h2>
-                    We'd love to
-                    <span class="about-gradient-text">
-                        hear from you.
-                    </span>
+         CONTACT US
+    ========================================== -->
+    <section id="contact" class="about-contact py-5">
+        <div class="container py-3">
+            <div class="contact-section-header text-center mb-5">
+                <span class="about-label">CONNECT WITH CLOTHÉ</span>
+                <h2 class="fw-bold" style="font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -0.02em;">
+                    We'd love to <span class="about-gradient-text">hear from you.</span>
                 </h2>
-
-                <p>
-                    Have a question about our products, your order,
-                    delivery, or anything else? Get in touch with us.
+                <p class="text-muted" style="max-width: 600px; margin: 0 auto;">
+                    Have questions about sizing, styling, wholesale, or tracking your order?
+                    Our client concierge team is ready to assist you.
                 </p>
-
             </div>
 
-
             <div class="contact-wrapper">
-
-                <!-- =========================================
-                 LEFT - CONTACT INFORMATION
-            ========================================== -->
-                <div class="contact-information">
-
+                <!-- LEFT - DIRECT CONTACT INFORMATION -->
+                <div class="contact-information shadow-sm">
                     <div class="contact-info-content">
-
-                        <span class="contact-small-label">
-                            GET IN TOUCH
-                        </span>
-
-                        <h3>
-                            Let's talk about
-                            <span>style.</span>
-                        </h3>
-
-                        <p>
-                            Our team is always ready to help you find
-                            the perfect style and answer your questions.
-                        </p>
-
+                        <span class="contact-small-label">CLIENT CONCIERGE</span>
+                        <h3>Let's talk about <span>style.</span></h3>
+                        <p>Our dedicated team typically responds to inquiries within 2-4 business hours.</p>
 
                         <!-- EMAIL -->
-                        <a href="mailto:hello@clothe.com"
-                           class="contact-item">
-
+                        <a href="mailto:hello@clothe.com" class="contact-item">
                             <div class="contact-item-icon contact-blue">
                                 <i class="bi bi-envelope"></i>
                             </div>
-
                             <div class="contact-item-content">
-
-                                <small>
-                                    EMAIL
-                                </small>
-
-                                <strong>
-                                    hello@clothe.com
-                                </strong>
-
+                                <small>EMAIL</small>
+                                <strong>hello@clothe.com</strong>
                             </div>
-
                             <i class="bi bi-arrow-up-right contact-arrow"></i>
-
                         </a>
 
-
                         <!-- PHONE -->
-                        <a href="tel:+85512345678"
-                           class="contact-item">
-
+                        <a href="tel:+85512345678" class="contact-item">
                             <div class="contact-item-icon contact-red">
                                 <i class="bi bi-telephone"></i>
                             </div>
-
                             <div class="contact-item-content">
-
-                                <small>
-                                    PHONE
-                                </small>
-
-                                <strong>
-                                    +855 12 345 678
-                                </strong>
-
+                                <small>PHONE &amp; WHATSAPP</small>
+                                <strong>+855 12 345 678</strong>
                             </div>
-
                             <i class="bi bi-arrow-up-right contact-arrow"></i>
-
                         </a>
-
 
                         <!-- LOCATION -->
                         <div class="contact-item">
-
                             <div class="contact-item-icon contact-yellow">
                                 <i class="bi bi-geo-alt"></i>
                             </div>
-
                             <div class="contact-item-content">
-
-                                <small>
-                                    LOCATION
-                                </small>
-
-                                <strong>
-                                    Phnom Penh, Cambodia
-                                </strong>
-
+                                <small>FLAGSHIP ATELIER</small>
+                                <strong>Street 302, BKK1, Phnom Penh</strong>
                             </div>
-
                         </div>
 
+                        <!-- HOURS -->
+                        <div class="contact-item">
+                            <div class="contact-item-icon contact-green">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="contact-item-content">
+                                <small>BUSINESS HOURS</small>
+                                <strong>Mon – Sun: 8:00 AM – 9:00 PM (ICT)</strong>
+                            </div>
+                        </div>
 
-                        <!-- SOCIAL -->
-                        <div class="contact-social">
-
-                            <span>
-                                FOLLOW CLOTHÉ
-                            </span>
-
+                        <!-- SOCIAL LINKS -->
+                        <div class="contact-social pt-3">
+                            <span>FOLLOW CLOTHÉ</span>
                             <div class="contact-social-links">
-
-                                <a href="#" aria-label="Facebook">
+                                <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
                                     <i class="bi bi-facebook"></i>
                                 </a>
-
-                                <a href="#" aria-label="Instagram">
+                                <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram">
                                     <i class="bi bi-instagram"></i>
                                 </a>
-
-                                <a href="#" aria-label="Telegram">
+                                <a href="https://telegram.org" target="_blank" rel="noopener" aria-label="Telegram">
                                     <i class="bi bi-telegram"></i>
                                 </a>
-
-                                <a href="#" aria-label="TikTok">
+                                <a href="https://tiktok.com" target="_blank" rel="noopener" aria-label="TikTok">
                                     <i class="bi bi-tiktok"></i>
                                 </a>
-
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
 
-
-                <!-- =========================================
-                 RIGHT - CONTACT FORM
-            ========================================== -->
-                <div class="contact-form-wrapper">
-
+                <!-- RIGHT - INTERACTIVE CONTACT FORM -->
+                <div class="contact-form-wrapper shadow-sm">
                     <div class="contact-form-header">
-
                         <div>
-
-                            <span>
-                                SEND A MESSAGE
-                            </span>
-
-                            <h3>
-                                How can we help?
-                            </h3>
-
+                            <span>SEND AN INQUIRY</span>
+                            <h3>How can we assist?</h3>
                         </div>
-
                         <div class="contact-form-icon">
                             <i class="bi bi-chat-heart"></i>
                         </div>
-
                     </div>
 
+                    <!-- SUCCESS CONFIRMATION ALERT (TRIGGERED ON SUBMIT) -->
+                    <div id="contactSuccessAlert" class="alert alert-success d-none rounded-4 p-3 mb-4 border-0 shadow-sm" role="alert">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-check-circle-fill text-success fs-3"></i>
+                            <div>
+                                <strong class="d-block text-dark">Message Sent Successfully!</strong>
+                                <small class="text-muted">Thank you for reaching out. Our team has received your ticket <span id="ticketRef" class="font-monospace fw-bold text-dark">#CL-8492</span> and will get back to you shortly.</small>
+                            </div>
+                        </div>
+                    </div>
 
-                    <form>
-
-                        <div class="row g-4">
-
+                    <form id="aboutContactForm" onsubmit="handleContactSubmit(event)">
+                        <div class="row g-3">
                             <!-- NAME -->
                             <div class="col-md-6">
-
-                                <label class="contact-form-label">
-                                    Your Name
-                                </label>
-
+                                <label class="contact-form-label" for="contactName">Your Full Name</label>
                                 <input type="text"
+                                       id="contactName"
                                        class="form-control contact-input"
-                                       placeholder="Enter your name" />
-
+                                       placeholder="e.g. Serey Vathana"
+                                       required />
                             </div>
-
 
                             <!-- EMAIL -->
                             <div class="col-md-6">
-
-                                <label class="contact-form-label">
-                                    Email Address
-                                </label>
-
+                                <label class="contact-form-label" for="contactEmail">Email Address</label>
                                 <input type="email"
+                                       id="contactEmail"
                                        class="form-control contact-input"
-                                       placeholder="Enter your email" />
-
+                                       placeholder="name@example.com"
+                                       required />
                             </div>
 
-
-                            <!-- SUBJECT -->
+                            <!-- INQUIRY TYPE -->
                             <div class="col-12">
-
-                                <label class="contact-form-label">
-                                    Subject
-                                </label>
-
-                                <input type="text"
-                                       class="form-control contact-input"
-                                       placeholder="What can we help you with?" />
-
+                                <label class="contact-form-label" for="contactTopic">Topic / Category</label>
+                                <select id="contactTopic" class="form-select contact-input" required>
+                                    <option value="" selected disabled>Select an inquiry topic...</option>
+                                    <option value="orders">Order Tracking &amp; Delivery</option>
+                                    <option value="products">Product Inquiries &amp; Sizing</option>
+                                    <option value="returns">Exchange &amp; Returns</option>
+                                    <option value="partnership">Wholesale &amp; Brand Partnerships</option>
+                                    <option value="other">General Feedback</option>
+                                </select>
                             </div>
-
 
                             <!-- MESSAGE -->
                             <div class="col-12">
-
-                                <label class="contact-form-label">
-                                    Message
-                                </label>
-
-                                <textarea class="form-control contact-input contact-textarea"
-                                          rows="5"
-                                          placeholder="Tell us how we can help..."></textarea>
-
+                                <label class="contact-form-label" for="contactMessage">Your Message</label>
+                                <textarea id="contactMessage"
+                                          class="form-control contact-input contact-textarea"
+                                          rows="4"
+                                          placeholder="Please provide any details or order numbers so we can assist quickly..."
+                                          required></textarea>
                             </div>
 
-
-                            <!-- BUTTON -->
-                            <div class="col-12">
-
-                                <button type="button"
-                                        class="contact-submit-btn">
-
-                                    <span>
-                                        Send Message
-                                    </span>
-
-                                    <i class="bi bi-arrow-up-right"></i>
-
+                            <!-- SUBMIT BUTTON -->
+                            <div class="col-12 pt-2">
+                                <button type="submit" id="contactSubmitBtn" class="contact-submit-btn w-100">
+                                    <span id="btnText">Send Inquiry</span>
+                                    <i class="bi bi-arrow-up-right ms-1"></i>
                                 </button>
-
                             </div>
-
                         </div>
-
                     </form>
-
                 </div>
-
             </div>
-
         </div>
-
     </section>
 
     <!-- =========================================
          CTA
     ========================================== -->
     <section class="about-cta">
-
         <div class="container">
-
-            <div class="cta-card">
-
-                <span class="about-label">
-                    FIND YOUR STYLE
-                </span>
-
+            <div class="cta-card shadow-sm">
+                <span class="about-label">FIND YOUR NEXT PIECE</span>
                 <h2>
                     Your wardrobe.
-                    <span>
-                        Your way.
-                    </span>
+                    <span>Your way.</span>
                 </h2>
-
                 <p>
-                    Discover clothing made for your everyday moments.
+                    Explore our newest seasonal drops crafted for contemporary living.
                 </p>
 
-
-                <!-- REDIRECT TO SHOP -->
-                <a asp-controller="Shop"
-                   asp-action="Index"
-                   class="about-primary-btn">
-
-                    Shop CLOTHÉ
-
+                <a asp-controller="Shop" asp-action="Index" class="about-primary-btn shadow">
+                    <span>Shop CLOTHÉ Collection</span>
                     <i class="bi bi-arrow-right"></i>
-
                 </a>
-
             </div>
-
         </div>
-
     </section>
 
 </section>
+
+@section Scripts {
+    <script>
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById("contactSubmitBtn");
+            const btnText = document.getElementById("btnText");
+            const alertBox = document.getElementById("contactSuccessAlert");
+            const form = document.getElementById("aboutContactForm");
+
+            // Temporary loading state
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sending...';
+
+            setTimeout(function () {
+                btn.disabled = false;
+                btnText.textContent = "Message Sent";
+
+                // Generate random reference ID
+                const randomRef = "CL-" + Math.floor(1000 + Math.random() * 9000);
+                const refEl = document.getElementById("ticketRef");
+                if (refEl) refEl.textContent = "#" + randomRef;
+
+                alertBox.classList.remove("d-none");
+                form.reset();
+
+                setTimeout(function () {
+                    btnText.textContent = "Send Inquiry";
+                }, 3000);
+            }, 800);
+        }
+    </script>
+}

@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using WebApplication_ClothingEcommerce.Models;
 using WebApplication_ClothingEcommerce.Data.Enums;
 using Microsoft.AspNetCore.Builder;
@@ -22,13 +23,84 @@ namespace WebApplication_ClothingEcommerce.Data
             // ==========================================
             var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var configuration = serviceScope.ServiceProvider.GetService<IConfiguration>();
 
-            if (!await roleManager.RoleExistsAsync("Admin"))
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            // Seed Roles: SuperAdmin, Admin, User
+            string[] systemRoles = ["SuperAdmin", "Admin", "User"];
+            foreach (var role in systemRoles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
 
-            if (!await roleManager.RoleExistsAsync("User"))
-                await roleManager.CreateAsync(new IdentityRole("User"));
+            // Seed SuperAdmin
+            var superAdminEmail = configuration?["SUPERADMIN_EMAIL"]
+                ?? Environment.GetEnvironmentVariable("SUPERADMIN_EMAIL")
+                ?? "superadmin@clothe.com";
+            var superAdminPassword = configuration?["SUPERADMIN_PASSWORD"]
+                ?? Environment.GetEnvironmentVariable("SUPERADMIN_PASSWORD")
+                ?? "SuperAdmin@12345";
 
+            var superAdmin = await userManager.FindByEmailAsync(superAdminEmail)
+                ?? await userManager.FindByNameAsync(superAdminEmail);
+            if (superAdmin == null)
+            {
+                superAdmin = new ApplicationUser
+                {
+                    FirstName = "Super",
+                    LastName = "Administrator",
+                    UserName = superAdminEmail,
+                    Email = superAdminEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(superAdmin, superAdminPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+                }
+            }
+            else
+            {
+                if (!superAdmin.EmailConfirmed)
+                {
+                    superAdmin.EmailConfirmed = true;
+                    await userManager.UpdateAsync(superAdmin);
+                }
+
+                if (!await userManager.IsInRoleAsync(superAdmin, "SuperAdmin"))
+                {
+                    await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+                }
+            }
+
+            // Seed Admin: admin@clothe.com
+            var clotheAdminEmail = "admin@clothe.com";
+            var clotheAdmin = await userManager.FindByEmailAsync(clotheAdminEmail);
+            if (clotheAdmin == null)
+            {
+                clotheAdmin = new ApplicationUser
+                {
+                    FirstName = "Admin",
+                    LastName = "Clothe",
+                    UserName = clotheAdminEmail,
+                    Email = clotheAdminEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(clotheAdmin, "Admin@12345");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(clotheAdmin, "Admin");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(clotheAdmin, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(clotheAdmin, "Admin");
+                }
+            }
+
+            // Seed / Ensure Legacy Admin: admin@clothing.com
             var adminEmail = "admin@clothing.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
@@ -45,6 +117,13 @@ namespace WebApplication_ClothingEcommerce.Data
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(newAdmin, "Admin");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }
 

@@ -2,8 +2,8 @@
 
 <li class="nav-item dropdown categories-dropdown">
 
-    <a class="clothe-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-grid-fill" style="font-size: 0.85rem;" aria-hidden="true"></i>
+    <a class="clothe-nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+        <i class="bi bi-grid-fill" style="font-size: 0.8rem;" aria-hidden="true"></i>
         <span>Categories</span>
     </a>
 
@@ -20,7 +20,7 @@
 
         @if (Model != null && Model.Any())
         {
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider categories-divider" /></li>
 
             @foreach (var category in Model)
             {
@@ -37,7 +37,7 @@
         }
         else
         {
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider categories-divider" /></li>
             <li>
                 <div class="categories-dropdown-empty">
                     <i class="bi bi-inboxes" aria-hidden="true"></i>
@@ -52,31 +52,32 @@
 
 <style>
     .categories-dropdown-menu {
-        min-width: 240px;
-        padding: 10px;
+        min-width: 220px;
+        padding: 8px;
         background: #ffffff;
         border: 1px solid rgba(15, 23, 42, 0.08);
-        border-radius: 16px;
-        box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
-        margin-top: 10px !important;
-        animation: menu-slide-down 0.2s ease-out;
+        border-radius: 14px;
+        box-shadow: 0 8px 30px -6px rgba(15, 23, 42, 0.13), 0 2px 8px -2px rgba(15, 23, 42, 0.05);
+        margin-top: 8px !important;
+        animation: menu-slide-down 0.18s ease-out;
     }
 
     .categories-dropdown-menu .dropdown-item {
-        border-radius: 10px;
-        padding: 9px 12px;
+        border-radius: 8px;
+        padding: 8px 10px;
         font-size: 0.875rem;
         font-weight: 500;
-        color: #334155;
+        color: #374151;
         display: flex;
         align-items: center;
-        gap: 10px;
-        transition: all 0.15s ease;
+        gap: 9px;
+        transition: background 0.15s ease, color 0.15s ease;
     }
 
     .categories-dropdown-menu .dropdown-item i {
-        font-size: 0.95rem;
-        color: #64748b;
+        font-size: 0.9rem;
+        color: #6b7280;
+        flex-shrink: 0;
         transition: color 0.15s ease;
     }
 
@@ -93,12 +94,13 @@
         opacity: 0;
         transform: translateX(-4px);
         transition: opacity 0.15s ease, transform 0.15s ease;
-        font-size: 0.75rem !important;
+        font-size: 0.7rem !important;
+        color: #9ca3af !important;
     }
 
     .categories-dropdown-menu .dropdown-item:hover,
     .categories-dropdown-menu .dropdown-item:focus-visible {
-        background-color: #f1f5f9;
+        background-color: #f3f4f6;
         color: #0f172a;
     }
 
@@ -116,14 +118,14 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 12px;
-        color: #94a3b8;
+        padding: 10px;
+        color: #9ca3af;
         font-size: 0.8125rem;
     }
 
-    .categories-dropdown-menu .dropdown-divider {
-        margin: 6px 0;
-        border-color: #f1f5f9;
+    .categories-divider {
+        margin: 4px 0;
+        border-color: #f3f4f6;
     }
 
     @@media (min-width: 992px) {

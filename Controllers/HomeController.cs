@@ -1,16 +1,17 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
+using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IHomeService _homeService;
 
-        public HomeController(AppDbContext context)
+        public HomeController(IHomeService homeService)
         {
-            _context = context;
+            _homeService = homeService;
         }
 
         // =====================================================
@@ -20,65 +21,12 @@ namespace WebApplication_ClothingEcommerce.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // ==========================================
-            // CATEGORIES
-            // ==========================================
+            var data = await _homeService.GetHomeIndexDataAsync();
 
-            var categories = await _context.Categories
-                .AsNoTracking()
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            ViewBag.Categories = data.Categories;
+            ViewBag.Brands = data.Brands;
 
-
-            // ==========================================
-            // BRANDS
-            // ==========================================
-
-            var brands = await _context.Brands
-                .AsNoTracking()
-                .OrderBy(b => b.Name)
-                .ToListAsync();
-
-
-            // ==========================================
-            // LATEST PRODUCTS
-            // Reviews (star ratings) and Variants -> Inventory
-            // (so quick "Add to Cart" can find an in-stock
-            // variant without a second query per card).
-            // ==========================================
-
-            var products = await _context.Products
-                .AsNoTracking()
-
-                .Include(p => p.Brand)
-
-                .Include(p => p.Category)
-
-                .Include(p => p.Images)
-
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Inventory)
-
-                .Include(p => p.Reviews)
-
-                .Where(p =>
-                    p.Status == Data.Enums.ProductStatus.Active)
-
-                .OrderByDescending(p => p.CreatedAt)
-
-                .Take(8)
-
-                .ToListAsync();
-
-
-            // ==========================================
-            // VIEWBAG
-            // ==========================================
-
-            ViewBag.Categories = categories;
-            ViewBag.Brands = brands;
-
-            return View(products);
+            return View(data.LatestProducts);
         }
 
         public IActionResult Privacy()
@@ -89,6 +37,12 @@ namespace WebApplication_ClothingEcommerce.Controllers
         public IActionResult About()
         {
             return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

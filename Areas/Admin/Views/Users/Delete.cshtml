@@ -1,0 +1,56 @@
+@model WebApplication_ClothingEcommerce.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = $"Delete User: {Model.FullName}";
+}
+
+<div class="container-fluid px-4 py-3" style="max-width: 600px;">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <span class="text-muted">/</span>
+        <span class="fw-semibold text-danger">Delete User</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="text-center mb-4">
+            <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-3 mb-3" style="width: 64px; height: 64px;">
+                <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">Confirm Account Deletion</h4>
+            <p class="text-muted small">Are you sure you want to permanently delete this user?</p>
+        </div>
+
+        <div class="bg-light p-3 rounded-3 mb-4">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted small">Name</span>
+                <span class="fw-semibold small text-dark">@Model.FullName</span>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+                <span class="text-muted small">Email</span>
+                <span class="fw-semibold small text-dark">@Model.Email</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+                <span class="text-muted small">User ID</span>
+                <span class="font-monospace small text-dark">@Model.Id</span>
+            </div>
+        </div>
+
+        <div class="alert alert-warning small rounded-3 border-0 mb-4">
+            <i class="bi bi-info-circle-fill me-1"></i>
+            This operation cannot be undone. User records and authentication tokens will be removed.
+        </div>
+
+        <form method="post" asp-action="Delete">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-light rounded-pill px-4">Cancel</a>
+                <button type="submit" class="btn btn-danger rounded-pill px-4">
+                    <i class="bi bi-trash me-1"></i> Delete User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

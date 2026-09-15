@@ -7,180 +7,393 @@
         ViewBag.PaymentMethods
         as List<WebApplication_ClothingEcommerce.Models.PaymentMethod>
         ?? new List<WebApplication_ClothingEcommerce.Models.PaymentMethod>();
+
+    // Identify KHQR / ABA Pay methods
+    var khqrMethods = paymentMethods
+        .Where(m => m.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase)
+                 || m.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    var khqrMethodIds = khqrMethods.Select(m => m.Id.ToString()).ToList();
 }
 
 <style>
-    .checkout-page {
-        background: #fff;
-    }
+    .checkout-page { background: #f8fafc; min-height: 80vh; }
 
     .checkout-hero {
-        background: linear-gradient(120deg, var(--blue-soft, #eaf2ff), #fff 60%);
-        border-bottom: 1px solid var(--border, #eeeeee);
-        padding: 32px 0;
+        background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 28px 0;
     }
 
     .checkout-hero-eyebrow {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        color: var(--google-blue, #4285F4);
-        margin-bottom: 4px;
+        font-size: 11px; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .12em; color: #4285F4; margin-bottom: 4px;
     }
 
     .checkout-hero h1 {
         font-size: clamp(1.6rem, 3vw, 2.2rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: var(--black, #202124);
-        margin-bottom: 0;
+        font-weight: 800; letter-spacing: -0.03em;
+        color: #0f172a; margin-bottom: 0;
     }
 
     .checkout-card {
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 20px;
-        background: #fff;
+        border: 1px solid #e2e8f0; border-radius: 16px; background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
 
     .checkout-card-title {
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--black, #202124);
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-size: 16px; font-weight: 800; color: #0f172a;
+        margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
     }
 
     .checkout-section-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        color: #fff;
+        width: 34px; height: 34px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; color: #fff; flex-shrink: 0;
     }
 
-        .checkout-section-icon.blue {
-            background: var(--google-blue, #4285F4);
-        }
-
-        .checkout-section-icon.green {
-            background: var(--google-green, #34A853);
-        }
-
-        .checkout-section-icon.yellow {
-            background: var(--google-yellow-dark, #F9AB00);
-        }
+    .checkout-section-icon.blue   { background: #4285F4; }
+    .checkout-section-icon.green  { background: #34A853; }
+    .checkout-section-icon.yellow { background: #F9AB00; }
+    .checkout-section-icon.red    { background: #EA4335; }
 
     .checkout-page .form-control,
     .checkout-page .form-select {
-        border: 1px solid #dcdcdc;
-        border-radius: 10px;
-        padding: 10px 14px;
+        border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 14px;
+        color: #0f172a; font-size: 14px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-        .checkout-page .form-control:focus,
-        .checkout-page .form-select:focus {
-            border-color: var(--google-blue, #4285F4);
-            box-shadow: 0 0 0 3px rgba(66,133,244,.12);
-        }
+    .checkout-page .form-control:focus,
+    .checkout-page .form-select:focus {
+        border-color: #4285F4; box-shadow: 0 0 0 3px rgba(66,133,244,.12);
+        outline: none;
+    }
 
     .checkout-page .form-label {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--black, #202124);
+        font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;
     }
 
+    /* ── Payment method cards ── */
     .payment-method-card {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 16px;
-        border: 1px solid #dcdcdc;
-        border-radius: 14px;
-        height: 100%;
-        cursor: pointer;
-        transition: all .2s ease;
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px; border: 1.5px solid #e2e8f0; border-radius: 14px;
+        height: 100%; cursor: pointer; transition: all .2s ease;
+        background: #fff; position: relative;
     }
 
-        .payment-method-card:hover {
-            border-color: var(--google-blue, #4285F4);
-            background: var(--blue-soft, #eaf2ff);
-        }
+    .payment-method-card:hover {
+        border-color: #93c5fd; background: #f8faff;
+    }
 
-        .payment-method-card:has(input:checked) {
-            border-color: var(--google-blue, #4285F4);
-            background: var(--blue-soft, #eaf2ff);
-            box-shadow: 0 0 0 2px rgba(66,133,244,.15);
-        }
+    .payment-method-card.selected,
+    .payment-method-card:has(input:checked) {
+        border-color: #4285F4; background: #f0f7ff;
+        box-shadow: 0 0 0 2px rgba(66,133,244,.2);
+    }
 
+    .payment-icon-wrap {
+        width: 44px; height: 44px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        background: #f8fafc; border: 1px solid #e2e8f0; flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .payment-icon-wrap img {
+        width: 100%; height: 100%; object-fit: contain;
+    }
+
+    .khqr-tag-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 10.5px; font-weight: 700; color: #d32f2f;
+        background: #fee2e2; padding: 2px 7px; border-radius: 6px;
+        letter-spacing: .02em;
+    }
+
+    .aba-tag-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 10.5px; font-weight: 700; color: #003764;
+        background: #e0f2fe; padding: 2px 7px; border-radius: 6px;
+        letter-spacing: .02em;
+    }
+
+    /* ── Place order button ── */
     .checkout-place-order-btn {
-        width: 100%;
-        border: 0;
-        border-radius: 12px;
-        padding: 16px;
-        background: var(--google-blue, #4285F4);
-        color: #fff;
-        font-weight: 800;
-        font-size: 15px;
-        box-shadow: 0 10px 24px rgba(66,133,244,.28);
-        transition: all .2s ease;
+        width: 100%; border: 0; border-radius: 12px; padding: 15px;
+        background: #4285F4; color: #fff; font-weight: 800; font-size: 15px;
+        box-shadow: 0 8px 20px rgba(66,133,244,.28); transition: all .2s ease;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
     }
 
-        .checkout-place-order-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            transform: translateY(-2px);
-        }
+    .checkout-place-order-btn:hover {
+        background: #3367D6; transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(66,133,244,.35); color: #fff;
+    }
 
+    /* ── Order summary card ── */
     .checkout-summary-card {
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 20px;
-        background: #fff;
-        position: sticky;
-        top: 90px;
+        border: 1px solid #e2e8f0; border-radius: 16px;
+        background: #fff; position: sticky; top: 84px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
 
     .checkout-summary-item-img {
-        width: 70px;
-        height: 85px;
-        object-fit: cover;
-        border-radius: 12px;
-        border: 1px solid var(--border, #eeeeee);
+        width: 60px; height: 72px; object-fit: cover;
+        border-radius: 10px; border: 1px solid #e2e8f0;
     }
 
     .checkout-summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 14px;
-        color: var(--gray, #666);
+        display: flex; justify-content: space-between;
+        margin-bottom: 10px; font-size: 13.5px; color: #64748b;
     }
 
     .checkout-summary-total {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 14px;
-        border-top: 1px solid var(--border, #eeeeee);
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: 14px; border-top: 1px solid #e2e8f0;
     }
 
-    .checkout-summary-total-value {
-        font-size: 22px;
+    .checkout-summary-total-value { font-size: 22px; font-weight: 800; color: #4285F4; }
+
+    /* ── KHQR Standee Card & Modal Redesign (Centered & Consistent) ── */
+    .khqr-modal-dialog {
+        max-width: 440px !important;
+        margin: 1.5rem auto;
+    }
+
+    .khqr-modal-content {
+        border-radius: 24px !important;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18) !important;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .khqr-standee {
+        width: 100%;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+        border: 1.5px solid #e2e8f0;
+        transition: all .25s ease;
+    }
+
+    .khqr-header-banner {
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+        padding: 13px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #ffffff;
+    }
+
+    .khqr-header-title {
+        font-weight: 900;
+        font-size: 19px;
+        letter-spacing: .06em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .khqr-header-brand {
+        font-size: 11px;
         font-weight: 800;
-        color: var(--google-blue, #4285F4);
+        letter-spacing: .08em;
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.15);
+        padding: 3px 10px;
+        border-radius: 6px;
+    }
+
+    .khqr-merchant-info {
+        padding: 18px 20px 8px;
+        text-align: center;
+    }
+
+    .khqr-merchant-name {
+        font-size: 15px;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .khqr-amount-display {
+        font-size: 28px;
+        font-weight: 900;
+        color: #0f172a;
+        margin: 0 0 4px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }
+
+    .khqr-currency-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #64748b;
+        margin-left: 2px;
+    }
+
+    .khqr-khr-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 3px 12px;
+        border-radius: 12px;
+    }
+
+    .khqr-qr-container {
+        padding: 14px 20px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* QR frame: red accent border, NOTHING placed on top — overlays block scanner cameras */
+    .khqr-qr-frame {
+        background: #ffffff;
+        padding: 8px;
+        border-radius: 14px;
+        border: 2.5px solid #e11d48;
+        box-shadow: 0 0 0 5px rgba(225,29,72,0.07), 0 8px 28px rgba(15,23,42,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        width: 240px;
+        height: 240px;
+    }
+
+    #khqrCanvas {
+        display: block;
+        margin: 0 auto;
+        border-radius: 4px;
+        width: 220px !important;
+        height: 220px !important;
+        image-rendering: pixelated;
+    }
+
+    .khqr-scan-tip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #e11d48;
+        background: #fff1f2;
+        padding: 4px 13px;
+        border-radius: 20px;
+        letter-spacing: .02em;
+    }
+
+    .khqr-footer-banner {
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        text-align: center;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .khqr-banks-strip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+
+    .khqr-bank-tag {
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: .01em;
+    }
+
+    .khqr-countdown-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #0284c7;
+        background: #e0f2fe;
+        padding: 5px 12px;
+        border-radius: 20px;
+    }
+
+    .btn-khqr-confirm {
+        width: 100%;
+        padding: 14px 20px;
+        border: 0;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 15.5px;
+        box-shadow: 0 8px 24px rgba(22, 163, 74, 0.32);
+        transition: all .2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+    }
+
+    .btn-khqr-confirm:hover:not(:disabled) {
+        background: linear-gradient(135deg, #15803d, #166534);
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px rgba(22, 163, 74, 0.42);
+        color: #ffffff;
+    }
+
+    .btn-khqr-confirm:disabled {
+        opacity: 0.85;
+        cursor: not-allowed;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #16a34a;
+        animation: pulseAnimation 1.6s infinite;
+        display: inline-block;
+    }
+
+    .khqr-success-card {
+        animation: fadeInScale 0.3s ease;
+    }
+
+    @@keyframes pulseAnimation {
+        0%   { transform: scale(0.85); opacity: 1; }
+        50%  { transform: scale(1.4); opacity: 0.4; }
+        100% { transform: scale(0.85); opacity: 1; }
+    }
+
+    @@keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.96); }
+        to   { opacity: 1; transform: scale(1); }
     }
 </style>
 
 <div class="checkout-page">
 
-    <!-- =========================================
-         BREADCRUMB
-    ========================================== -->
-    <section class="py-3 border-bottom">
+    <!-- BREADCRUMB -->
+    <section class="py-3 border-bottom bg-white">
         <div class="container">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 small">
@@ -190,11 +403,9 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item">
-                        <a asp-controller="Cart" asp-action="Index" class="text-decoration-none text-secondary">
-                            Cart
-                        </a>
+                        <a asp-controller="Cart" asp-action="Index" class="text-decoration-none text-secondary">Cart</a>
                     </li>
-                    <li class="breadcrumb-item active fw-semibold" aria-current="page" style="color: var(--google-blue, #4285F4);">
+                    <li class="breadcrumb-item active fw-semibold" aria-current="page" style="color:#4285F4;">
                         Checkout
                     </li>
                 </ol>
@@ -202,126 +413,115 @@
         </div>
     </section>
 
-    <!-- =========================================
-         HERO
-    ========================================== -->
+    <!-- HERO -->
     <section class="checkout-hero">
         <div class="container">
-            <div class="checkout-hero-eyebrow">FINAL STEP</div>
-            <h1>Checkout</h1>
+            <div class="checkout-hero-eyebrow">STEP 2 OF 2</div>
+            <h1>Order Checkout</h1>
         </div>
     </section>
 
     <section class="py-5">
         <div class="container">
-
             <div class="row g-4">
 
                 <!-- ========================= -->
-                <!-- CHECKOUT FORM -->
+                <!-- CHECKOUT FORM             -->
                 <!-- ========================= -->
-
                 <div class="col-lg-8">
 
-                    <form asp-action="Checkout"
-                          method="post">
+                    <form asp-controller="Checkout"
+                          asp-action="Index"
+                          method="post"
+                          id="checkoutForm">
 
                         @Html.AntiForgeryToken()
 
+                        <!-- Hidden fields for KHQR payment confirmation -->
+                        <input type="hidden" asp-for="PaymentTransactionRef" id="hdnPaymentRef" value="" />
+                        <input type="hidden" asp-for="IsPaymentConfirmed" id="hdnPaymentConfirmed" value="false" />
+
                         <div asp-validation-summary="ModelOnly"
-                             class="alert alert-danger border-0 rounded-3">
+                             class="alert alert-danger border-0 rounded-3 mb-3">
                         </div>
 
-                        <!-- CUSTOMER -->
-                        <div class="checkout-card mb-4 p-4">
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger border-0 rounded-3 mb-3">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+                            </div>
+                        }
 
+                        <!-- 1. CUSTOMER INFORMATION -->
+                        <div class="checkout-card mb-4 p-4">
                             <div class="checkout-card-title">
                                 <span class="checkout-section-icon blue">
-                                    <i class="bi bi-person"></i>
+                                    <i class="bi bi-person" aria-hidden="true"></i>
                                 </span>
                                 Customer Information
                             </div>
 
                             <div class="row g-3">
-
                                 <div class="col-md-6">
-                                    <label asp-for="FirstName" class="form-label">First Name</label>
-                                    <input asp-for="FirstName" class="form-control" />
+                                    <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input asp-for="FirstName" class="form-control" id="txtFirstName" required />
                                     <span asp-validation-for="FirstName" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-6">
-                                    <label asp-for="LastName" class="form-label">Last Name</label>
-                                    <input asp-for="LastName" class="form-control" />
+                                    <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input asp-for="LastName" class="form-control" id="txtLastName" required />
                                     <span asp-validation-for="LastName" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-6">
-                                    <label asp-for="Phone" class="form-label">Phone</label>
-                                    <input asp-for="Phone" class="form-control" />
+                                    <label asp-for="Phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    <input asp-for="Phone" class="form-control" id="txtPhone" required placeholder="012 345 678" />
                                     <span asp-validation-for="Phone" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-6">
-                                    <label asp-for="Email" class="form-label">Email</label>
-                                    <input asp-for="Email" class="form-control" />
+                                    <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <input asp-for="Email" class="form-control" id="txtEmail" required type="email" />
                                     <span asp-validation-for="Email" class="text-danger small"></span>
                                 </div>
-
                             </div>
-
                         </div>
 
-
-                        <!-- ========================= -->
-                        <!-- SHIPPING ADDRESS -->
-                        <!-- ========================= -->
-
+                        <!-- 2. SHIPPING ADDRESS -->
                         <div class="checkout-card mb-4 p-4">
-
                             <div class="checkout-card-title">
                                 <span class="checkout-section-icon green">
-                                    <i class="bi bi-geo-alt"></i>
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
                                 </span>
                                 Shipping Address
                             </div>
 
                             <div class="row g-3">
-
                                 <div class="col-md-6">
-                                    <label asp-for="Province" class="form-label">Province</label>
-                                    <input asp-for="Province" class="form-control" />
+                                    <label asp-for="Province" class="form-label">Province / State <span class="text-danger">*</span></label>
+                                    <input asp-for="Province" class="form-control" id="txtProvince" required placeholder="Phnom Penh" />
+                                    <span asp-validation-for="Province" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-6">
-                                    <label asp-for="City" class="form-label">City</label>
-                                    <input asp-for="City" class="form-control" />
+                                    <label asp-for="City" class="form-label">City / Khan <span class="text-danger">*</span></label>
+                                    <input asp-for="City" class="form-control" id="txtCity" required placeholder="Daun Penh" />
+                                    <span asp-validation-for="City" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-8">
-                                    <label asp-for="Street" class="form-label">Street</label>
-                                    <input asp-for="Street" class="form-control" />
+                                    <label asp-for="Street" class="form-label">Street &amp; House No. <span class="text-danger">*</span></label>
+                                    <input asp-for="Street" class="form-control" id="txtStreet" required placeholder="St. 200, House 12A" />
+                                    <span asp-validation-for="Street" class="text-danger small"></span>
                                 </div>
-
                                 <div class="col-md-4">
                                     <label asp-for="PostalCode" class="form-label">Postal Code</label>
-                                    <input asp-for="PostalCode" class="form-control" />
+                                    <input asp-for="PostalCode" class="form-control" placeholder="12000" />
                                 </div>
-
                             </div>
-
                         </div>
 
-
-                        <!-- ========================= -->
-                        <!-- PAYMENT METHOD -->
-                        <!-- ========================= -->
-
+                        <!-- 3. PAYMENT METHOD -->
                         <div class="checkout-card mb-4 p-4">
-
                             <div class="checkout-card-title">
                                 <span class="checkout-section-icon yellow">
-                                    <i class="bi bi-credit-card"></i>
+                                    <i class="bi bi-credit-card" aria-hidden="true"></i>
                                 </span>
                                 Payment Method
                             </div>
@@ -329,136 +529,589 @@
                             @if (paymentMethods.Count == 0)
                             {
                                 <div class="alert alert-warning border-0 rounded-3">
-                                    No payment methods are currently available.
+                                    No payment methods are currently active.
                                 </div>
                             }
                             else
                             {
                                 <div class="row g-3">
-
                                     @foreach (var method in paymentMethods)
                                     {
+                                        var isKhqr = method.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase);
+                                        var isAba  = method.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase);
+                                        var isOnlineKhqr = isKhqr || isAba;
+
                                         <div class="col-md-6">
-
-                                            <label class="payment-method-card">
-
+                                            <label class="payment-method-card" id="pmCard-@method.Id">
                                                 <input type="radio"
                                                        asp-for="PaymentMethodId"
                                                        value="@method.Id"
-                                                       class="form-check-input" />
+                                                       class="form-check-input mt-0 me-1"
+                                                       data-is-khqr="@(isOnlineKhqr ? "true" : "false")"
+                                                       data-name="@method.Name"
+                                                       name="PaymentMethodId" />
 
-                                                @if (!string.IsNullOrWhiteSpace(method.Icon))
-                                                {
-                                                    <img src="@method.Icon"
-                                                         alt="@method.Name"
-                                                         style="width:42px;height:42px;object-fit:contain;" />
-                                                }
-
-                                                <div>
-                                                    <div class="fw-semibold">
-                                                        @method.Name
-                                                    </div>
-
-                                                    @if (!string.IsNullOrWhiteSpace(method.Description))
+                                                <div class="payment-icon-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(method.Icon))
                                                     {
-                                                        <small class="text-muted">
-                                                            @method.Description
-                                                        </small>
+                                                        <img src="@method.Icon" 
+                                                             alt="@method.Name"
+                                                             onerror="this.onerror=null;this.src='@(isKhqr ? "/images/khqr-logo.svg" : (isAba ? "/images/aba-logo.svg" : "/images/khqr-logo.svg"))';" />
+                                                    }
+                                                    else if (isKhqr)
+                                                    {
+                                                        <img src="/images/khqr-logo.svg" alt="KHQR" />
+                                                    }
+                                                    else if (isAba)
+                                                    {
+                                                        <img src="/images/aba-logo.svg" alt="ABA Pay" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-cash-stack" style="color:#64748b;font-size:18px;"></i>
                                                     }
                                                 </div>
 
-                                            </label>
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <strong style="font-size:14px;color:#0f172a;">@method.Name</strong>
+                                                        @if (isKhqr)
+                                                        {
+                                                            <span class="khqr-tag-pill">
+                                                                <i class="bi bi-qr-code"></i> KHQR
+                                                            </span>
+                                                        }
+                                                        else if (isAba)
+                                                        {
+                                                            <span class="aba-tag-pill">
+                                                                <i class="bi bi-phone"></i> ABA Mobile
+                                                            </span>
+                                                        }
+                                                    </div>
 
+                                                    <small class="text-muted d-block mt-1" style="font-size:11.5px;line-height:1.35;">
+                                                        @if (isKhqr || isAba)
+                                                        {
+                                                            <span>Scan to pay instantly with any Cambodian banking app</span>
+                                                        }
+                                                        else if (!string.IsNullOrWhiteSpace(method.Description))
+                                                        {
+                                                            <span>@method.Description</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Pay upon package arrival</span>
+                                                        }
+                                                    </small>
+                                                </div>
+                                            </label>
                                         </div>
                                     }
-
                                 </div>
                             }
 
-                            <span asp-validation-for="PaymentMethodId" class="text-danger small"></span>
-
+                            <span asp-validation-for="PaymentMethodId" class="text-danger small d-block mt-2"></span>
                         </div>
 
-
-                        <button type="submit" class="checkout-place-order-btn">
-                            <i class="bi bi-lock-fill me-2"></i>
-                            Place Order
+                        <!-- SUBMIT BUTTON -->
+                        <button type="button"
+                                class="checkout-place-order-btn"
+                                id="btnTriggerOrder"
+                                onclick="onPlaceOrderClicked()">
+                            <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                            <span id="btnOrderText">Proceed to Payment</span>
+                            <i class="bi bi-arrow-right ms-1"></i>
                         </button>
 
                     </form>
-
                 </div>
 
-
                 <!-- ========================= -->
-                <!-- ORDER SUMMARY -->
+                <!-- ORDER SUMMARY             -->
                 <!-- ========================= -->
-
                 <div class="col-lg-4">
-
                     <div class="checkout-summary-card p-4">
+                        <h4 class="fw-bold mb-4" style="color:#0f172a;font-size:18px;">Order Summary</h4>
 
-                        <h4 class="fw-bold mb-4">Order Summary</h4>
-
-                        @foreach (var item in Model.Items)
-                        {
-                            <div class="d-flex gap-3 mb-3">
-
-                                <img src="@item.ImageUrl"
-                                     alt="@item.ProductName"
-                                     class="checkout-summary-item-img" />
-
-                                <div class="flex-grow-1">
-
-                                    <div class="fw-semibold">
-                                        @item.ProductName
+                        <div class="d-flex flex-column gap-3 mb-3">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="d-flex gap-3">
+                                    <img src="@item.ImageUrl"
+                                         alt="@item.ProductName"
+                                         class="checkout-summary-item-img" />
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-truncate" style="color:#0f172a;max-width:180px;font-size:13.5px;">
+                                            @item.ProductName
+                                        </div>
+                                        <div class="text-muted small mt-1" style="font-size:12px;">
+                                            Size: @item.Size &bull; @item.Color
+                                        </div>
+                                        <div class="small fw-semibold text-dark mt-1">
+                                            @item.Quantity &times; $@item.UnitPrice.ToString("0.00")
+                                        </div>
                                     </div>
-
-                                    <small class="text-muted">
-                                        @item.Size / @item.Color
-                                    </small>
-
-                                    <div class="small text-secondary">
-                                        @item.Quantity × @item.UnitPrice.ToString("C")
-                                    </div>
-
                                 </div>
+                            }
+                        </div>
 
-                            </div>
-                        }
-
-                        <hr />
+                        <hr class="my-3" style="border-color:#e2e8f0;" />
 
                         <div class="checkout-summary-row">
                             <span>Subtotal</span>
-                            <strong class="text-dark">@Model.SubTotal.ToString("C")</strong>
+                            <strong style="color:#0f172a;">$@Model.SubTotal.ToString("0.00")</strong>
                         </div>
-
                         <div class="checkout-summary-row">
-                            <span>Delivery</span>
-                            <strong class="text-dark">@Model.DeliveryFee.ToString("C")</strong>
+                            <span>Delivery Fee</span>
+                            <strong style="color:#0f172a;">$@Model.DeliveryFee.ToString("0.00")</strong>
                         </div>
 
                         <div class="checkout-summary-total">
-                            <strong class="fs-5">Total</strong>
-                            <strong class="checkout-summary-total-value">
-                                @Model.Total.ToString("C")
-                            </strong>
+                            <strong class="fs-6" style="color:#0f172a;">Total Amount</strong>
+                            <strong class="checkout-summary-total-value">$@Model.Total.ToString("0.00")</strong>
                         </div>
 
+                        <div class="d-flex align-items-center gap-2 mt-4 pt-3 border-top text-muted small">
+                            <i class="bi bi-shield-check text-success fs-5"></i>
+                            <span style="font-size:11.5px;">Bakong KHQR &amp; SSL 256-Bit Encrypted Secure Checkout</span>
+                        </div>
                     </div>
-
                 </div>
 
             </div>
-
         </div>
     </section>
-
 </div>
+
+
+<!-- ================================================================
+     AUTHENTIC BAKONG KHQR & ABA PAY PAYMENT MODAL
+================================================================ -->
+<div class="modal fade" id="khqrModal" tabindex="-1" aria-labelledby="khqrModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered khqr-modal-dialog">
+        <div class="modal-content khqr-modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header border-0 pb-0 pt-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="khqr-countdown-pill" id="khqrTimer">
+                        <i class="bi bi-clock-history"></i> <span id="khqrTimerText">05:00</span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2 text-success small fw-semibold ms-2" id="khqrLiveStatus">
+                        <span class="pulse-dot"></span> Ready to scan
+                    </span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopPolling()"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 pt-2">
+
+                <!-- Standee Card Container -->
+                <div class="khqr-standee" id="khqrStandee">
+
+                    <!-- Top Red Banner -->
+                    <div class="khqr-header-banner">
+                        <div class="khqr-header-title">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="24" height="24" rx="5" fill="white"/>
+                                <path d="M4 4H10V10H4V4ZM5.5 5.5V8.5H8.5V5.5H5.5ZM14 4H20V10H14V4ZM15.5 5.5V8.5H18.5V5.5H15.5ZM4 14H10V20H4V14ZM5.5 15.5V18.5H8.5V15.5H5.5ZM14 14H16V16H14V14ZM18 14H20V16H18V14ZM16 16H18V18H16V16ZM14 18H16V20H14V18ZM18 18H20V20H18V18Z" fill="#e11d48"/>
+                            </svg>
+                            <span>KHQR</span>
+                        </div>
+                        <span class="khqr-header-brand">BAKONG</span>
+                    </div>
+
+                    <!-- Merchant Info -->
+                    <div class="khqr-merchant-info">
+                        <div class="khqr-merchant-name" id="khqrMerchantName">CLOTHÉ STORE</div>
+                        <div class="khqr-amount-display" id="khqrAmountUsd">$@Model.Total.ToString("0.00") <span class="khqr-currency-label">USD</span></div>
+                        <div class="khqr-khr-pill" id="khqrAmountKhr">
+                            <i class="bi bi-arrow-repeat me-1"></i>~ ៛@(Math.Round(Model.Total * 4100).ToString("N0")) KHR
+                        </div>
+                    </div>
+
+                    <!-- QR Canvas Area (Centered) -->
+                    <div class="khqr-qr-container">
+                        <div id="khqrSpinner" class="py-5 text-center">
+                            <div class="spinner-border text-danger" role="status" style="width:2.4rem;height:2.4rem;"></div>
+                            <div class="text-muted small mt-2 fw-semibold">Generating Bakong KHQR…</div>
+                        </div>
+                        <div id="khqrCanvasWrap" style="display:none;">
+                            <div class="khqr-qr-frame">
+                                <canvas id="khqrCanvas" width="220" height="220"></canvas>
+                            </div>
+                            <div class="khqr-scan-tip">
+                                <i class="bi bi-camera me-1"></i> Open camera &amp; point at QR code
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Strip -->
+                    <div class="khqr-footer-banner">
+                        <div class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;">Scan with any mobile banking app</div>
+                        <div class="khqr-banks-strip">
+                            <span class="khqr-bank-tag" style="background:#e0f2fe;color:#003764;">ABA Mobile</span>
+                            <span class="khqr-bank-tag" style="background:#fce7f3;color:#9d174d;">Bakong</span>
+                            <span class="khqr-bank-tag" style="background:#dcfce7;color:#166534;">ACLEDA</span>
+                            <span class="khqr-bank-tag" style="background:#fef9c3;color:#854d0e;">Wing Bank</span>
+                            <span class="khqr-bank-tag" style="background:#fee2e2;color:#991b1b;">Canadia</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Links (Save QR & Open ABA in 2 equal columns) -->
+                <div class="row g-2 mt-3">
+                    <div class="col-6">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 rounded-3 py-2 fw-semibold" onclick="downloadKhqr()">
+                            <i class="bi bi-download me-1"></i> Save QR
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <a id="lnkOpenAba" href="aba://" class="btn btn-outline-primary btn-sm w-100 rounded-3 py-2 fw-semibold">
+                            <i class="bi bi-phone me-1"></i> Open ABA
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Developer / Instant Test Simulation button -->
+                <button type="button" class="btn btn-light btn-sm text-success border rounded-3 w-100 py-2 mt-2 fw-bold" onclick="simulateSuccessfulPayment()" title="Simulate payment confirmation for instant testing">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> Test Pay (Simulate)
+                </button>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer border-0 px-4 pb-4 pt-1 flex-column gap-2">
+                <button type="button"
+                        class="btn-khqr-confirm w-100"
+                        id="btnConfirmPaid"
+                        onclick="onPaymentConfirmed()">
+                    <i class="bi bi-shield-check fs-5"></i>
+                    <span>I've Completed the Payment</span>
+                </button>
+                <button type="button"
+                        class="btn btn-link text-decoration-none text-muted w-100 py-1"
+                        data-bs-dismiss="modal"
+                        onclick="stopPolling()"
+                        style="font-size:13px;">
+                    Cancel &amp; Select Different Method
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <!-- QRious QR generator library (pure JavaScript, fast & lightweight) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
+    <script>
+        const KHQR_METHOD_IDS = new Set(@Html.Raw(
+            "[" + string.Join(",", khqrMethodIds.Select(id => $"\"{id}\"")) + "]"
+        ));
+
+        const ORDER_TOTAL = @Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+        let khqrModal = null;
+        let qrTimerInterval = null;
+        let isPollingActive = false;
+        let pollTimeoutId = null;
+        let currentAbortController = null;
+        let generatedQrString = "";
+        let generatedMd5 = "";
+        let standeeOriginalHtml = "";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const standeeEl = document.getElementById('khqrStandee');
+            if (standeeEl) {
+                standeeOriginalHtml = standeeEl.innerHTML;
+            }
+
+            const modalEl = document.getElementById('khqrModal');
+            if (modalEl) {
+                khqrModal = new bootstrap.Modal(modalEl);
+
+                modalEl.addEventListener('hidden.bs.modal', () => {
+                    stopPolling();
+                    if (qrTimerInterval) clearInterval(qrTimerInterval);
+                });
+            }
+
+            // Sync visual selected state on radio cards
+            document.querySelectorAll('input[name="PaymentMethodId"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('selected'));
+                    const card = radio.closest('.payment-method-card');
+                    if (card) card.classList.add('selected');
+                });
+            });
+        });
+
+        function stopPolling() {
+            isPollingActive = false;
+            if (pollTimeoutId) {
+                clearTimeout(pollTimeoutId);
+                pollTimeoutId = null;
+            }
+            if (currentAbortController) {
+                try {
+                    currentAbortController.abort();
+                } catch (e) {}
+                currentAbortController = null;
+            }
+        }
+
+        // Triggered when user clicks the main "Proceed to Payment" button
+        function onPlaceOrderClicked() {
+            // 1. Basic HTML5 validation of required inputs
+            const form = document.getElementById('checkoutForm');
+            const requiredFields = ['txtFirstName', 'txtLastName', 'txtPhone', 'txtEmail', 'txtProvince', 'txtCity', 'txtStreet'];
+            for (const id of requiredFields) {
+                const el = document.getElementById(id);
+                if (el && !el.value.trim()) {
+                    el.focus();
+                    el.classList.add('is-invalid');
+                    return;
+                } else if (el) {
+                    el.classList.remove('is-invalid');
+                }
+            }
+
+            // 2. Check if a payment method is selected
+            const selectedMethod = document.querySelector('input[name="PaymentMethodId"]:checked');
+            if (!selectedMethod) {
+                alert('Please select a payment method.');
+                return;
+            }
+
+            const isKhqr = selectedMethod.getAttribute('data-is-khqr') === 'true' || KHQR_METHOD_IDS.has(selectedMethod.value);
+
+            if (isKhqr) {
+                openKhqrModal();
+            } else {
+                stopPolling();
+                document.getElementById('hdnPaymentConfirmed').value = 'false';
+                form.submit();
+            }
+        }
+
+        // Open the KHQR payment modal and fetch payload
+        async function openKhqrModal() {
+            stopPolling();
+            if (standeeOriginalHtml && document.getElementById('khqrStandee')) {
+                document.getElementById('khqrStandee').innerHTML = standeeOriginalHtml;
+            }
+
+            // Reset live status badge
+            const statusEl = document.getElementById('khqrLiveStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="pulse-dot"></span> Ready to scan`;
+            }
+
+            if (khqrModal) khqrModal.show();
+
+            const spinner = document.getElementById('khqrSpinner');
+            const canvasWrap = document.getElementById('khqrCanvasWrap');
+            if (spinner) spinner.style.display = 'block';
+            if (canvasWrap) canvasWrap.style.display = 'none';
+
+            // Start 5-minute countdown
+            startKhqrTimer(300);
+
+            try {
+                const orderRef = 'CLOTHE-' + Math.floor(100000 + Math.random() * 900000);
+                document.getElementById('hdnPaymentRef').value = orderRef;
+
+                const res = await fetch(`/Khqr/Generate?amount=${ORDER_TOTAL}&currency=USD&reference=${orderRef}`);
+                if (!res.ok) throw new Error('Failed to generate KHQR');
+
+                const data = await res.json();
+                generatedQrString = data.qrString;
+                generatedMd5 = data.md5;
+
+                // Update text elements
+                document.getElementById('khqrMerchantName').textContent = data.merchant;
+                document.getElementById('khqrAmountUsd').innerHTML = '$' + parseFloat(data.amount).toFixed(2) + ' <span class="khqr-currency-label">USD</span>';
+                document.getElementById('khqrAmountKhr').innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>~ ៛' + Number(data.khrAmount).toLocaleString() + ' KHR';
+
+                // Deep link update
+                const abaLink = document.getElementById('lnkOpenAba');
+                if (abaLink && data.abaDeepLink) {
+                    abaLink.href = data.abaDeepLink;
+                }
+
+                // Render centered QR code on canvas
+                const canvas = document.getElementById('khqrCanvas');
+                new QRious({
+                    element: canvas,
+                    value: data.qrString,
+                    size: 220,
+                    level: 'Q',
+                    background: '#ffffff',
+                    foreground: '#1a1a2e',
+                    padding: 4
+                });
+
+                document.getElementById('khqrSpinner').style.display = 'none';
+                document.getElementById('khqrCanvasWrap').style.display = 'flex';
+
+                // Start safe sequential polling via Bakong API check_transaction_by_md5
+                startBakongPolling(data.md5);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('khqrSpinner').innerHTML =
+                    `<div class="text-danger small py-4">
+                        <i class="bi bi-exclamation-circle fs-4 d-block mb-1"></i> Failed to generate KHQR code. Please retry.
+                    </div>`;
+            }
+        }
+
+        // Safe, non-blocking sequential polling to Bakong Open API
+        function startBakongPolling(md5) {
+            stopPolling();
+            if (!md5) return;
+            isPollingActive = true;
+
+            async function checkOnce() {
+                if (!isPollingActive) return;
+
+                currentAbortController = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    if (currentAbortController) {
+                        currentAbortController.abort();
+                    }
+                }, 3500);
+
+                try {
+                    const res = await fetch('/Khqr/CheckTransaction', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ md5: md5 }),
+                        signal: currentAbortController.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (res.ok) {
+                        const result = await res.json();
+                        if (result.paid && isPollingActive) {
+                            stopPolling();
+                            handlePaymentSuccess("Verified via Bakong Open API");
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    // Timeout or aborted, normal for polling when unpaid
+                } finally {
+                    clearTimeout(timeoutId);
+                    currentAbortController = null;
+                }
+
+                if (isPollingActive) {
+                    pollTimeoutId = setTimeout(checkOnce, 2500);
+                }
+            }
+
+            // Begin first poll after 2 seconds
+            pollTimeoutId = setTimeout(checkOnce, 2000);
+        }
+
+        // Universal Payment Success Handler
+        function handlePaymentSuccess(subtitle) {
+            stopPolling();
+            if (qrTimerInterval) clearInterval(qrTimerInterval);
+
+            // Update live status pill
+            const statusEl = document.getElementById('khqrLiveStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="pulse-dot bg-success"></span> <span class="text-success fw-bold">Payment Verified!</span>`;
+            }
+
+            // Show celebratory UI state inside standee
+            const standee = document.getElementById('khqrStandee');
+            if (standee) {
+                standee.innerHTML = `
+                    <div class="p-4 py-5 text-center khqr-success-card">
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3.8rem;"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">Payment Received!</h4>
+                        <p class="text-muted small mb-1">${subtitle || 'Verified successfully.'}</p>
+                        <div class="badge bg-success-subtle text-success px-3 py-2 rounded-pill mt-2 mb-3 fw-semibold">
+                            <i class="bi bi-shield-check me-1"></i> KHQR Transaction Completed
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center gap-2 text-muted small mt-2">
+                            <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                            <span>Finalizing your order…</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const btn = document.getElementById('btnConfirmPaid');
+            if (btn) {
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span> Finalizing Order…`;
+                btn.disabled = true;
+            }
+
+            document.getElementById('hdnPaymentConfirmed').value = 'true';
+
+            setTimeout(() => {
+                document.getElementById('checkoutForm').submit();
+            }, 800);
+        }
+
+        // Countdown timer
+        function startKhqrTimer(durationSeconds) {
+            if (qrTimerInterval) clearInterval(qrTimerInterval);
+            let time = durationSeconds;
+            const timerEl = document.getElementById('khqrTimerText');
+
+            qrTimerInterval = setInterval(() => {
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                timerEl.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (--time < 0) {
+                    clearInterval(qrTimerInterval);
+                    stopPolling();
+                    timerEl.textContent = 'Expired';
+                }
+            }, 1000);
+        }
+
+        // When user confirms payment in modal
+        function onPaymentConfirmed() {
+            handlePaymentSuccess("Payment confirmed by customer");
+        }
+
+        // Download KHQR image to device
+        function downloadKhqr() {
+            const canvas = document.getElementById('khqrCanvas');
+            if (!canvas) return;
+
+            const link = document.createElement('a');
+            link.download = `KHQR-CLOTHE-${ORDER_TOTAL}USD.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Simulate successful payment for instant local testing
+        function simulateSuccessfulPayment() {
+            handlePaymentSuccess("Simulated payment confirmed (Demo Test)");
+        }
+    </script>
 }
+
+
+
+
+

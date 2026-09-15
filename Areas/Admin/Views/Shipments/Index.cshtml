@@ -1,0 +1,335 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Shipment>
+@using WebApplication_ClothingEcommerce.Data.Enums
+
+@{
+    ViewData["Title"] = "Shipments";
+}
+
+<div class="admin-page">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">SALES & FULFILLMENT</div>
+            <h1 class="page-title">Shipments</h1>
+            <p class="page-description">Track parcels, carriers, and dispatch status across customer orders.</p>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="admin-alert admin-alert-success">
+            <i class="bi bi-check-circle-fill"></i>
+            @TempData["Success"]
+        </div>
+    }
+
+    <!-- STAT PILLS -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold">Total Shipments</small>
+                        <h3 class="fw-bold mb-0 mt-1">@ViewBag.TotalCount</h3>
+                    </div>
+                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
+                        <i class="bi bi-truck fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold">Pending Dispatch</small>
+                        <h3 class="fw-bold mb-0 mt-1 text-warning">@ViewBag.PendingCount</h3>
+                    </div>
+                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold">In Transit</small>
+                        <h3 class="fw-bold mb-0 mt-1 text-info">@ViewBag.InTransitCount</h3>
+                    </div>
+                    <div class="p-3 bg-info bg-opacity-10 text-info rounded-circle">
+                        <i class="bi bi-box-seam fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold">Delivered</small>
+                        <h3 class="fw-bold mb-0 mt-1 text-success">@ViewBag.DeliveredCount</h3>
+                    </div>
+                    <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle">
+                        <i class="bi bi-check2-circle fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="admin-card">
+
+        <div class="admin-card-header">
+            <div>
+                <h3 class="admin-card-title">All Shipments</h3>
+                <p class="admin-card-subtitle">Real-time delivery progress and tracking codes</p>
+            </div>
+            <div class="admin-card-count">
+                <span>@(Model?.Count() ?? 0)</span>
+                <small>records</small>
+            </div>
+        </div>
+
+        <!-- SEARCH & FILTER -->
+        <div class="search-wrapper">
+            <form asp-action="Index" method="get" class="search-form flex-wrap gap-2">
+                <div class="search-input-wrapper" style="flex: 2; min-width: 240px;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" value="@ViewBag.Search" class="search-input" placeholder="Search order ID, customer, tracking #, carrier..." />
+                </div>
+
+                <div class="search-input-wrapper" style="flex: 1; min-width: 180px;">
+                    <select name="status" class="search-input" asp-items="ViewBag.Statuses">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-search">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn-reset">
+                    <i class="bi bi-arrow-repeat"></i> Reset
+                </a>
+            </form>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Carrier</th>
+                        <th>Tracking Number</th>
+                        <th>Status</th>
+                        <th>Shipped Date</th>
+                        <th>Delivered Date</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@item.OrderId" class="fw-bold font-monospace text-decoration-none">
+                                        #@item.OrderId.ToString()[..8].ToUpper()
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@(item.Order?.Customer != null ? $"{item.Order.Customer.FirstName} {item.Order.Customer.LastName}".Trim() : "Customer")</div>
+                                    <small class="text-muted">@(item.Order?.Customer?.Email ?? "N/A")</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-truck me-1"></i> @(string.IsNullOrWhiteSpace(item.ShippingCompany) ? "Standard" : item.ShippingCompany)
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.TrackingNumber))
+                                    {
+                                        <code class="fw-bold">@item.TrackingNumber</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small italic">Not assigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    @switch (item.ShipmentStatus)
+                                    {
+                                        case ShipmentStatus.Delivered:
+                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
+                                                <i class="bi bi-check-circle me-1"></i> Delivered
+                                            </span>
+                                            break;
+                                        case ShipmentStatus.InTransit:
+                                        case ShipmentStatus.Shipped:
+                                            <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-2">
+                                                <i class="bi bi-truck me-1"></i> @item.ShipmentStatus
+                                            </span>
+                                            break;
+
+                                        default:
+                                            <span class="badge bg-warning bg-opacity-10 text-warning-emphasis rounded-pill px-3 py-2">
+                                                <i class="bi bi-clock me-1"></i> Pending
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <small class="text-muted">@(item.ShippedAt?.ToLocalTime().ToString("MMM dd, yyyy HH:mm") ?? "—")</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@(item.DeliveredAt?.ToLocalTime().ToString("MMM dd, yyyy HH:mm") ?? "—")</small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
+                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <!-- Quick Status Modal Trigger -->
+                                                <button type="button" class="dropdown-item"
+                                                        data-bs-toggle="modal" data-bs-target="#updateModal"
+                                                        data-id="@item.Id"
+                                                        data-order="@item.OrderId.ToString()[..8].ToUpper()"
+                                                        data-tracking="@item.TrackingNumber"
+                                                        data-carrier="@item.ShippingCompany"
+                                                        data-status="@item.ShipmentStatus">
+                                                    <i class="bi bi-pencil text-warning"></i> <span>Update Status</span>
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1" /></li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                                        data-id="@item.Id"
+                                                        data-order="@item.OrderId.ToString()[..8].ToUpper()">
+                                                    <i class="bi bi-trash"></i> <span>Delete Shipment</span>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state py-5 text-center">
+                                    <div class="empty-icon fs-1 text-muted mb-2"><i class="bi bi-truck"></i></div>
+                                    <h5>No shipments found</h5>
+                                    <p class="text-muted">Shipments are automatically created whenever customers place orders.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Quick Update Modal -->
+<div class="modal fade" id="updateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="QuickUpdate" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="modalShipmentId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Shipment Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Update tracking information and status for Order <strong id="modalOrderLabel"></strong>.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Shipment Status</label>
+                        <select name="status" id="modalStatusSelect" class="form-select" required>
+                            @foreach (var s in Enum.GetValues<ShipmentStatus>())
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tracking Number</label>
+                        <input type="text" name="trackingNumber" id="modalTrackingInput" class="form-control" placeholder="e.g. JT123456789KH" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteShipmentId" />
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Delete Shipment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the shipment record for Order <strong id="deleteOrderLabel"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const updateModal = document.getElementById('updateModal');
+        if (updateModal) {
+            updateModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                document.getElementById('modalShipmentId').value = btn.getAttribute('data-id');
+                document.getElementById('modalOrderLabel').textContent = '#' + btn.getAttribute('data-order');
+                document.getElementById('modalTrackingInput').value = btn.getAttribute('data-tracking') || '';
+                document.getElementById('modalStatusSelect').value = btn.getAttribute('data-status');
+            });
+        }
+
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                document.getElementById('deleteShipmentId').value = btn.getAttribute('data-id');
+                document.getElementById('deleteOrderLabel').textContent = '#' + btn.getAttribute('data-order');
+            });
+        }
+    </script>
+}

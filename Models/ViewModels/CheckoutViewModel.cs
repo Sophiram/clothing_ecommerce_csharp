@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApplication_ClothingEcommerce.Models.ViewModels
@@ -49,6 +49,10 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
         [Required(ErrorMessage = "Please select a payment method.")]
         [Display(Name = "Payment Method")]
         public Guid? PaymentMethodId { get; set; }
+
+        public string? PaymentTransactionRef { get; set; }
+
+        public bool IsPaymentConfirmed { get; set; }
 
 
         // =========================================================

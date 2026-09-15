@@ -1,73 +1,42 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class BrandsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IBrandService _brandService;
         private readonly IWebHostEnvironment _environment;
 
-        private readonly string[] _allowedExtensions =
+        public BrandsController(IBrandService brandService, IWebHostEnvironment environment)
         {
-            ".jpg", ".jpeg", ".png", ".webp", ".svg"
-        };
-
-        private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
-
-        public BrandsController(AppDbContext context, IWebHostEnvironment environment)
-        {
-            _context = context;
+            _brandService = brandService;
             _environment = environment;
         }
 
         // =====================================================
         // INDEX
         // =====================================================
-
         public async Task<IActionResult> Index(string? search)
         {
-            var query = _context.Brands
-                .Include(b => b.Products)
-                .AsNoTracking()
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                search = search.Trim();
-                query = query.Where(b =>
-                    b.Name.Contains(search) ||
-                    (b.Description != null && b.Description.Contains(search)));
-            }
-
             ViewBag.Search = search;
-
-            var brands = await query.OrderBy(b => b.Name).ToListAsync();
+            var brands = await _brandService.GetBrandsAsync(search);
             return View(brands);
         }
 
         // =====================================================
         // DETAILS
         // =====================================================
-
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
 
-            var brand = await _context.Brands
-                .Include(b => b.Products).ThenInclude(p => p.Category)
-                .Include(b => b.Products).ThenInclude(p => p.Variants)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Id == id);
-
-            if (brand == null)
-                return NotFound();
+            var brand = await _brandService.GetBrandDetailsAsync(id.Value);
+            if (brand == null) return NotFound();
 
             return View(brand);
         }
@@ -75,15 +44,12 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         // =====================================================
         // CREATE - POST (AJAX)
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Description")] Brand brand, IFormFile? logo)
+        public async Task<IActionResult> Create([Bind("Name,Description")] Brand brand, IFormFile? logo, string? logoUrl)
         {
             ModelState.Remove("Products");
             ModelState.Remove("Logo");
-
-            ValidateLogo(logo);
 
             if (!ModelState.IsValid)
             {
@@ -91,26 +57,22 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 return BadRequest(new { success = false, errors });
             }
 
-            brand.Id = Guid.NewGuid();
-
-            if (logo != null && logo.Length > 0)
+            var result = await _brandService.CreateBrandAsync(brand, logo, logoUrl, _environment.WebRootPath);
+            if (!result.Success)
             {
-                brand.Logo = await SaveLogoAsync(logo);
+                return BadRequest(new { success = false, errors = result.Errors });
             }
-
-            _context.Brands.Add(brand);
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 success = true,
-                message = $"Brand '{brand.Name}' was created successfully.",
+                message = result.Message,
                 brand = new
                 {
-                    id = brand.Id,
-                    name = brand.Name,
-                    description = brand.Description,
-                    logo = brand.Logo,
+                    id = result.Brand!.Id,
+                    name = result.Brand.Name,
+                    description = result.Brand.Description,
+                    logo = result.Brand.Logo,
                     productCount = 0
                 }
             });
@@ -119,10 +81,9 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         // =====================================================
         // EDIT - POST (AJAX)
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Description")] Brand brand, IFormFile? logo, bool removeLogo = false)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Description")] Brand brand, IFormFile? logo, string? logoUrl, bool removeLogo = false)
         {
             if (id != brand.Id)
                 return BadRequest(new { success = false, errors = new[] { "Invalid brand ID." } });
@@ -130,46 +91,28 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             ModelState.Remove("Products");
             ModelState.Remove("Logo");
 
-            ValidateLogo(logo);
-
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
                 return BadRequest(new { success = false, errors });
             }
 
-            var existingBrand = await _context.Brands.FirstOrDefaultAsync(b => b.Id == id);
-
-            if (existingBrand == null)
-                return NotFound(new { success = false, errors = new[] { "Brand not found." } });
-
-            existingBrand.Name = brand.Name;
-            existingBrand.Description = brand.Description;
-
-            if (logo != null && logo.Length > 0)
+            var result = await _brandService.UpdateBrandAsync(id, brand, logo, logoUrl, removeLogo, _environment.WebRootPath);
+            if (!result.Success)
             {
-                var oldLogo = existingBrand.Logo;
-                existingBrand.Logo = await SaveLogoAsync(logo);
-                DeleteLogo(oldLogo);
+                return BadRequest(new { success = false, errors = result.Errors });
             }
-            else if (removeLogo && !string.IsNullOrWhiteSpace(existingBrand.Logo))
-            {
-                DeleteLogo(existingBrand.Logo);
-                existingBrand.Logo = null;
-            }
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 success = true,
-                message = $"Brand '{existingBrand.Name}' was updated successfully.",
+                message = result.Message,
                 brand = new
                 {
-                    id = existingBrand.Id,
-                    name = existingBrand.Name,
-                    description = existingBrand.Description,
-                    logo = existingBrand.Logo
+                    id = result.Brand!.Id,
+                    name = result.Brand.Name,
+                    description = result.Brand.Description,
+                    logo = result.Brand.Logo
                 }
             });
         }
@@ -177,83 +120,17 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         // =====================================================
         // DELETE - POST (AJAX)
         // =====================================================
-
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)
         {
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Id == id);
-
-            if (brand == null)
-                return NotFound(new { success = false, errors = new[] { "Brand not found." } });
-
-            var hasProducts = await _context.Products.AnyAsync(p => p.BrandId == id);
-
-            if (hasProducts)
+            var result = await _brandService.DeleteBrandAsync(id, _environment.WebRootPath);
+            if (!result.Success)
             {
-                return BadRequest(new { success = false, errors = new[] { "This brand cannot be deleted because it has products." } });
+                return BadRequest(new { success = false, errors = result.Errors });
             }
 
-            var name = brand.Name;
-            DeleteLogo(brand.Logo);
-            _context.Brands.Remove(brand);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Brand '{name}' was deleted successfully." });
+            return Ok(new { success = true, message = result.Message });
         }
-
-        // =====================================================
-        // HELPERS
-        // =====================================================
-
-        private void ValidateLogo(IFormFile? logo)
-        {
-            if (logo == null || logo.Length == 0)
-                return;
-
-            if (logo.Length > MaxFileSize)
-            {
-                ModelState.AddModelError("Logo", "Logo image must be smaller than 5 MB.");
-                return;
-            }
-
-            var extension = Path.GetExtension(logo.FileName).ToLowerInvariant();
-
-            if (!_allowedExtensions.Contains(extension))
-            {
-                ModelState.AddModelError("Logo", "Only JPG, JPEG, PNG, WEBP and SVG images are allowed.");
-            }
-        }
-
-        private async Task<string> SaveLogoAsync(IFormFile logo)
-        {
-            var folder = Path.Combine(_environment.WebRootPath, "images", "brands");
-
-            if (!Directory.Exists(folder))
-                Directory.CreateDirectory(folder);
-
-            var extension = Path.GetExtension(logo.FileName).ToLowerInvariant();
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-            var filePath = Path.Combine(folder, fileName);
-
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await logo.CopyToAsync(stream);
-
-            return $"/images/brands/{fileName}";
-        }
-
-        private void DeleteLogo(string? logoPath)
-        {
-            if (string.IsNullOrWhiteSpace(logoPath))
-                return;
-
-            var fileName = Path.GetFileName(logoPath);
-            var filePath = Path.Combine(_environment.WebRootPath, "images", "brands", fileName);
-
-            if (System.IO.File.Exists(filePath))
-                System.IO.File.Delete(filePath);
-        }
-
-        private bool BrandExists(Guid id) => _context.Brands.Any(e => e.Id == id);
     }
 }

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<WebApplication_ClothingEcommerce.Models.PaymentMethod>
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.PaymentMethod>
 
 @{
     ViewData["Title"] = "Payment Methods";
@@ -229,7 +229,8 @@
                                             @if (!string.IsNullOrWhiteSpace(method.Icon))
                                             {
                                                 <img src="@method.Icon"
-                                                     alt="@method.Name" />
+                                                     alt="@method.Name"
+                                                     onerror="this.onerror=null;this.src='/images/khqr-logo.svg';" />
                                             }
                                             else
                                             {
@@ -319,82 +320,57 @@
 
 
                                 <!-- ACTIONS -->
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                                            <!-- DETAILS -->
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@method.Id">
+                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                                                </a>
+                                            </li>
 
-                                <td>
+                                            <!-- EDIT -->
+                                            <li>
+                                                <a class="dropdown-item" asp-action="Edit" asp-route-id="@method.Id">
+                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Method</span>
+                                                </a>
+                                            </li>
 
-                                    <div class="table-actions">
+                                            <!-- ENABLE / DISABLE -->
+                                            <li>
+                                                <form asp-action="ToggleActive" asp-route-id="@method.Id" method="post" class="m-0">
+                                                    @Html.AntiForgeryToken()
+                                                    @if (method.IsActive)
+                                                    {
+                                                        <button type="submit" class="dropdown-item text-secondary">
+                                                            <i class="bi bi-pause-circle text-warning"></i> <span>Disable Method</span>
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="submit" class="dropdown-item text-secondary">
+                                                            <i class="bi bi-play-circle text-success"></i> <span>Enable Method</span>
+                                                        </button>
+                                                    }
+                                                </form>
+                                            </li>
 
-                                        <!-- DETAILS -->
-
-                                        <a asp-action="Details"
-                                           asp-route-id="@method.Id"
-                                           class="action-btn"
-                                           title="View details">
-
-                                            <i class="bi bi-eye"></i>
-
-                                        </a>
-
-
-                                        <!-- EDIT -->
-
-                                        <a asp-action="Edit"
-                                           asp-route-id="@method.Id"
-                                           class="action-btn"
-                                           title="Edit payment method">
-
-                                            <i class="bi bi-pencil"></i>
-
-                                        </a>
-
-
-                                        <!-- ENABLE / DISABLE -->
-
-                                        <form asp-action="ToggleActive"
-                                              asp-route-id="@method.Id"
-                                              method="post">
-
-                                            @Html.AntiForgeryToken()
-
-                                            @if (method.IsActive)
+                                            <!-- DELETE -->
+                                            @if (method.Payments.Count == 0)
                                             {
-                                                <button type="submit"
-                                                        class="action-btn action-warning"
-                                                        title="Disable">
-
-                                                    <i class="bi bi-pause-circle"></i>
-
-                                                </button>
+                                                <li><hr class="dropdown-divider my-1" /></li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@method.Id">
+                                                        <i class="bi bi-trash"></i> <span>Delete Method</span>
+                                                    </a>
+                                                </li>
                                             }
-                                            else
-                                            {
-                                                <button type="submit"
-                                                        class="action-btn action-success"
-                                                        title="Enable">
-
-                                                    <i class="bi bi-play-circle"></i>
-
-                                                </button>
-                                            }
-
-                                        </form>
-
-
-                                        <!-- DELETE -->
-                                        @if (method.Payments.Count == 0)
-                                        {
-                                            <a asp-action="Delete"
-                                               asp-route-id="@method.Id"
-                                               class="action-btn action-danger"
-                                               title="Delete">
-
-                                                <i class="bi bi-trash"></i>
-
-                                            </a>
-                                        }
-
+                                        </ul>
                                     </div>
-
                                 </td>
 
                             </tr>
