@@ -2,246 +2,364 @@
 
 @{
     ViewData["Title"] = "Colors";
+    var totalColors = Model?.Count() ?? 0;
+    var totalVariants = Model?.Sum(c => c.Variants?.Count ?? 0) ?? 0;
+    var activeColors = Model?.Count(c => (c.Variants?.Count ?? 0) > 0) ?? 0;
+    var unusedColors = Model?.Count(c => (c.Variants?.Count ?? 0) == 0) ?? 0;
 }
 
-<div class="admin-page">
+<div class="space-y-6">
 
-    <div class="page-header">
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <div class="page-eyebrow">CATALOG</div>
-            <h1 class="page-title">Colors</h1>
-            <p class="page-description">Manage product colors.</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-palette-fill"></i>
+                <span>CATALOG &amp; ATTRIBUTES</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Colors
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Manage hex codes and color swatches assigned across product variations.
+            </p>
         </div>
 
-        <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createColorModal">
-            <i class="bi bi-plus-lg"></i> Add Color
-        </button>
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="openCreateColorModal()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Color</span>
+            </button>
+        </div>
     </div>
 
+    <!-- ALERT CONTAINER -->
     <div id="alertPlaceholder"></div>
 
-    <div class="admin-card">
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div class="admin-card-header">
-            <div>
-                <h3 class="admin-card-title">All Colors</h3>
-                <p class="admin-card-subtitle">Manage colors used across product variants</p>
+        <!-- 1. TOTAL COLORS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Colors</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-palette"></i>
+                </span>
             </div>
-            <div class="admin-card-count">
-                <span>@Model.Count()</span>
-                <small>total</small>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalColors
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Palette variations</span>
+                </div>
             </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Color Name</th>
-                        <th>Hex Code / Preview</th>
-                        <th>Variants Linked</th>
-                        <th style="text-align:right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Any())
-                    {
+        <!-- 2. TOTAL VARIANTS LINKED -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Assigned Variants</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-boxes"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @totalVariants
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>SKUs utilizing colors</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ACTIVE COLORS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active in Catalog</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-check-circle-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                    @activeColors
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>With product variants</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. UNUSED COLORS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Unused Colors</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-exclamation-circle"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    @unusedColors
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Available for assignment</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COLORS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">All Colors</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Color definitions and hex swatches for clothing variants</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                @totalColors total
+            </span>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-5">Color Name</th>
+                            <th class="py-3 px-4">Swatch &amp; Hex Code</th>
+                            <th class="py-3 px-4">Variants Linked</th>
+                            <th class="py-3 px-5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                         @foreach (var item in Model)
                         {
-                            <tr>
-                                <td class="payment-name">@item.Name</td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="color-swatch" style="background-color: @item.HexCode;"></div>
-                                        <span class="font-monospace text-muted small">@item.HexCode</span>
+                            var vCount = item.Variants?.Count ?? 0;
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3.5 px-5 font-bold text-slate-900 dark:text-white">
+                                    @item.Name
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-6 h-6 rounded-full border border-slate-300 dark:border-slate-600 shadow-xs shrink-0" style="background-color: @item.HexCode;"></div>
+                                        <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                                            @item.HexCode
+                                        </span>
                                     </div>
                                 </td>
-                                <td><span class="payment-count">@(item.Variants?.Count ?? 0)</span></td>
-                                <td class="text-end">
-                                    <div class="dropdown">
-                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold @(vCount > 0 ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                                        <i class="bi bi-box-seam"></i> @vCount variants
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-5 text-right">
+                                    <div class="inline-flex items-center gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 transition flex items-center justify-center"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button"
+                                                onclick="openEditColorModal('@item.Id', '@Html.Raw(Html.Encode(item.Name))', '@item.HexCode')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Edit Color">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
-                                            <li>
-                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
-                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <button type="button" class="dropdown-item"
-                                                        data-bs-toggle="modal" data-bs-target="#editColorModal"
-                                                        data-id="@item.Id"
-                                                        data-name="@item.Name"
-                                                        data-hex="@item.HexCode">
-                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Color</span>
-                                                </button>
-                                            </li>
-                                            <li><hr class="dropdown-divider my-1" /></li>
-                                            <li>
-                                                <button type="button" class="dropdown-item text-danger"
-                                                        data-bs-toggle="modal" data-bs-target="#deleteColorModal"
-                                                        data-id="@item.Id"
-                                                        data-name="@item.Name">
-                                                    <i class="bi bi-trash"></i> <span>Delete Color</span>
-                                                </button>
-                                            </li>
-                                        </ul>
+                                        <button type="button"
+                                                onclick="openDeleteColorModal('@item.Id', '@Html.Raw(Html.Encode(item.Name))')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:border-rose-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Delete Color">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    <div class="empty-icon"><i class="bi bi-palette"></i></div>
-                                    <h5>No colors found</h5>
-                                    <p>Add your first color to start managing variants.</p>
-                                    <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createColorModal">
-                                        <i class="bi bi-plus-lg"></i> Add Color
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-palette text-2xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">No colors configured</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">Add color attributes and hex values to start creating product variations.</p>
+                <button type="button" onclick="openCreateColorModal()"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-plus-lg"></i> Add Color
+                </button>
+            </div>
+        }
     </div>
 
 </div>
 
-<!-- Create Modal -->
-<div class="modal fade" id="createColorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="createColorForm">
-                @Html.AntiForgeryToken()
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Color</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- =========================================================
+     MODERN TAILWIND CREATE COLOR MODAL
+========================================================= -->
+<div id="createColorModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-plus-circle"></i>
                 </div>
-                <div class="modal-body">
-                    <div id="createErrors" class="admin-alert admin-alert-danger d-none"></div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Color Name</label>
-                        <input name="Name" class="form-control" placeholder="e.g. Midnight Blue" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Hex Code</label>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="color" id="createColorPicker" class="form-control form-control-color" value="#000000" />
-                            <input type="text" name="HexCode" id="createHexInput" class="form-control font-monospace" value="#000000" pattern="^#[0-9A-Fa-f]{6}$" required />
-                        </div>
-                        <small class="text-muted">Format: #RRGGBB</small>
-                    </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Color</h3>
+                    <p class="text-[11px] text-slate-400">Define a new palette swatch</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Create</button>
-                </div>
-            </form>
+            </div>
+            <button type="button" onclick="closeCreateColorModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
+
+        <form id="createColorForm" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <div id="createErrors" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs"></div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Color Name</label>
+                <input name="Name" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. Midnight Blue, Charcoal, Crimson" required />
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Hex Code &amp; Preview</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" id="createColorPicker" class="w-10 h-9 p-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer" value="#000000" />
+                    <input type="text" name="HexCode" id="createHexInput" class="w-full text-xs font-mono font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" value="#000000" pattern="^#[0-9A-Fa-f]{6}$" required />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeCreateColorModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Create Color</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Edit Modal -->
-<div class="modal fade" id="editColorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editColorForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="Id" id="editId" />
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Color</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- =========================================================
+     MODERN TAILWIND EDIT COLOR MODAL
+========================================================= -->
+<div id="editColorModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pencil-square"></i>
                 </div>
-                <div class="modal-body">
-                    <div id="editErrors" class="admin-alert admin-alert-danger d-none"></div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Color Name</label>
-                        <input name="Name" id="editName" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Hex Code</label>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="color" id="editColorPicker" class="form-control form-control-color" />
-                            <input type="text" name="HexCode" id="editHexInput" class="form-control font-monospace" pattern="^#[0-9A-Fa-f]{6}$" required />
-                        </div>
-                        <small class="text-muted">Format: #RRGGBB</small>
-                    </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Color</h3>
+                    <p class="text-[11px] text-slate-400">Modify color name and hex</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
-                </div>
-            </form>
+            </div>
+            <button type="button" onclick="closeEditColorModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
+
+        <form id="editColorForm" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editId" />
+            <div id="editErrors" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs"></div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Color Name</label>
+                <input name="Name" id="editName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Hex Code &amp; Preview</label>
+                <div class="flex items-center gap-2">
+                    <input type="color" id="editColorPicker" class="w-10 h-9 p-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer" />
+                    <input type="text" name="HexCode" id="editHexInput" class="w-full text-xs font-mono font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" pattern="^#[0-9A-Fa-f]{6}$" required />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditColorModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteColorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="deleteColorForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" id="deleteId" />
-                <div class="modal-header">
-                    <h5 class="modal-title">Delete Color</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="deleteErrors" class="admin-alert admin-alert-danger d-none"></div>
-                    <p>Are you sure you want to delete <strong id="deleteName"></strong>? This cannot be undone.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </div>
-            </form>
+<!-- =========================================================
+     MODERN TAILWIND DELETE COLOR MODAL
+========================================================= -->
+<div id="deleteColorModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="bi bi-trash"></i>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Delete Color?</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                Are you sure you want to delete <strong id="deleteName" class="text-slate-800 dark:text-slate-200"></strong>? This cannot be undone.
+            </p>
         </div>
+
+        <form id="deleteColorForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="deleteId" />
+            <div id="deleteErrors" class="hidden p-3 mb-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs text-left"></div>
+
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeleteColorModal()"
+                        class="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-trash"></i> <span>Delete</span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-
-<style>
-    .color-swatch {
-        width: 24px;
-        height: 24px;
-        border-radius: 999px;
-        border: 1px solid rgba(0,0,0,0.15);
-    }
-
-    .form-control-color {
-        width: 52px;
-        height: 38px;
-        padding: 4px;
-    }
-</style>
 
 @section Scripts {
     <script>
         function showAlert(type, message) {
             const placeholder = document.getElementById('alertPlaceholder');
-            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
-            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+            const bgCls = type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300';
+            const icon = type === 'success' ? 'bi-check-circle-fill text-emerald-600' : 'bi-exclamation-triangle-fill text-rose-600';
+            placeholder.innerHTML = `<div class="flex items-center gap-2.5 p-3.5 mb-4 rounded-2xl border ${bgCls} text-xs font-semibold shadow-xs"><i class="bi ${icon} text-sm"></i><span>${message}</span></div>`;
         }
 
         function showErrors(boxId, errors) {
             const box = document.getElementById(boxId);
-            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
-            box.classList.remove('d-none');
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill mr-1"></i> ' + errors.join('<br />');
+            box.classList.remove('hidden');
         }
 
         function hideErrors(boxId) {
-            document.getElementById(boxId).classList.add('d-none');
+            document.getElementById(boxId).classList.add('hidden');
         }
 
         async function postForm(url, form, errorBoxId) {
@@ -260,7 +378,6 @@
             return data;
         }
 
-        // ---- Sync color picker <-> hex text input ----
         function linkColorInputs(pickerId, textId) {
             const picker = document.getElementById(pickerId);
             const text = document.getElementById(textId);
@@ -275,26 +392,59 @@
         linkColorInputs('createColorPicker', 'createHexInput');
         linkColorInputs('editColorPicker', 'editHexInput');
 
-        // ---- Create ----
+        function openCreateColorModal() {
+            var m = document.getElementById('createColorModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeCreateColorModal() {
+            var m = document.getElementById('createColorModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function openEditColorModal(id, name, hex) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editHexInput').value = hex || '#000000';
+            document.getElementById('editColorPicker').value = hex || '#000000';
+            hideErrors('editErrors');
+            var m = document.getElementById('editColorModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeEditColorModal() {
+            var m = document.getElementById('editColorModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function openDeleteColorModal(id, name) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteName').textContent = name;
+            hideErrors('deleteErrors');
+            var m = document.getElementById('deleteColorModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeDeleteColorModal() {
+            var m = document.getElementById('deleteColorModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Form submits
         document.getElementById('createColorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const result = await postForm('@Url.Action("Create")', this, 'createErrors');
             if (result && result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('createColorModal')).hide();
+                closeCreateColorModal();
                 sessionStorage.setItem('colorToast', JSON.stringify({ type: 'success', message: result.message }));
                 location.reload();
             }
-        });
-
-        // ---- Edit ----
-        document.getElementById('editColorModal').addEventListener('show.bs.modal', function(e) {
-            const btn = e.relatedTarget;
-            const hex = btn.getAttribute('data-hex') || '#000000';
-            document.getElementById('editId').value = btn.getAttribute('data-id');
-            document.getElementById('editName').value = btn.getAttribute('data-name');
-            document.getElementById('editHexInput').value = hex;
-            document.getElementById('editColorPicker').value = hex;
-            hideErrors('editErrors');
         });
 
         document.getElementById('editColorForm').addEventListener('submit', async function(e) {
@@ -302,18 +452,10 @@
             const id = document.getElementById('editId').value;
             const result = await postForm('@Url.Action("Edit")?id=' + id, this, 'editErrors');
             if (result && result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('editColorModal')).hide();
+                closeEditColorModal();
                 sessionStorage.setItem('colorToast', JSON.stringify({ type: 'success', message: result.message }));
                 location.reload();
             }
-        });
-
-        // ---- Delete ----
-        document.getElementById('deleteColorModal').addEventListener('show.bs.modal', function(e) {
-            const btn = e.relatedTarget;
-            document.getElementById('deleteId').value = btn.getAttribute('data-id');
-            document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
-            hideErrors('deleteErrors');
         });
 
         document.getElementById('deleteColorForm').addEventListener('submit', async function(e) {
@@ -321,13 +463,21 @@
             const id = document.getElementById('deleteId').value;
             const result = await postForm('@Url.Action("Delete")/' + id, this, 'deleteErrors');
             if (result && result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('deleteColorModal')).hide();
+                closeDeleteColorModal();
                 sessionStorage.setItem('colorToast', JSON.stringify({ type: 'success', message: result.message }));
                 location.reload();
             }
         });
 
-        // ---- Toast after reload ----
+        window.addEventListener('click', function(e) {
+            var cM = document.getElementById('createColorModal');
+            var eM = document.getElementById('editColorModal');
+            var dM = document.getElementById('deleteColorModal');
+            if (e.target === cM) closeCreateColorModal();
+            if (e.target === eM) closeEditColorModal();
+            if (e.target === dM) closeDeleteColorModal();
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             const raw = sessionStorage.getItem('colorToast');
             if (raw) {

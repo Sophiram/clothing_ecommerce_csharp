@@ -8,688 +8,254 @@
     var amountNeeded = Math.Max(0, freeShippingThreshold - subtotal);
     var progressPercent = Math.Min(100, (int)((subtotal / freeShippingThreshold) * 100));
     var currentUrl = Context.Request.Path + Context.Request.QueryString;
-    var totalItemCount = Model?.Cart?.Items?.Sum(i => i.Quantity) ?? 0;
+    var cartItems = Model?.Cart?.Items?.ToList() ?? new List<WebApplication_ClothingEcommerce.Models.CartItem>();
+    var totalItemCount = cartItems.Sum(i => i.Quantity);
+    var shippingFee = subtotal >= freeShippingThreshold || subtotal == 0 ? 0.00m : 5.00m;
+    var finalTotal = subtotal + shippingFee;
 }
 
-<style>
-    .cart-page {
-        background-color: #f8fafc;
-        min-height: 85vh;
-    }
+<div class="min-h-[85vh] bg-gray-50/50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
 
-    /* Hero Banner */
-    .cart-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border-radius: 28px;
-        position: relative;
-        overflow: hidden;
-        color: #ffffff;
-        box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.25);
-        padding: 2.25rem 2.5rem;
-    }
-
-    .cart-hero::before {
-        content: "";
-        position: absolute;
-        top: -60%;
-        right: -10%;
-        width: 380px;
-        height: 380px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
-        pointer-events: none;
-    }
-
-    .cart-hero-eyebrow {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        color: #93c5fd;
-        margin-bottom: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .cart-hero-icon {
-        width: 68px;
-        height: 68px;
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Free Shipping Banner */
-    .cart-shipping-banner {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 20px;
-        padding: 1.25rem 1.5rem;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02);
-        margin-bottom: 1.5rem;
-    }
-
-    .cart-shipping-progress {
-        height: 8px;
-        background: #f1f5f9;
-        border-radius: 9999px;
-        overflow: hidden;
-        margin-top: 10px;
-    }
-
-    .cart-shipping-progress-bar {
-        background: linear-gradient(90deg, #3b82f6, #10b981);
-        height: 100%;
-        border-radius: 9999px;
-        transition: width 0.5s ease;
-    }
-
-    /* Main Cart Card */
-    .cart-items-card {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-    }
-
-    .cart-card-header {
-        padding: 1.25rem 1.75rem;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #fafbfc;
-    }
-
-    .cart-item-row {
-        padding: 1.5rem 1.75rem;
-        border-bottom: 1px solid #f1f5f9;
-        transition: background 0.15s ease;
-    }
-
-    .cart-item-row:last-child {
-        border-bottom: 0;
-    }
-
-    .cart-item-row:hover {
-        background: #f8fafc;
-    }
-
-    .cart-thumb {
-        width: 88px;
-        height: 110px;
-        object-fit: cover;
-        border-radius: 16px;
-        border: 1px solid #f1f5f9;
-        background: #f8fafc;
-        transition: transform 0.25s ease;
-        flex-shrink: 0;
-    }
-
-    .cart-thumb:hover {
-        transform: scale(1.03);
-    }
-
-    .cart-thumb-placeholder {
-        width: 88px;
-        height: 110px;
-        border-radius: 16px;
-        border: 1px solid #f1f5f9;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #94a3b8;
-        font-size: 28px;
-        flex-shrink: 0;
-    }
-
-    /* Stepper */
-    .cart-stepper {
-        display: inline-flex;
-        align-items: center;
-        background: #f1f5f9;
-        border-radius: 9999px;
-        padding: 3px;
-        border: 1px solid #e2e8f0;
-    }
-
-    .cart-stepper-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 0;
-        background: transparent;
-        color: #0f172a;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 0;
-    }
-
-    .cart-stepper-btn:hover {
-        background: #0f172a;
-        color: #ffffff;
-    }
-
-    .cart-stepper-qty {
-        min-width: 34px;
-        text-align: center;
-        font-size: 14px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .cart-delete-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: 1px solid #fee2e2;
-        background: #ffffff;
-        color: #ef4444;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .cart-delete-btn:hover {
-        background: #ef4444;
-        border-color: #ef4444;
-        color: #ffffff;
-        transform: scale(1.08);
-    }
-
-    /* Sticky Summary Card */
-    .cart-summary-card {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
-        position: sticky;
-        top: 2rem;
-    }
-
-    .cart-summary-body {
-        padding: 1.75rem;
-    }
-
-    .cart-summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        font-size: 14px;
-        color: #64748b;
-    }
-
-    .cart-checkout-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        width: 100%;
-        border: 0;
-        border-radius: 9999px;
-        padding: 15px;
-        background: #0f172a;
-        color: #ffffff !important;
-        font-weight: 700;
-        font-size: 15px;
-        text-decoration: none;
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
-        transition: all 0.2s ease;
-    }
-
-    .cart-checkout-btn:hover {
-        background: #1e293b;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35);
-    }
-
-    .cart-promo-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    .cart-promo-input {
-        border-radius: 9999px;
-        padding: 9px 18px;
-        font-size: 13.5px;
-        border: 1px solid #e2e8f0;
-    }
-
-    .cart-promo-btn {
-        border-radius: 9999px;
-        padding: 9px 20px;
-        font-size: 13px;
-        font-weight: 700;
-        background: #f1f5f9;
-        color: #0f172a;
-        border: 1px solid #e2e8f0;
-        transition: all 0.2s ease;
-    }
-
-    .cart-promo-btn:hover {
-        background: #0f172a;
-        color: #ffffff;
-    }
-
-    /* Reassurance Tiles */
-    .cart-service-tile {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 18px;
-        padding: 1rem 1.25rem;
-    }
-
-    .cart-service-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 18px;
-    }
-
-    /* Empty Cart State */
-    .cart-empty-box {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 28px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-    }
-
-    .cart-empty-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 18px;
-        border-radius: 9999px;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        color: #334155;
-        font-size: 13px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.2s ease;
-    }
-
-    .cart-empty-pill:hover {
-        background: #0f172a;
-        color: #ffffff;
-        border-color: #0f172a;
-        transform: translateY(-1px);
-    }
-
-    @@media (max-width: 768px) {
-        .cart-hero {
-            padding: 1.5rem;
-            border-radius: 20px;
-        }
-
-        .cart-card-header, .cart-item-row, .cart-summary-body {
-            padding: 1.25rem;
-        }
-
-        .cart-thumb, .cart-thumb-placeholder {
-            width: 72px;
-            height: 90px;
-        }
-    }
-</style>
-
-<div class="cart-page py-4 py-lg-5">
-    <div class="container">
+        <!-- 4 TABS GLOBAL ACCOUNT HUB NAV -->
         <partial name="_AccountNav" />
-
-        <!-- HERO BANNER -->
-        <div class="cart-hero mb-4">
-            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 position-relative" style="z-index: 1;">
-                <div>
-                    <div class="cart-hero-eyebrow">
-                        <i class="bi bi-bag-check"></i> CUSTOMER BAG
-                    </div>
-                    <h1 class="h3 fw-bold mb-1 text-white">Shopping Bag</h1>
-                    <p class="text-white-50 mb-0 small">
-                        Review your selected clothing items, adjust quantities, and checkout securely.
-                    </p>
-                </div>
-
-                <div class="d-none d-md-flex cart-hero-icon">
-                    <i class="bi bi-bag"></i>
-                </div>
-            </div>
-        </div>
 
         <!-- ALERTS -->
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 d-flex align-items-center gap-2 mb-4" role="alert">
-                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
-                <span class="fw-medium">@TempData["Success"]</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="mb-6 flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl shadow-sm text-emerald-800 dark:text-emerald-300 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-base"></i>
+                    <span class="font-semibold">@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
-
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 d-flex align-items-center gap-2 mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
-                <span class="fw-medium">@TempData["Error"]</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="mb-6 flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl shadow-sm text-rose-800 dark:text-rose-300 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-base"></i>
+                    <span class="font-semibold">@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
 
-        <!-- FREE SHIPPING PROGRESS BANNER -->
-        @if (Model?.Cart?.Items != null && Model.Cart.Items.Count > 0)
+        @if (cartItems.Any())
         {
-            <div class="cart-shipping-banner">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-truck fs-5 text-primary"></i>
+            <!-- FREE SHIPPING BAR -->
+            <div class="mb-8 p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 text-xs font-semibold">
+                    <div class="flex items-center gap-2 text-gray-700 dark:text-slate-300">
+                        <i class="bi bi-truck text-blue-600 dark:text-blue-400 text-base"></i>
                         @if (amountNeeded > 0)
                         {
-                            <span class="fw-semibold text-dark small">
-                                Add <strong class="text-primary">$@amountNeeded.ToString("N2")</strong> more to qualify for <strong>FREE Standard Delivery</strong>!
-                            </span>
+                            <span>Add <strong class="text-blue-600 dark:text-blue-400">$@amountNeeded.ToString("N2")</strong> more to qualify for <strong>FREE Standard Delivery</strong>!</span>
                         }
                         else
                         {
-                            <span class="fw-bold text-success small">
-                                🎉 Congratulations! You've unlocked <strong>FREE Standard Delivery</strong>!
-                            </span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">🎉 Congratulations! You've unlocked <strong>FREE Standard Delivery</strong>!</span>
                         }
                     </div>
-                    <span class="badge @(amountNeeded > 0 ? "bg-primary-subtle text-primary border border-primary-subtle" : "bg-success text-white") rounded-pill px-3 py-1 small">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold @(amountNeeded > 0 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300")">
                         @(amountNeeded > 0 ? $"{progressPercent}% of $50 Goal" : "Free Delivery Qualified")
                     </span>
                 </div>
-                <div class="cart-shipping-progress">
-                    <div class="cart-shipping-progress-bar" style="width: @progressPercent%"></div>
+                <div class="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-500"
+                         style="width: @progressPercent%"></div>
                 </div>
             </div>
-        }
 
-        <!-- EMPTY CART STATE -->
-        @if (Model?.Cart?.Items == null || Model.Cart.Items.Count == 0)
-        {
-            <div class="cart-empty-box text-center py-5 px-4 my-2">
-                <div class="py-4">
-                    <div class="rounded-circle bg-light text-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 84px; height: 84px;">
-                        <i class="bi bi-bag-x display-6"></i>
+            <!-- TWO COLUMN CART LAYOUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <!-- ITEMS LIST (8 COLS) -->
+                <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/40">
+                        <h2 class="text-base font-bold text-gray-900 dark:text-white">Bag Items (@totalItemCount)</h2>
+                        <span class="text-xs text-gray-400">Prices in USD ($)</span>
                     </div>
-                    <h4 class="fw-bold mb-2 text-dark">Your shopping bag is empty</h4>
-                    <p class="text-secondary mb-4 mx-auto" style="max-width: 440px;">
-                        Looks like you haven't added anything to your cart yet. Discover our latest seasonal drops, exclusive sales, and timeless clothing.
-                    </p>
-                    
-                    <a asp-controller="Shop" asp-action="Index" class="btn btn-dark rounded-pill px-4 py-2 fw-semibold mb-4">
-                        <span>Explore Catalog</span>
-                        <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
 
-                    <div class="mt-4 pt-4 border-top" style="max-width: 600px; margin: 0 auto;">
-                        <div class="text-uppercase text-secondary small fw-bold mb-3 tracking-wider" style="font-size: 11px;">
-                            POPULAR CATEGORIES
+                    <div class="divide-y divide-gray-100 dark:divide-slate-800 p-6 space-y-6">
+                        @foreach (var item in cartItems)
+                        {
+                            var product = item.Variant?.Product;
+                            var primaryImg = product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                          ?? product?.Images?.FirstOrDefault()?.ImageUrl;
+                            var variantPrice = item.Variant?.Price ?? 0;
+                            var itemTotal = variantPrice * item.Quantity;
+
+                            <div class="pt-6 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <!-- Image -->
+                                    <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-gray-200/60 dark:border-slate-800 relative">
+                                        @if (!string.IsNullOrEmpty(primaryImg))
+                                        {
+                                            <img src="@primaryImg" alt="@(product?.Name ?? "Item")" class="w-full h-full object-cover" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                <i class="bi bi-image text-2xl"></i>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Details -->
+                                    <div>
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                                            @(product?.Brand?.Name ?? "CLOTHÉ")
+                                        </span>
+                                        <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">
+                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product?.Id" class="hover:text-blue-600 transition-colors">
+                                                @(product?.Name ?? "Item")
+                                            </a>
+                                        </h3>
+                                        <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mb-2">
+                                            @if (item.Variant?.Size != null)
+                                            {
+                                                <span>Size: <strong class="text-gray-800 dark:text-slate-200">@item.Variant.Size.Name</strong></span>
+                                            }
+                                            @if (item.Variant?.Color != null)
+                                            {
+                                                <span>Color: <strong class="text-gray-800 dark:text-slate-200">@item.Variant.Color.Name</strong></span>
+                                            }
+                                        </div>
+                                        <span class="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                                            $@variantPrice.ToString("0.00") each
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Stepper, Price & Remove -->
+                                <div class="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-slate-800">
+                                    <!-- Stepper -->
+                                    <div class="flex items-center border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-slate-800">
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="quantity" value="@(item.Quantity - 1)" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="w-8 h-8 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                                    @(item.Quantity <= 1 ? "disabled" : "")>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                        </form>
+                                        <span class="w-9 text-center text-xs font-bold text-gray-900 dark:text-white">
+                                            @item.Quantity
+                                        </span>
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="quantity" value="@(item.Quantity + 1)" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="w-8 h-8 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Item Total -->
+                                    <span class="text-base font-extrabold text-gray-900 dark:text-white">
+                                        $@itemTotal.ToString("0.00")
+                                    </span>
+
+                                    <!-- Delete Button -->
+                                    <form asp-controller="Cart" asp-action="Remove" method="post" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                        <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                                title="Remove item">
+                                            <i class="bi bi-trash text-sm"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Cart Footer Actions -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-slate-800/40 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                        <a asp-controller="Shop" asp-action="Index" class="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                            <i class="bi bi-arrow-left"></i> Continue Shopping
+                        </a>
+                        <span class="text-xs text-gray-400">All prices include local VAT</span>
+                    </div>
+                </div>
+
+                <!-- ORDER SUMMARY SIDEBAR (4 COLS) -->
+                <div class="lg:col-span-4 sticky top-24 space-y-4">
+                    <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Order Summary</h3>
+
+                        <div class="space-y-3 text-xs sm:text-sm border-b border-gray-100 dark:border-slate-800 pb-4">
+                            <div class="flex items-center justify-between text-gray-600 dark:text-slate-400">
+                                <span>Subtotal</span>
+                                <span class="font-bold text-gray-900 dark:text-white">$@subtotal.ToString("0.00")</span>
+                            </div>
+                            <div class="flex items-center justify-between text-gray-600 dark:text-slate-400">
+                                <span>Shipping</span>
+                                @if (shippingFee == 0)
+                                {
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs">Free</span>
+                                }
+                                else
+                                {
+                                    <span class="font-bold text-gray-900 dark:text-white">$@shippingFee.ToString("0.00")</span>
+                                }
+                            </div>
                         </div>
-                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                            <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="cart-empty-pill text-danger">
-                                🔥 Sale & Deals
-                            </a>
-                            <a asp-controller="Shop" asp-action="Index" asp-route-sort="newest" class="cart-empty-pill">
-                                ✨ New Arrivals
-                            </a>
-                            <a asp-controller="Shop" asp-action="Index" asp-route-sort="popularity" class="cart-empty-pill">
-                                ⭐ Best Sellers
-                            </a>
-                            <a asp-controller="Shop" asp-action="Index" class="cart-empty-pill">
-                                👕 All Products
-                            </a>
+
+                        <!-- Total -->
+                        <div class="flex items-center justify-between py-4 text-base font-extrabold text-gray-900 dark:text-white">
+                            <span>Estimated Total</span>
+                            <span class="text-xl sm:text-2xl text-blue-600 dark:text-blue-400">$@finalTotal.ToString("0.00")</span>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <a asp-controller="Checkout" asp-action="Index"
+                           class="btn-primary-clothe w-full py-3 text-sm font-bold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                            <span>Proceed to Checkout</span> <i class="bi bi-arrow-right"></i>
+                        </a>
+
+                        <!-- Payment Trust Badges -->
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 text-center">
+                            <div class="text-[11px] text-gray-400 mb-2 font-medium">Secured with Bakong KHQR &amp; SSL Encryption</div>
+                            <div class="flex items-center justify-center gap-3 text-gray-400 text-sm">
+                                <i class="bi bi-shield-check text-emerald-500"></i>
+                                <i class="bi bi-qr-code text-blue-500"></i>
+                                <i class="bi bi-credit-card"></i>
+                                <i class="bi bi-truck text-amber-500"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         }
         else
         {
-            <div class="row g-4">
-                <!-- CART ITEMS LIST -->
-                <div class="col-lg-8">
-                    <div class="cart-items-card">
-                        <div class="cart-card-header">
-                            <div>
-                                <h5 class="fw-bold mb-0 text-dark">Shopping Items</h5>
-                                <small class="text-secondary">
-                                    @totalItemCount @(totalItemCount == 1 ? "item" : "items") in your bag
-                                </small>
-                            </div>
-                            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold">
-                                <i class="bi bi-arrow-left me-1"></i> Add More Items
-                            </a>
-                        </div>
-
-                        <div>
-                            @foreach (var item in Model.Cart.Items)
-                            {
-                                var image = item.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
-                                            ?? item.Variant?.Product?.Images?.FirstOrDefault();
-                                var itemTotal = item.Quantity * (item.Variant?.Price ?? 0);
-
-                                <div class="cart-item-row">
-                                    <div class="row g-3 align-items-center">
-                                        <!-- Product Thumbnail -->
-                                        <div class="col-auto">
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@item.Variant?.ProductId">
-                                                @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
-                                                {
-                                                    <img src="@image.ImageUrl"
-                                                         alt="@item.Variant?.Product?.Name"
-                                                         class="cart-thumb" />
-                                                }
-                                                else
-                                                {
-                                                    <div class="cart-thumb-placeholder">
-                                                        <i class="bi bi-image"></i>
-                                                    </div>
-                                                }
-                                            </a>
-                                        </div>
-
-                                        <!-- Product Info -->
-                                        <div class="col">
-                                            <span class="small fw-bold text-uppercase text-primary tracking-wider" style="font-size: 11px;">
-                                                @(item.Variant?.Product?.Brand?.Name ?? "CLOTHÉ")
-                                            </span>
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@item.Variant?.ProductId" class="text-decoration-none text-dark d-block">
-                                                <h6 class="fw-bold mb-1 mt-1">
-                                                    @(item.Variant?.Product?.Name ?? "Product Name")
-                                                </h6>
-                                            </a>
-
-                                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                                @if (item.Variant?.Size != null)
-                                                {
-                                                    <span class="badge bg-light text-secondary border">
-                                                        Size: <strong class="text-dark">@item.Variant.Size.Name</strong>
-                                                    </span>
-                                                }
-                                                @if (item.Variant?.Color != null)
-                                                {
-                                                    <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1">
-                                                        @if (!string.IsNullOrEmpty(item.Variant.Color.HexCode))
-                                                        {
-                                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: @item.Variant.Color.HexCode; display: inline-block; border: 1px solid #ccc;"></span>
-                                                        }
-                                                        Color: <strong class="text-dark">@item.Variant.Color.Name</strong>
-                                                    </span>
-                                                }
-                                            </div>
-
-                                            <div class="fw-semibold text-secondary small mb-3">
-                                                $@((item.Variant?.Price ?? 0).ToString("N2")) each
-                                            </div>
-
-                                            <!-- Stepper & Remove -->
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="cart-stepper">
-                                                    <form asp-controller="Cart" asp-action="Update" method="post" class="m-0 p-0">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="id" value="@item.Id" />
-                                                        <input type="hidden" name="quantity" value="@(item.Quantity - 1)" />
-                                                        <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                                        <button type="submit" class="cart-stepper-btn" title="Decrease">
-                                                            <i class="bi bi-dash"></i>
-                                                        </button>
-                                                    </form>
-
-                                                    <span class="cart-stepper-qty">@item.Quantity</span>
-
-                                                    <form asp-controller="Cart" asp-action="Update" method="post" class="m-0 p-0">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="id" value="@item.Id" />
-                                                        <input type="hidden" name="quantity" value="@(item.Quantity + 1)" />
-                                                        <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                                        <button type="submit" class="cart-stepper-btn" title="Increase">
-                                                            <i class="bi bi-plus"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-
-                                                <form asp-controller="Cart" asp-action="Remove" method="post" class="m-0 p-0">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@item.Id" />
-                                                    <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                                    <button type="submit" class="cart-delete-btn" title="Remove item">
-                                                        <i class="bi bi-trash3"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-
-                                        <!-- Line Total -->
-                                        <div class="col-12 col-md-auto text-md-end pt-2 pt-md-0 border-top border-md-0">
-                                            <small class="text-secondary d-block" style="font-size: 11px;">Line Total</small>
-                                            <strong class="fs-5 text-dark fw-bold d-block">
-                                                $@itemTotal.ToString("N2")
-                                            </strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
+            <!-- EMPTY CART STATE -->
+            <div class="text-center py-16 px-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm">
+                <div class="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-3xl mx-auto mb-4">
+                    <i class="bi bi-bag-x"></i>
                 </div>
-
-                <!-- ORDER SUMMARY SIDEBAR -->
-                <div class="col-lg-4">
-                    <div class="cart-summary-card mb-4">
-                        <div class="cart-summary-body">
-                            <span class="small fw-bold text-uppercase text-primary tracking-wider d-block mb-1" style="font-size: 11px;">
-                                ORDER SUMMARY
-                            </span>
-                            <h5 class="fw-bold mb-4 text-dark">Price Breakdown</h5>
-
-                            <div class="cart-summary-row">
-                                <span>Bag Subtotal</span>
-                                <strong class="text-dark">$@Model.SubTotal.ToString("N2")</strong>
-                            </div>
-
-                            <div class="cart-summary-row">
-                                <span>Estimated Shipping</span>
-                                @if (Model.SubTotal >= freeShippingThreshold)
-                                {
-                                    <span class="text-success fw-bold">FREE</span>
-                                }
-                                else
-                                {
-                                    <strong class="text-dark">$@Model.DeliveryFee.ToString("N2")</strong>
-                                }
-                            </div>
-
-                            <div class="cart-summary-row">
-                                <span>Estimated Tax</span>
-                                <strong class="text-dark">$0.00</strong>
-                            </div>
-
-                            <!-- PROMO CODE -->
-                            <div class="my-3 pt-3 border-top">
-                                <label class="form-label small fw-bold text-secondary">Promotional Voucher</label>
-                                <div class="cart-promo-group">
-                                    <input type="text" class="form-control cart-promo-input" placeholder="Coupon code" />
-                                    <button type="button" class="btn cart-promo-btn">Apply</button>
-                                </div>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center pt-3 border-top mb-4">
-                                <strong class="fs-6 text-dark fw-bold">Total Amount</strong>
-                                <strong class="fs-3 text-dark fw-bold">
-                                    $@Model.Total.ToString("N2")
-                                </strong>
-                            </div>
-
-                            <a asp-controller="Checkout"
-                               asp-action="Index"
-                               class="cart-checkout-btn mb-3">
-                                <i class="bi bi-lock-fill"></i>
-                                <span>Proceed to Checkout</span>
-                                <i class="bi bi-arrow-right"></i>
-                            </a>
-
-                            <div class="text-center small text-secondary">
-                                <i class="bi bi-shield-check text-success me-1"></i>
-                                256-Bit SSL Encrypted & Guaranteed Safe
-                            </div>
-
-                            <div class="d-flex justify-content-center align-items-center gap-3 mt-3 pt-3 border-top text-secondary fs-5">
-                                <i class="bi bi-credit-card" title="Credit Card"></i>
-                                <i class="bi bi-wallet2" title="Digital Wallet"></i>
-                                <i class="bi bi-apple" title="Apple Pay"></i>
-                                <i class="bi bi-google" title="Google Pay"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- REASSURANCE TILES -->
-                    <div class="d-flex flex-column gap-3">
-                        <div class="cart-service-tile d-flex align-items-center gap-3">
-                            <div class="cart-service-icon bg-success-subtle text-success">
-                                <i class="bi bi-truck"></i>
-                            </div>
-                            <div>
-                                <strong class="d-block text-dark small fw-bold">Fast & Complimentary Shipping</strong>
-                                <small class="text-secondary" style="font-size: 12px;">Orders over $50 qualify for free express delivery.</small>
-                            </div>
-                        </div>
-
-                        <div class="cart-service-tile d-flex align-items-center gap-3">
-                            <div class="cart-service-icon bg-primary-subtle text-primary">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </div>
-                            <div>
-                                <strong class="d-block text-dark small fw-bold">30-Day Hassle-Free Returns</strong>
-                                <small class="text-secondary" style="font-size: 12px;">Love it or return/exchange easily within 30 days.</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Your shopping bag is empty</h2>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                    Looks like you haven't added any clothing pieces yet. Explore our latest seasonal drops and wardrobe essentials.
+                </p>
+                <a asp-controller="Shop" asp-action="Index" class="btn-primary-clothe py-3 px-8 text-sm">
+                    <span>Explore Catalog</span> <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
         }
+
     </div>
 </div>

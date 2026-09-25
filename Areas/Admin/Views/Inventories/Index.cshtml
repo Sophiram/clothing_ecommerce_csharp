@@ -2,226 +2,416 @@
 
 @{
     ViewData["Title"] = "Inventory";
+    var totalRecords = Model.Count();
+    var totalOnHand = Model.Sum(i => i.Quantity);
+    var totalReserved = Model.Sum(i => i.ReservedQuantity);
+    var outOfStockCount = Model.Count(i => i.AvailableQuantity <= 0);
 }
 
-<div class="admin-page">
+<div class="space-y-6">
 
     <!-- PAGE HEADER -->
-    <div class="page-header">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <div class="page-eyebrow">CATALOG</div>
-            <h1 class="page-title">Inventory</h1>
-            <p class="page-description">Cross-product stock levels — a warehouse view across every variant.</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-boxes"></i>
+                <span>WAREHOUSE &amp; INVENTORY</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Inventory
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Cross-product stock levels — a warehouse view across every variant SKU.
+            </p>
         </div>
 
-        <a asp-action="Create" class="btn-primary-custom">
-            <i class="bi bi-plus-lg"></i>
-            Add Inventory
-        </a>
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-action="Create"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Inventory</span>
+            </a>
+        </div>
     </div>
 
     <!-- ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="admin-alert admin-alert-success">
-            <i class="bi bi-check-circle-fill"></i>
-            @TempData["Success"]
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-check-circle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Success"]</span>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="admin-alert admin-alert-danger">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            @TempData["Error"]
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-exclamation-triangle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Error"]</span>
         </div>
     }
 
-    <!-- MAIN CARD -->
-    <div class="admin-card">
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div class="admin-card-header">
-            <div>
-                <h3 class="admin-card-title">All Inventory Records</h3>
-                <p class="admin-card-subtitle">Stock, reserved units, and last update per SKU</p>
+        <!-- 1. TOTAL SKUs -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tracked SKUs</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-upc-scan"></i>
+                </span>
             </div>
-            <div class="admin-card-count">
-                <span>@Model.Count()</span>
-                <small>total</small>
-            </div>
-        </div>
-
-        <!-- FILTER -->
-        <div class="search-wrapper">
-            <form asp-action="Index" method="get" class="search-form flex-wrap">
-
-                <div class="search-input-wrapper" style="flex: 2; min-width: 220px;">
-                    <select name="productId" class="search-input" asp-items="ViewBag.Products">
-                        <option value="">All Products</option>
-                    </select>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalRecords
                 </div>
-
-                <button type="submit" class="btn-search">
-                    <i class="bi bi-funnel"></i> Filter
-                </button>
-
-                <a asp-action="Index" class="btn-reset">
-                    <i class="bi bi-arrow-repeat"></i> Reset
-                </a>
-
-            </form>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Distinct variant items</span>
+                </div>
+            </div>
         </div>
 
-        <!-- TABLE -->
-        <div class="table-responsive">
+        <!-- 2. TOTAL ON HAND -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Units</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-box-seam-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @totalOnHand
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Units in warehouse</span>
+                </div>
+            </div>
+        </div>
 
-            <table class="admin-table">
+        <!-- 3. RESERVED UNITS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Reserved Units</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-lock-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                    @totalReserved
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Allocated to customer orders</span>
+                </div>
+            </div>
+        </div>
 
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Size</th>
-                        <th>Color</th>
-                        <th>Total</th>
-                        <th>Reserved</th>
-                        <th>Available</th>
-                        <th>Updated</th>
-                        <th style="text-align:right;">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @if (Model.Any())
-                    {
-                        @foreach (var item in Model)
-                        {
-                            var available = item.AvailableQuantity;
-
-                            <tr>
-
-                                <td class="payment-name">
-                                    @item.ProductVariant.Product.Name
-                                </td>
-
-                                <td>
-                                    <code>@item.ProductVariant.SKU</code>
-                                </td>
-
-                                <td>
-                                    <span class="tag-badge">@item.ProductVariant.Size.Name</span>
-                                </td>
-
-                                <td>
-                                    <span class="tag-badge">@item.ProductVariant.Color.Name</span>
-                                </td>
-
-                                <td>
-                                    <strong>@item.Quantity</strong>
-                                </td>
-
-                                <td>
-                                    @item.ReservedQuantity
-                                </td>
-
-                                <td>
-                                    @if (available > 0)
-                                    {
-                                        <span class="status-badge status-active">@available</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="status-badge status-danger">Out of Stock</span>
-                                    }
-                                </td>
-
-                                <td>
-                                    <small class="description-text">@item.UpdatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small>
-                                </td>
-
-                                <td class="text-end">
-                                    <div class="dropdown">
-                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
-                                            <li>
-                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
-                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id">
-                                                    <i class="bi bi-pencil text-warning"></i> <span>Edit Stock</span>
-                                                </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider my-1" /></li>
-                                            <li>
-                                                <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.Id">
-                                                    <i class="bi bi-trash"></i> <span>Delete Inventory</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
-
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="9">
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="bi bi-box-seam"></i>
-                                    </div>
-                                    <h5>No inventory records</h5>
-                                    <p>Start by adding inventory for a product variant, or adjust your filter.</p>
-                                    <a asp-action="Create" class="btn-primary-custom">
-                                        <i class="bi bi-plus-lg"></i> Add Inventory
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-
-                </tbody>
-
-            </table>
-
+        <!-- 4. OUT OF STOCK SKUs -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stock Alerts</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400 tabular-nums">
+                    @outOfStockCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>SKUs currently depleted</span>
+                </div>
+            </div>
         </div>
 
     </div>
 
+    <!-- FILTER TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <form asp-action="Index" method="get" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <select name="productId" asp-items="ViewBag.Products"
+                        class="w-full text-xs font-semibold py-2.5 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Products</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="submit"
+                        class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> <span>Filter</span>
+                </button>
+                <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Reset Filter">
+                    <i class="bi bi-arrow-repeat text-xs"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- INVENTORY TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        @if (Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-4" style="width: 60px;">Image</th>
+                            <th class="py-3 px-4">Product Variant</th>
+                            <th class="py-3 px-4">SKU</th>
+                            <th class="py-3 px-4">Size &amp; Color</th>
+                            <th class="py-3 px-4">Total</th>
+                            <th class="py-3 px-4">Reserved</th>
+                            <th class="py-3 px-4">Available</th>
+                            <th class="py-3 px-4">Last Updated</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        @foreach (var item in Model)
+                        {
+                            var available = item.AvailableQuantity;
+                            var prodName = item.ProductVariant?.Product?.Name ?? "Product";
+                            var sku = item.ProductVariant?.SKU ?? "—";
+                            var size = item.ProductVariant?.Size?.Name ?? "—";
+                            var color = item.ProductVariant?.Color?.Name ?? "—";
+                            var invImg = item.ProductVariant?.Product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                         ?? item.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl;
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                                <!-- Image Thumbnail -->
+                                <td class="py-3.5 px-4">
+                                    @if (!string.IsNullOrWhiteSpace(invImg))
+                                    {
+                                        <img src="@invImg"
+                                             alt="@prodName"
+                                             class="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    }
+                                </td>
+
+                                <!-- Product Name -->
+                                <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                                    @prodName
+                                </td>
+
+                                <!-- SKU -->
+                                <td class="py-3.5 px-4 font-mono text-[11px] text-slate-600 dark:text-slate-300 font-semibold">
+                                    @sku
+                                </td>
+
+                                <!-- Size & Color -->
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] border border-slate-200 dark:border-slate-700">
+                                            @size
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] border border-slate-200 dark:border-slate-700">
+                                            @color
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- Total Quantity -->
+                                <td class="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                                    @item.Quantity
+                                </td>
+
+                                <!-- Reserved Quantity -->
+                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
+                                    @item.ReservedQuantity
+                                </td>
+
+                                <!-- Available Quantity -->
+                                <td class="py-3.5 px-4">
+                                    @if (available > 0)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800 tabular-nums">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> @available in stock
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Depleted
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Last Updated -->
+                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 tabular-nums text-[11px]">
+                                    @item.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 hover:border-blue-300 transition"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <button type="button"
+                                                onclick="openEditStockModal('@item.Id', '@item.ProductVariantId', '@prodName', '@sku', '@size', '@color', @item.Quantity, @item.ReservedQuantity, '@(invImg ?? "")')"
+                                                class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 hover:border-amber-300 transition cursor-pointer"
+                                                title="Edit Stock">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" onsubmit="return confirm('Are you sure you want to delete this inventory record?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 hover:border-rose-300 transition cursor-pointer"
+                                                    title="Delete Record">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-12 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">No Inventory Records Found</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                    Try adjusting your product filter or create a new inventory allocation for an active product variant.
+                </p>
+                <a asp-action="Create" class="inline-flex items-center gap-1.5 px-4 py-2 mt-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow">
+                    <i class="bi bi-plus-lg"></i> <span>Allocate Stock</span>
+                </a>
+            </div>
+        }
+    </div>
+
 </div>
 
-<style>
-    .status-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
+<!-- EDIT STOCK MODAL (TAILWIND) -->
+<div id="editStockModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-pencil-square text-blue-600"></i>
+                <span>Adjust Stock Levels</span>
+            </h3>
+            <button type="button" onclick="closeEditStockModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
 
-    .status-active {
-        background: #dcfce7;
-        color: #15803d;
-    }
+        <form id="editStockForm" method="post" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editStockId" />
+            <input type="hidden" name="ProductVariantId" id="editStockVariantId" />
 
-    .status-danger {
-        background: #fee2e2;
-        color: #b91c1c;
-    }
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700 text-xs flex items-center gap-3">
+                <img id="modalProductImg" src="" alt="Product" class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs hidden" />
+                <div id="modalProductImgPlaceholder" class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs flex-shrink-0">
+                    <i class="bi bi-image"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="font-bold text-slate-900 dark:text-white truncate" id="modalProductName"></div>
+                    <div class="text-[11px] text-slate-400 font-mono mt-0.5" id="modalProductSku"></div>
+                </div>
+            </div>
 
-    .tag-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        font-size: 0.8rem;
-    }
-</style>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Total On Hand</label>
+                    <input type="number" name="Quantity" id="editStockQty" min="0"
+                           class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Reserved Units</label>
+                    <input type="number" name="ReservedQuantity" id="editStockReserved" min="0"
+                           class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditStockModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditStockModal(id, variantId, name, sku, size, color, qty, reserved, imageUrl) {
+            document.getElementById('editStockId').value = id;
+            document.getElementById('editStockVariantId').value = variantId;
+            document.getElementById('editStockQty').value = qty;
+            document.getElementById('editStockReserved').value = reserved;
+
+            document.getElementById('modalProductName').textContent = name;
+            document.getElementById('modalProductSku').textContent = `${sku} • ${size} / ${color}`;
+
+            const imgEl = document.getElementById('modalProductImg');
+            const phEl = document.getElementById('modalProductImgPlaceholder');
+            if (imageUrl && imageUrl.trim() !== '') {
+                imgEl.src = imageUrl;
+                imgEl.classList.remove('hidden');
+                phEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                phEl.classList.remove('hidden');
+            }
+
+            document.getElementById('editStockForm').action = '@Url.Action("Edit", "Inventories")/' + id;
+
+            const modal = document.getElementById('editStockModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditStockModal() {
+            const modal = document.getElementById('editStockModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function confirmDeleteInventory(id, label) {
+            var isKh = (localStorage.getItem('site_language') || 'en') === 'kh';
+            Swal.fire({
+                title: isKh ? 'តើអ្នកប្រាកដទេ?' : 'Delete Inventory Record?',
+                text: isKh ? `តើអ្នកពិតជាចង់លុបស្តុកសម្រាប់ "${label}" មែនទេ?` : `Are you sure you want to delete stock record for "${label}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: isKh ? 'បាទ/ចាស លុបវា!' : 'Yes, delete it!',
+                cancelButtonText: isKh ? 'បោះបង់' : 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm-' + id).submit();
+                }
+            });
+        }
+    </script>
+}
+

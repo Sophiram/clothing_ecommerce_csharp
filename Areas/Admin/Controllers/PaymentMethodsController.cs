@@ -41,6 +41,25 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             return View(method);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetMethodJson(Guid id)
+        {
+            var method = await _paymentService.GetPaymentMethodByIdAsync(id);
+            if (method == null) return NotFound();
+
+            return Json(new
+            {
+                id = method.Id,
+                name = method.Name,
+                description = method.Description ?? string.Empty,
+                icon = method.Icon ?? string.Empty,
+                displayOrder = method.DisplayOrder,
+                isActive = method.IsActive,
+                paymentsCount = method.Payments?.Count ?? 0,
+                createdAt = method.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
+            });
+        }
+
         // =========================================================
         // CREATE GET
         // =========================================================

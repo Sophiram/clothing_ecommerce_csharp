@@ -243,6 +243,22 @@ namespace WebApplication_ClothingEcommerce.Services
             };
         }
 
+        public async Task<ProductDetailsResult> GetFirstProductDetailsAsync()
+        {
+            var firstProduct = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Status == ProductStatus.Active)
+                .OrderBy(p => p.Name)
+                .FirstOrDefaultAsync();
+
+            if (firstProduct == null)
+            {
+                return new ProductDetailsResult { Product = null };
+            }
+
+            return await GetProductDetailsAsync(firstProduct.Id);
+        }
+
         public async Task<(List<Product> Products, List<Category> Categories, List<Brand> Brands)> GetAdminShopDataAsync(Guid? categoryId, Guid? brandId, string? search)
         {
             var query = _context.Products

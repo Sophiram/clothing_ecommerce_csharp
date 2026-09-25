@@ -1,0 +1,14 @@
+{
+  "name": "webapplication_clothingecommerce",
+  "version": "1.0.0",
+  "description": "CLOTHÉ Tailwind CSS Build System",
+  "scripts": {
+    "build:css": "tailwindcss -i ./wwwroot/css/tailwind-input.css -o ./wwwroot/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./wwwroot/css/tailwind-input.css -o ./wwwroot/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}

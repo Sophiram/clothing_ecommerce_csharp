@@ -57,6 +57,8 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 Selected = paymentMethodId == x.Id
             }).ToList();
 
+            ViewBag.ActivePaymentMethods = await _paymentService.GetActivePaymentMethodsAsync();
+
             return View(payments);
         }
 
@@ -72,6 +74,32 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             if (payment == null) return NotFound();
 
             return View(payment);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPaymentDetailsJson(Guid id)
+        {
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
+            if (payment == null) return NotFound();
+
+            var custName = $"{payment.Order?.Customer?.FirstName} {payment.Order?.Customer?.LastName}".Trim();
+            if (string.IsNullOrWhiteSpace(custName)) custName = payment.Order?.Customer?.Email ?? "Guest Customer";
+
+            return Json(new
+            {
+                id = payment.Id,
+                orderId = payment.OrderId,
+                orderShortId = payment.OrderId.ToString()[..8].ToUpper(),
+                customerName = custName,
+                customerEmail = payment.Order?.Customer?.Email ?? "—",
+                customerPhone = payment.Order?.Customer?.Phone ?? "—",
+                paymentMethodId = payment.PaymentMethodId,
+                paymentMethodName = payment.PaymentMethod?.Name ?? "Credit / Debit Card",
+                status = payment.PaymentStatus.ToString(),
+                amount = payment.Amount,
+                paidAt = payment.PaidAt?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm"),
+                paidAtFormatted = payment.PaidAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "Pending / Unpaid"
+            });
         }
 
         // =========================================================
@@ -96,6 +124,9 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Payment payment)
         {
+            ModelState.Remove("Order");
+            ModelState.Remove("PaymentMethod");
+
             if (!ModelState.IsValid)
             {
                 await LoadOrdersAsync(payment.OrderId);
@@ -133,6 +164,14 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             await LoadOrdersAsync(payment.OrderId);
             await LoadPaymentMethodsAsync(payment.PaymentMethodId);
 
+            ViewBag.PaymentStatusList = Enum.GetValues<PaymentStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Text = s.ToString(),
+                    Value = s.ToString(),
+                    Selected = payment.PaymentStatus == s
+                }).ToList();
+
             return View(payment);
         }
 
@@ -145,10 +184,20 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
         {
             if (id != payment.Id) return NotFound();
 
+            ModelState.Remove("Order");
+            ModelState.Remove("PaymentMethod");
+
             if (!ModelState.IsValid)
             {
                 await LoadOrdersAsync(payment.OrderId);
                 await LoadPaymentMethodsAsync(payment.PaymentMethodId);
+                ViewBag.PaymentStatusList = Enum.GetValues<PaymentStatus>()
+                    .Select(s => new SelectListItem
+                    {
+                        Text = s.ToString(),
+                        Value = s.ToString(),
+                        Selected = payment.PaymentStatus == s
+                    }).ToList();
                 return View(payment);
             }
 
@@ -161,6 +210,13 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
                 }
                 await LoadOrdersAsync(payment.OrderId);
                 await LoadPaymentMethodsAsync(payment.PaymentMethodId);
+                ViewBag.PaymentStatusList = Enum.GetValues<PaymentStatus>()
+                    .Select(s => new SelectListItem
+                    {
+                        Text = s.ToString(),
+                        Value = s.ToString(),
+                        Selected = payment.PaymentStatus == s
+                    }).ToList();
                 return View(payment);
             }
 

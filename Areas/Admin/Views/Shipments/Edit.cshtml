@@ -32,7 +32,14 @@
 
                 <div class="mb-3">
                     <label asp-for="ShippingCompany" class="form-label fw-semibold">Shipping Carrier</label>
-                    <input asp-for="ShippingCompany" class="form-control" placeholder="e.g. J&T Express, DHL, FedEx" required />
+                    <select asp-for="ShippingCompany" class="form-select" required>
+                        <option value="VET Express (VET)">VET Express (VET)</option>
+                        <option value="J&T Express">J&T Express (J&T)</option>
+                        <option value="Virak Buntham Logistics">Virak Buntham Logistics</option>
+                        <option value="Standard Courier">Standard Courier</option>
+                        <option value="DHL Express">DHL Express</option>
+                        <option value="FedEx">FedEx</option>
+                    </select>
                     <span asp-validation-for="ShippingCompany" class="text-danger small"></span>
                 </div>
 

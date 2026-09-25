@@ -1,0 +1,263 @@
+@model WebApplication_ClothingEcommerce.Models.HomePageSettings
+
+@{
+    ViewData["Title"] = "Manage Homepage & Hero Banner";
+}
+
+<div class="p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">
+                <span data-en="Storefront Customization" data-kh="ការកែសម្រួលទំព័រដើម">Storefront Customization</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight"
+                data-en="Manage Homepage & Hero" data-kh="គ្រប់គ្រងទំព័រដើម & បដា Hero">
+                Manage Homepage & Hero
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1"
+               data-en="Customize hero content, promotional announcement bar, stats and imagery live on the storefront."
+               data-kh="កែប្រែមាតិកា Hero, របារប្រកាសលក់, ស្ថិតិ និងរូបភាពនៅលើទំព័រដើម។">
+                Customize hero content, promotional announcement bar, stats and imagery live on the storefront.
+            </p>
+        </div>
+
+        <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/80 transition-all shadow-sm">
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span data-en="Preview Storefront" data-kh="មើលហាងផ្ទាល់">Preview Storefront</span>
+        </a>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="flex items-center justify-between gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 shadow-sm">
+            <div class="flex items-center gap-3">
+                <i class="bi bi-check-circle-fill text-xl text-emerald-500"></i>
+                <span class="text-sm font-medium">@TempData["SuccessMessage"]</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 p-1">
+                <i class="bi bi-x-lg text-xs"></i>
+            </button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="flex items-center justify-between gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 shadow-sm">
+            <div class="flex items-center gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-xl text-rose-500"></i>
+                <span class="text-sm font-medium">@TempData["ErrorMessage"]</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 p-1">
+                <i class="bi bi-x-lg text-xs"></i>
+            </button>
+        </div>
+    }
+
+    <!-- CONFIGURATION FORM -->
+    <form asp-area="Admin" asp-controller="HomePage" asp-action="Save" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+
+            <!-- MAIN EDITING PANELS -->
+            <div class="space-y-6">
+
+                <!-- 1. HERO BANNER SECTION -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+                        <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <i class="bi bi-stars text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-gray-900 dark:text-white" data-en="Hero Banner Content" data-kh="មាតិកាបដា Hero">Hero Banner Content</h2>
+                            <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Headline, descriptions, and primary/secondary CTAs" data-kh="ចំណងជើង ការពិពណ៌នា និងប៊ូតុងចុច">Headline, descriptions, and primary/secondary CTAs</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="HeroLabel" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Badge Label" data-kh="ស្លាកសញ្ញា">Badge Label</label>
+                            <input asp-for="HeroLabel" class="input-clothe text-sm" placeholder="NEW COLLECTION 2026" />
+                        </div>
+                        <div>
+                            <label asp-for="HeroHighlightWord" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Highlight Title Word" data-kh="ពាក្យលេចធ្លោ">Highlight Title Word</label>
+                            <input asp-for="HeroHighlightWord" class="input-clothe text-sm" placeholder="identity." />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="HeroTitle" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Hero Main Title" data-kh="ចំណងជើងធំ Hero">Hero Main Title</label>
+                            <input asp-for="HeroTitle" class="input-clothe text-sm" placeholder="Wear your identity." />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="HeroDescription" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Hero Description" data-kh="ការពិពណ៌នា Hero">Hero Description</label>
+                            <textarea asp-for="HeroDescription" class="input-clothe text-sm" rows="3" placeholder="Discover modern clothing designed for everyday confidence..."></textarea>
+                        </div>
+                        <div>
+                            <label asp-for="HeroPrimaryBtnText" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Primary Button Text" data-kh="អត្ថបទប៊ូតុងមេ">Primary Button Text</label>
+                            <input asp-for="HeroPrimaryBtnText" class="input-clothe text-sm" placeholder="Shop Collection" />
+                        </div>
+                        <div>
+                            <label asp-for="HeroPrimaryBtnUrl" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Primary Button URL" data-kh="តំណភ្ជាប់ប៊ូតុងមេ">Primary Button URL</label>
+                            <input asp-for="HeroPrimaryBtnUrl" class="input-clothe text-sm" placeholder="/Shop" />
+                        </div>
+                        <div>
+                            <label asp-for="HeroSecondaryBtnText" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Secondary Button Text" data-kh="អត្ថបទប៊ូតុងរង">Secondary Button Text</label>
+                            <input asp-for="HeroSecondaryBtnText" class="input-clothe text-sm" placeholder="Explore Products" />
+                        </div>
+                        <div>
+                            <label asp-for="HeroSecondaryBtnUrl" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Secondary Button URL" data-kh="តំណភ្ជាប់ប៊ូតុងរង">Secondary Button URL</label>
+                            <input asp-for="HeroSecondaryBtnUrl" class="input-clothe text-sm" placeholder="/Shop" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="HeroImageUrl" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Hero Background / Image URL" data-kh="តំណភ្ជាប់រូបភាព Hero">Hero Background / Image URL</label>
+                            <input asp-for="HeroImageUrl" id="heroImageInput" class="input-clothe text-sm" placeholder="https://images.unsplash.com/..." oninput="updateHeroPreview(this.value)" />
+                            
+                            <!-- Image Preview -->
+                            <div class="mt-3 p-2 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-700">
+                                <span class="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">Live Preview:</span>
+                                <div class="h-32 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                    <img id="heroImagePreview" src="@Model.HeroImageUrl" alt="Hero Preview"
+                                         class="w-full h-full object-cover @(string.IsNullOrEmpty(Model.HeroImageUrl) ? "hidden" : "")"
+                                         onerror="this.classList.add('hidden'); document.getElementById('heroImagePlaceholder').classList.remove('hidden');" />
+                                    <div id="heroImagePlaceholder" class="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-2 @(string.IsNullOrEmpty(Model.HeroImageUrl) ? "" : "hidden")">
+                                        <i class="bi bi-image text-xl"></i>
+                                        <span>No image URL provided</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. PROMO ANNOUNCEMENT BAR SECTION -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+                        <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <i class="bi bi-megaphone text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-gray-900 dark:text-white" data-en="Promo Announcement Bar" data-kh="របារប្រកាសប្រូម៉ូសិន">Promo Announcement Bar</h2>
+                            <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Top bar running on every page with countdown" data-kh="របារកំពូលដែលបង្ហាញគ្រប់ទំព័រ">Top bar running on every page with countdown</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="PromoTag" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Promo Tag" data-kh="ស្លាកប្រូម៉ូសិន">Promo Tag</label>
+                            <input asp-for="PromoTag" class="input-clothe text-sm" placeholder="Flash Sale" />
+                        </div>
+                        <div>
+                            <label asp-for="PromoText" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Announcement Text" data-kh="អត្ថបទប្រកាស">Announcement Text</label>
+                            <input asp-for="PromoText" class="input-clothe text-sm" placeholder="Season Collection — Up to 40% OFF..." />
+                        </div>
+                        <div>
+                            <label asp-for="PromoCtaText" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Promo Button Text" data-kh="អត្ថបទប៊ូតុង">Promo Button Text</label>
+                            <input asp-for="PromoCtaText" class="input-clothe text-sm" placeholder="Shop Now" />
+                        </div>
+                        <div>
+                            <label asp-for="PromoCtaUrl" class="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1.5" data-en="Promo Link URL" data-kh="តំណភ្ជាប់ប្រូម៉ូសិន">Promo Link URL</label>
+                            <input asp-for="PromoCtaUrl" class="input-clothe text-sm" placeholder="/Shop?onSale=true" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SIDEBAR CONTROL & STATS -->
+            <div class="space-y-6">
+
+                <!-- 3. HERO STATS & FLOATING BADGES -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <i class="bi bi-bar-chart-line text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-gray-900 dark:text-white" data-en="Stats & Floating Badges" data-kh="ស្ថិតិ និងស្លាក">Stats & Floating Badges</h2>
+                            <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Metrics displayed around the hero card" data-kh="ស្ថិតិបង្ហាញលើកាត Hero">Metrics displayed around the hero card</p>
+                        </div>
+                    </div>
+
+                    <!-- Floating Badges -->
+                    <div class="space-y-4 mb-6">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 block" data-en="Floating Badges" data-kh="ស្លាកអណ្តែត">Floating Badges</span>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] text-gray-500 dark:text-slate-400">Badge 1 (Title & Subtitle)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input asp-for="FloatingCard1Title" class="input-clothe text-xs py-2" placeholder="New Season" />
+                                <input asp-for="FloatingCard1Sub" class="input-clothe text-xs py-2" placeholder="Fresh styles..." />
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[11px] text-gray-500 dark:text-slate-400">Badge 2 (Title & Subtitle)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input asp-for="FloatingCard2Title" class="input-clothe text-xs py-2" placeholder="Free Shipping" />
+                                <input asp-for="FloatingCard2Sub" class="input-clothe text-xs py-2" placeholder="On orders..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Store Statistics -->
+                    <div class="space-y-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 block" data-en="Store Statistics" data-kh="ស្ថិតិហាង">Store Statistics</span>
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-gray-500 dark:text-slate-400">Stat 1 (Value & Label)</label>
+                            <div class="grid grid-cols-[80px_1fr] gap-2">
+                                <input asp-for="Stat1Value" class="input-clothe text-xs py-2" placeholder="500+" />
+                                <input asp-for="Stat1Label" class="input-clothe text-xs py-2" placeholder="PRODUCTS" />
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-gray-500 dark:text-slate-400">Stat 2 (Value & Label)</label>
+                            <div class="grid grid-cols-[80px_1fr] gap-2">
+                                <input asp-for="Stat2Value" class="input-clothe text-xs py-2" placeholder="50+" />
+                                <input asp-for="Stat2Label" class="input-clothe text-xs py-2" placeholder="BRANDS" />
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-gray-500 dark:text-slate-400">Stat 3 (Value & Label)</label>
+                            <div class="grid grid-cols-[80px_1fr] gap-2">
+                                <input asp-for="Stat3Value" class="input-clothe text-xs py-2" placeholder="10K+" />
+                                <input asp-for="Stat3Label" class="input-clothe text-xs py-2" placeholder="CUSTOMERS" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUBLISH ACTION CARD -->
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl">
+                    <h3 class="text-base font-bold mb-1" data-en="Publish Changes" data-kh="បោះពុម្ពការផ្លាស់ប្តូរ">Publish Changes</h3>
+                    <p class="text-xs text-blue-100 mb-4" data-en="Save updates live to the storefront hero section and promo banner." data-kh="រក្សាទុកការធ្វើបច្ចុប្បន្នភាពនៅលើទំព័រដើមហាងភ្លាមៗ។">
+                        Save updates live to the storefront hero section and promo banner.
+                    </p>
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 transition-all shadow-md active:scale-95">
+                        <i class="bi bi-cloud-arrow-up-fill text-base"></i>
+                        <span data-en="Save Homepage Settings" data-kh="រក្សាទុកការកំណត់ទំព័រដើម">Save Homepage Settings</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateHeroPreview(url) {
+        const preview = document.getElementById('heroImagePreview');
+        const placeholder = document.getElementById('heroImagePlaceholder');
+        if (url && url.trim() !== '') {
+            preview.src = url;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        } else {
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+    }
+</script>

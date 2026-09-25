@@ -13,17 +13,20 @@ namespace WebApplication_ClothingEcommerce.Controllers
         private readonly IOrderService _orderService;
         private readonly ICartService _cartService;
         private readonly IPaymentService _paymentService;
+        private readonly IDeliveryService _deliveryService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public CheckoutController(
             IOrderService orderService,
             ICartService cartService,
             IPaymentService paymentService,
+            IDeliveryService deliveryService,
             UserManager<ApplicationUser> userManager)
         {
             _orderService = orderService;
             _cartService = cartService;
             _paymentService = paymentService;
+            _deliveryService = deliveryService;
             _userManager = userManager;
         }
 
@@ -38,6 +41,16 @@ namespace WebApplication_ClothingEcommerce.Controllers
         private async Task LoadPaymentMethodsAsync()
         {
             ViewBag.PaymentMethods = await _paymentService.GetActivePaymentMethodsAsync();
+            ViewBag.DeliveryMethods = await _deliveryService.GetActiveDeliveryMethodsAsync();
+            ViewBag.DeliveryBranches = await _deliveryService.GetBranchesByCarrierAsync("VETExpress");
+            ViewBag.Provinces = await _deliveryService.GetProvincesAsync("VETExpress");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetBranches(string province)
+        {
+            var branches = await _deliveryService.GetBranchesByProvinceAsync(province, "VETExpress");
+            return Json(branches.Select(b => new { id = b.Id, name = b.BranchName, address = b.Address, phone = b.Phone }));
         }
 
         // =========================================================
@@ -121,7 +134,62 @@ namespace WebApplication_ClothingEcommerce.Controllers
             }
 
             TempData["Success"] = result.Message;
-            return RedirectToAction("Details", "Orders", new { id = result.OrderId });
+            return RedirectToAction("Success", new { id = result.OrderId });
+        }
+
+        /// <summary>
+        /// POST: /Checkout/CreateOrder
+        /// Creates the initial order from checkout form via AJAX and returns the new orderId.
+        /// Used by the dynamic Bakong KHQR checkout flow.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
+        {
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                return Json(new { success = false, message = "Customer profile was not found." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .ToList();
+                return Json(new { success = false, message = string.Join(" ", errors), errors });
+            }
+
+            var result = await _orderService.PlaceOrderAsync(customer.Id, model);
+            if (!result.Success)
+            {
+                return Json(new { success = false, message = string.Join(" ", result.Errors), errors = result.Errors });
+            }
+
+            return Json(new { success = true, orderId = result.OrderId, message = result.Message });
+        }
+
+        // =========================================================
+        // GET: /Checkout/Success/{id}
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Success(Guid id)
+        {
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var order = await _orderService.GetCustomerOrderByIdAsync(customer.Id, id);
+            if (order == null)
+            {
+                return RedirectToAction("Index", "Orders");
+            }
+
+            return View("Success", order);
         }
 
         [HttpPost]

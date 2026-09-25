@@ -83,962 +83,1148 @@
     }
 
     var navCategories = new List<WebApplication_ClothingEcommerce.Models.Category>();
+    var layoutHomeSettings = new WebApplication_ClothingEcommerce.Models.HomePageSettings();
     try
     {
         navCategories = DbContext.Categories.OrderBy(c => c.Name).ToList();
+        layoutHomeSettings = DbContext.HomePageSettings.FirstOrDefault() ?? layoutHomeSettings;
     }
     catch { }
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 
 <head>
-
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CLOTHÉ</title>
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0" />
+    <!-- Google Fonts: Inter + Kantumruy Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" />
 
-    <title>
-        @ViewData["Title"] - CLOTHÉ
-    </title>
+    <!-- Bootstrap Icons (icon library only, no Bootstrap CSS) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
-    <link rel="preconnect"
-          href="https://fonts.googleapis.com" />
+    <!-- Compiled Standalone Tailwind CSS (Full utility set, responsive, dark mode, Kantumruy Pro) -->
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
 
-    <link rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossorigin />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap"
-          rel="stylesheet">
+    <!-- Theme & i18n engine (runs before DOM paint to avoid flash) -->
+    <script src="~/js/site-theme-i18n.js" asp-append-version="true"></script>
 
-    <link rel="stylesheet"
-          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-
-    <link rel="stylesheet"
-          href="~/css/site.css"
-          asp-append-version="true" />
-
-    <!-- CLOTHÉ Modern Navbar & Authentication Stylesheets -->
-    <link rel="stylesheet"
-          href="~/css/navbar-modern.css"
-          asp-append-version="true" />
-
-    <link rel="stylesheet"
-          href="~/css/auth-modern.css"
-          asp-append-version="true" />
-
+    <!-- Override theme engine to use Tailwind dark class -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('site_theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var isDark = stored === 'dark' || (!stored && prefersDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
 </head>
 
 <body>
 
-    <!-- =====================================================
-         PROMO / COUNTDOWN BAR
-    ====================================================== -->
-    <div class="clothe-promo-bar" id="promoBar">
-        <div class="container clothe-promo-inner">
-            <div class="clothe-promo-text">
-                <span class="clothe-promo-tag">Flash Sale</span>
-                <span>Season Collection — Up to <strong>40% OFF</strong> essentials & trending styles!</span>
-            </div>
+<!-- =========================================================
+     PROMO BAR
+========================================================= -->
+<div id="promoBar" class="promo-bar">
+    <div class="flex items-center gap-2 flex-wrap">
+        <span class="px-2 py-0.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold uppercase rounded-full tracking-wide"
+              data-en="@layoutHomeSettings.PromoTag" data-kh="លក់ប្រូម៉ូសិន">@layoutHomeSettings.PromoTag</span>
+        <span class="text-slate-300" data-en="@layoutHomeSettings.PromoText" data-kh="បណ្តុំរដូវកាល — បញ្ចុះតម្លៃរហូតដល់ ៤០%!">@layoutHomeSettings.PromoText</span>
+    </div>
 
-            <div class="clothe-promo-countdown" id="promoCountdown" aria-label="Sale countdown">
-                <div class="clothe-countdown-unit">
-                    <span id="cd-h">00</span>
-                    <small>H</small>
-                </div>
-                <div class="clothe-countdown-unit">
-                    <span id="cd-m">00</span>
-                    <small>M</small>
-                </div>
-                <div class="clothe-countdown-unit">
-                    <span id="cd-s">00</span>
-                    <small>S</small>
-                </div>
-            </div>
-
-            <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="clothe-promo-cta">
-                Shop Now <i class="bi bi-arrow-right-short"></i>
-            </a>
-
-            <button class="clothe-promo-close" id="promoBarClose" type="button" aria-label="Dismiss promo bar">
-                <i class="bi bi-x-lg"></i>
-            </button>
+    <!-- Countdown -->
+    <div class="flex items-center gap-1.5 flex-shrink-0" id="promoCountdown">
+        <div class="flex flex-col items-center bg-white/10 rounded-lg px-2 py-0.5 min-w-[32px]">
+            <span id="cd-h" class="text-sm font-bold leading-tight">00</span>
+            <span class="text-[8px] text-slate-400 uppercase">H</span>
+        </div>
+        <span class="text-slate-500">:</span>
+        <div class="flex flex-col items-center bg-white/10 rounded-lg px-2 py-0.5 min-w-[32px]">
+            <span id="cd-m" class="text-sm font-bold leading-tight">00</span>
+            <span class="text-[8px] text-slate-400 uppercase">M</span>
+        </div>
+        <span class="text-slate-500">:</span>
+        <div class="flex flex-col items-center bg-white/10 rounded-lg px-2 py-0.5 min-w-[32px]">
+            <span id="cd-s" class="text-sm font-bold leading-tight">00</span>
+            <span class="text-[8px] text-slate-400 uppercase">S</span>
         </div>
     </div>
 
-    <!-- =====================================================
-         CLOTHÉ REFINED NAVBAR
-    ====================================================== -->
-    <nav class="clothe-navbar">
-        <div class="container clothe-nav-container">
+    <div class="flex items-center gap-3 flex-shrink-0">
+        <a href="@layoutHomeSettings.PromoCtaUrl"
+           class="hidden sm:inline-flex items-center gap-1 text-yellow-400 hover:text-yellow-300 font-semibold text-xs transition-colors">
+            <span data-en="@layoutHomeSettings.PromoCtaText" data-kh="ទិញឥឡូវនេះ">@layoutHomeSettings.PromoCtaText</span>
+            <i class="bi bi-arrow-right-short"></i>
+        </a>
+        <button id="promoBarClose" type="button" aria-label="Dismiss"
+                class="text-slate-400 hover:text-white transition-colors p-0.5">
+            <i class="bi bi-x-lg text-xs"></i>
+        </button>
+    </div>
+</div>
+
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
+<header id="siteNavbar"
+        class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-shadow duration-300"
+        style="box-shadow: 0 1px 0 rgba(0,0,0,.06);">
+
+    <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
+        <div class="flex items-center gap-4 h-16">
 
             <!-- BRAND LOGO -->
-            <a class="clothe-brand" asp-controller="Home" asp-action="Index" aria-label="CLOTHÉ — Go to homepage">
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-brand-logo" />
+            <a asp-controller="Home" asp-action="Index" class="flex-shrink-0 flex items-center" aria-label="CLOTHÉ — Go to homepage">
+                <!-- Light mode logo -->
+                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-logo-img h-9 w-auto block dark:hidden" style="height: 36px; width: auto; object-fit: contain;" />
+                <!-- Dark mode logo -->
+                <img src="~/images/ClothingLogoDarkMode.svg" alt="CLOTHÉ" class="clothe-logo-img h-9 w-auto hidden dark:block" style="height: 36px; width: auto; object-fit: contain;" />
             </a>
 
-            <!-- DESKTOP NAVIGATION LINKS -->
-            <ul class="clothe-nav-links d-none d-lg-flex">
-                <li>
-                    <a asp-controller="Home" asp-action="Index"
-                       class="clothe-nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
-                        Home
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Shop" asp-action="Index"
-                       class="clothe-nav-link @(currentController == "Shop" ? "active" : "")">
-                        Shop
-                    </a>
-                </li>
+            <!-- DESKTOP NAV LINKS -->
+            <nav class="hidden lg:flex items-center gap-6 ml-4">
+                <a asp-controller="Home" asp-action="Index"
+                   class="nav-link-clothe @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                    Home
+                </a>
+                <a asp-controller="Shop" asp-action="Index"
+                   class="nav-link-clothe @(currentController == "Shop" ? "active" : "")">
+                    Shop
+                </a>
 
-                <!-- Live category dropdown -->
-                @await Component.InvokeAsync("CategoryNav")
+                <!-- Categories Dropdown -->
+                <div class="dropdown-trigger relative">
+                    <button type="button" class="nav-link-clothe flex items-center gap-1">
+                        <i class="bi bi-grid-3x3-gap-fill text-xs"></i>
+                        Categories
+                        <i class="bi bi-chevron-down text-[10px] opacity-60 transition-transform duration-200"></i>
+                    </button>
+                    <div class="dropdown-panel w-56">
+                        <a asp-controller="Shop" asp-action="Index"
+                           class="dropdown-item-clothe font-semibold text-brand-blue">
+                            <i class="bi bi-collection-fill"></i> All Collections
+                        </a>
+                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
+                        @if (navCategories != null && navCategories.Any())
+                        {
+                            @foreach (var cat in navCategories)
+                            {
+                                <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@cat.Id"
+                                   class="dropdown-item-clothe">
+                                    <i class="bi bi-tag text-gray-400"></i> @cat.Name
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
 
+                <!-- Sale -->
+                <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true"
+                   class="nav-link-clothe text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300">
+                    Sale <span class="sale-pill">HOT</span>
+                </a>
 
-
-                <li>
-                    <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true"
-                       class="clothe-nav-link clothe-nav-link-sale">
-                        Sale
-                        <span class="clothe-sale-pill" aria-hidden="true">HOT</span>
-                    </a>
-                </li>
-                <li>
+                <!-- About & Contact Dropdown -->
+                <div class="dropdown-trigger relative">
                     <a asp-controller="Home" asp-action="About"
-                       class="clothe-nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")">
+                       class="nav-link-clothe flex items-center gap-1 @(currentController == "Home" && (currentAction == "About" || currentAction == "Contact") ? "active" : "")">
                         About
+                        <i class="bi bi-chevron-down text-[10px] opacity-60 transition-transform duration-200"></i>
                     </a>
-                </li>
+                    <div class="dropdown-panel w-52">
+                        <a asp-controller="Home" asp-action="About"
+                           class="dropdown-item-clothe">
+                            <i class="bi bi-info-circle text-brand-blue"></i> About Us
+                        </a>
+                        <a asp-controller="Home" asp-action="About" asp-fragment="contact"
+                           class="dropdown-item-clothe">
+                            <i class="bi bi-chat-dots text-brand-blue"></i> Contact
+                        </a>
+                        <div class="my-1 border-t border-gray-100 dark:border-slate-700"></div>
+                        <a href="https://t.me/khmerclothingstore_bot" target="_blank" rel="noopener noreferrer"
+                           class="dropdown-item-clothe text-[#229ED9] hover:text-[#1b8bc2]">
+                            <i class="bi bi-telegram text-[#229ED9]"></i> Telegram Chat
+                        </a>
+                    </div>
+                </div>
 
                 @if (isAdmin)
                 {
-                    <li>
-                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
-                           class="clothe-admin-badge" aria-label="Open Admin Dashboard">
-                            <i class="bi bi-speedometer2" aria-hidden="true"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                       class="nav-link-clothe flex items-center gap-1.5 text-brand-blue dark:text-blue-400">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
                 }
-            </ul>
+            </nav>
 
-            <!-- LIVE SEARCH BAR (DESKTOP) -->
-            <div class="clothe-nav-search d-none d-lg-block">
-                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form" id="desktopSearchForm" role="search">
-                    <i class="bi bi-search clothe-search-icon" aria-hidden="true"></i>
-                    <input type="text"
-                           name="search"
-                           id="navSearchInput"
-                           class="clothe-search-input"
-                           placeholder="Search styles, brands, collections…"
-                           autocomplete="off"
-                           aria-label="Search products" />
-                    <button type="button" class="clothe-search-clear d-none" id="navSearchClear" aria-label="Clear search">
-                        <i class="bi bi-x-circle-fill" aria-hidden="true"></i>
-                    </button>
-                    <button type="submit" class="clothe-search-submit" aria-label="Submit search">
-                        <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+            <!-- DESKTOP SEARCH -->
+            <div class="hidden lg:block flex-1 max-w-xs xl:max-w-sm">
+                <form asp-controller="Shop" asp-action="Index" method="get"
+                      class="relative flex items-center">
+                    <i class="bi bi-search absolute left-3 text-gray-400 dark:text-slate-500 text-sm pointer-events-none"></i>
+                    <input type="text" name="search" id="navSearchInput"
+                           class="input-clothe pl-9 pr-8 py-2 text-sm"
+                           placeholder="Search styles, brands…"
+                           autocomplete="off" aria-label="Search products" />
+                    <button type="button" id="navSearchClear"
+                            class="absolute right-2 text-gray-400 hover:text-gray-600 hidden">
+                        <i class="bi bi-x-circle-fill text-sm"></i>
                     </button>
                 </form>
             </div>
 
-            <!-- ACTION BUTTONS & USER PROFILE -->
-            <div class="clothe-nav-actions">
+            <!-- SPACER -->
+            <div class="flex-1 lg:flex-none"></div>
 
-                <!-- WISHLIST -->
+            <!-- ACTION BUTTONS -->
+            <div class="flex items-center gap-1">
+
+                <!-- Language Toggle -->
+                <div class="dropdown-trigger relative">
+                    <button type="button"
+                            class="nav-action-btn text-sm font-semibold gap-1.5 w-auto px-2"
+                            title="Language / ភាសា">
+                        <span id="globalLangFlag" class="inline-flex items-center">
+                            <img src="~/images/flags/gb.svg" alt="English" class="w-5 h-3.5 object-cover rounded-xs shadow-xs" />
+                        </span>
+                        <span id="globalLangText" class="hidden xl:inline text-xs font-semibold">ENG</span>
+                        <i class="bi bi-chevron-down text-[9px] opacity-60"></i>
+                    </button>
+                    <div class="dropdown-panel w-44">
+                        <button type="button" onclick="setGlobalLanguage('en')"
+                                class="dropdown-item-clothe justify-between">
+                            <span class="inline-flex items-center gap-2">
+                                <img src="~/images/flags/gb.svg" alt="English" class="w-5 h-3.5 object-cover rounded-xs shadow-xs" />
+                                English
+                            </span>
+                            <i class="bi bi-check2 text-brand-blue hidden" id="checkLangEn"></i>
+                        </button>
+                        <button type="button" onclick="setGlobalLanguage('kh')"
+                                class="dropdown-item-clothe justify-between font-khmer">
+                            <span class="inline-flex items-center gap-2">
+                                <img src="~/images/flags/kh.svg" alt="ភាសាខ្មែរ" class="w-5 h-3.5 object-cover rounded-xs shadow-xs" />
+                                ភាសាខ្មែរ
+                            </span>
+                            <i class="bi bi-check2 text-brand-blue hidden" id="checkLangKh"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dark Mode Toggle -->
+                <button type="button" class="nav-action-btn" id="globalThemeToggleBtn"
+                        onclick="toggleGlobalTheme()" title="Toggle dark mode">
+                    <i class="bi bi-moon-stars-fill" id="globalThemeIcon"></i>
+                </button>
+
+                <!-- Wishlist (authenticated only) -->
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a asp-controller="Wishlist"
-                       asp-action="Index"
-                       class="clothe-action-btn"
-                       title="My Wishlist"
-                       aria-label="My Wishlist">
-                        <i class="bi bi-heart" aria-hidden="true"></i>
+                    <a asp-controller="Wishlist" asp-action="Index"
+                       class="nav-action-btn relative" title="Wishlist" aria-label="My Wishlist">
+                        <i class="bi bi-heart text-base"></i>
                         @if (userWishlistCount > 0)
                         {
-                            <span class="clothe-badge-count" aria-hidden="true">@userWishlistCount</span>
+                            <span class="nav-badge">@userWishlistCount</span>
                         }
                     </a>
                 }
 
-                <!-- CART -->
-                <button type="button"
-                        class="clothe-action-btn"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#cartSidebarDrawer"
-                        aria-controls="cartSidebarDrawer"
-                        title="Shopping Bag"
-                        aria-label="Shopping Bag">
-                    <i class="bi bi-bag" aria-hidden="true"></i>
+                <!-- Cart -->
+                <button type="button" class="nav-action-btn relative" id="cartDrawerToggle"
+                        title="Shopping Bag" aria-label="Shopping Bag">
+                    <i class="bi bi-bag text-base"></i>
                     @if (userCartCount > 0)
                     {
-                        <span class="clothe-badge-count badge-sale" aria-hidden="true">@userCartCount</span>
+                        <span class="nav-badge bg-red-500" id="cartBadge">@userCartCount</span>
+                    }
+                    else
+                    {
+                        <span class="nav-badge bg-red-500 hidden" id="cartBadge">0</span>
                     }
                 </button>
 
-                <!-- USER ACCOUNT -->
+                <!-- User Account -->
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <div class="dropdown">
-                        <button class="clothe-user-trigger"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                                type="button"
-                                aria-label="Account menu">
-                            <span class="clothe-user-avatar">
+                    <div class="dropdown-trigger relative hidden sm:block">
+                        <button type="button" class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                            <span class="user-avatar">
                                 @if (!string.IsNullOrEmpty(userAvatarUrl))
                                 {
-                                    <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
+                                    <img src="@userAvatarUrl" alt="@userDisplayName" class="w-full h-full object-cover" />
                                 }
                                 else
                                 {
                                     @userFirstLetter
                                 }
                             </span>
-                            <span class="clothe-user-name d-none d-lg-inline">@(string.IsNullOrEmpty(userFirstName) ? "Account" : userFirstName)</span>
-                            <i class="bi bi-chevron-down clothe-user-chevron d-none d-lg-inline" aria-hidden="true"></i>
+                            <span class="hidden lg:block text-sm font-medium text-gray-700 dark:text-slate-300 max-w-[80px] truncate">
+                                @(string.IsNullOrEmpty(userFirstName) ? "Account" : userFirstName)
+                            </span>
+                            <i class="bi bi-chevron-down text-[10px] text-gray-400 hidden lg:block"></i>
                         </button>
 
-                        <ul class="dropdown-menu dropdown-menu-end clothe-dropdown-menu">
-                            <li>
-                                <div class="clothe-user-header">
-                                    <div class="clothe-user-header-avatar">
-                                        @if (!string.IsNullOrEmpty(userAvatarUrl))
-                                        {
-                                            <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
-                                        }
-                                        else
-                                        {
-                                            @userFirstLetter
-                                        }
-                                    </div>
-                                    <div class="clothe-user-meta">
-                                        <strong>@userDisplayName</strong>
-                                        <small>@userEmail</small>
-                                        @if (User.IsInRole("SuperAdmin"))
-                                        {
-                                            <span class="clothe-user-role-badge role-admin">
-                                                <i class="bi bi-shield-fill-check" aria-hidden="true"></i> SuperAdmin
-                                            </span>
-                                        }
-                                        else if (isAdmin)
-                                        {
-                                            <span class="clothe-user-role-badge role-admin">
-                                                <i class="bi bi-shield-check" aria-hidden="true"></i> Admin
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="clothe-user-role-badge role-member">
-                                                <i class="bi bi-stars" aria-hidden="true"></i> Member
-                                            </span>
-                                        }
-                                    </div>
+                        <!-- User Dropdown -->
+                        <div class="dropdown-panel w-60">
+                            <!-- User header -->
+                            <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                                <span class="user-avatar flex-shrink-0 w-10 h-10 text-base">
+                                    @if (!string.IsNullOrEmpty(userAvatarUrl))
+                                    {
+                                        <img src="@userAvatarUrl" alt="@userDisplayName" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        @userFirstLetter
+                                    }
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">@userDisplayName</div>
+                                    <div class="text-xs text-gray-500 dark:text-slate-400 truncate">@userEmail</div>
+                                    @if (User.IsInRole("SuperAdmin"))
+                                    {
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide rounded bg-amber-100 text-amber-800">SuperAdmin</span>
+                                    }
+                                    else if (isAdmin)
+                                    {
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide rounded bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Member</span>
+                                    }
                                 </div>
-                            </li>
+                            </div>
 
-                            <li><div class="clothe-dropdown-section-title">My Account</div></li>
-
-                            <li>
-                                <a class="dropdown-item" asp-controller="Profile" asp-action="Index">
-                                    <i class="bi bi-person"></i>
-                                    <span>Profile Overview</span>
+                            <!-- My Account section -->
+                            <div class="py-1">
+                                <p class="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">My Account</p>
+                                <a class="dropdown-item-clothe" asp-controller="Profile" asp-action="Index">
+                                    <i class="bi bi-person w-4 text-center"></i> <span>Profile Overview</span>
                                 </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item" asp-controller="Orders" asp-action="Index">
-                                    <i class="bi bi-box-seam"></i>
-                                    <span>My Orders</span>
+                                <a class="dropdown-item-clothe" asp-controller="Orders" asp-action="Index">
+                                    <i class="bi bi-box-seam w-4 text-center"></i> <span>My Orders</span>
                                 </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item" asp-controller="Wishlist" asp-action="Index">
-                                    <i class="bi bi-heart"></i>
-                                    <span>Wishlist</span>
+                                <a class="dropdown-item-clothe" asp-controller="Wishlist" asp-action="Index">
+                                    <i class="bi bi-heart w-4 text-center"></i> <span>Wishlist</span>
                                 </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item" asp-controller="Cart" asp-action="Index">
-                                    <i class="bi bi-bag"></i>
-                                    <span>Shopping Bag</span>
+                                <a class="dropdown-item-clothe" asp-controller="Cart" asp-action="Index">
+                                    <i class="bi bi-bag w-4 text-center"></i> <span>Shopping Bag</span>
                                 </a>
-                            </li>
+                            </div>
 
                             @if (isAdmin)
                             {
-                                <li><hr class="clothe-dropdown-divider" /></li>
-                                <li><div class="clothe-dropdown-section-title">Administration</div></li>
-
-                                <li>
-                                    <a class="dropdown-item admin-item" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                                        <i class="bi bi-speedometer2"></i>
-                                        <span>Admin Dashboard</span>
+                                <div class="border-t border-gray-100 dark:border-slate-700 py-1">
+                                    <p class="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Administration</p>
+                                    <a class="dropdown-item-clothe text-brand-blue dark:text-blue-400" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                        <i class="bi bi-speedometer2 w-4 text-center"></i> <span>Admin Dashboard</span>
                                     </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item admin-item" asp-area="Admin" asp-controller="Products" asp-action="Index">
-                                        <i class="bi bi-box-seam-fill"></i>
-                                        <span>Manage Products</span>
+                                    <a class="dropdown-item-clothe" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                                        <i class="bi bi-box-seam-fill w-4 text-center"></i> <span>Manage Products</span>
                                     </a>
-                                </li>
+                                </div>
                             }
 
-                            <li><hr class="clothe-dropdown-divider" /></li>
-
-                            <li>
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
+                            <div class="border-t border-gray-100 dark:border-slate-700 py-1">
+                                <form asp-controller="Account" asp-action="Logout" method="post">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="clothe-logout-btn">
-                                        <i class="bi bi-box-arrow-right"></i>
-                                        <span>Sign out</span>
+                                    <button type="submit" class="dropdown-item-clothe text-red-600 dark:text-red-400 w-full">
+                                        <i class="bi bi-box-arrow-right w-4 text-center"></i> <span>Sign out</span>
                                     </button>
                                 </form>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
                     </div>
                 }
                 else
                 {
-                    <div class="d-none d-sm-flex align-items-center gap-2">
-                        <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
-                            <i class="bi bi-person"></i>
-                            <span>Sign in</span>
+                    <div class="hidden sm:flex items-center gap-2 ml-1">
+                        <a asp-controller="Account" asp-action="Login"
+                           class="btn-outline-clothe py-2 px-4 text-xs">
+                            <i class="bi bi-person"></i> Sign in
                         </a>
-
-                        <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
-                            <span>Get started</span>
+                        <a asp-controller="Account" asp-action="Register"
+                           class="btn-primary-clothe py-2 px-4 text-xs">
+                            Get started
                         </a>
                     </div>
                 }
 
-                <!-- MOBILE HAMBURGER TOGGLER -->
-                <button class="clothe-mobile-toggler d-lg-none"
-                        type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#clotheMobileNav"
-                        aria-controls="clotheMobileNav"
-                        aria-label="Open navigation menu"
-                        id="clotheMobileToggler">
-                    <i class="bi bi-list" aria-hidden="true"></i>
+                <!-- Mobile hamburger -->
+                <button type="button" id="mobileMenuToggle"
+                        class="lg:hidden nav-action-btn ml-1"
+                        aria-label="Open menu">
+                    <i class="bi bi-list text-lg" id="mobileMenuIcon"></i>
                 </button>
-
-            </div>
-
-        </div>
-
-     
-    </nav>
-    <!-- MOBILE MENU DRAWER (OFFCANVAS) -->
-    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="clotheMobileNav" aria-labelledby="clotheMobileNavLabel">
-        <div class="offcanvas-header" style="border-bottom: 1px solid #f3f4f6;">
-            <a class="clothe-brand" asp-controller="Home" asp-action="Index" id="clotheMobileNavLabel">
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-brand-logo" style="height:30px;" />
-            </a>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
-        </div>
-        <div class="offcanvas-body clothe-mobile-menu">
-
-            <!-- Logged In User Mobile Card -->
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <div class="clothe-mobile-user-card mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="clothe-user-avatar">
-                            @if (!string.IsNullOrEmpty(userAvatarUrl))
-                            {
-                                <img src="@userAvatarUrl" alt="@userDisplayName" class="clothe-avatar-img" />
-                            }
-                            else
-                            {
-                                @userFirstLetter
-                            }
-                        </span>
-                        <div class="flex-grow-1 overflow-hidden">
-                            <strong class="d-block text-truncate" style="font-size:0.9375rem;color:#0f172a;">@userDisplayName</strong>
-                            <small class="text-muted text-truncate d-block" style="font-size:0.8rem;">@userEmail</small>
-                            @if (User.IsInRole("SuperAdmin"))
-                            {
-                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#fef3c7;color:#92400e;">SuperAdmin</span>
-                            }
-                            else if (isAdmin)
-                            {
-                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#fee2e2;color:#b91c1c;">Admin</span>
-                            }
-                            else
-                            {
-                                <span style="display:inline-block;margin-top:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:4px;background:#dbeafe;color:#1d4ed8;">Member</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="clothe-mobile-user-grid mt-3">
-                        <a asp-controller="Profile" asp-action="Index" class="clothe-mobile-user-tile">
-                            <i class="bi bi-person"></i>
-                            <span>Profile</span>
-                        </a>
-                        <a asp-controller="Orders" asp-action="Index" class="clothe-mobile-user-tile">
-                            <i class="bi bi-box-seam"></i>
-                            <span>Orders</span>
-                        </a>
-                        <a asp-controller="Wishlist" asp-action="Index" class="clothe-mobile-user-tile position-relative">
-                            <i class="bi bi-heart"></i>
-                            <span>Wishlist</span>
-                            @if (userWishlistCount > 0)
-                            {
-                                <span class="badge bg-dark rounded-pill">@userWishlistCount</span>
-                            }
-                        </a>
-                        <button type="button"
-                                class="clothe-mobile-user-tile position-relative border-0 bg-transparent text-start"
-                                data-bs-toggle="offcanvas"
-                                data-bs-target="#cartSidebarDrawer"
-                                aria-controls="cartSidebarDrawer">
-                            <i class="bi bi-bag"></i>
-                            <span>Bag</span>
-                            @if (userCartCount > 0)
-                            {
-                                <span class="badge bg-danger rounded-pill">@userCartCount</span>
-                            }
-                        </button>
-                    </div>
-                </div>
-            }
-
-            <!-- Mobile Search Bar -->
-            <div class="clothe-mobile-search-wrap">
-                <form asp-controller="Shop" asp-action="Index" method="get" class="clothe-search-form" id="mobileSearchForm">
-                    <i class="bi bi-search clothe-search-icon"></i>
-                    <input type="text"
-                           name="search"
-                           id="mobileSearchInput"
-                           class="clothe-search-input"
-                           placeholder="Search styles, brands, collections..."
-                           autocomplete="off" />
-                    <button type="button" class="clothe-search-clear d-none" id="mobileSearchClear" title="Clear search">
-                        <i class="bi bi-x-circle-fill"></i>
-                    </button>
-                    <button type="submit" class="clothe-search-submit" title="Search">
-                        <i class="bi bi-arrow-right-short"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Mobile Navigation List -->
-            <ul class="clothe-mobile-nav-list">
-                <li class="clothe-mobile-nav-item">
-                    <a asp-controller="Home" asp-action="Index" class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">
-                        <span><i class="bi bi-house me-2"></i> Home</span>
-                        <i class="bi bi-chevron-right text-muted small"></i>
-                    </a>
-                </li>
-                <li class="clothe-mobile-nav-item">
-                    <a asp-controller="Shop" asp-action="Index" class="@(currentController == "Shop" && currentAction == "Index" && string.IsNullOrEmpty(Context.Request.Query["onSale"]) && string.IsNullOrEmpty(Context.Request.Query["categoryId"]) ? "active" : "")">
-                        <span><i class="bi bi-shop me-2"></i> Shop All</span>
-                        <i class="bi bi-chevron-right text-muted small"></i>
-                    </a>
-                </li>
-
-                <!-- Categories Expandable Accordion in Mobile -->
-                <li class="clothe-mobile-nav-item">
-                    <a href="#mobileCategoriesCollapse" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mobileCategoriesCollapse" class="d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-grid me-2"></i> Categories</span>
-                        <i class="bi bi-chevron-down text-muted small transition-chevron"></i>
-                    </a>
-                    <div class="collapse ps-3 pe-2 py-1" id="mobileCategoriesCollapse">
-                        <div class="d-flex flex-column gap-1 my-1">
-                            <a asp-controller="Shop" asp-action="Index" class="clothe-mobile-sublink fw-semibold">
-                                <i class="bi bi-collection-fill me-2 text-primary"></i> All Collections
-                            </a>
-                            @if (navCategories != null && navCategories.Any())
-                            {
-                                @foreach (var cat in navCategories)
-                                {
-                                    <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@cat.Id" class="clothe-mobile-sublink">
-                                        <span>@cat.Name</span>
-                                    </a>
-                                }
-                            }
-                        </div>
-                    </div>
-                </li>
-
-                <li class="clothe-mobile-nav-item">
-                    <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="sale-item @(!string.IsNullOrEmpty(Context.Request.Query["onSale"]) ? "active" : "")">
-                        <span><i class="bi bi-lightning-charge-fill me-2"></i> Sale & Promotions</span>
-                        <span class="clothe-sale-pill">HOT</span>
-                    </a>
-                </li>
-                <li class="clothe-mobile-nav-item">
-                    <a asp-controller="Home" asp-action="About" class="@(currentController == "Home" && currentAction == "About" ? "active" : "")">
-                        <span><i class="bi bi-info-circle me-2"></i> About Us</span>
-                        <i class="bi bi-chevron-right text-muted small"></i>
-                    </a>
-                </li>
-
-                @if (isAdmin)
-                {
-                    <li class="clothe-mobile-nav-item">
-                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-danger fw-bold">
-                            <span><i class="bi bi-speedometer2 me-2"></i> Admin Dashboard</span>
-                            <i class="bi bi-chevron-right text-muted small"></i>
-                        </a>
-                    </li>
-                }
-            </ul>
-
-            <!-- Mobile Auth Buttons or Logout -->
-            @if (User.Identity?.IsAuthenticated != true)
-            {
-                <div class="clothe-mobile-auth-block">
-                    <a asp-controller="Account" asp-action="Login" class="clothe-btn-signin">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        <span>Sign in</span>
-                    </a>
-                    <a asp-controller="Account" asp-action="Register" class="clothe-btn-register">
-                        <span>Create Account</span>
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="mt-3 pt-2" style="border-top: 1px solid #f3f4f6;">
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 p-0">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="clothe-logout-btn w-100 justify-content-center" style="padding: 10px 14px;">
-                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-                            <span>Sign out</span>
-                        </button>
-                    </form>
-                </div>
-            }
-        </div>
-    </div>
-
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <main>
-        @RenderBody()
-    </main>
-
-
-    <!-- =====================================================
-         NEWSLETTER STRIP (site-wide, sits above footer)
-    ====================================================== -->
-
-    <section class="newsletter-strip">
-
-        <div class="container">
-
-            <div class="newsletter-strip-inner">
-
-                <div class="newsletter-strip-text">
-                    <span class="newsletter-strip-label">STAY IN THE LOOP</span>
-                    <h3>Get 10% off your first order</h3>
-                    <p>Sign up for drops, deals and style tips. No spam, ever.</p>
-                </div>
-
-                <form class="newsletter-strip-form" id="newsletterForm">
-                    <div class="newsletter-input-wrap">
-                        <i class="bi bi-envelope"></i>
-                        <input type="email" class="newsletter-input" placeholder="Enter your email" required />
-                    </div>
-                    <button type="submit" class="newsletter-submit-btn">
-                        Subscribe
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </form>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
-    <footer class="google-footer">
-
-        <div class="container">
-
-            <div class="footer-top">
-
-                <div class="footer-brand">
-
-                    <div class="footer-google-logo d-flex align-items-center gap-2 mb-3">
-                        <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="height: 35px; width: auto; object-fit: contain;" />
-                    </div>
-
-                    <p>
-                        Modern clothing for everyday life.
-                        Discover quality fashion designed
-                        for confidence and comfort.
-                    </p>
-
-                    <div class="footer-social">
-
-                        <a href="#">
-                            <i class="bi bi-facebook"></i>
-                        </a>
-
-                        <a href="#">
-                            <i class="bi bi-instagram"></i>
-                        </a>
-
-                        <a href="#">
-                            <i class="bi bi-tiktok"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-
-                <div class="footer-column">
-
-                    <h6>SHOP</h6>
-
-                    <a asp-controller="Shop"
-                       asp-action="Index">
-
-                        All Products
-
-                    </a>
-
-                    <a asp-controller="Shop"
-                       asp-action="Index"
-                       asp-route-onSale="true">
-
-                        Sale
-
-                    </a>
-
-                </div>
-
-
-                <div class="footer-column">
-
-                    <h6>ACCOUNT</h6>
-
-                    <a asp-controller="Profile"
-                       asp-action="Index">
-                        My Profile
-                    </a>
-
-                    <a asp-controller="Orders"
-                       asp-action="Index">
-
-                        My Orders
-
-                    </a>
-
-                    <a asp-controller="Wishlist"
-                       asp-action="Index">
-
-                        Wishlist
-
-                    </a>
-
-                    <a asp-controller="Cart"
-                       asp-action="Index">
-
-                        My Cart
-
-                    </a>
-
-                </div>
-
-
-                <div class="footer-column">
-
-                    <h6>COMPANY</h6>
-
-                    <a asp-controller="Home"
-                       asp-action="About">
-
-                        About Us
-
-                    </a>
-
-                    <a asp-controller="Home"
-                       asp-action="About"
-                       asp-fragment="contact">
-
-                        Contact Us
-
-                    </a>
-
-                    <a asp-controller="Home"
-                       asp-action="Privacy">
-
-                        Privacy Policy
-
-                    </a>
-
-                </div>
-
-            </div>
-
-
-            <div class="footer-bottom">
-
-                <span>
-                    © @DateTime.Now.Year CLOTHÉ.
-                    All rights reserved.
-                </span>
-
-                <span>
-                    Made with
-                    <i class="bi bi-heart-fill footer-heart"></i>
-                    for fashion.
-                </span>
-
-            </div>
-
-        </div>
-
-    </footer>
-
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- =====================================================
-         PROMO BAR: countdown + dismiss (resets daily)
-    ====================================================== -->
-    <script>
-            (function () {
-                var bar = document.getElementById('promoBar');
-                var closeBtn = document.getElementById('promoBarClose');
-
-                // Hide for the rest of the browser session if dismissed
-                if (sessionStorage.getItem('promoBarDismissed') === '1') {
-                    if (bar) bar.style.display = 'none';
-                }
-
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', function () {
-                        bar.style.display = 'none';
-                        sessionStorage.setItem('promoBarDismissed', '1');
-                    });
-                }
-
-                // Countdown to the next midnight (rolls over daily)
-                function updateCountdown() {
-                    var now = new Date();
-                    var midnight = new Date(now);
-                    midnight.setHours(24, 0, 0, 0);
-
-                    var diff = midnight - now;
-                    var hours = Math.floor(diff / (1000 * 60 * 60));
-                    var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                    var hEl = document.getElementById('cd-h');
-                    var mEl = document.getElementById('cd-m');
-                    var sEl = document.getElementById('cd-s');
-
-                    if (hEl) hEl.textContent = String(hours).padStart(2, '0');
-                    if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
-                    if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
-                }
-
-                updateCountdown();
-                setInterval(updateCountdown, 1000);
-            })();
-    </script>
-
-    <!-- =====================================================
-         NEWSLETTER FORM (placeholder handler — wire up to your
-         real endpoint / controller action when ready)
-    ====================================================== -->
-    <script>
-            (function () {
-                var form = document.getElementById('newsletterForm');
-                if (!form) return;
-
-                form.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    var input = form.querySelector('.newsletter-input');
-                    var btn = form.querySelector('.newsletter-submit-btn');
-
-                    if (!input || !input.value) return;
-
-                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Subscribed!';
-                    btn.disabled = true;
-                    input.value = '';
-
-                    setTimeout(function () {
-                        btn.innerHTML = 'Subscribe <i class="bi bi-arrow-right"></i>';
-                        btn.disabled = false;
-                    }, 2500);
-                });
-            })();
-    </script>
-
-    <!-- =====================================================
-         NAVBAR SCROLL LISTENER
-    ====================================================== -->
-    <script>
-        (function() {
-            var navbar = document.querySelector('.clothe-navbar');
-            if (!navbar) return;
-
-            function handleScroll() {
-                if (window.scrollY > 15) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
-            }
-
-            window.addEventListener('scroll', handleScroll, { passive: true });
-            handleScroll();
-        })();
-    </script>
-
-    <!-- =====================================================
-         GLOBAL CART TOAST NOTIFICATION
-    ====================================================== -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 2050;">
-        <div id="cartToast" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 14px; background: #0f172a; color: white;">
-            <div class="d-flex p-2 align-items-center">
-                <div class="toast-body d-flex align-items-center gap-3">
-                    <span class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
-                        <i class="bi bi-check-lg"></i>
-                    </span>
-                    <div>
-                        <div class="fw-bold small" id="cartToastTitle">Added to bag!</div>
-                        <div class="text-white-50 small" id="cartToastMsg">Item has been added to your shopping bag.</div>
-                    </div>
-                </div>
-                <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-light rounded-pill ms-auto me-2 px-3 fw-semibold">View Bag</a>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     </div>
+</header>
 
-    <!-- =====================================================
-         CART EVENT LISTENER & REAL-TIME BADGE UPDATER
-    ====================================================== -->
-    <script>
-        window.showCartToast = function(title, message) {
-            const toastEl = document.getElementById('cartToast');
-            if (!toastEl) return;
-            if (title) document.getElementById('cartToastTitle').textContent = title;
-            if (message) document.getElementById('cartToastMsg').textContent = message;
-            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3500 });
-            toast.show();
-        };
+<!-- =========================================================
+     MOBILE DRAWER
+========================================================= -->
+<div id="mobileDrawerOverlay" class="drawer-overlay" onclick="closeMobileMenu()"></div>
+<div id="mobileDrawer" class="drawer-panel left">
 
-        document.addEventListener('cart:updated', async function(e) {
-            if (e && e.detail && e.detail.toast) {
-                window.showCartToast(e.detail.title || "Added to bag!", e.detail.message || "Item was successfully added.");
-            }
+    <!-- Drawer Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-800">
+        <a asp-controller="Home" asp-action="Index">
+            <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="h-7 w-auto" />
+        </a>
+        <button type="button" onclick="closeMobileMenu()"
+                class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+            <i class="bi bi-x-lg text-sm text-gray-500"></i>
+        </button>
+    </div>
 
-            try {
-                const res = await fetch('/Cart/GetCount');
-                if (res.ok) {
-                    const data = await res.json();
-                    const cartBtns = document.querySelectorAll('.clothe-action-btn[title="Shopping Bag"]');
-                    cartBtns.forEach(btn => {
-                        let badge = btn.querySelector('.clothe-badge-count');
-                        if (data.count > 0) {
-                            if (badge) {
-                                badge.textContent = data.count;
-                                badge.classList.remove('d-none');
-                            } else {
-                                badge = document.createElement('span');
-                                badge.className = 'clothe-badge-count badge-sale';
-                                badge.textContent = data.count;
-                                btn.appendChild(badge);
-                            }
-                        } else if (badge) {
-                            badge.classList.add('d-none');
+    <div class="overflow-y-auto h-[calc(100%-64px)]">
+
+        <!-- Logged In User Card -->
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="p-4 border-b border-gray-100 dark:border-slate-800">
+                <div class="flex items-center gap-3">
+                    <span class="user-avatar w-10 h-10 text-base">
+                        @if (!string.IsNullOrEmpty(userAvatarUrl))
+                        {
+                            <img src="@userAvatarUrl" alt="@userDisplayName" class="w-full h-full object-cover" />
                         }
-                    });
+                        else
+                        {
+                            @userFirstLetter
+                        }
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">@userDisplayName</div>
+                        <div class="text-xs text-gray-500 dark:text-slate-400 truncate">@userEmail</div>
+                    </div>
+                </div>
+                <!-- Quick action tiles -->
+                <div class="grid grid-cols-4 gap-2 mt-3">
+                    <a asp-controller="Profile" asp-action="Index"
+                       class="flex flex-col items-center gap-1 p-2 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors text-center">
+                        <i class="bi bi-person text-brand-blue text-base"></i>
+                        <span class="text-[10px] font-medium text-gray-600 dark:text-slate-400">Profile</span>
+                    </a>
+                    <a asp-controller="Orders" asp-action="Index"
+                       class="flex flex-col items-center gap-1 p-2 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors text-center">
+                        <i class="bi bi-box-seam text-brand-blue text-base"></i>
+                        <span class="text-[10px] font-medium text-gray-600 dark:text-slate-400">Orders</span>
+                    </a>
+                    <a asp-controller="Wishlist" asp-action="Index"
+                       class="relative flex flex-col items-center gap-1 p-2 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors text-center">
+                        <i class="bi bi-heart text-brand-blue text-base"></i>
+                        <span class="text-[10px] font-medium text-gray-600 dark:text-slate-400">Wishlist</span>
+                        @if (userWishlistCount > 0)
+                        {
+                            <span class="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center text-[9px] font-bold text-white bg-red-500 rounded-full">@userWishlistCount</span>
+                        }
+                    </a>
+                    <button type="button" id="mobileCartDrawerBtn"
+                            class="relative flex flex-col items-center gap-1 p-2 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors text-center">
+                        <i class="bi bi-bag text-brand-blue text-base"></i>
+                        <span class="text-[10px] font-medium text-gray-600 dark:text-slate-400">Bag</span>
+                        @if (userCartCount > 0)
+                        {
+                            <span class="absolute -top-0.5 -right-0.5 w-4 h-4 flex items-center justify-center text-[9px] font-bold text-white bg-red-500 rounded-full">@userCartCount</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Mobile Search -->
+        <div class="p-4 border-b border-gray-100 dark:border-slate-800">
+            <form asp-controller="Shop" asp-action="Index" method="get" class="relative">
+                <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" name="search" id="mobileSearchInput"
+                       class="input-clothe pl-9 pr-8 text-sm"
+                       placeholder="Search styles, brands…" autocomplete="off" />
+                <button type="button" id="mobileSearchClear"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                    <i class="bi bi-x-circle-fill text-sm"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Mobile Nav Links -->
+        <nav class="p-4 space-y-1">
+            <a asp-controller="Home" asp-action="Index"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium
+                      @(currentController == "Home" && currentAction == "Index" ? "bg-blue-50 dark:bg-blue-900/20 text-brand-blue dark:text-blue-400" : "text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800")
+                      transition-colors">
+                <span class="flex items-center gap-2.5"><i class="bi bi-house w-4 text-center"></i> Home</span>
+                <i class="bi bi-chevron-right text-xs text-gray-400"></i>
+            </a>
+            <a asp-controller="Shop" asp-action="Index"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium
+                      @(currentController == "Shop" ? "bg-blue-50 dark:bg-blue-900/20 text-brand-blue dark:text-blue-400" : "text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800")
+                      transition-colors">
+                <span class="flex items-center gap-2.5"><i class="bi bi-shop w-4 text-center"></i> Shop All</span>
+                <i class="bi bi-chevron-right text-xs text-gray-400"></i>
+            </a>
+
+            <!-- Categories Accordion -->
+            <div>
+                <button type="button" onclick="toggleMobileCategories()"
+                        class="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                    <span class="flex items-center gap-2.5"><i class="bi bi-grid w-4 text-center"></i> Categories</span>
+                    <i class="bi bi-chevron-down text-xs text-gray-400 transition-transform duration-200" id="mobileCatChevron"></i>
+                </button>
+                <div id="mobileCategoryList" class="hidden pl-4 mt-1 space-y-1">
+                    <a asp-controller="Shop" asp-action="Index"
+                       class="block px-3 py-2 rounded-lg text-sm font-semibold text-brand-blue dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                        <i class="bi bi-collection-fill mr-2 text-xs"></i>All Collections
+                    </a>
+                    @if (navCategories != null && navCategories.Any())
+                    {
+                        @foreach (var cat in navCategories)
+                        {
+                            <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@cat.Id"
+                               class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                <i class="bi bi-tag mr-2 text-xs text-gray-400"></i>@cat.Name
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+
+            <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                <span class="flex items-center gap-2.5"><i class="bi bi-lightning-charge-fill w-4 text-center"></i> Sale &amp; Promotions</span>
+                <span class="sale-pill">HOT</span>
+            </a>
+            <a asp-controller="Home" asp-action="About"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                <span class="flex items-center gap-2.5"><i class="bi bi-info-circle w-4 text-center"></i> About Us</span>
+                <i class="bi bi-chevron-right text-xs text-gray-400"></i>
+            </a>
+            <a asp-controller="Home" asp-action="About" asp-fragment="contact"
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                <span class="flex items-center gap-2.5"><i class="bi bi-chat-dots w-4 text-center"></i> Contact &amp; Support</span>
+                <i class="bi bi-chevron-right text-xs text-gray-400"></i>
+            </a>
+
+            @if (isAdmin)
+            {
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                   class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold text-brand-blue dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                    <span class="flex items-center gap-2.5"><i class="bi bi-speedometer2 w-4 text-center"></i> Admin Dashboard</span>
+                    <i class="bi bi-chevron-right text-xs text-gray-400"></i>
+                </a>
+            }
+        </nav>
+
+        <!-- Mobile Lang + Theme -->
+        <div class="px-4 py-3 border-t border-gray-100 dark:border-slate-800 flex items-center gap-3">
+            <button onclick="setGlobalLanguage('en')"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-colors">
+                <img src="~/images/flags/gb.svg" alt="English" class="w-5 h-3.5 object-cover rounded-xs shadow-xs" />
+                <span id="mobileLangText">ENG</span>
+            </button>
+            <button onclick="setGlobalLanguage('kh')"
+                    class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-colors font-khmer">
+                <img src="~/images/flags/kh.svg" alt="ភាសាខ្មែរ" class="w-5 h-3.5 object-cover rounded-xs shadow-xs" />
+                <span>ខ្មែរ</span>
+            </button>
+            <button onclick="toggleGlobalTheme()"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-brand-blue hover:text-brand-blue transition-colors">
+                <i class="bi bi-moon-stars-fill" id="mobileThemeIcon"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Auth / Logout -->
+        @if (User.Identity?.IsAuthenticated != true)
+        {
+            <div class="px-4 pb-4 flex gap-2">
+                <a asp-controller="Account" asp-action="Login" class="btn-outline-clothe flex-1 justify-center py-2.5">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign in
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn-primary-clothe flex-1 justify-center py-2.5">
+                    Get started
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="px-4 pb-4 pt-1 border-t border-gray-100 dark:border-slate-800">
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                        <i class="bi bi-box-arrow-right"></i> Sign out
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- =========================================================
+     CART SIDEBAR DRAWER
+========================================================= -->
+<div id="cartDrawerOverlay" class="drawer-overlay" onclick="closeCartDrawer()"></div>
+<div id="cartDrawer" class="drawer-panel right">
+    <!-- Cart content injected here or via partial -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-800">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-slate-100">
+            <i class="bi bi-bag mr-2 text-brand-blue"></i>Shopping Bag
+        </h2>
+        <button type="button" onclick="closeCartDrawer()"
+                class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+            <i class="bi bi-x-lg text-sm text-gray-500"></i>
+        </button>
+    </div>
+    <div id="cartDrawerContent" class="overflow-y-auto h-[calc(100%-64px)] p-4">
+        <p class="text-center text-sm text-gray-400 dark:text-slate-500 mt-8">Loading cart…</p>
+    </div>
+</div>
+
+<!-- =========================================================
+     MAIN CONTENT
+========================================================= -->
+<main>
+    @RenderBody()
+</main>
+
+<!-- =========================================================
+     NEWSLETTER STRIP
+========================================================= -->
+<section class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950 py-12 px-4">
+    <div class="max-w-screen-xl mx-auto">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="text-center md:text-left">
+                <span class="inline-block mb-2 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-300 bg-blue-900/50 rounded-full">Stay in the loop</span>
+                <h3 class="text-2xl font-bold text-white mb-1">Get 10% off your first order</h3>
+                <p class="text-slate-400 text-sm">Sign up for drops, deals and style tips. No spam, ever.</p>
+            </div>
+            <form class="flex flex-col sm:flex-row gap-3 w-full md:w-auto" id="newsletterForm">
+                <div class="relative flex-1 min-w-[260px]">
+                    <i class="bi bi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"></i>
+                    <input type="email" class="w-full pl-9 pr-4 py-3 text-sm bg-white/10 dark:bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Enter your email" required />
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-brand-blue hover:bg-brand-blue-dark rounded-xl transition-all duration-200 whitespace-nowrap" id="newsletterBtn">
+                    Subscribe <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+<footer class="bg-slate-950 dark:bg-black text-slate-400 border-t border-slate-800">
+    <div class="max-w-screen-xl mx-auto px-4 lg:px-6 py-12">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+            <!-- Brand -->
+            <div class="lg:col-span-1">
+                <img src="~/images/ClothingLogoDarkMode.svg" alt="CLOTHÉ" class="h-8 w-auto mb-4 opacity-90" />
+                <p class="text-sm leading-relaxed text-slate-500 mb-4">
+                    Modern clothing for everyday life. Discover quality fashion designed for confidence and comfort.
+                </p>
+                <div class="flex items-center gap-3">
+                    <a href="https://t.me/khmerclothingstore_bot" target="_blank" rel="noopener noreferrer" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-[#229ED9] text-slate-400 hover:text-white transition-all duration-200" title="Telegram Bot: @@khmerclothingstore_bot">
+                        <i class="bi bi-telegram text-sm"></i>
+                    </a>
+                    <a href="#" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-brand-blue text-slate-400 hover:text-white transition-all duration-200">
+                        <i class="bi bi-facebook text-sm"></i>
+                    </a>
+                    <a href="#" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-brand-blue text-slate-400 hover:text-white transition-all duration-200">
+                        <i class="bi bi-instagram text-sm"></i>
+                    </a>
+                    <a href="#" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-brand-blue text-slate-400 hover:text-white transition-all duration-200">
+                        <i class="bi bi-tiktok text-sm"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Shop -->
+            <div>
+                <h6 class="text-xs font-semibold uppercase tracking-widest text-slate-300 mb-4">Shop</h6>
+                <div class="space-y-2.5">
+                    <a asp-controller="Shop" asp-action="Index" class="block text-sm hover:text-white transition-colors">All Products</a>
+                    <a asp-controller="Shop" asp-action="Index" asp-route-onSale="true" class="block text-sm hover:text-white transition-colors">Sale</a>
+                    <a asp-controller="Shop" asp-action="Index" class="block text-sm hover:text-white transition-colors">New Arrivals</a>
+                </div>
+            </div>
+
+            <!-- Account -->
+            <div>
+                <h6 class="text-xs font-semibold uppercase tracking-widest text-slate-300 mb-4">Account</h6>
+                <div class="space-y-2.5">
+                    <a asp-controller="Profile" asp-action="Index" class="block text-sm hover:text-white transition-colors">My Profile</a>
+                    <a asp-controller="Orders" asp-action="Index" class="block text-sm hover:text-white transition-colors">My Orders</a>
+                    <a asp-controller="Wishlist" asp-action="Index" class="block text-sm hover:text-white transition-colors">Wishlist</a>
+                    <a asp-controller="Cart" asp-action="Index" class="block text-sm hover:text-white transition-colors">My Cart</a>
+                </div>
+            </div>
+
+            <!-- Company -->
+            <div>
+                <h6 class="text-xs font-semibold uppercase tracking-widest text-slate-300 mb-4">Company</h6>
+                <div class="space-y-2.5">
+                    <a asp-controller="Home" asp-action="About" class="block text-sm hover:text-white transition-colors">About Us</a>
+                    <a asp-controller="Home" asp-action="About" asp-fragment="contact" class="block text-sm hover:text-white transition-colors">Contact Us</a>
+                    <a asp-controller="Home" asp-action="Privacy" class="block text-sm hover:text-white transition-colors">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="mt-10 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+            <span>© @DateTime.Now.Year CLOTHÉ. All rights reserved.</span>
+            <span class="flex items-center gap-1">
+                Made with <i class="bi bi-heart-fill text-red-500 text-[10px]"></i> for fashion.
+            </span>
+        </div>
+    </div>
+</footer>
+
+<!-- =========================================================
+     FLOATING TELEGRAM QUICK CONTACT BUTTON
+========================================================= -->
+<aside aria-label="Telegram support chat" class="fixed bottom-6 right-6 z-40">
+    <a href="https://t.me/khmerclothingstore_bot" target="_blank" rel="noopener noreferrer"
+       class="group flex items-center gap-2.5 px-4 py-3 bg-[#229ED9] hover:bg-[#1b8bc2] text-white rounded-full shadow-xl hover:shadow-cyan-500/30 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-sky-300 dark:focus:ring-sky-800"
+       style="background-color: #229ED9;"
+       title="Chat with us on Telegram (@@khmerclothingstore_bot)">
+        <i class="bi bi-telegram text-xl leading-none"></i>
+        <span class="text-xs font-bold tracking-wide hidden sm:inline-block pr-1">Telegram Chat</span>
+        <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+        </span>
+    </a>
+</aside>
+
+<!-- =========================================================
+     TOAST NOTIFICATION
+========================================================= -->
+<div id="cartToastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div id="cartToast" class="hidden pointer-events-auto flex items-center gap-3 px-4 py-3 bg-slate-900 text-white rounded-2xl shadow-2xl min-w-[300px] max-w-sm">
+        <span class="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 flex-shrink-0">
+            <i class="bi bi-check-lg text-sm"></i>
+        </span>
+        <div class="flex-1 min-w-0">
+            <div class="text-sm font-semibold" id="cartToastTitle">Added to bag!</div>
+            <div class="text-xs text-slate-400" id="cartToastMsg">Item has been added to your shopping bag.</div>
+        </div>
+        <a asp-controller="Cart" asp-action="Index"
+           class="flex-shrink-0 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold transition-colors">
+            View Bag
+        </a>
+<!-- Hidden Anti-Forgery Token Form for secure AJAX requests -->
+<form id="antiforgeryForm" style="display:none;" aria-hidden="true">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- =========================================================
+     SCRIPTS
+========================================================= -->
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<!-- Override theme toggle for Tailwind dark class -->
+<script>
+    // Patch theme engine to toggle <html class="dark"> instead of body.dark-mode
+    window.toggleGlobalTheme = function () {
+        const isDark = document.documentElement.classList.contains('dark');
+        const next = isDark ? 'light' : 'dark';
+        localStorage.setItem('site_theme', next);
+        if (next === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        const icon = document.getElementById('globalThemeIcon');
+        if (icon) icon.className = next === 'dark' ? 'bi bi-sun-fill text-yellow-400' : 'bi bi-moon-stars-fill';
+        const mIcon = document.getElementById('mobileThemeIcon');
+        if (mIcon) mIcon.className = next === 'dark' ? 'bi bi-sun-fill text-yellow-400' : 'bi bi-moon-stars-fill';
+    };
+
+    // Apply i18n lang controls on load
+    document.addEventListener('DOMContentLoaded', function () {
+        const lang = localStorage.getItem('site_language') || 'en';
+        const isDark = document.documentElement.classList.contains('dark');
+        const icon = document.getElementById('globalThemeIcon');
+        if (icon) icon.className = isDark ? 'bi bi-sun-fill text-yellow-400' : 'bi bi-moon-stars-fill';
+        const mIcon = document.getElementById('mobileThemeIcon');
+        if (mIcon) mIcon.className = isDark ? 'bi bi-sun-fill text-yellow-400' : 'bi bi-moon-stars-fill';
+
+        // Sync lang check marks
+        const checkEn = document.getElementById('checkLangEn');
+        const checkKh = document.getElementById('checkLangKh');
+        if (checkEn) checkEn.classList.toggle('hidden', lang === 'kh');
+        if (checkKh) checkKh.classList.toggle('hidden', lang !== 'kh');
+
+        // Apply font-khmer to body when Khmer is active
+        if (lang === 'kh') {
+            document.documentElement.setAttribute('lang', 'km');
+        }
+    });
+</script>
+
+<!-- Mobile menu + cart drawer JS -->
+<script>
+    // ── MOBILE MENU ──
+    function openMobileMenu() {
+        document.getElementById('mobileDrawer').classList.add('open');
+        document.getElementById('mobileDrawerOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('mobileMenuIcon').className = 'bi bi-x-lg text-lg';
+    }
+    function closeMobileMenu() {
+        document.getElementById('mobileDrawer').classList.remove('open');
+        document.getElementById('mobileDrawerOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+        document.getElementById('mobileMenuIcon').className = 'bi bi-list text-lg';
+    }
+    document.getElementById('mobileMenuToggle').addEventListener('click', function () {
+        if (document.getElementById('mobileDrawer').classList.contains('open')) {
+            closeMobileMenu();
+        } else {
+            openMobileMenu();
+        }
+    });
+
+    // ── MOBILE CATEGORIES ──
+    function toggleMobileCategories() {
+        const list = document.getElementById('mobileCategoryList');
+        const chevron = document.getElementById('mobileCatChevron');
+        const isOpen = !list.classList.contains('hidden');
+        list.classList.toggle('hidden', isOpen);
+        chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    }
+
+    // ── CART DRAWER ──
+    function openCartDrawer() {
+        document.getElementById('cartDrawer').classList.add('open');
+        document.getElementById('cartDrawerOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        loadCartDrawerContent();
+    }
+    function closeCartDrawer() {
+        document.getElementById('cartDrawer').classList.remove('open');
+        document.getElementById('cartDrawerOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    async function loadCartDrawerContent() {
+        const content = document.getElementById('cartDrawerContent');
+        if (!content) return;
+        try {
+            const res = await fetch('/Cart/SidebarPartial');
+            if (res.ok) {
+                content.innerHTML = await res.text();
+            } else {
+                content.innerHTML = '<p class="text-center text-sm text-gray-400 mt-8">Could not load cart.</p>';
+            }
+        } catch {
+            content.innerHTML = '<p class="text-center text-sm text-gray-400 mt-8">Could not load cart.</p>';
+        }
+    }
+
+    // ── CART SIDEBAR GLOBAL ENGINE (AJAX QUANTITY, VARIANT EDITING, REMOVAL) ──
+    window.updateSidebarQty = async function (itemId, newQty) {
+        if (newQty < 1) return;
+        var qtyEl = document.getElementById('itemQty_' + itemId);
+        if (qtyEl) qtyEl.textContent = newQty;
+
+        try {
+            var csrfToken = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            var formData = new FormData();
+            formData.append('id', itemId);
+            formData.append('quantity', newQty);
+            if (csrfToken) formData.append('__RequestVerificationToken', csrfToken);
+
+            var res = await fetch('/Cart/Update', {
+                method: 'POST',
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': csrfToken
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                var data = await res.json();
+                document.dispatchEvent(new CustomEvent('cart:updated', { 
+                    detail: { count: data.cartCount } 
+                }));
+                loadCartDrawerContent();
+            }
+        } catch (err) {
+            console.error('Update qty error:', err);
+            loadCartDrawerContent();
+        }
+    };
+
+    window.removeSidebarItem = async function (itemId) {
+        var row = document.getElementById('cartItemRow_' + itemId);
+        if (row) {
+            row.style.opacity = '0.3';
+            row.style.pointerEvents = 'none';
+        }
+
+        try {
+            var csrfToken = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            var formData = new FormData();
+            formData.append('id', itemId);
+            if (csrfToken) formData.append('__RequestVerificationToken', csrfToken);
+
+            var res = await fetch('/Cart/Remove', {
+                method: 'POST',
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': csrfToken
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                var data = await res.json();
+                document.dispatchEvent(new CustomEvent('cart:updated', { 
+                    detail: { count: data.cartCount, toast: true, title: "Item Removed", message: "Item was removed from your bag." } 
+                }));
+                loadCartDrawerContent();
+            }
+        } catch (err) {
+            console.error('Remove item error:', err);
+            loadCartDrawerContent();
+        }
+    };
+
+    window.toggleVariantEditor = async function (itemId, productId, currentVariantId) {
+        var editor = document.getElementById('variantEditor_' + itemId);
+        if (!editor) return;
+
+        if (!editor.classList.contains('hidden')) {
+            editor.classList.add('hidden');
+            return;
+        }
+
+        editor.classList.remove('hidden');
+        var loader = document.getElementById('variantLoader_' + itemId);
+        var fields = document.getElementById('variantFields_' + itemId);
+        var select = document.getElementById('selVariant_' + itemId);
+        var priceLbl = document.getElementById('variantPriceLbl_' + itemId);
+
+        if (loader) loader.classList.remove('hidden');
+        if (fields) fields.classList.add('hidden');
+        if (select) select.innerHTML = '';
+
+        try {
+            var res = await fetch('/Cart/GetProductVariants?productId=' + encodeURIComponent(productId));
+            if (res.ok) {
+                var variants = await res.json();
+                variants.forEach(function (v) {
+                    var opt = document.createElement('option');
+                    opt.value = v.id;
+                    var stockText = v.stock > 0 ? (v.stock <= 5 ? ` (Only ${v.stock} left)` : '') : ' (Out of Stock)';
+                    opt.textContent = `${v.sizeName} / ${v.colorName} - $${v.price.toFixed(2)}${stockText}`;
+                    opt.dataset.price = v.price.toFixed(2);
+                    opt.dataset.stock = v.stock;
+                    if (v.stock <= 0) opt.disabled = true;
+                    if (currentVariantId && v.id.toLowerCase() === currentVariantId.toLowerCase()) opt.selected = true;
+                    select.appendChild(opt);
+                });
+
+                function updatePriceLabel() {
+                    var sel = select.options[select.selectedIndex];
+                    if (sel && priceLbl) {
+                        priceLbl.textContent = '$' + sel.dataset.price;
+                    }
                 }
-            } catch(err) {
-                console.error('Failed to refresh cart count', err);
+                select.onchange = updatePriceLabel;
+                updatePriceLabel();
+
+                if (loader) loader.classList.add('hidden');
+                if (fields) fields.classList.remove('hidden');
+            }
+        } catch (err) {
+            if (loader) loader.textContent = 'Could not load options.';
+        }
+    };
+
+    window.closeVariantEditor = function (itemId) {
+        var editor = document.getElementById('variantEditor_' + itemId);
+        if (editor) editor.classList.add('hidden');
+    };
+
+    window.saveVariantChange = async function (itemId) {
+        var select = document.getElementById('selVariant_' + itemId);
+        if (!select || !select.value) return;
+
+        var newVariantId = select.value;
+        try {
+            var csrfToken = document.querySelector('#antiforgeryForm input[name="__RequestVerificationToken"]')?.value || '';
+            var formData = new FormData();
+            formData.append('id', itemId);
+            formData.append('newVariantId', newVariantId);
+            if (csrfToken) formData.append('__RequestVerificationToken', csrfToken);
+
+            var res = await fetch('/Cart/ChangeVariant', {
+                method: 'POST',
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': csrfToken
+                },
+                body: formData
+            });
+
+            if (res.ok) {
+                var data = await res.json();
+                document.dispatchEvent(new CustomEvent('cart:updated', { 
+                    detail: { count: data.cartCount, toast: true, title: "Option Updated", message: data.message || "Variant updated." } 
+                }));
+                loadCartDrawerContent();
+            }
+        } catch (err) {
+            console.error('Save variant error:', err);
+        }
+    };
+
+    document.getElementById('cartDrawerToggle').addEventListener('click', openCartDrawer);
+    var mobileCartBtn = document.getElementById('mobileCartDrawerBtn');
+    if (mobileCartBtn) mobileCartBtn.addEventListener('click', function () { closeMobileMenu(); openCartDrawer(); });
+
+    // ── NAVBAR SCROLL ──
+    (function () {
+        var navbar = document.getElementById('siteNavbar');
+        if (!navbar) return;
+        window.addEventListener('scroll', function () {
+            if (window.scrollY > 15) {
+                navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,.12)';
+            } else {
+                navbar.style.boxShadow = '0 1px 0 rgba(0,0,0,.06)';
+            }
+        }, { passive: true });
+    })();
+
+    // ── PROMO BAR COUNTDOWN ──
+    (function () {
+        var bar = document.getElementById('promoBar');
+        var closeBtn = document.getElementById('promoBarClose');
+        if (sessionStorage.getItem('promoBarDismissed') === '1') {
+            if (bar) bar.style.display = 'none';
+        }
+        if (closeBtn && bar) {
+            closeBtn.addEventListener('click', function () {
+                bar.style.display = 'none';
+                sessionStorage.setItem('promoBarDismissed', '1');
+            });
+        }
+        function updateCountdown() {
+            var now = new Date();
+            var midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            var diff = midnight - now;
+            var h = Math.floor(diff / 3600000);
+            var m = Math.floor((diff % 3600000) / 60000);
+            var s = Math.floor((diff % 60000) / 1000);
+            var hEl = document.getElementById('cd-h');
+            var mEl = document.getElementById('cd-m');
+            var sEl = document.getElementById('cd-s');
+            if (hEl) hEl.textContent = String(h).padStart(2, '0');
+            if (mEl) mEl.textContent = String(m).padStart(2, '0');
+            if (sEl) sEl.textContent = String(s).padStart(2, '0');
+        }
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    })();
+
+    // ── NEWSLETTER ──
+    (function () {
+        var form = document.getElementById('newsletterForm');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = document.getElementById('newsletterBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Subscribed!';
+                btn.disabled = true;
+                setTimeout(function () {
+                    btn.innerHTML = 'Subscribe <i class="bi bi-arrow-right"></i>';
+                    btn.disabled = false;
+                }, 2500);
             }
         });
-    </script>
+    })();
 
-    <!-- =====================================================
-         NAVBAR INTERACTIVE ENHANCEMENTS: SEARCH & MOBILE DRAWER
-    ====================================================== -->
-    <script>
-        (function() {
-            // Search input clear buttons (Desktop & Mobile)
-            function setupSearchClear(inputId, clearBtnId) {
-                var input = document.getElementById(inputId);
-                var btn = document.getElementById(clearBtnId);
-                if (!input || !btn) return;
-
-                function toggleClear() {
-                    if (input.value.trim().length > 0) {
-                        btn.classList.remove('d-none');
-                    } else {
-                        btn.classList.add('d-none');
-                    }
-                }
-
-                input.addEventListener('input', toggleClear);
-                btn.addEventListener('click', function() {
-                    input.value = '';
-                    toggleClear();
-                    input.focus();
-                });
-                toggleClear();
-            }
-
-            setupSearchClear('navSearchInput', 'navSearchClear');
-            setupSearchClear('mobileSearchInput', 'mobileSearchClear');
-
-            // Global shortcut Ctrl+K or / to focus search
-            document.addEventListener('keydown', function(e) {
-                if ((e.ctrlKey && e.key.toLowerCase() === 'k') || (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
-                    var desktopSearch = document.getElementById('navSearchInput');
-                    var mobileSearch = document.getElementById('mobileSearchInput');
-                    if (desktopSearch && window.innerWidth >= 992) {
-                        e.preventDefault();
-                        desktopSearch.focus();
-                    } else if (mobileSearch) {
-                        e.preventDefault();
-                        var mobileOffcanvas = document.getElementById('clotheMobileNav');
-                        if (mobileOffcanvas && !mobileOffcanvas.classList.contains('show')) {
-                            var bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(mobileOffcanvas);
-                            bsOffcanvas.show();
-                        }
-                        // Focus might need a slight delay to allow offcanvas to open
-                        setTimeout(() => mobileSearch.focus(), 300);
-                    }
-                }
+    // ── SEARCH CLEAR ──
+    (function () {
+        function setupClear(inputId, clearId) {
+            var input = document.getElementById(inputId);
+            var btn = document.getElementById(clearId);
+            if (!input || !btn) return;
+            input.addEventListener('input', function () {
+                btn.classList.toggle('hidden', input.value.trim() === '');
             });
-        })();
-    </script>
+            btn.addEventListener('click', function () {
+                input.value = '';
+                btn.classList.add('hidden');
+                input.focus();
+            });
+        }
+        setupClear('navSearchInput', 'navSearchClear');
+        setupClear('mobileSearchInput', 'mobileSearchClear');
 
-    <!-- CART SIDEBAR DRAWER (GLOBAL) -->
-    <partial name="_CartSidebar" />
+        // Ctrl+K shortcut
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey && e.key.toLowerCase() === 'k') ||
+                (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+                e.preventDefault();
+                var si = document.getElementById('navSearchInput');
+                if (si && window.innerWidth >= 1024) si.focus();
+                else openMobileMenu();
+            }
+        });
+    })();
 
-    @await RenderSectionAsync("Scripts", required: false)
+    // ── CART TOAST ──
+    window.showCartToast = function (title, message) {
+        var toast = document.getElementById('cartToast');
+        if (!toast) return;
+        if (title) document.getElementById('cartToastTitle').textContent = title;
+        if (message) document.getElementById('cartToastMsg').textContent = message;
+        toast.classList.remove('hidden');
+        clearTimeout(window._cartToastTimer);
+        window._cartToastTimer = setTimeout(function () {
+            toast.classList.add('hidden');
+        }, 3500);
+    };
+
+    document.addEventListener('cart:updated', async function (e) {
+        if (e && e.detail && e.detail.toast) {
+            window.showCartToast(e.detail.title || "Added to bag!", e.detail.message || "Item was successfully added.");
+        }
+        try {
+            var res = await fetch('/Cart/GetCount');
+            if (res.ok) {
+                var data = await res.json();
+                var badge = document.getElementById('cartBadge');
+                if (badge) {
+                    badge.textContent = data.count;
+                    badge.classList.toggle('hidden', data.count === 0);
+                }
+            }
+        } catch (err) { }
+    });
+</script>
+
+@await RenderSectionAsync("Scripts", required: false)
 
 </body>
-
 </html>

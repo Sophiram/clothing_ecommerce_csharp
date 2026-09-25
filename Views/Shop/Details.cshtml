@@ -102,1823 +102,950 @@
     }
 }
 
-<style>
-    /* =========================================
-       CLOTHÉ LUXURY PRODUCT DETAILS STYLES
-    ========================================== */
-    .product-page {
-        background: #ffffff;
-        color: #0f172a;
-    }
-
-    /* Breadcrumbs */
-    .product-breadcrumb {
-        border-bottom: 1px solid #f1f5f9;
-        background: #fafafa;
-    }
-
-    .product-breadcrumb a {
-        color: #64748b;
-        transition: color .2s ease;
-        text-decoration: none;
-    }
-
-    .product-breadcrumb a:hover {
-        color: #0f172a;
-    }
-
-    /* Gallery */
-    .product-gallery {
-        position: sticky;
-        top: 90px;
-    }
-
-    .main-image-wrapper {
-        position: relative;
-        background: #f8fafc;
-        border-radius: 20px;
-        overflow: hidden;
-        aspect-ratio: 4 / 5;
-        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-        border: 1px solid #f1f5f9;
-    }
-
-    .main-product-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform .4s ease, opacity .2s ease;
-    }
-
-    .main-image-wrapper:hover .main-product-image {
-        transform: scale(1.03);
-    }
-
-    .gallery-badge {
-        position: absolute;
-        top: 16px;
-        left: 16px;
-        z-index: 3;
-        background: #0f172a;
-        color: #fff;
-        padding: 6px 14px;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-    }
-
-    .gallery-actions {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        z-index: 3;
-        display: flex;
-        gap: 8px;
-    }
-
-    .gallery-action-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        color: #0f172a;
-        transition: all .2s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .gallery-action-btn:hover {
-        transform: translateY(-2px);
-        background: #0f172a;
-        color: #fff;
-    }
-
-    /* Prev & Next Gallery Chevrons */
-    .gallery-nav-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        color: #0f172a;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        cursor: pointer;
-        z-index: 3;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-        opacity: 0;
-    }
-
-    .main-image-wrapper:hover .gallery-nav-btn {
-        opacity: 1;
-    }
-
-    .gallery-nav-btn.prev {
-        left: 14px;
-    }
-
-    .gallery-nav-btn.next {
-        right: 14px;
-    }
-
-    .gallery-nav-btn:hover {
-        background: #0f172a;
-        color: #fff;
-        transform: translateY(-50%) scale(1.08);
-    }
-
-    .gallery-counter {
-        position: absolute;
-        bottom: 16px;
-        right: 16px;
-        background: rgba(15, 23, 42, 0.75);
-        color: #fff;
-        backdrop-filter: blur(6px);
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: .05em;
-        z-index: 3;
-    }
-
-    .thumbnail-strip {
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 6px 2px;
-        scrollbar-width: none;
-    }
-
-    .thumbnail-strip::-webkit-scrollbar {
-        display: none;
-    }
-
-    .product-thumbnail {
-        flex: 0 0 76px;
-        height: 94px;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0;
-        overflow: hidden;
-        background: #f8fafc;
-        cursor: pointer;
-        transition: all .2s ease;
-    }
-
-    .product-thumbnail:hover {
-        border-color: #0f172a;
-        transform: translateY(-2px);
-    }
-
-    .product-thumbnail.active {
-        border-color: #0f172a;
-        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
-    }
-
-    .product-thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    /* Product Info */
-    .brand-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        text-decoration: none;
-        color: #0f172a;
-        margin-bottom: 14px;
-    }
-
-    .brand-logo {
-        width: 36px;
-        height: 36px;
-        border: 1px solid #e2e8f0;
-        border-radius: 50%;
-        object-fit: contain;
-        background: #fff;
-        padding: 2px;
-    }
-
-    .brand-name {
-        font-size: 12px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        color: #2563eb;
-    }
-
-    .product-title {
-        font-size: clamp(1.85rem, 3.5vw, 2.75rem);
-        line-height: 1.15;
-        font-weight: 800;
-        letter-spacing: -.03em;
-        margin-bottom: 14px;
-        color: #0f172a;
-    }
-
-    .product-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 14px;
-        color: #64748b;
-        font-size: 14px;
-        margin-bottom: 20px;
-    }
-
-    .rating-stars {
-        color: #f59e0b;
-        letter-spacing: 2px;
-    }
-
-    .price-block {
-        padding: 18px 0;
-        border-top: 1px solid #f1f5f9;
-        border-bottom: 1px solid #f1f5f9;
-        margin-bottom: 22px;
-    }
-
-    .current-price {
-        font-size: 30px;
-        font-weight: 800;
-        letter-spacing: -.03em;
-        color: #0f172a;
-    }
-
-    .product-description {
-        color: #475569;
-        line-height: 1.75;
-        font-size: 15px;
-        margin-bottom: 24px;
-    }
-
-    /* Facts Grid */
-    .product-facts {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 26px;
-    }
-
-    .product-fact {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 12px 14px;
-        border: 1px solid #f1f5f9;
-    }
-
-    .product-fact-label {
-        display: block;
-        color: #94a3b8;
-        font-size: 11px;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: .08em;
-        margin-bottom: 4px;
-    }
-
-    .product-fact-value {
-        font-weight: 600;
-        font-size: 14px;
-        color: #0f172a;
-    }
-
-    /* Interactive Variant Chips (Sizes & Colors) */
-    .variant-chip-group {
-        margin-bottom: 20px;
-    }
-
-    .variant-group-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .variant-group-title {
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: #1e293b;
-    }
-
-    .variant-color-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 9999px;
-        background: #fff;
-        color: #1e293b;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .color-swatch-circle {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 1px solid rgba(0,0,0,0.15);
-        flex-shrink: 0;
-    }
-
-    .variant-color-chip:hover {
-        border-color: #0f172a;
-        background: #f8fafc;
-    }
-
-    .variant-color-chip.active {
-        border-color: #0f172a;
-        background: #0f172a;
-        color: #fff;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-    }
-
-    .variant-size-chip {
-        min-width: 44px;
-        height: 42px;
-        padding: 0 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 10px;
-        background: #fff;
-        color: #1e293b;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .variant-size-chip:hover {
-        border-color: #0f172a;
-        background: #f8fafc;
-    }
-
-    .variant-size-chip.active {
-        border-color: #0f172a;
-        background: #0f172a;
-        color: #fff;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-    }
-
-    /* Fallback select */
-    .variant-select {
-        height: 48px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0 16px;
-        font-size: 14px;
-        width: 100%;
-        background-color: #fff;
-        font-weight: 500;
-    }
-
-    .variant-select:focus {
-        border-color: #0f172a;
-        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-        outline: none;
-    }
-
-    /* Purchase controls */
-    .purchase-row {
-        display: flex;
-        gap: 12px;
-        margin-top: 20px;
-    }
-
-    .quantity-control {
-        display: flex;
-        align-items: center;
-        height: 52px;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #fff;
-    }
-
-    .quantity-btn {
-        width: 40px;
-        height: 100%;
-        border: 0;
-        background: transparent;
-        font-size: 18px;
-        font-weight: 600;
-        color: #0f172a;
-        transition: background 0.15s ease;
-    }
-
-    .quantity-btn:hover {
-        background: #f1f5f9;
-    }
-
-    .quantity-input {
-        width: 44px;
-        height: 100%;
-        border: 0;
-        text-align: center;
-        font-weight: 700;
-        font-size: 15px;
-        outline: none;
-        color: #0f172a;
-    }
-
-    .add-cart-btn {
-        height: 52px;
-        flex: 1;
-        border: 0;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #fff;
-        font-weight: 700;
-        font-size: 15px;
-        transition: all .2s ease;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .add-cart-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.25);
-    }
-
-    .add-cart-btn:disabled {
-        opacity: .5;
-        cursor: not-allowed;
-        box-shadow: none;
-    }
-
-    .wishlist-btn {
-        height: 52px;
-        width: 52px;
-        flex: 0 0 52px;
-        border: 1.5px solid #e2e8f0;
-        background: #fff;
-        border-radius: 12px;
-        font-size: 19px;
-        color: #0f172a;
-        transition: all .2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .wishlist-btn:hover {
-        border-color: #ef4444;
-        background: #fef2f2;
-        color: #ef4444;
-        transform: translateY(-2px);
-    }
-
-    /* Service List */
-    .service-list {
-        margin-top: 26px;
-        border-top: 1px solid #f1f5f9;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        padding-top: 20px;
-    }
-
-    .service-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px;
-        background: #f8fafc;
-        border-radius: 12px;
-    }
-
-    .service-icon {
-        width: 36px;
-        height: 36px;
-        flex: 0 0 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        background: #ffffff;
-        color: #0f172a;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-    }
-
-    .service-item strong {
-        display: block;
-        font-size: 12px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .service-item span {
-        color: #64748b;
-        font-size: 11px;
-    }
-
-    /* Tabs & Content Sections */
-    .detail-section {
-        border-top: 1px solid #f1f5f9;
-        margin-top: 60px;
-        padding-top: 50px;
-    }
-
-    .section-eyebrow {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: .15em;
-        font-weight: 800;
-        color: #2563eb;
-        margin-bottom: 6px;
-    }
-
-    .section-title {
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: -.03em;
-        color: #0f172a;
-    }
-
-    /* Reviews System Styles */
-    .review-score-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #fff;
-        border-radius: 20px;
-        padding: 28px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .review-big-num {
-        font-size: 48px;
-        font-weight: 900;
-        line-height: 1;
-        margin-bottom: 8px;
-    }
-
-    .review-breakdown-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
-        font-size: 13px;
-        color: #475569;
-    }
-
-    .review-breakdown-bar {
-        flex: 1;
-        height: 8px;
-        background: #e2e8f0;
-        border-radius: 9999px;
-        overflow: hidden;
-    }
-
-    .review-breakdown-fill {
-        height: 100%;
-        background: #f59e0b;
-        border-radius: 9999px;
-        transition: width 0.5s ease;
-    }
-
-    /* Star Rating Selector in Review Form */
-    .star-picker {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .star-picker-item {
-        font-size: 28px;
-        color: #cbd5e1;
-        cursor: pointer;
-        transition: transform 0.15s ease, color 0.15s ease;
-    }
-
-    .star-picker-item:hover,
-    .star-picker-item.hovered,
-    .star-picker-item.selected {
-        color: #f59e0b;
-    }
-
-    .star-picker-item:hover {
-        transform: scale(1.2);
-    }
-
-    /* Review Card */
-    .review-item-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 22px;
-        margin-bottom: 16px;
-        transition: box-shadow 0.2s ease;
-    }
-
-    .review-item-card:hover {
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
-    }
-
-    .review-user-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-        color: #fff;
-        font-weight: 700;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .review-filter-btn {
-        padding: 6px 14px;
-        font-size: 13px;
-        font-weight: 600;
-        border: 1px solid #e2e8f0;
-        border-radius: 9999px;
-        background: #fff;
-        color: #475569;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-
-    .review-filter-btn:hover,
-    .review-filter-btn.active {
-        background: #0f172a;
-        color: #fff;
-        border-color: #0f172a;
-    }
-
-    /* Sticky mobile add-to-cart bar */
-    .sticky-mobile-cta {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 1050;
-        background: #fff;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -8px 24px rgba(0,0,0,.08);
-        padding: 12px 16px;
-        display: none;
-        align-items: center;
-        gap: 12px;
-        transform: translateY(100%);
-        transition: transform .3s ease;
-    }
-
-    .sticky-mobile-cta.visible {
-        transform: translateY(0);
-    }
-
-    .sticky-mobile-cta .sticky-price {
-        font-weight: 800;
-        font-size: 18px;
-        color: #0f172a;
-        white-space: nowrap;
-    }
-
-    .sticky-mobile-cta button {
-        flex: 1;
-        height: 46px;
-        border: 0;
-        border-radius: 9999px;
-        background: #0f172a;
-        color: #fff;
-        font-weight: 700;
-        font-size: 14px;
-    }
-
-    @@media (max-width: 991.98px) {
-        .product-gallery {
-            position: static;
-        }
-
-        .sticky-mobile-cta {
-            display: flex;
-        }
-
-        .product-page {
-            padding-bottom: 76px;
-        }
-    }
-
-    @@media (max-width: 575.98px) {
-        .product-title {
-            font-size: 1.75rem;
-        }
-
-        .product-facts, .service-list {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
-<div class="product-page">
-
-    <!-- =========================================
-         BREADCRUMB & NOTIFICATIONS
-    ========================================== -->
-    <section class="product-breadcrumb py-3">
-        <div class="container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 small">
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Shop" asp-action="Index">Shop</a>
-                    </li>
-                    @if (Model.Category != null)
-                    {
-                        <li class="breadcrumb-item">
-                            <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.Category.Id">
-                                @Model.Category.Name
-                            </a>
-                        </li>
-                    }
-                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
-                        @Model.Name
-                    </li>
-                </ol>
-            </nav>
+<div class="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+
+    <!-- BREADCRUMB -->
+    <nav class="border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 py-3.5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ol class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <li><a asp-controller="Home" asp-action="Index" class="hover:text-slate-900 dark:hover:text-white transition">Home</a></li>
+                <li class="text-slate-300 dark:text-slate-600">/</li>
+                <li><a asp-controller="Shop" asp-action="Index" class="hover:text-slate-900 dark:hover:text-white transition">Shop</a></li>
+                @if (Model.Category != null)
+                {
+                    <li class="text-slate-300 dark:text-slate-600">/</li>
+                    <li><a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.Category.Id" class="hover:text-slate-900 dark:hover:text-white transition">@Model.Category.Name</a></li>
+                }
+                <li class="text-slate-300 dark:text-slate-600">/</li>
+                <li class="text-slate-900 dark:text-white font-semibold truncate max-w-xs sm:max-w-md">@Model.Name</li>
+            </ol>
         </div>
-    </section>
+    </nav>
 
-    <!-- Feedback alerts -->
-    <div class="container mt-3">
+    <!-- FEEDBACK ALERTS -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                <div>@TempData["Success"]</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 flex items-center justify-between gap-3 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-check-circle-fill text-emerald-500 text-lg shrink-0"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 dark:text-emerald-400 hover:opacity-75 text-lg">&times;</button>
             </div>
         }
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                <div>@TempData["Error"]</div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 flex items-center justify-between gap-3 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-500 text-lg shrink-0"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 dark:text-rose-400 hover:opacity-75 text-lg">&times;</button>
             </div>
         }
     </div>
 
-    <!-- =========================================
-         PRODUCT HERO (GALLERY & DETAILS)
-    ========================================== -->
-    <section class="py-4 py-lg-5">
-        <div class="container">
-            <div class="row g-5">
+    <!-- PRODUCT HERO (GALLERY & DETAILS) -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
 
-                <!-- GALLERY -->
-                <div class="col-lg-7">
-                    <div class="product-gallery">
-                        <div class="main-image-wrapper">
+            <!-- LEFT GALLERY (7 COLS) -->
+            <div class="lg:col-span-7">
+                <div class="lg:sticky lg:top-24 space-y-3">
+                    <div class="aspect-[4/5] relative rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-800 shadow-sm group">
 
-                            <span class="gallery-badge">
-                                @(Model.Brand?.Name ?? "CLOTHÉ")
-                            </span>
+                        <!-- Brand Badge -->
+                        <span class="absolute top-4 left-4 z-10 px-3.5 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest bg-slate-900/90 text-white backdrop-blur shadow-md">
+                            @(Model.Brand?.Name ?? "CLOTHÉ")
+                        </span>
 
-                            @if (compareAt.HasValue && minPrice > 0)
+                        @if (compareAt.HasValue && minPrice > 0)
+                        {
+                            var discountPct = (int)Math.Round((1 - (minPrice / compareAt.Value)) * 100);
+                            if (discountPct > 0)
                             {
-                                var discountPct = (int)Math.Round((1 - (minPrice / compareAt.Value)) * 100);
-                                if (discountPct > 0)
-                                {
-                                    <span class="badge bg-danger rounded-pill position-absolute" style="top: 16px; left: 110px; z-index: 3; padding: 7px 12px; font-weight: 800;">
-                                        -@discountPct% OFF
-                                    </span>
-                                }
-                            }
-
-                            <div class="gallery-actions">
-                                <button type="button"
-                                        class="gallery-action-btn"
-                                        onclick="toggleFullscreen()"
-                                        aria-label="View fullscreen">
-                                    <i class="bi bi-arrows-fullscreen"></i>
-                                </button>
-                            </div>
-
-                            <!-- Prev / Next Navigation buttons on main image -->
-                            @if (images.Count > 1)
-                            {
-                                <button type="button" class="gallery-nav-btn prev" onclick="prevImage()" aria-label="Previous photo">
-                                    <i class="bi bi-chevron-left"></i>
-                                </button>
-                                <button type="button" class="gallery-nav-btn next" onclick="nextImage()" aria-label="Next photo">
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                                <span class="gallery-counter">
-                                    <span id="galleryCurrentIdx">1</span> / @images.Count
+                                <span class="absolute top-4 left-24 sm:left-28 z-10 px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white shadow-md">
+                                    -@discountPct% OFF
                                 </span>
                             }
+                        }
 
-                            @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
-                            {
-                                <img id="mainProductImage"
-                                     src="@primaryImage.ImageUrl"
-                                     alt="@Model.Name"
-                                     class="main-product-image" />
-                            }
-                            else
-                            {
-                                <div class="d-flex align-items-center justify-content-center h-100">
-                                    <i class="bi bi-image display-1 text-secondary"></i>
-                                </div>
-                            }
-
+                        <!-- Gallery Actions -->
+                        <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
+                            <button type="button" onclick="toggleFullscreen()" class="w-10 h-10 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur text-slate-800 dark:text-white flex items-center justify-center shadow-md hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition active:scale-95" aria-label="View fullscreen">
+                                <i class="bi bi-arrows-fullscreen"></i>
+                            </button>
                         </div>
 
-                        <!-- Thumbnail strip -->
+                        <!-- Prev / Next Chevrons -->
                         @if (images.Count > 1)
                         {
-                            <div class="thumbnail-strip mt-3" id="thumbnailStrip">
-                                @for (int i = 0; i < images.Count; i++)
-                                {
-                                    var img = images[i];
-                                    if (!string.IsNullOrWhiteSpace(img.ImageUrl))
-                                    {
-                                        <button type="button"
-                                                class="product-thumbnail @(img == primaryImage ? "active" : "")"
-                                                data-index="@(i + 1)"
-                                                onclick="changeImageByIndex(@i, '@img.ImageUrl')">
-                                            <img src="@img.ImageUrl" alt="@Model.Name thumbnail" />
-                                        </button>
-                                    }
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- PRODUCT INFORMATION -->
-                <div class="col-lg-5">
-                    <div class="product-info">
-
-                        <!-- Brand Link -->
-                        <a asp-controller="Shop" asp-action="Index" asp-route-brandId="@Model.Brand?.Id" class="brand-link">
-                            @if (!string.IsNullOrWhiteSpace(Model.Brand?.Logo))
-                            {
-                                <img src="@Model.Brand.Logo" alt="@Model.Brand.Name" class="brand-logo" />
-                            }
-                            else
-                            {
-                                <span class="brand-logo d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-award"></i>
-                                </span>
-                            }
-                            <span class="brand-name">
-                                @(Model.Brand?.Name ?? "CLOTHÉ")
+                            <button type="button" onclick="prevImage()" class="absolute top-1/2 -translate-y-1/2 left-3 z-10 w-11 h-11 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur text-slate-800 dark:text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition hover:scale-110 active:scale-95" aria-label="Previous photo">
+                                <i class="bi bi-chevron-left text-lg"></i>
+                            </button>
+                            <button type="button" onclick="nextImage()" class="absolute top-1/2 -translate-y-1/2 right-3 z-10 w-11 h-11 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur text-slate-800 dark:text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition hover:scale-110 active:scale-95" aria-label="Next photo">
+                                <i class="bi bi-chevron-right text-lg"></i>
+                            </button>
+                            <span class="absolute bottom-4 right-4 z-10 px-3 py-1 rounded-full text-xs font-bold bg-slate-900/75 text-white backdrop-blur">
+                                <span id="galleryCurrentIdx">1</span> / @images.Count
                             </span>
-                        </a>
+                        }
 
-                        <!-- Title -->
-                        <h1 class="product-title">
-                            @Model.Name
-                        </h1>
-
-                        <!-- Rating & Category Meta -->
-                        <div class="product-meta">
-                            <a href="#reviewsSection" class="text-decoration-none d-flex align-items-center gap-2">
-                                <span class="rating-stars">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {
-                                        if (i <= fullStars)
-                                        {
-                                            <i class="bi bi-star-fill"></i>
-                                        }
-                                        else if (i == fullStars + 1 && hasHalfStar)
-                                        {
-                                            <i class="bi bi-star-half"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-star"></i>
-                                        }
-                                    }
-                                </span>
-                                <strong class="text-dark">@averageRating.ToString("0.0")</strong>
-                                <span class="text-muted">(@reviews.Count review@(reviews.Count == 1 ? "" : "s"))</span>
-                            </a>
-
-                            @if (Model.Category != null)
-                            {
-                                <span>
-                                    <i class="bi bi-dot"></i>
-                                    <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.Category.Id" class="text-decoration-none text-muted">
-                                        @Model.Category.Name
-                                    </a>
-                                </span>
-                            }
-                        </div>
-
-                        <!-- Price Block -->
-                        <div class="price-block">
-                            <div id="productPrice" class="current-price d-flex align-items-center flex-wrap gap-2">
-                                @if (minPrice > 0)
-                                {
-                                    <span>$@minPrice.ToString("0.00")</span>
-
-                                    @if (compareAt.HasValue)
-                                    {
-                                        <span class="text-decoration-line-through text-muted fs-5 fw-normal">
-                                            $@compareAt.Value.ToString("0.00")
-                                        </span>
-
-                                        var discountPct = (int)Math.Round((1 - (minPrice / compareAt.Value)) * 100);
-                                        if (discountPct > 0)
-                                        {
-                                            <span class="badge bg-danger rounded-pill px-2 py-1 fs-6 fw-bold">
-                                                Save $@((compareAt.Value - minPrice).ToString("0.00")) (-@discountPct%)
-                                            </span>
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-secondary">Contact us</span>
-                                }
-                            </div>
-
-                            @if (minPrice > 0 && minPrice != maxPrice)
-                            {
-                                <div id="priceRange" class="small text-muted mt-1">
-                                    Price varies by selected options ($@minPrice.ToString("0.00") – $@maxPrice.ToString("0.00"))
-                                </div>
-                            }
-                        </div>
-
-                        <!-- Description -->
-                        <p class="product-description">
-                            @(Model.Description ?? "Designed with premium fabrics, durable stitching, and timeless everyday style.")
-                        </p>
-
-                        <!-- Product Quick Facts -->
-                        <div class="product-facts">
-                            <div class="product-fact">
-                                <span class="product-fact-label">Material</span>
-                                <span class="product-fact-value">@(string.IsNullOrWhiteSpace(Model.Material) ? "100% Premium Cotton" : Model.Material)</span>
-                            </div>
-                            <div class="product-fact">
-                                <span class="product-fact-label">Gender</span>
-                                <span class="product-fact-value">@Model.Gender</span>
-                            </div>
-                            <div class="product-fact">
-                                <span class="product-fact-label">Availability</span>
-                                <span id="productAvailability" class="product-fact-value">
-                                    @if (totalStock > 0)
-                                    {
-                                        <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> In Stock</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Out of Stock</span>
-                                    }
-                                </span>
-                            </div>
-                            <div class="product-fact">
-                                <span class="product-fact-label">Collection</span>
-                                <span class="product-fact-value">@(Model.Category?.Name ?? "Essential")</span>
-                            </div>
-                        </div>
-
-                        <!-- VARIANT OPTIONS & ADD TO CART FORM -->
-                        @if (variants.Count > 0)
+                        @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
                         {
-                            <form asp-controller="Cart" asp-action="Add" method="post" id="addToCartForm">
-                                @Html.AntiForgeryToken()
-
-                                <!-- Interactive Color Swatches -->
-                                @if (distinctColors.Any())
-                                {
-                                    <div class="variant-chip-group">
-                                        <div class="variant-group-header">
-                                            <span class="variant-group-title">Color: <strong id="selectedColorLabel" class="text-primary">All Colors</strong></span>
-                                        </div>
-                                        <div class="d-flex flex-wrap gap-2" id="colorChipsContainer">
-                                            @foreach (var col in distinctColors)
-                                            {
-                                                <button type="button"
-                                                        class="variant-color-chip"
-                                                        data-color-id="@col.Id"
-                                                        data-color-name="@col.Name"
-                                                        onclick="selectColorChip(this, '@col.Id', '@col.Name')">
-                                                    <span class="color-swatch-circle" style="background-color: @(string.IsNullOrWhiteSpace(col.HexCode) ? "#202124" : col.HexCode);"></span>
-                                                    <span>@col.Name</span>
-                                                </button>
-                                            }
-                                        </div>
-                                    </div>
-                                }
-
-                                <!-- Interactive Size Pills -->
-                                @if (distinctSizes.Any())
-                                {
-                                    <div class="variant-chip-group">
-                                        <div class="variant-group-header">
-                                            <span class="variant-group-title">Size: <strong id="selectedSizeLabel" class="text-primary">Choose size</strong></span>
-                                            <button type="button" class="btn btn-link p-0 text-decoration-none small fw-semibold text-muted" data-bs-toggle="modal" data-bs-target="#sizeGuideModal">
-                                                <i class="bi bi-rulers me-1"></i> Size Guide
-                                            </button>
-                                        </div>
-                                        <div class="d-flex flex-wrap gap-2" id="sizeChipsContainer">
-                                            @foreach (var sz in distinctSizes)
-                                            {
-                                                <button type="button"
-                                                        class="variant-size-chip"
-                                                        data-size-id="@sz.Id"
-                                                        data-size-name="@sz.Name"
-                                                        onclick="selectSizeChip(this, '@sz.Id', '@sz.Name')">
-                                                    @sz.Name
-                                                </button>
-                                            }
-                                        </div>
-                                    </div>
-                                }
-
-                                <!-- Variant Dropdown (keeps full data synchronized) -->
-                                <div class="mb-3">
-                                    <label for="variantSelect" class="form-label small fw-bold text-muted text-uppercase letter-spacing-1">
-                                        Selected Option
-                                    </label>
-                                    <select name="variantId" id="variantSelect" class="variant-select" required>
-                                        <option value="">Choose your size & color option</option>
-                                        @foreach (var variant in variants)
-                                        {
-                                            var stock = variant.Inventory?.AvailableQuantity ?? 0;
-                                            var isSale = variant.CompareAtPrice.HasValue && variant.CompareAtPrice.Value > variant.Price;
-                                            var optionLabel = (variant.Size?.Name ?? "One Size") + " / " + (variant.Color?.Name ?? "Default") + " — $" + variant.Price.ToString("0.00") + (isSale ? " (Sale)" : "") + (stock <= 0 ? " — Out of Stock" : "");
-
-                                            <option value="@variant.Id"
-                                                    data-price="@variant.Price"
-                                                    data-compare-at="@(variant.CompareAtPrice ?? 0)"
-                                                    data-stock="@stock"
-                                                    data-size-id="@variant.SizeId"
-                                                    data-color-id="@variant.ColorId">
-                                                @optionLabel
-                                            </option>
-                                        }
-                                    </select>
-                                </div>
-
-                                <!-- Live Stock Status Feedback -->
-                                <div id="stockMessage" class="mb-3">
-                                    @if (totalStock > 0)
-                                    {
-                                        <span class="text-success small fw-semibold">
-                                            <i class="bi bi-check-circle-fill me-1"></i>
-                                            In stock — ready to ship
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-danger small fw-semibold">
-                                            <i class="bi bi-x-circle-fill me-1"></i>
-                                            Currently out of stock
-                                        </span>
-                                    }
-                                </div>
-
-                                <!-- Quantity & Action Buttons -->
-                                <div class="purchase-row">
-                                    <div class="quantity-control">
-                                        <button type="button" class="quantity-btn" onclick="changeQuantity(-1)" aria-label="Decrease quantity">−</button>
-                                        <input type="number"
-                                               name="quantity"
-                                               id="quantityInput"
-                                               value="1"
-                                               min="1"
-                                               max="1"
-                                               class="quantity-input"
-                                               readonly />
-                                        <button type="button" class="quantity-btn" onclick="changeQuantity(1)" aria-label="Increase quantity">+</button>
-                                    </div>
-
-                                    <button type="submit"
-                                            id="addCartButton"
-                                            class="add-cart-btn"
-                                            disabled="@(isSignedIn ? "disabled" : null)">
-                                        @if (isSignedIn)
-                                        {
-                                            <i class="bi bi-bag-plus-fill"></i>
-                                            <span>Add to Bag</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-box-arrow-in-right"></i>
-                                            <span>Sign in to Add</span>
-                                        }
-                                    </button>
-
-                                    @if (isSignedIn)
-                                    {
-                                        <button type="button"
-                                                class="wishlist-btn"
-                                                onclick="submitWishlistForm()"
-                                                title="Add to wishlist"
-                                                aria-label="Add to wishlist">
-                                            <i class="bi bi-heart"></i>
-                                        </button>
-                                    }
-                                </div>
-
-                            </form>
-
-                            @if (isSignedIn)
-                            {
-                                <form id="wishlistForm" asp-controller="Wishlist" asp-action="Add" method="post" class="d-none">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" id="wishlistVariantId" name="variantId" value="" />
-                                </form>
-                            }
-                            else
-                            {
-                                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="d-block text-center text-muted small mt-3 text-decoration-none">
-                                    <i class="bi bi-heart me-1"></i> Sign in to save this to your wishlist
-                                </a>
-                            }
+                            <img id="mainProductImage" src="@primaryImage.ImageUrl" alt="@Model.Name" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         }
                         else
                         {
-                            <div class="alert alert-light border rounded-3 p-3">
-                                <i class="bi bi-info-circle me-2"></i> This product currently has no available sizes or colors.
+                            <div class="flex items-center justify-center h-full text-slate-400 text-5xl">
+                                <i class="bi bi-image"></i>
                             </div>
                         }
 
-                        <!-- Service Perks -->
-                        <div class="service-list">
-                            <div class="service-item">
-                                <div class="service-icon"><i class="bi bi-truck"></i></div>
-                                <div>
-                                    <strong>Fast Delivery</strong>
-                                    <span>2–3 business days</span>
-                                </div>
-                            </div>
-                            <div class="service-item">
-                                <div class="service-icon"><i class="bi bi-arrow-repeat"></i></div>
-                                <div>
-                                    <strong>30-Day Returns</strong>
-                                    <span>Hassle-free exchange</span>
-                                </div>
-                            </div>
-                            <div class="service-item">
-                                <div class="service-icon"><i class="bi bi-shield-check"></i></div>
-                                <div>
-                                    <strong>Authentic Quality</strong>
-                                    <span>Certified fabrics</span>
-                                </div>
-                            </div>
-                            <div class="service-item">
-                                <div class="service-icon"><i class="bi bi-lock"></i></div>
-                                <div>
-                                    <strong>Secure Checkout</strong>
-                                    <span>Protected payment</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- =========================================
-                 TABS: DESCRIPTION, SPECIFICATIONS, SHIPPING
-            ========================================== -->
-            <div class="detail-section">
-                <ul class="nav nav-tabs border-bottom mb-4" id="productTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-bold px-4 py-3" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc-pane" type="button" role="tab">
-                            Description & Details
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold px-4 py-3" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs-pane" type="button" role="tab">
-                            Fabric & Care
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-bold px-4 py-3" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-pane" type="button" role="tab">
-                            Shipping & Returns
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content" id="productTabsContent">
-                    <!-- Tab 1: Description -->
-                    <div class="tab-pane fade show active" id="desc-pane" role="tabpanel">
-                        <div class="row">
-                            <div class="col-lg-8">
-                                <h4 class="fw-bold mb-3">Designed for Everyday Elegance</h4>
-                                <p class="text-secondary lh-lg mb-4">
-                                    @(Model.Description ?? "Crafted from carefully selected fabrics, this piece delivers the perfect balance of comfort, durability, and contemporary silhouette.")
-                                </p>
-                                <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <div class="p-3 bg-light rounded-3">
-                                            <h6 class="fw-bold mb-1"><i class="bi bi-stars me-2 text-primary"></i> Premium Finish</h6>
-                                            <p class="text-muted small mb-0">High tensile stitching designed for regular wear and lasting form retention.</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <div class="p-3 bg-light rounded-3">
-                                            <h6 class="fw-bold mb-1"><i class="bi bi-feather me-2 text-primary"></i> Breathable Comfort</h6>
-                                            <p class="text-muted small mb-0">Soft touch texture that adapts comfortably across all seasons.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- Tab 2: Specs & Care -->
-                    <div class="tab-pane fade" id="specs-pane" role="tabpanel">
-                        <div class="col-lg-7">
-                            <table class="table table-borderless align-middle">
-                                <tbody>
-                                    <tr class="border-bottom">
-                                        <th class="text-muted py-3" style="width: 35%;">Material Composition</th>
-                                        <td class="fw-semibold py-3">@(string.IsNullOrWhiteSpace(Model.Material) ? "100% Combed Cotton" : Model.Material)</td>
-                                    </tr>
-                                    <tr class="border-bottom">
-                                        <th class="text-muted py-3">Target Gender</th>
-                                        <td class="fw-semibold py-3">@Model.Gender</td>
-                                    </tr>
-                                    <tr class="border-bottom">
-                                        <th class="text-muted py-3">Washing Instructions</th>
-                                        <td class="fw-semibold py-3">Machine wash cold with like colors, gentle cycle</td>
-                                    </tr>
-                                    <tr class="border-bottom">
-                                        <th class="text-muted py-3">Drying</th>
-                                        <td class="fw-semibold py-3">Tumble dry low or line dry in shade</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted py-3">Ironing</th>
-                                        <td class="fw-semibold py-3">Low iron if needed, do not iron over prints</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Tab 3: Shipping & Returns -->
-                    <div class="tab-pane fade" id="shipping-pane" role="tabpanel">
-                        <div class="row g-4 col-lg-9">
-                            <div class="col-md-6">
-                                <div class="p-4 border rounded-3 h-100">
-                                    <h5 class="fw-bold mb-3"><i class="bi bi-box-seam me-2 text-primary"></i> Delivery Options</h5>
-                                    <ul class="list-unstyled text-muted small d-flex flex-column gap-2 mb-0">
-                                        <li><strong>Standard Shipping:</strong> 2–4 business days ($3.99, Free over $50).</li>
-                                        <li><strong>Express Shipping:</strong> 1–2 business days ($7.99).</li>
-                                        <li><strong>Store Pickup:</strong> Free at selected branch locations.</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-4 border rounded-3 h-100">
-                                    <h5 class="fw-bold mb-3"><i class="bi bi-arrow-counterclockwise me-2 text-primary"></i> Easy 30-Day Returns</h5>
-                                    <p class="text-muted small mb-0">
-                                        Not quite the right fit? No worries! Return any unwashed, unworn items with tags attached within 30 days for an instant exchange or full refund.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- =========================================
-                 REVIEWS & COMMENTS SECTION
-            ========================================== -->
-            <div class="detail-section" id="reviewsSection">
-
-                <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
-                    <div>
-                        <div class="section-eyebrow">Customer Community</div>
-                        <h2 class="section-title mb-0">Customer Reviews & Ratings</h2>
-                    </div>
-                    @if (isSignedIn && userReview == null)
+                    <!-- Thumbnails Strip -->
+                    @if (images.Count > 1)
                     {
-                        <a href="#writeReviewCard" class="btn btn-dark rounded-pill px-4 fw-semibold btn-sm">
-                            <i class="bi bi-pencil-square me-1"></i> Write a Review
+                        <div class="flex gap-2.5 overflow-x-auto py-2" id="thumbnailStrip">
+                            @for (int i = 0; i < images.Count; i++)
+                            {
+                                var img = images[i];
+                                if (!string.IsNullOrWhiteSpace(img.ImageUrl))
+                                {
+                                    <button type="button" class="shrink-0 w-20 h-24 rounded-2xl overflow-hidden border-2 transition focus:outline-none @(img == primaryImage ? "border-slate-900 dark:border-blue-500 ring-2 ring-slate-900/20 dark:ring-blue-500/30" : "border-slate-200 dark:border-slate-800 opacity-80 hover:opacity-100 hover:border-slate-400")" data-index="@(i + 1)" onclick="changeImageByIndex(@i, '@img.ImageUrl')">
+                                        <img src="@img.ImageUrl" alt="@Model.Name thumbnail" class="w-full h-full object-cover" />
+                                    </button>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- RIGHT PRODUCT INFORMATION (5 COLS) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Brand Link -->
+                <a asp-controller="Shop" asp-action="Index" asp-route-brandId="@Model.Brand?.Id" class="inline-flex items-center gap-2.5 group">
+                    @if (!string.IsNullOrWhiteSpace(Model.Brand?.Logo))
+                    {
+                        <img src="@Model.Brand.Logo" alt="@Model.Brand.Name" class="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 object-contain p-0.5 bg-white shadow-sm" />
+                    }
+                    else
+                    {
+                        <span class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-sm">
+                            <i class="bi bi-award"></i>
+                        </span>
+                    }
+                    <span class="text-xs font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400 group-hover:underline">
+                        @(Model.Brand?.Name ?? "CLOTHÉ")
+                    </span>
+                </a>
+
+                <!-- Product Title -->
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    @Model.Name
+                </h1>
+
+                <!-- Ratings & Reviews Meta -->
+                <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                    <a href="#reviewsSection" class="flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition">
+                        <span class="flex items-center gap-1 text-amber-400">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= fullStars)
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else if (i == fullStars + 1 && hasHalfStar)
+                                {
+                                    <i class="bi bi-star-half"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star text-slate-300 dark:text-slate-600"></i>
+                                }
+                            }
+                        </span>
+                        <strong class="text-slate-900 dark:text-white font-bold">@averageRating.ToString("0.0")</strong>
+                        <span>(@reviews.Count review@(reviews.Count == 1 ? "" : "s"))</span>
+                    </a>
+
+                    @if (Model.Category != null)
+                    {
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.Category.Id" class="hover:text-slate-900 dark:hover:text-white transition">
+                            @Model.Category.Name
                         </a>
                     }
                 </div>
 
-                <div class="row g-4 mb-5">
-
-                    <!-- Score Summary Hero -->
-                    <div class="col-lg-4">
-                        <div class="review-score-hero h-100">
-                            <div class="review-big-num">@averageRating.ToString("0.0")</div>
-                            <div class="rating-stars fs-4 mb-2">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    if (i <= fullStars)
-                                    {
-                                        <i class="bi bi-star-fill text-warning"></i>
-                                    }
-                                    else if (i == fullStars + 1 && hasHalfStar)
-                                    {
-                                        <i class="bi bi-star-half text-warning"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-star text-white-50"></i>
-                                    }
-                                }
-                            </div>
-                            <div class="fw-semibold">Based on @reviews.Count verified review@(reviews.Count == 1 ? "" : "s")</div>
-                            <div class="small text-white-50 mt-1">@recommendPct% of customers recommend this product</div>
-                        </div>
-                    </div>
-
-                    <!-- Breakdown Bars -->
-                    <div class="col-lg-8">
-                        <div class="p-4 bg-light rounded-4 border h-100 d-flex flex-column justify-content-center">
-                            <div class="review-breakdown-row">
-                                <span style="width: 55px;" class="fw-bold text-dark">5 Stars</span>
-                                <div class="review-breakdown-bar">
-                                    <div class="review-breakdown-fill" style="width: @fiveStarPct%;"></div>
-                                </div>
-                                <span style="width: 45px;" class="text-end text-muted small">@fiveStarCount (@fiveStarPct%)</span>
-                            </div>
-
-                            <div class="review-breakdown-row">
-                                <span style="width: 55px;" class="fw-bold text-dark">4 Stars</span>
-                                <div class="review-breakdown-bar">
-                                    <div class="review-breakdown-fill" style="width: @fourStarPct%;"></div>
-                                </div>
-                                <span style="width: 45px;" class="text-end text-muted small">@fourStarCount (@fourStarPct%)</span>
-                            </div>
-
-                            <div class="review-breakdown-row">
-                                <span style="width: 55px;" class="fw-bold text-dark">3 Stars</span>
-                                <div class="review-breakdown-bar">
-                                    <div class="review-breakdown-fill" style="width: @threeStarPct%;"></div>
-                                </div>
-                                <span style="width: 45px;" class="text-end text-muted small">@threeStarCount (@threeStarPct%)</span>
-                            </div>
-
-                            <div class="review-breakdown-row">
-                                <span style="width: 55px;" class="fw-bold text-dark">2 Stars</span>
-                                <div class="review-breakdown-bar">
-                                    <div class="review-breakdown-fill" style="width: @twoStarPct%;"></div>
-                                </div>
-                                <span style="width: 45px;" class="text-end text-muted small">@twoStarCount (@twoStarPct%)</span>
-                            </div>
-
-                            <div class="review-breakdown-row">
-                                <span style="width: 55px;" class="fw-bold text-dark">1 Star</span>
-                                <div class="review-breakdown-bar">
-                                    <div class="review-breakdown-fill" style="width: @oneStarPct%;"></div>
-                                </div>
-                                <span style="width: 45px;" class="text-end text-muted small">@oneStarCount (@oneStarPct%)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- =========================================
-                     WRITE / UPDATE REVIEW CARD
-                ========================================== -->
-                <div class="card border rounded-4 shadow-sm mb-5" id="writeReviewCard">
-                    <div class="card-body p-4 p-md-5">
-
-                        @if (isSignedIn)
+                <!-- Price Block -->
+                <div class="py-4 border-y border-slate-200/80 dark:border-slate-800 space-y-1">
+                    <div id="productPrice" class="flex items-center flex-wrap gap-3">
+                        @if (minPrice > 0)
                         {
-                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                                <div>
-                                    <h4 class="fw-bold mb-1">
-                                        @(userReview != null ? "Update Your Review" : "Write a Customer Review")
-                                    </h4>
-                                    <p class="text-muted small mb-0">
-                                        @(userReview != null
-                                            ? $"You posted a review on {userReview.CreatedAt:MMM dd, yyyy}. You can modify your rating and feedback below."
-                                            : "Share your honest thoughts about the fit, comfort, and fabric with other shoppers.")
-                                    </p>
-                                </div>
+                            <span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                $@minPrice.ToString("0.00")
+                            </span>
 
-                                @if (userReview != null)
+                            @if (compareAt.HasValue)
+                            {
+                                <span class="text-lg line-through text-slate-400 dark:text-slate-500">
+                                    $@compareAt.Value.ToString("0.00")
+                                </span>
+
+                                var discountPct = (int)Math.Round((1 - (minPrice / compareAt.Value)) * 100);
+                                if (discountPct > 0)
                                 {
-                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteReviewModal">
-                                        <i class="bi bi-trash3 me-1"></i> Delete Review
-                                    </button>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                                        Save $@((compareAt.Value - minPrice).ToString("0.00")) (-@discountPct%)
+                                    </span>
                                 }
-                            </div>
-
-                            <form asp-controller="Reviews" asp-action="Add" method="post" id="reviewForm">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="productId" value="@Model.Id" />
-                                <input type="hidden" name="rating" id="reviewRatingInput" value="@(userReview?.Rating ?? 5)" />
-
-                                <!-- Star rating selector -->
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold small text-uppercase letter-spacing-1 text-muted d-block">
-                                        Your Overall Rating <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="star-picker" id="starPicker">
-                                            @for (int i = 1; i <= 5; i++)
-                                            {
-                                                var isSel = (userReview != null ? userReview.Rating : 5) >= i;
-                                                <i class="bi @(isSel ? "bi-star-fill selected" : "bi-star") star-picker-item"
-                                                   data-rating="@i"
-                                                   title="@i Star@(i > 1 ? "s" : "")"></i>
-                                            }
-                                        </div>
-                                        <span id="starRatingLabel" class="fw-bold text-dark small bg-light py-1 px-3 rounded-pill border">
-                                            @((userReview?.Rating ?? 5) switch
-                                            {
-                                                5 => "5 - Excellent, loved it!",
-                                                4 => "4 - Very good",
-                                                3 => "3 - Average / Fair",
-                                                2 => "2 - Not as expected",
-                                                _ => "1 - Disappointed"
-                                            })
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Review Comment -->
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label for="reviewCommentInput" class="form-label fw-bold small text-uppercase letter-spacing-1 text-muted mb-0">
-                                            Your Feedback & Comments
-                                        </label>
-                                        <span class="text-muted small" id="reviewCharCounter">0 / 1000</span>
-                                    </div>
-                                    <textarea name="comment"
-                                              id="reviewCommentInput"
-                                              class="form-control rounded-3 p-3"
-                                              rows="4"
-                                              maxlength="1000"
-                                              placeholder="Tell us what you liked or disliked. How was the sizing, fabric softness, and everyday wear?">@(userReview?.Comment ?? "")</textarea>
-                                </div>
-
-                                <div class="d-flex align-items-center gap-3">
-                                    <button type="submit" class="btn btn-dark rounded-pill px-4 py-2 fw-bold" id="submitReviewBtn">
-                                        <i class="bi bi-send-fill me-2"></i>
-                                        @(userReview != null ? "Update Review" : "Submit Review")
-                                    </button>
-                                    <span class="text-muted small">Your review will be posted under your account name.</span>
-                                </div>
-                            </form>
+                            }
                         }
                         else
                         {
-                            <!-- Guest callout -->
-                            <div class="text-center py-4">
-                                <div class="mb-3">
-                                    <span class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="bi bi-chat-square-quote-fill fs-3 text-primary"></i>
-                                    </span>
-                                </div>
-                                <h4 class="fw-bold">Have you purchased or tried this item?</h4>
-                                <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
-                                    Sign in to your CLOTHÉ account to share your rating and review with our community.
-                                </p>
-                                <a asp-controller="Account"
-                                   asp-action="Login"
-                                   asp-route-returnUrl="@(Context.Request.Path + "#reviewsSection")"
-                                   class="btn btn-dark rounded-pill px-4 py-2 fw-bold">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i> Sign in to Write a Review
-                                </a>
-                            </div>
+                            <span class="text-xl font-bold text-slate-500">Contact us</span>
                         }
+                    </div>
 
+                    @if (minPrice > 0 && minPrice != maxPrice)
+                    {
+                        <div id="priceRange" class="text-xs text-slate-500 dark:text-slate-400">
+                            Price varies by selected options ($@minPrice.ToString("0.00") – $@maxPrice.ToString("0.00"))
+                        </div>
+                    }
+                </div>
+
+                <!-- Description -->
+                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    @(Model.Description ?? "Designed with premium fabrics, durable stitching, and timeless everyday style.")
+                </p>
+
+                <!-- Quick Facts Grid -->
+                <div class="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                    <div>
+                        <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Material</span>
+                        <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">@(string.IsNullOrWhiteSpace(Model.Material) ? "100% Premium Cotton" : Model.Material)</span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Gender</span>
+                        <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">@Model.Gender</span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Availability</span>
+                        <span id="productAvailability" class="text-sm font-semibold">
+                            @if (totalStock > 0)
+                            {
+                                <span class="text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
+                                    <i class="bi bi-check-circle-fill"></i> In Stock
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-rose-600 dark:text-rose-400 inline-flex items-center gap-1">
+                                    <i class="bi bi-x-circle-fill"></i> Out of Stock
+                                </span>
+                            }
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">Collection</span>
+                        <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">@(Model.Category?.Name ?? "Essential")</span>
                     </div>
                 </div>
 
-                <!-- =========================================
-                     REVIEWS LIST & FILTERS
-                ========================================== -->
-                @if (reviews.Any())
+                <!-- VARIANT SELECTION & ADD TO CART FORM -->
+                @if (variants.Count > 0)
                 {
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-                        <!-- Rating filter pills -->
-                        <div class="d-flex flex-wrap gap-2" id="reviewFilters">
-                            <button type="button" class="review-filter-btn active" data-filter="all">All (@reviews.Count)</button>
-                            <button type="button" class="review-filter-btn" data-filter="5">5 ★ (@fiveStarCount)</button>
-                            <button type="button" class="review-filter-btn" data-filter="4">4 ★ (@fourStarCount)</button>
-                            <button type="button" class="review-filter-btn" data-filter="3">3 ★ (@threeStarCount)</button>
-                            <button type="button" class="review-filter-btn" data-filter="2">2 ★ (@twoStarCount)</button>
-                            <button type="button" class="review-filter-btn" data-filter="1">1 ★ (@oneStarCount)</button>
-                        </div>
+                    <form asp-controller="Cart" asp-action="Add" method="post" id="addToCartForm" class="space-y-5">
+                        @Html.AntiForgeryToken()
 
-                        <!-- Sort dropdown -->
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small fw-semibold">Sort by:</span>
-                            <select id="reviewSortSelect" class="form-select form-select-sm rounded-pill" style="width: 170px;">
-                                <option value="newest">Most Recent</option>
-                                <option value="highest">Highest Rating</option>
-                                <option value="lowest">Lowest Rating</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="reviewsListContainer">
-                        @foreach (var r in reviews)
+                        <!-- Colors -->
+                        @if (distinctColors.Any())
                         {
-                            var isCurrentUser = currentCustomer != null && r.CustomerId == currentCustomer.Id;
-                            var customerInitial = !string.IsNullOrWhiteSpace(r.Customer?.FirstName)
-                                ? r.Customer.FirstName.Substring(0, 1).ToUpper()
-                                : "C";
-
-                            <div class="review-item-card @(isCurrentUser ? "border-primary" : "")"
-                                 data-rating="@r.Rating"
-                                 data-timestamp="@r.CreatedAt.Ticks">
-
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="review-user-avatar @(isCurrentUser ? "bg-primary" : "")">
-                                            @customerInitial
-                                        </div>
-                                        <div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <strong class="text-dark">
-                                                    @(r.Customer?.FirstName ?? "Customer") @(r.Customer?.LastName ?? "")
-                                                </strong>
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small py-0 px-2">
-                                                    <i class="bi bi-patch-check-fill me-1"></i> Verified
-                                                </span>
-                                                @if (isCurrentUser)
-                                                {
-                                                    <span class="badge bg-primary rounded-pill small py-0 px-2">Your Review</span>
-                                                }
-                                            </div>
-                                            <div class="text-muted small mt-1">
-                                                @r.CreatedAt.ToString("MMMM dd, yyyy")
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="text-end">
-                                        <div class="rating-stars">
-                                            @for (int i = 1; i <= 5; i++)
-                                            {
-                                                if (i <= r.Rating)
-                                                {
-                                                    <i class="bi bi-star-fill"></i>
-                                                }
-                                                else
-                                                {
-                                                    <i class="bi bi-star"></i>
-                                                }
-                                            }
-                                        </div>
-                                    </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    <span>Color: <strong id="selectedColorLabel" class="text-blue-600 dark:text-blue-400 font-semibold normal-case">All Colors</strong></span>
                                 </div>
-
-                                @if (!string.IsNullOrWhiteSpace(r.Comment))
-                                {
-                                    <p class="text-secondary mb-0 lh-base" style="font-size: 14.5px;">
-                                        @r.Comment
-                                    </p>
-                                }
-                                else
-                                {
-                                    <p class="text-muted fst-italic mb-0 small">
-                                        (Customer did not provide written comments)
-                                    </p>
-                                }
+                                <div class="flex flex-wrap gap-2" id="colorChipsContainer">
+                                    @foreach (var col in distinctColors)
+                                    {
+                                        <button type="button" class="variant-color-chip inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white transition shadow-sm" data-color-id="@col.Id" data-color-name="@col.Name" onclick="selectColorChip(this, '@col.Id', '@col.Name')">
+                                            <span class="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0" style="background-color: @(string.IsNullOrWhiteSpace(col.HexCode) ? "#202124" : col.HexCode);"></span>
+                                            <span>@col.Name</span>
+                                        </button>
+                                    }
+                                </div>
                             </div>
                         }
-                    </div>
+
+                        <!-- Sizes -->
+                        @if (distinctSizes.Any())
+                        {
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    <span>Size: <strong id="selectedSizeLabel" class="text-blue-600 dark:text-blue-400 font-semibold normal-case">Choose size</strong></span>
+                                    <button type="button" class="text-slate-500 hover:text-slate-900 dark:hover:text-white normal-case font-semibold text-xs inline-flex items-center gap-1 transition" onclick="openSizeGuideModal()">
+                                        <i class="bi bi-rulers"></i> Size Guide
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap gap-2" id="sizeChipsContainer">
+                                    @foreach (var sz in distinctSizes)
+                                    {
+                                        <button type="button" class="variant-size-chip min-w-[44px] h-10 px-3.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white transition shadow-sm flex items-center justify-center" data-size-id="@sz.Id" data-size-name="@sz.Name" onclick="selectSizeChip(this, '@sz.Id', '@sz.Name')">
+                                            @sz.Name
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Hidden / Synchronized select -->
+                        <div>
+                            <label for="variantSelect" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                Selected Option
+                            </label>
+                            <select name="variantId" id="variantSelect" class="w-full h-11 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" required>
+                                <option value="">Choose your size & color option</option>
+                                @foreach (var variant in variants)
+                                {
+                                    var stock = variant.Inventory?.AvailableQuantity ?? 0;
+                                    var isSale = variant.CompareAtPrice.HasValue && variant.CompareAtPrice.Value > variant.Price;
+                                    var optionLabel = (variant.Size?.Name ?? "One Size") + " / " + (variant.Color?.Name ?? "Default") + " — $" + variant.Price.ToString("0.00") + (isSale ? " (Sale)" : "") + (stock <= 0 ? " — Out of Stock" : "");
+
+                                    <option value="@variant.Id" data-price="@variant.Price" data-compare-at="@(variant.CompareAtPrice ?? 0)" data-stock="@stock" data-size-id="@variant.SizeId" data-color-id="@variant.ColorId">
+                                        @optionLabel
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Live Stock Feedback -->
+                        <div id="stockMessage" class="text-xs font-semibold">
+                            @if (totalStock > 0)
+                            {
+                                <span class="text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5">
+                                    <i class="bi bi-check-circle-fill"></i> In stock — ready to ship
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-rose-600 dark:text-rose-400 inline-flex items-center gap-1.5">
+                                    <i class="bi bi-x-circle-fill"></i> Currently out of stock
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Quantity Stepper & Buttons Row -->
+                        <div class="purchase-row flex items-center gap-3 pt-2">
+                            <!-- Stepper -->
+                            <div class="flex items-center h-12 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shadow-sm shrink-0">
+                                <button type="button" class="w-10 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-base font-bold" onclick="changeQuantity(-1)" aria-label="Decrease quantity">−</button>
+                                <input type="number" name="quantity" id="quantityInput" value="1" min="1" max="1" class="w-12 h-full text-center bg-transparent border-0 font-bold text-sm text-slate-900 dark:text-white outline-none" readonly />
+                                <button type="button" class="w-10 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-base font-bold" onclick="changeQuantity(1)" aria-label="Increase quantity">+</button>
+                            </div>
+
+                            <!-- Add to Cart -->
+                            <button type="submit" id="addCartButton" class="flex-1 h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed" disabled="@(totalStock <= 0 ? "disabled" : null)">
+                                <i class="bi bi-bag-plus-fill text-base"></i>
+                                <span data-en="Add to Cart" data-kh="បន្ថែមទៅកន្ត្រក">Add to Cart</span>
+                            </button>
+
+                            <!-- Wishlist -->
+                            @if (isSignedIn)
+                            {
+                                <button type="button" onclick="submitWishlistForm()" class="w-12 h-12 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-rose-500 hover:border-rose-500 transition active:scale-95 shadow-sm shrink-0" title="Add to wishlist" aria-label="Add to wishlist">
+                                    <i class="bi bi-heart text-lg"></i>
+                                </button>
+                            }
+                        </div>
+
+                    </form>
+
+                    @if (isSignedIn)
+                    {
+                        <form id="wishlistForm" asp-controller="Wishlist" asp-action="Add" method="post" class="hidden">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" id="wishlistVariantId" name="variantId" value="" />
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="block text-center text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition">
+                            <i class="bi bi-heart me-1 text-rose-500"></i> Sign in to save this to your wishlist
+                        </a>
+                    }
                 }
                 else
                 {
-                    <div class="text-center py-5 bg-light rounded-4 border">
-                        <div class="mb-3">
-                            <i class="bi bi-chat-square-heart display-4 text-muted"></i>
-                        </div>
-                        <h4 class="fw-bold">No Reviews Yet</h4>
-                        <p class="text-muted small mb-3">
-                            Be the first to share your thoughts and help others make a stylish choice!
-                        </p>
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500">
+                        <i class="bi bi-info-circle me-1.5"></i> This product currently has no available sizes or colors.
                     </div>
                 }
+
+                <!-- Service Highlights Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 border-t border-slate-200/80 dark:border-slate-800">
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm flex items-center justify-center text-sm shrink-0">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div class="text-xs">
+                            <strong class="block font-bold text-slate-900 dark:text-white">Fast Delivery</strong>
+                            <span class="text-slate-500 dark:text-slate-400">2–3 business days</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm flex items-center justify-center text-sm shrink-0">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                        <div class="text-xs">
+                            <strong class="block font-bold text-slate-900 dark:text-white">30-Day Returns</strong>
+                            <span class="text-slate-500 dark:text-slate-400">Hassle-free exchange</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm flex items-center justify-center text-sm shrink-0">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div class="text-xs">
+                            <strong class="block font-bold text-slate-900 dark:text-white">Authentic Quality</strong>
+                            <span class="text-slate-500 dark:text-slate-400">Certified fabrics</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm flex items-center justify-center text-sm shrink-0">
+                            <i class="bi bi-lock"></i>
+                        </div>
+                        <div class="text-xs">
+                            <strong class="block font-bold text-slate-900 dark:text-white">Secure Checkout</strong>
+                            <span class="text-slate-500 dark:text-slate-400">Protected payment</span>
+                        </div>
+                    </div>
+                </div>
 
             </div>
-
-            <!-- =========================================
-                 YOU MAY ALSO LIKE (RELATED PRODUCTS)
-            ========================================== -->
-            @if (ViewBag.RelatedProducts != null)
-            {
-                var relatedProducts = (List<WebApplication_ClothingEcommerce.Models.Product>)ViewBag.RelatedProducts;
-                if (relatedProducts.Any())
-                {
-                    <div class="detail-section">
-                        <div class="d-flex justify-content-between align-items-end mb-4">
-                            <div>
-                                <div class="section-eyebrow">Explore Collections</div>
-                                <h2 class="section-title mb-0">You May Also Like</h2>
-                            </div>
-                            <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-outline-dark rounded-pill px-4 btn-sm fw-semibold">
-                                View All <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
-                        </div>
-                        <div class="row g-4">
-                            @foreach (var related in relatedProducts)
-                            {
-                                <div class="col-6 col-md-4 col-lg-3">
-                                    <partial name="_ProductCard" model="related" />
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            }
 
         </div>
-    </section>
 
-</div>
-
-<!-- =========================================
-     SIZE GUIDE MODAL
-========================================== -->
-<div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-header border-bottom px-4 py-3">
-                <h5 class="modal-title fw-bold" id="sizeGuideModalLabel">
-                    <i class="bi bi-rulers me-2 text-primary"></i> Size & Fit Guide
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- TABS SECTION -->
+        <div class="mt-16 pt-12 border-t border-slate-200/80 dark:border-slate-800">
+            <!-- Tabs Nav -->
+            <div class="flex border-b border-slate-200 dark:border-slate-800 gap-8 text-sm font-bold">
+                <button type="button" class="tab-btn pb-4 border-b-2 border-slate-900 dark:border-blue-500 text-slate-900 dark:text-white transition" onclick="switchProductTab(0, this)">
+                    Description & Details
+                </button>
+                <button type="button" class="tab-btn pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition" onclick="switchProductTab(1, this)">
+                    Fabric & Care
+                </button>
+                <button type="button" class="tab-btn pb-4 border-b-2 border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition" onclick="switchProductTab(2, this)">
+                    Shipping & Returns
+                </button>
             </div>
-            <div class="modal-body p-4">
-                <p class="text-muted small mb-4">
-                    Use our standard body measurement guide to find your ideal fit. All measurements are in inches (and cm).
-                </p>
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle text-center small mb-4">
-                        <thead class="table-dark">
+
+            <!-- Tabs Panels -->
+            <div class="pt-8">
+                <!-- Panel 0: Description -->
+                <div id="tabPanel0" class="tab-panel space-y-6 max-w-3xl">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Designed for Everyday Elegance</h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        @(Model.Description ?? "Crafted from carefully selected fabrics, this piece delivers the perfect balance of comfort, durability, and contemporary silhouette.")
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                                <i class="bi bi-stars text-blue-600 dark:text-blue-400"></i> Premium Finish
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">High tensile stitching designed for regular wear and lasting form retention.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                                <i class="bi bi-feather text-blue-600 dark:text-blue-400"></i> Breathable Comfort
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Soft touch texture that adapts comfortably across all seasons.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 1: Fabric & Care -->
+                <div id="tabPanel1" class="tab-panel hidden max-w-2xl">
+                    <table class="w-full text-left text-sm divide-y divide-slate-200/80 dark:divide-slate-800">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                             <tr>
-                                <th>Size</th>
-                                <th>Chest (in / cm)</th>
-                                <th>Waist (in / cm)</th>
-                                <th>Hips (in / cm)</th>
-                                <th>Length (in / cm)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="fw-bold">XS</td>
-                                <td>34" / 86cm</td>
-                                <td>28" / 71cm</td>
-                                <td>34" / 86cm</td>
-                                <td>26" / 66cm</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold">S</td>
-                                <td>36–38" / 91–96cm</td>
-                                <td>30–32" / 76–81cm</td>
-                                <td>36–38" / 91–96cm</td>
-                                <td>27" / 68cm</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold">M</td>
-                                <td>40–42" / 101–106cm</td>
-                                <td>34–36" / 86–91cm</td>
-                                <td>40–42" / 101–106cm</td>
-                                <td>28" / 71cm</td>
+                                <th class="py-3.5 text-xs font-medium text-slate-400 w-1/3">Material Composition</th>
+                                <td class="py-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200">@(string.IsNullOrWhiteSpace(Model.Material) ? "100% Combed Cotton" : Model.Material)</td>
                             </tr>
                             <tr>
-                                <td class="fw-bold">L</td>
-                                <td>44–46" / 111–116cm</td>
-                                <td>38–40" / 96–101cm</td>
-                                <td>44–46" / 111–116cm</td>
-                                <td>29" / 73cm</td>
+                                <th class="py-3.5 text-xs font-medium text-slate-400">Target Gender</th>
+                                <td class="py-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200">@Model.Gender</td>
                             </tr>
                             <tr>
-                                <td class="fw-bold">XL</td>
-                                <td>48–50" / 121–127cm</td>
-                                <td>42–44" / 106–111cm</td>
-                                <td>48–50" / 121–127cm</td>
-                                <td>30" / 76cm</td>
+                                <th class="py-3.5 text-xs font-medium text-slate-400">Washing Instructions</th>
+                                <td class="py-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200">Machine wash cold with like colors, gentle cycle</td>
                             </tr>
                             <tr>
-                                <td class="fw-bold">XXL</td>
-                                <td>52–54" / 132–137cm</td>
-                                <td>46–48" / 116–121cm</td>
-                                <td>52–54" / 132–137cm</td>
-                                <td>31" / 78cm</td>
+                                <th class="py-3.5 text-xs font-medium text-slate-400">Drying</th>
+                                <td class="py-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200">Tumble dry low or line dry in shade</td>
+                            </tr>
+                            <tr>
+                                <th class="py-3.5 text-xs font-medium text-slate-400">Ironing</th>
+                                <td class="py-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200">Low iron if needed, do not iron over prints</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <div class="p-3 bg-light rounded-3">
-                    <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-1 text-primary"></i> How to Measure:</h6>
-                    <ul class="text-muted small mb-0 ps-3">
-                        <li><strong>Chest:</strong> Measure under arms around the fullest part of your chest.</li>
-                        <li><strong>Waist:</strong> Measure around natural waistline, keeping tape comfortably loose.</li>
-                        <li><strong>Fit Tip:</strong> If you fall between two sizes, choose the smaller size for a slim fit or the larger size for a relaxed, looser fit.</li>
-                    </ul>
+                <!-- Panel 2: Shipping & Returns -->
+                <div id="tabPanel2" class="tab-panel hidden max-w-3xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="bi bi-box-seam text-blue-600 dark:text-blue-400"></i> Delivery Options
+                            </h3>
+                            <ul class="text-xs text-slate-500 dark:text-slate-400 space-y-2">
+                                <li><strong>Standard Shipping:</strong> 2–4 business days ($3.99, Free over $50).</li>
+                                <li><strong>Express Shipping:</strong> 1–2 business days ($7.99).</li>
+                                <li><strong>Store Pickup:</strong> Free at selected branch locations.</li>
+                            </ul>
+                        </div>
+                        <div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="bi bi-arrow-counterclockwise text-blue-600 dark:text-blue-400"></i> Easy 30-Day Returns
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Not quite the right fit? No worries! Return any unwashed, unworn items with tags attached within 30 days for an instant exchange or full refund.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 px-4 pb-4">
-                <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Got it, thanks</button>
+        </div>
+
+        <!-- REVIEWS & RATINGS SECTION -->
+        <div class="mt-16 pt-12 border-t border-slate-200/80 dark:border-slate-800" id="reviewsSection">
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">Customer Community</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Customer Reviews & Ratings</h2>
+                </div>
+                @if (isSignedIn && userReview == null)
+                {
+                    <a href="#writeReviewCard" class="px-5 py-2.5 rounded-full text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition shadow-sm inline-flex items-center gap-2">
+                        <i class="bi bi-pencil-square"></i> Write a Review
+                    </a>
+                }
+            </div>
+
+            <!-- Score Hero & Breakdown Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">
+                <!-- Hero Score Box (4 cols) -->
+                <div class="lg:col-span-4 rounded-3xl p-8 bg-slate-900 text-white flex flex-col items-center justify-center text-center shadow-lg">
+                    <div class="text-5xl font-black mb-2">@averageRating.ToString("0.0")</div>
+                    <div class="flex items-center gap-1 text-amber-400 text-xl mb-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= fullStars)
+                            {
+                                <i class="bi bi-star-fill"></i>
+                            }
+                            else if (i == fullStars + 1 && hasHalfStar)
+                            {
+                                <i class="bi bi-star-half"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-star text-white/30"></i>
+                            }
+                        }
+                    </div>
+                    <div class="text-sm font-semibold">Based on @reviews.Count verified review@(reviews.Count == 1 ? "" : "s")</div>
+                    <div class="text-xs text-white/60 mt-1">@recommendPct% of customers recommend this product</div>
+                </div>
+
+                <!-- Breakdown Bars (8 cols) -->
+                <div class="lg:col-span-8 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-center space-y-3">
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="w-14 font-bold text-slate-800 dark:text-slate-200">5 Stars</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: @fiveStarPct%;"></div>
+                        </div>
+                        <span class="w-16 text-right text-slate-400">@fiveStarCount (@fiveStarPct%)</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="w-14 font-bold text-slate-800 dark:text-slate-200">4 Stars</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: @fourStarPct%;"></div>
+                        </div>
+                        <span class="w-16 text-right text-slate-400">@fourStarCount (@fourStarPct%)</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="w-14 font-bold text-slate-800 dark:text-slate-200">3 Stars</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: @threeStarPct%;"></div>
+                        </div>
+                        <span class="w-16 text-right text-slate-400">@threeStarCount (@threeStarPct%)</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="w-14 font-bold text-slate-800 dark:text-slate-200">2 Stars</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: @twoStarPct%;"></div>
+                        </div>
+                        <span class="w-16 text-right text-slate-400">@twoStarCount (@twoStarPct%)</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="w-14 font-bold text-slate-800 dark:text-slate-200">1 Star</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-amber-400 rounded-full transition-all duration-500" style="width: @oneStarPct%;"></div>
+                        </div>
+                        <span class="w-16 text-right text-slate-400">@oneStarCount (@oneStarPct%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WRITE / UPDATE REVIEW CARD -->
+            <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-10" id="writeReviewCard">
+                @if (isSignedIn)
+                {
+                    <div class="flex items-center justify-between pb-5 mb-6 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                                @(userReview != null ? "Update Your Review" : "Write a Customer Review")
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                @(userReview != null ? $"You posted a review on {userReview.CreatedAt:MMM dd, yyyy}. You can modify your rating and feedback below." : "Share your honest thoughts about the fit, comfort, and fabric with other shoppers.")
+                            </p>
+                        </div>
+                        @if (userReview != null)
+                        {
+                            <button type="button" onclick="openDeleteReviewModal()" class="px-3.5 py-1.5 rounded-full text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition">
+                                <i class="bi bi-trash3 me-1"></i> Delete Review
+                            </button>
+                        }
+                    </div>
+
+                    <form asp-controller="Reviews" asp-action="Add" method="post" id="reviewForm" class="space-y-6">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <input type="hidden" name="rating" id="reviewRatingInput" value="@(userReview?.Rating ?? 5)" />
+
+                        <!-- Interactive Star Picker -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                                Your Overall Rating <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5 text-2xl text-slate-300 dark:text-slate-700 cursor-pointer" id="starPicker">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        var isSel = (userReview != null ? userReview.Rating : 5) >= i;
+                                        <i class="bi @(isSel ? "bi-star-fill text-amber-400" : "bi-star") star-picker-item transition hover:scale-110" data-rating="@i" title="@i Star@(i > 1 ? "s" : "")"></i>
+                                    }
+                                </div>
+                                <span id="starRatingLabel" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                    @((userReview?.Rating ?? 5) switch
+                                    {
+                                        5 => "5 - Excellent, loved it!",
+                                        4 => "4 - Very good",
+                                        3 => "3 - Average / Fair",
+                                        2 => "2 - Not as expected",
+                                        _ => "1 - Disappointed"
+                                    })
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Comment -->
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                                <label for="reviewCommentInput">Your Feedback & Comments</label>
+                                <span class="text-slate-400 font-normal normal-case" id="reviewCharCounter">0 / 1000</span>
+                            </div>
+                            <textarea name="comment" id="reviewCommentInput" rows="4" maxlength="1000" class="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed" placeholder="Tell us what you liked or disliked. How was the sizing, fabric softness, and everyday wear?">@(userReview?.Comment ?? "")</textarea>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button type="submit" class="px-6 py-3 rounded-full text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition shadow-sm inline-flex items-center gap-2">
+                                <i class="bi bi-send-fill"></i> @(userReview != null ? "Update Review" : "Submit Review")
+                            </button>
+                            <span class="text-xs text-slate-400">Your review will be posted under your account name.</span>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-center py-6 max-w-md mx-auto space-y-3">
+                        <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                            <i class="bi bi-chat-square-quote-fill"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Have you tried this item?</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            Sign in to your CLOTHÉ account to share your rating and review with our community.
+                        </p>
+                        <div class="pt-2">
+                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + "#reviewsSection")" class="px-6 py-2.5 rounded-full text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition shadow-sm inline-flex items-center gap-2">
+                                <i class="bi bi-box-arrow-in-right"></i> Sign in to Write a Review
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- REVIEWS LIST & FILTERS -->
+            @if (reviews.Any())
+            {
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div class="flex flex-wrap gap-2" id="reviewFilters">
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 dark:bg-blue-600 text-white transition" data-filter="all">All (@reviews.Count)</button>
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-900 transition" data-filter="5">5 ★ (@fiveStarCount)</button>
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-900 transition" data-filter="4">4 ★ (@fourStarCount)</button>
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-900 transition" data-filter="3">3 ★ (@threeStarCount)</button>
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-900 transition" data-filter="2">2 ★ (@twoStarCount)</button>
+                        <button type="button" class="review-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-900 transition" data-filter="1">1 ★ (@oneStarCount)</button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400">Sort by:</span>
+                        <select id="reviewSortSelect" class="h-9 px-3 rounded-full text-xs font-medium border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none">
+                            <option value="newest">Most Recent</option>
+                            <option value="highest">Highest Rating</option>
+                            <option value="lowest">Lowest Rating</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-4" id="reviewsListContainer">
+                    @foreach (var r in reviews)
+                    {
+                        var isCurrentUser = currentCustomer != null && r.CustomerId == currentCustomer.Id;
+                        var customerInitial = !string.IsNullOrWhiteSpace(r.Customer?.FirstName) ? r.Customer.FirstName.Substring(0, 1).ToUpper() : "C";
+
+                        <div class="review-item-card p-6 rounded-3xl bg-white dark:bg-slate-900 border @(isCurrentUser ? "border-blue-500 dark:border-blue-500 ring-2 ring-blue-500/20" : "border-slate-200 dark:border-slate-800") shadow-sm" data-rating="@r.Rating" data-timestamp="@r.CreatedAt.Ticks">
+                            <div class="flex items-start justify-between gap-4 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full @(isCurrentUser ? "bg-blue-600 text-white" : "bg-slate-800 text-white dark:bg-slate-700") font-bold text-sm flex items-center justify-center shrink-0">
+                                        @customerInitial
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <strong class="text-sm font-bold text-slate-900 dark:text-white">
+                                                @(r.Customer?.FirstName ?? "Customer") @(r.Customer?.LastName ?? "")
+                                            </strong>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                Verified
+                                            </span>
+                                            @if (isCurrentUser)
+                                            {
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500 text-white">Your Review</span>
+                                            }
+                                        </div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">
+                                            @r.CreatedAt.ToString("MMMM dd, yyyy")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1 text-amber-400 text-sm">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= r.Rating)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star text-slate-300 dark:text-slate-600"></i>
+                                        }
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(r.Comment))
+                            {
+                                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed m-0">
+                                    @r.Comment
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="text-xs italic text-slate-400 m-0">
+                                    (Customer did not provide written comments)
+                                </p>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-12 rounded-3xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                    <i class="bi bi-chat-square-heart text-4xl text-slate-400 block mb-2"></i>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">No Reviews Yet</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Be the first to share your thoughts and help others make a stylish choice!</p>
+                </div>
+            }
+        </div>
+
+        <!-- RELATED PRODUCTS SECTION -->
+        @if (ViewBag.RelatedProducts != null)
+        {
+            var relatedProducts = (List<WebApplication_ClothingEcommerce.Models.Product>)ViewBag.RelatedProducts;
+            if (relatedProducts.Any())
+            {
+                <div class="mt-16 pt-12 border-t border-slate-200/80 dark:border-slate-800">
+                    <div class="flex items-end justify-between gap-4 mb-8">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">Explore Collections</span>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">You May Also Like</h2>
+                        </div>
+                        <a asp-controller="Shop" asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="px-4 py-2 rounded-full text-xs font-bold border border-slate-300 dark:border-slate-700 hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900 transition">
+                            View All &rarr;
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        @foreach (var related in relatedProducts)
+                        {
+                            <partial name="_ProductCard" model="related" />
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+    </section>
+
+</div>
+
+<!-- SIZE GUIDE MODAL (Pure Tailwind) -->
+<div id="sizeGuideModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="sizeGuideModalLabel" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeSizeGuideModal()"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div class="relative w-full max-w-2xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2" id="sizeGuideModalLabel">
+                    <i class="bi bi-rulers text-blue-600 dark:text-blue-400"></i> Size & Fit Guide
+                </h3>
+                <button type="button" onclick="closeSizeGuideModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Use our standard body measurement guide to find your ideal fit. All measurements are in inches (and cm).
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                        <thead class="bg-slate-900 text-white font-bold">
+                            <tr>
+                                <th class="p-2.5">Size</th>
+                                <th class="p-2.5">Chest</th>
+                                <th class="p-2.5">Waist</th>
+                                <th class="p-2.5">Hips</th>
+                                <th class="p-2.5">Length</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                            <tr><td class="p-2.5 font-bold">XS</td><td class="p-2.5">34" / 86cm</td><td class="p-2.5">28" / 71cm</td><td class="p-2.5">34" / 86cm</td><td class="p-2.5">26" / 66cm</td></tr>
+                            <tr><td class="p-2.5 font-bold">S</td><td class="p-2.5">36–38"</td><td class="p-2.5">30–32"</td><td class="p-2.5">36–38"</td><td class="p-2.5">27" / 68cm</td></tr>
+                            <tr><td class="p-2.5 font-bold">M</td><td class="p-2.5">40–42"</td><td class="p-2.5">34–36"</td><td class="p-2.5">40–42"</td><td class="p-2.5">28" / 71cm</td></tr>
+                            <tr><td class="p-2.5 font-bold">L</td><td class="p-2.5">44–46"</td><td class="p-2.5">38–40"</td><td class="p-2.5">44–46"</td><td class="p-2.5">29" / 73cm</td></tr>
+                            <tr><td class="p-2.5 font-bold">XL</td><td class="p-2.5">48–50"</td><td class="p-2.5">42–44"</td><td class="p-2.5">48–50"</td><td class="p-2.5">30" / 76cm</td></tr>
+                            <tr><td class="p-2.5 font-bold">XXL</td><td class="p-2.5">52–54"</td><td class="p-2.5">46–48"</td><td class="p-2.5">52–54"</td><td class="p-2.5">31" / 78cm</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                    <strong class="font-bold text-slate-900 dark:text-white block mb-1">How to Measure:</strong>
+                    <div>• <strong>Chest:</strong> Measure under arms around fullest part of chest.</div>
+                    <div>• <strong>Waist:</strong> Measure around natural waistline, keeping tape comfortable.</div>
+                    <div>• <strong>Fit Tip:</strong> If between two sizes, choose smaller for a slim fit or larger for a relaxed fit.</div>
+                </div>
+            </div>
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button type="button" onclick="closeSizeGuideModal()" class="px-5 py-2.5 rounded-full text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition">
+                    Got it, thanks
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- =========================================
-     DELETE REVIEW MODAL
-========================================== -->
+<!-- DELETE REVIEW MODAL (Pure Tailwind) -->
 @if (userReview != null)
 {
-    <div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-body p-4 text-center">
-                    <div class="text-danger mb-3">
-                        <i class="bi bi-exclamation-octagon display-4"></i>
-                    </div>
-                    <h5 class="fw-bold">Delete Review?</h5>
-                    <p class="text-muted small mb-4">
-                        Are you sure you want to remove your review? This action cannot be undone.
-                    </p>
-                    <form asp-controller="Reviews" asp-action="Delete" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@userReview.Id" />
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-light rounded-pill flex-fill" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger rounded-pill flex-fill">Delete</button>
-                        </div>
-                    </form>
+    <div id="deleteReviewModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeDeleteReviewModal()"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 text-center space-y-4">
+                <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl mx-auto">
+                    <i class="bi bi-exclamation-octagon"></i>
                 </div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Delete Review?</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Are you sure you want to remove your review? This action cannot be undone.
+                </p>
+                <form asp-controller="Reviews" asp-action="Delete" method="post" class="space-y-3 pt-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@userReview.Id" />
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeDeleteReviewModal()" class="flex-1 py-2.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 transition">Cancel</button>
+                        <button type="submit" class="flex-1 py-2.5 rounded-full text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition">Delete</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 }
 
-<!-- =========================================
-     STICKY MOBILE ADD-TO-CART BAR
-========================================== -->
+<!-- STICKY MOBILE ADD-TO-CART BAR (Pure Tailwind) -->
 @if (variants.Count > 0)
 {
-    <div class="sticky-mobile-cta" id="stickyMobileCta">
-        <span class="sticky-price" id="stickyPrice">
+    <div id="stickyMobileCta" class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-3 flex items-center justify-between gap-3 md:hidden shadow-2xl translate-y-full transition-transform duration-300">
+        <span class="text-lg font-extrabold text-slate-900 dark:text-white whitespace-nowrap pl-2" id="stickyPrice">
             $@minPrice.ToString("0.00")
         </span>
-        <button type="button" id="stickyAddCartButton" disabled="@(isSignedIn ? "disabled" : null)">
-            @if (isSignedIn)
-            {
-                <i class="bi bi-bag-plus me-1"></i>
-                @:Add to Bag
-            }
-            else
-            {
-                <i class="bi bi-box-arrow-in-right me-1"></i>
-                @:Sign in to Add
-            }
+        <button type="button" id="stickyAddCartButton" class="flex-1 h-11 rounded-full bg-slate-900 dark:bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50" disabled="@(totalStock <= 0 ? "disabled" : null)">
+            <i class="bi bi-bag-plus"></i>
+            <span data-en="Add to Cart" data-kh="បន្ថែមទៅកន្ត្រក">Add to Cart</span>
         </button>
     </div>
 }
 
 @section Scripts {
     <script>
-        /* =========================================
-           IMAGE GALLERY CONTROLLER
-        ========================================== */
+        /* TAB SWITCHER */
+        function switchProductTab(index, btn) {
+            document.querySelectorAll('.tab-panel').forEach((p, i) => {
+                p.classList.toggle('hidden', i !== index);
+            });
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('border-slate-900', 'dark:border-blue-500', 'text-slate-900', 'dark:text-white');
+                b.classList.add('border-transparent', 'text-slate-400');
+            });
+            btn.classList.remove('border-transparent', 'text-slate-400');
+            btn.classList.add('border-slate-900', 'dark:border-blue-500', 'text-slate-900', 'dark:text-white');
+        }
+
+        /* MODAL HELPERS */
+        function openSizeGuideModal() {
+            document.getElementById('sizeGuideModal').classList.remove('hidden');
+        }
+        function closeSizeGuideModal() {
+            document.getElementById('sizeGuideModal').classList.add('hidden');
+        }
+        function openDeleteReviewModal() {
+            const m = document.getElementById('deleteReviewModal');
+            if (m) m.classList.remove('hidden');
+        }
+        function closeDeleteReviewModal() {
+            const m = document.getElementById('deleteReviewModal');
+            if (m) m.classList.add('hidden');
+        }
+
+        /* GALLERY CONTROLLER */
         const galleryImages = [
             @for (int i = 0; i < images.Count; i++)
             {
@@ -1940,12 +1067,18 @@
                 setTimeout(() => {
                     mainImg.src = src || galleryImages[index].url;
                     mainImg.onload = () => { mainImg.style.opacity = "1"; };
-                }, 100);
+                }, 80);
             }
 
-            // Update active thumbnail
-            document.querySelectorAll(".product-thumbnail").forEach((thumb, i) => {
-                thumb.classList.toggle("active", i === index);
+            const thumbs = document.querySelectorAll("#thumbnailStrip button");
+            thumbs.forEach((thumb, i) => {
+                const isActive = i === index;
+                thumb.classList.toggle("border-slate-900", isActive);
+                thumb.classList.toggle("dark:border-blue-500", isActive);
+                thumb.classList.toggle("ring-2", isActive);
+                thumb.classList.toggle("border-slate-200", !isActive);
+                thumb.classList.toggle("dark:border-slate-800", !isActive);
+                thumb.classList.toggle("opacity-80", !isActive);
             });
         }
 
@@ -1970,9 +1103,7 @@
             }
         }
 
-        /* =========================================
-           VARIANT SELECTION & SYNCHRONIZATION
-        ========================================== */
+        /* VARIANT SELECTION & SYNCHRONIZATION */
         const variantSelect = document.getElementById("variantSelect");
         const priceElement = document.getElementById("productPrice");
         const stockMessage = document.getElementById("stockMessage");
@@ -1987,8 +1118,12 @@
         let selectedSizeId = null;
 
         function selectColorChip(chip, colorId, colorName) {
-            document.querySelectorAll(".variant-color-chip").forEach(c => c.classList.remove("active"));
-            chip.classList.add("active");
+            document.querySelectorAll(".variant-color-chip").forEach(c => {
+                c.classList.remove("border-slate-900", "dark:border-white", "bg-slate-900", "text-white");
+                c.classList.add("bg-white", "dark:bg-slate-900", "border-slate-300", "dark:border-slate-700");
+            });
+            chip.classList.add("border-slate-900", "dark:border-white", "bg-slate-900", "text-white");
+            chip.classList.remove("bg-white", "dark:bg-slate-900", "border-slate-300", "dark:border-slate-700");
             selectedColorId = colorId;
             const label = document.getElementById("selectedColorLabel");
             if (label) label.textContent = colorName;
@@ -1996,8 +1131,12 @@
         }
 
         function selectSizeChip(chip, sizeId, sizeName) {
-            document.querySelectorAll(".variant-size-chip").forEach(s => s.classList.remove("active"));
-            chip.classList.add("active");
+            document.querySelectorAll(".variant-size-chip").forEach(s => {
+                s.classList.remove("border-slate-900", "dark:border-white", "bg-slate-900", "text-white");
+                s.classList.add("bg-white", "dark:bg-slate-900", "border-slate-300", "dark:border-slate-700");
+            });
+            chip.classList.add("border-slate-900", "dark:border-white", "bg-slate-900", "text-white");
+            chip.classList.remove("bg-white", "dark:bg-slate-900", "border-slate-300", "dark:border-slate-700");
             selectedSizeId = sizeId;
             const label = document.getElementById("selectedSizeLabel");
             if (label) label.textContent = sizeName;
@@ -2025,6 +1164,12 @@
             if (matchedOption) {
                 variantSelect.value = matchedOption.value;
                 variantSelect.dispatchEvent(new Event("change"));
+            } else {
+                if (stockMessage) {
+                    stockMessage.innerHTML = '<span class="text-rose-600 dark:text-rose-400 text-xs font-bold"><i class="bi bi-x-circle-fill me-1"></i> Selected combination is unavailable</span>';
+                }
+                if (addCartButton) addCartButton.disabled = true;
+                if (stickyAddCartButton) stickyAddCartButton.disabled = true;
             }
         }
 
@@ -2042,28 +1187,44 @@
                 const compareAt = parseFloat(selected.dataset.compareAt) || 0;
                 const stock = parseInt(selected.dataset.stock) || 0;
 
-                // Sync color & size chips if triggered directly from select
                 const colId = selected.dataset.colorId;
                 const szId = selected.dataset.sizeId;
                 if (colId) {
+                    selectedColorId = colId;
                     document.querySelectorAll(".variant-color-chip").forEach(c => {
-                        c.classList.toggle("active", c.dataset.colorId === colId);
+                        const isMatch = c.dataset.colorId === colId;
+                        c.classList.toggle("border-slate-900", isMatch);
+                        c.classList.toggle("dark:border-white", isMatch);
+                        c.classList.toggle("bg-slate-900", isMatch);
+                        c.classList.toggle("text-white", isMatch);
+                        if (isMatch) {
+                            const label = document.getElementById("selectedColorLabel");
+                            if (label && c.dataset.colorName) label.textContent = c.dataset.colorName;
+                        }
                     });
                 }
                 if (szId) {
+                    selectedSizeId = szId;
                     document.querySelectorAll(".variant-size-chip").forEach(s => {
-                        s.classList.toggle("active", s.dataset.sizeId === szId);
+                        const isMatch = s.dataset.sizeId === szId;
+                        s.classList.toggle("border-slate-900", isMatch);
+                        s.classList.toggle("dark:border-white", isMatch);
+                        s.classList.toggle("bg-slate-900", isMatch);
+                        s.classList.toggle("text-white", isMatch);
+                        if (isMatch) {
+                            const label = document.getElementById("selectedSizeLabel");
+                            if (label && s.dataset.sizeName) label.textContent = s.dataset.sizeName;
+                        }
                     });
                 }
 
-                // Update Price
                 if (priceElement && !isNaN(price)) {
                     if (compareAt > price) {
                         const discountPct = Math.round((1 - (price / compareAt)) * 100);
                         const savedAmount = (compareAt - price).toFixed(2);
-                        priceElement.innerHTML = `<span>$${price.toFixed(2)}</span> <span class="text-decoration-line-through text-muted fs-5 fw-normal ms-2">$${compareAt.toFixed(2)}</span> <span class="badge bg-danger rounded-pill px-2 py-1 fs-6 fw-bold ms-2">Save $${savedAmount} (-${discountPct}%)</span>`;
+                        priceElement.innerHTML = `<span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">$${price.toFixed(2)}</span> <span class="text-lg line-through text-slate-400 dark:text-slate-500">$${compareAt.toFixed(2)}</span> <span class="px-2.5 py-1 rounded-full text-xs font-black bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900">Save $${savedAmount} (-${discountPct}%)</span>`;
                     } else {
-                        priceElement.innerHTML = `<span>$${price.toFixed(2)}</span>`;
+                        priceElement.innerHTML = `<span class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">$${price.toFixed(2)}</span>`;
                     }
                 }
 
@@ -2071,33 +1232,33 @@
                     stickyPrice.textContent = "$" + price.toFixed(2);
                 }
 
-                // Update Stock
                 if (quantityInput) {
                     quantityInput.max = Math.max(stock, 1);
-                    quantityInput.value = 1;
+                    if (parseInt(quantityInput.value) > stock && stock > 0) {
+                        quantityInput.value = stock;
+                    }
                 }
 
                 if (stockMessage) {
                     if (stock <= 0) {
-                        stockMessage.innerHTML = '<span class="text-danger small fw-bold"><i class="bi bi-x-circle-fill me-1"></i> Out of stock — check back soon</span>';
+                        stockMessage.innerHTML = '<span class="text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5"><i class="bi bi-x-circle-fill"></i> Out of stock — check back soon</span>';
                     } else if (stock <= 5) {
-                        stockMessage.innerHTML = `<span class="text-warning small fw-bold"><i class="bi bi-exclamation-circle-fill me-1"></i> Only ${stock} left in stock — order soon!</span>`;
+                        stockMessage.innerHTML = `<span class="text-amber-600 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5"><i class="bi bi-exclamation-circle-fill"></i> Only ${stock} left in stock — order soon!</span>`;
                     } else {
-                        stockMessage.innerHTML = `<span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i> In stock (${stock} available) — ready to ship</span>`;
+                        stockMessage.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold inline-flex items-center gap-1.5"><i class="bi bi-check-circle-fill"></i> In stock (${stock} available) — ready to ship</span>`;
                     }
                 }
 
                 if (availability) {
                     availability.innerHTML = stock > 0
-                        ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> In Stock</span>'
-                        : '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Out of Stock</span>';
+                        ? '<span class="text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1"><i class="bi bi-check-circle-fill"></i> In Stock</span>'
+                        : '<span class="text-rose-600 dark:text-rose-400 inline-flex items-center gap-1"><i class="bi bi-x-circle-fill"></i> Out of Stock</span>';
                 }
 
-                // Enable/disable buttons
-                if (addCartButton && isSignedIn) {
+                if (addCartButton) {
                     addCartButton.disabled = stock <= 0;
                 }
-                if (stickyAddCartButton && isSignedIn) {
+                if (stickyAddCartButton) {
                     stickyAddCartButton.disabled = stock <= 0;
                 }
 
@@ -2105,9 +1266,21 @@
                     wishlistVariant.value = selected.value;
                 }
             });
+
+            if (variantSelect.options.length > 1) {
+                let defaultIndex = 1;
+                for (let i = 1; i < variantSelect.options.length; i++) {
+                    const optStock = parseInt(variantSelect.options[i].dataset.stock) || 0;
+                    if (optStock > 0) {
+                        defaultIndex = i;
+                        break;
+                    }
+                }
+                variantSelect.selectedIndex = defaultIndex;
+                variantSelect.dispatchEvent(new Event("change"));
+            }
         }
 
-        /* Quantity controls */
         function changeQuantity(amount) {
             if (!quantityInput) return;
             let current = parseInt(quantityInput.value) || 1;
@@ -2118,7 +1291,6 @@
             quantityInput.value = current;
         }
 
-        /* Wishlist helper */
         function submitWishlistForm() {
             const form = document.getElementById("wishlistForm");
             const wVariant = document.getElementById("wishlistVariantId");
@@ -2128,22 +1300,14 @@
             }
         }
 
-        /* Authentication redirect helper */
         const isSignedIn = @(isSignedIn ? "true" : "false");
         function redirectToLogin() {
             window.location.href = "/Account/Login?ReturnUrl=" + encodeURIComponent(window.location.pathname);
         }
 
         const cartForm = document.getElementById("addToCartForm");
-        if (addCartButton && !isSignedIn) {
-            addCartButton.addEventListener("click", function (e) {
-                e.preventDefault();
-                redirectToLogin();
-            });
-        }
-
         if (cartForm) {
-            cartForm.addEventListener("submit", function (e) {
+            cartForm.addEventListener("submit", async function (e) {
                 if (!isSignedIn) {
                     e.preventDefault();
                     redirectToLogin();
@@ -2153,6 +1317,52 @@
                     e.preventDefault();
                     alert("Please choose a product option (size & color) before adding to bag.");
                     return false;
+                }
+
+                e.preventDefault();
+                const btn = addCartButton;
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> <span>Adding…</span>';
+                }
+
+                try {
+                    const formData = new FormData(cartForm);
+                    const response = await fetch(cartForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (btn) {
+                            btn.innerHTML = '<i class="bi bi-check-lg"></i> <span>Added!</span>';
+                            setTimeout(function () {
+                                btn.innerHTML = originalHtml;
+                                btn.disabled = false;
+                            }, 1600);
+                        }
+
+                        document.dispatchEvent(new CustomEvent('cart:updated', {
+                            detail: {
+                                toast: true,
+                                title: "Added to bag!",
+                                message: data.message || "Item was successfully added to your shopping cart."
+                            }
+                        }));
+                    } else {
+                        throw new Error('Server returned ' + response.status);
+                    }
+                } catch (err) {
+                    if (btn) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                    cartForm.submit();
                 }
             });
         }
@@ -2164,11 +1374,11 @@
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        stickyBar.classList.remove("visible");
+                        stickyBar.classList.add("translate-y-full");
                     } else if (entry.boundingClientRect.top < 0) {
-                        stickyBar.classList.add("visible");
+                        stickyBar.classList.remove("translate-y-full");
                     } else {
-                        stickyBar.classList.remove("visible");
+                        stickyBar.classList.add("translate-y-full");
                     }
                 });
             }, { threshold: 0 });
@@ -2189,9 +1399,7 @@
             });
         }
 
-        /* =========================================
-           INTERACTIVE STAR RATING PICKER
-        ========================================== */
+        /* STAR RATING PICKER */
         const starPicker = document.getElementById("starPicker");
         const ratingInput = document.getElementById("reviewRatingInput");
         const ratingLabel = document.getElementById("starRatingLabel");
@@ -2211,11 +1419,11 @@
                 stars.forEach(star => {
                     const r = parseInt(star.dataset.rating);
                     if (r <= val) {
-                        star.classList.add("bi-star-fill", "selected");
-                        star.classList.remove("bi-star");
+                        star.classList.add("bi-star-fill", "text-amber-400");
+                        star.classList.remove("bi-star", "text-slate-300", "dark:text-slate-700");
                     } else {
-                        star.classList.remove("bi-star-fill", "selected");
-                        star.classList.add("bi-star");
+                        star.classList.remove("bi-star-fill", "text-amber-400");
+                        star.classList.add("bi-star", "text-slate-300", "dark:text-slate-700");
                     }
                 });
                 if (ratingLabel) {
@@ -2229,6 +1437,7 @@
                     stars.forEach(s => {
                         const r = parseInt(s.dataset.rating);
                         s.classList.toggle("bi-star-fill", r <= hoverVal);
+                        s.classList.toggle("text-amber-400", r <= hoverVal);
                         s.classList.toggle("bi-star", r > hoverVal);
                     });
                     if (ratingLabel) ratingLabel.textContent = ratingDescriptions[hoverVal] || `${hoverVal} Stars`;
@@ -2247,7 +1456,7 @@
             });
         }
 
-        /* Character Counter */
+        /* Char Counter */
         const commentInput = document.getElementById("reviewCommentInput");
         const charCounter = document.getElementById("reviewCharCounter");
         if (commentInput && charCounter) {
@@ -2258,9 +1467,7 @@
             updateCharCount();
         }
 
-        /* =========================================
-           CLIENT-SIDE REVIEWS FILTERING & SORTING
-        ========================================== */
+        /* REVIEWS FILTERING & SORTING */
         const filterBtns = document.querySelectorAll(".review-filter-btn");
         const reviewCards = document.querySelectorAll(".review-item-card");
         const sortSelect = document.getElementById("reviewSortSelect");
@@ -2269,8 +1476,12 @@
         if (filterBtns.length > 0 && reviewCards.length > 0) {
             filterBtns.forEach(btn => {
                 btn.addEventListener("click", function () {
-                    filterBtns.forEach(b => b.classList.remove("active"));
-                    this.classList.add("active");
+                    filterBtns.forEach(b => {
+                        b.classList.remove("bg-slate-900", "dark:bg-blue-600", "text-white");
+                        b.classList.add("bg-white", "dark:bg-slate-900", "text-slate-600", "dark:text-slate-400", "border", "border-slate-300", "dark:border-slate-700");
+                    });
+                    this.classList.remove("bg-white", "dark:bg-slate-900", "text-slate-600", "dark:text-slate-400", "border", "border-slate-300", "dark:border-slate-700");
+                    this.classList.add("bg-slate-900", "dark:bg-blue-600", "text-white");
                     const filter = this.dataset.filter;
 
                     reviewCards.forEach(card => {
@@ -2296,7 +1507,6 @@
                     } else if (criteria === "lowest") {
                         return parseInt(a.dataset.rating) - parseInt(b.dataset.rating);
                     } else {
-                        // newest
                         return parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp);
                     }
                 });

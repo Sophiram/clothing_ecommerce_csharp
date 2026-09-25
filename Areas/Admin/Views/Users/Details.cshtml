@@ -10,354 +10,458 @@
     var initial = !string.IsNullOrEmpty(Model.FirstName)
         ? Model.FirstName.Substring(0, 1).ToUpperInvariant()
         : "U";
+    var avatarUrl = ViewBag.AvatarUrl as string;
 }
 
-<div class="container-fluid px-4 py-3" style="max-width: 860px;">
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <%-- Breadcrumb / Header --%>
-    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2">
-            <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
-                <i class="bi bi-arrow-left me-1"></i> Back
-            </a>
-            <span class="text-muted">/</span>
-            <span class="fw-semibold text-dark">User Profile</span>
+    <!-- BREADCRUMB & PAGE HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <!-- Breadcrumb -->
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <li class="inline-flex items-center">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400">Admin</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span data-en="System" data-kh="ប្រព័ន្ធ">System</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <a asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400" data-en="Users" data-kh="អ្នកប្រើប្រាស់">Users</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span class="text-slate-900 dark:text-white font-semibold" data-en="Profile" data-kh="គណនី">@Model.FullName</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-person-badge"></i>
+                </span>
+                <span data-en="User Profile" data-kh="ព័ត៌មានលម្អិតអ្នកប្រើប្រាស់">User Profile</span>
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Account identity, authorization roles, security audit parameters, and commerce activity.
+            </p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-dark btn-sm rounded-pill px-3">
-                <i class="bi bi-pencil me-1"></i> Edit Profile
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a asp-action="Index" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition">
+                <i class="bi bi-arrow-left"></i>
+                <span data-en="Back to Users" data-kh="ត្រឡប់ក្រោយ">Back to Users</span>
             </a>
+
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-xs font-semibold shadow-sm transition">
+                <i class="bi bi-pencil"></i>
+                <span data-en="Edit Profile" data-kh="កែសម្រួល">Edit Profile</span>
+            </a>
+
             @if (!isCurrent)
             {
-                <form method="post" asp-action="ToggleStatus" asp-route-id="@Model.Id" class="d-inline">
+                <form method="post" asp-action="ToggleStatus" asp-route-id="@Model.Id" class="inline">
                     @Html.AntiForgeryToken()
                     <button type="submit"
-                            class="btn btn-sm rounded-pill px-3 @(isLocked ? "btn-outline-success" : "btn-outline-warning")"
+                            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold shadow-sm transition @(isLocked ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100" : "border-rose-200 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100")"
                             onclick="return confirm('@(isLocked ? "Activate" : "Deactivate") account for @Model.FullName?')">
-                        <i class="bi @(isLocked ? "bi-check-circle" : "bi-slash-circle") me-1"></i>
-                        @(isLocked ? "Activate" : "Deactivate")
+                        <i class="bi @(isLocked ? "bi-check-circle" : "bi-slash-circle")"></i>
+                        <span>@(isLocked ? "Activate" : "Deactivate")</span>
                     </button>
                 </form>
+
                 <button type="button"
-                        class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm hover:shadow transition"
                         data-bs-toggle="modal"
                         data-bs-target="#resetPasswordModal">
-                    <i class="bi bi-key me-1"></i> Reset Password
+                    <i class="bi bi-key"></i>
+                    <span data-en="Reset Password" data-kh="ប្តូរពាក្យសម្ងាត់">Reset Password</span>
                 </button>
             }
         </div>
     </div>
 
-    <%-- Alerts --%>
+    <!-- NOTIFICATION ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 d-flex gap-2 align-items-center mb-3" role="alert">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <div>@TempData["Success"]</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill text-lg text-emerald-500"></i>
+            <span class="flex-1">@TempData["Success"]</span>
+            <button type="button" class="text-emerald-500 hover:text-emerald-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
         </div>
     }
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 d-flex gap-2 align-items-center mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-            <div>@TempData["Error"]</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill text-lg text-rose-500"></i>
+            <span class="flex-1">@TempData["Error"]</span>
+            <button type="button" class="text-rose-500 hover:text-rose-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
         </div>
     }
 
-    <div class="row g-4">
+    <!-- MAIN PROFILE GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        <%-- LEFT: Avatar + Identity Card --%>
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center h-100">
+        <!-- LEFT COLUMN: Identity & Quick Links (4 cols) -->
+        <div class="lg:col-span-4 space-y-6">
 
-                <%-- Avatar --%>
-                <div class="d-flex justify-content-center mb-3">
-                    @{
-                        var avatarUrl = ViewBag.AvatarUrl as string;
-                    }
-                    @if (!string.IsNullOrEmpty(avatarUrl))
-                    {
-                        <div class="position-relative">
-                            <img src="@avatarUrl" alt="@Model.FullName" class="rounded-circle shadow" style="width: 88px; height: 88px; object-fit: cover;" />
-                            @if (isCurrent)
-                            {
-                                <span class="position-absolute top-0 end-0 badge bg-primary rounded-pill border border-white"
-                                      style="font-size: 9px; padding: 3px 5px;">YOU</span>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold position-relative"
-                             style="width: 88px; height: 88px; font-size: 2rem;">
-                            @initial
-                            @if (isCurrent)
-                            {
-                                <span class="position-absolute top-0 end-0 badge bg-primary rounded-pill border border-white"
-                                      style="font-size: 9px; padding: 3px 5px;">YOU</span>
-                            }
-                        </div>
-                    }
+            <!-- Profile Identity Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm text-center">
+                <!-- Avatar -->
+                <div class="flex justify-center mb-4">
+                    <div class="relative inline-block">
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <img src="@avatarUrl" alt="@Model.FullName" class="w-24 h-24 rounded-full object-cover shadow-md ring-4 ring-slate-100 dark:ring-slate-800" />
+                        }
+                        else
+                        {
+                            <div class="w-24 h-24 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-3xl shadow-md ring-4 ring-slate-100 dark:ring-slate-800">
+                                @initial
+                            </div>
+                        }
+                        @if (isCurrent)
+                        {
+                            <span class="absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-600 text-white ring-2 ring-white dark:ring-slate-900 uppercase tracking-wider">
+                                YOU
+                            </span>
+                        }
+                    </div>
                 </div>
 
-                <%-- Name & Email --%>
-                <h5 class="fw-bold mb-1 text-dark">@Model.FullName</h5>
-                <div class="text-muted small mb-3">
-                    @Model.Email
+                <!-- Name & Email -->
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">@Model.FullName</h2>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                    <span>@Model.Email</span>
                     @if (Model.EmailConfirmed)
                     {
-                        <i class="bi bi-patch-check-fill text-success ms-1" title="Email Verified"></i>
+                        <i class="bi bi-patch-check-fill text-emerald-500 text-sm" title="Email Confirmed"></i>
                     }
                     else
                     {
-                        <i class="bi bi-exclamation-circle-fill text-warning ms-1" title="Email Not Verified"></i>
+                        <i class="bi bi-exclamation-circle-fill text-amber-500 text-sm" title="Email Unconfirmed"></i>
                     }
                 </div>
 
-                <%-- Role badges --%>
-                <div class="d-flex gap-1 flex-wrap justify-content-center mb-3">
+                <!-- Role Badges -->
+                <div class="flex flex-wrap justify-center gap-1.5 my-4">
                     @foreach (var r in roles)
                     {
-                        string bc = "bg-secondary-subtle text-secondary border-secondary-subtle";
-                        string ic = "bi-person";
-                        if (r == "SuperAdmin") { bc = "bg-warning-subtle text-warning-emphasis border-warning-subtle"; ic = "bi-shield-fill-check"; }
-                        else if (r == "Admin")  { bc = "bg-primary-subtle text-primary border-primary-subtle"; ic = "bi-shield-check"; }
-                        <span class="badge @bc border rounded-pill px-3 py-1 small fw-semibold">
-                            <i class="bi @ic me-1"></i>@r
-                        </span>
+                        if (r == "SuperAdmin")
+                        {
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50">
+                                <i class="bi bi-shield-fill-check"></i>@r
+                            </span>
+                        }
+                        else if (r == "Admin")
+                        {
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200/60 dark:border-primary-900/50">
+                                <i class="bi bi-shield-check"></i>@r
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                <i class="bi bi-person"></i>@r
+                            </span>
+                        }
                     }
                 </div>
 
-                <%-- Account Status --%>
+                <!-- Account Status Badge -->
                 <div>
                     @if (!isLocked)
                     {
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
-                            <i class="bi bi-check-circle me-1"></i> Active Account
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Active Account
                         </span>
                     }
                     else
                     {
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
-                            <i class="bi bi-lock me-1"></i> Deactivated
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/50">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                            Deactivated
                         </span>
                     }
                 </div>
             </div>
+
+            <!-- Connected Platform Links -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3" data-en="Activity Channels" data-kh="សកម្មភាពក្នុងប្រព័ន្ធ">
+                    Activity Channels
+                </h3>
+
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index" asp-route-search="@Model.Email" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition group">
+                    <div class="flex items-center gap-2.5">
+                        <i class="bi bi-bag-check text-primary-500 text-sm"></i>
+                        <span>Customer Orders</span>
+                    </div>
+                    <i class="bi bi-chevron-right text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+
+                <a asp-area="Admin" asp-controller="Wishlists" asp-action="Index" asp-route-search="@Model.Email" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition group">
+                    <div class="flex items-center gap-2.5">
+                        <i class="bi bi-heart text-rose-500 text-sm"></i>
+                        <span>Saved Wishlist</span>
+                    </div>
+                    <i class="bi bi-chevron-right text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+
+                <a asp-area="Admin" asp-controller="Reviews" asp-action="Index" asp-route-search="@Model.Email" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition group">
+                    <div class="flex items-center gap-2.5">
+                        <i class="bi bi-star text-amber-500 text-sm"></i>
+                        <span>Customer Reviews</span>
+                    </div>
+                    <i class="bi bi-chevron-right text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+
+                <a asp-area="Admin" asp-controller="AuditLogs" asp-action="Index" asp-route-search="@Model.Email" class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition group">
+                    <div class="flex items-center gap-2.5">
+                        <i class="bi bi-journal-text text-sky-500 text-sm"></i>
+                        <span>Audit Log History</span>
+                    </div>
+                    <i class="bi bi-chevron-right text-slate-400 group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+            </div>
         </div>
 
-        <%-- RIGHT: Details --%>
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <!-- RIGHT COLUMN: Details & Security (8 cols) -->
+        <div class="lg:col-span-8 space-y-6">
 
-                <h6 class="fw-bold text-uppercase text-muted small mb-3">
-                    <i class="bi bi-person-lines-fill me-1"></i> Account Information
-                </h6>
+            <!-- Account Information Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                    <div class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-sm">
+                        <i class="bi bi-person-lines-fill"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white" data-en="Account Information" data-kh="ព័ត៌មានគណនី">
+                        Account Information
+                    </h3>
+                </div>
 
-                <div class="row g-3">
-
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">First Name</div>
-                        <div class="fw-semibold text-dark mt-1">@(string.IsNullOrEmpty(Model.FirstName) ? "—" : Model.FirstName)</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">First Name</span>
+                        <span class="text-sm font-bold text-slate-900 dark:text-white">@(string.IsNullOrEmpty(Model.FirstName) ? "—" : Model.FirstName)</span>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Last Name</div>
-                        <div class="fw-semibold text-dark mt-1">@(string.IsNullOrEmpty(Model.LastName) ? "—" : Model.LastName)</div>
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Last Name</span>
+                        <span class="text-sm font-bold text-slate-900 dark:text-white">@(string.IsNullOrEmpty(Model.LastName) ? "—" : Model.LastName)</span>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Email Address</div>
-                        <div class="fw-semibold text-dark mt-1 d-flex align-items-center gap-1 flex-wrap">
-                            <span>@Model.Email</span>
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Email Address</span>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white">@Model.Email</span>
                             @if (Model.EmailConfirmed)
                             {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 10px;">Verified</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">Verified</span>
                             }
                             else
                             {
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill" style="font-size: 10px;">Unverified</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50">Unconfirmed</span>
                             }
                         </div>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Phone Number</div>
-                        <div class="fw-semibold text-dark mt-1">
-                            @(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)
-                        </div>
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Phone Number</span>
+                        <span class="text-sm font-bold text-slate-900 dark:text-white">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)</span>
                     </div>
 
-                    <div class="col-12">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Account ID</div>
-                        <div class="fw-semibold font-monospace small text-dark mt-1 text-break">@Model.Id</div>
+                    <div class="sm:col-span-2 p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Identity User Identifier (GUID)</span>
+                        <span class="font-mono text-xs text-slate-800 dark:text-slate-200 break-all select-all font-semibold">@Model.Id</span>
                     </div>
+                </div>
+            </div>
 
+            <!-- Security & Access State Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white" data-en="Security & Authentication" data-kh="សុវត្ថិភាព & ការផ្ទៀងផ្ទាត់">
+                        Security &amp; Authentication
+                    </h3>
                 </div>
 
-                <hr class="my-4" />
-
-                <h6 class="fw-bold text-uppercase text-muted small mb-3" style="font-size: 11px;">
-                    <i class="bi bi-shield-lock me-1"></i> Security &amp; Access
-                </h6>
-
-                <div class="row g-3">
-
-                    <div class="col-sm-4">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Account Status</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Account Lockout</span>
                         <div class="mt-1">
                             @if (!isLocked)
                             {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
-                                    <i class="bi bi-check-circle me-1"></i> Active
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                                    <i class="bi bi-check-circle"></i> Active
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 small">
-                                    <i class="bi bi-lock me-1"></i> Deactivated
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/50">
+                                    <i class="bi bi-lock"></i> Locked Out
                                 </span>
                             }
                         </div>
                     </div>
 
-                    <div class="col-sm-4">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Failed Login Attempts</div>
-                        <div class="fw-semibold text-dark mt-1">
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Failed Sign-In Count</span>
+                        <div class="text-sm font-bold mt-1">
                             @if (accessFailed > 0)
                             {
-                                <span class="text-danger fw-bold">@accessFailed</span>
-                                <span class="text-muted small ms-1">attempt(s)</span>
+                                <span class="text-rose-600 dark:text-rose-400">@accessFailed</span>
+                                <span class="text-slate-400 text-xs font-normal">attempt(s)</span>
                             }
                             else
                             {
-                                <span class="text-success">None</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 font-semibold">0 (Clean)</span>
                             }
                         </div>
                     </div>
 
-                    <div class="col-sm-4">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Lockout Expiry</div>
-                        <div class="fw-semibold text-dark mt-1 small">
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Lockout Expiration</span>
+                        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1">
                             @if (isLocked && lockoutEnd.HasValue)
                             {
                                 if (lockoutEnd.Value > DateTimeOffset.MaxValue.AddDays(-1))
                                 {
-                                    <span class="text-danger">Permanent</span>
+                                    <span class="text-rose-600 dark:text-rose-400 font-bold">Indefinite</span>
                                 }
                                 else
                                 {
-                                    <span class="text-danger">@lockoutEnd.Value.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                                    <span class="text-rose-600 dark:text-rose-400">@lockoutEnd.Value.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
                                 }
                             }
                             else
                             {
-                                <span class="text-muted">N/A</span>
+                                <span class="text-slate-400">None (Unlocked)</span>
                             }
                         </div>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Two-Factor Auth</div>
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">2-Factor Auth (2FA)</span>
                         <div class="mt-1">
                             @if (Model.TwoFactorEnabled)
                             {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
-                                    <i class="bi bi-shield-check me-1"></i> Enabled
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                                    <i class="bi bi-shield-check"></i> Enabled
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1 small">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
                                     Disabled
                                 </span>
                             }
                         </div>
                     </div>
 
-                    <div class="col-sm-6">
-                        <div class="text-muted fw-semibold text-uppercase" style="font-size: 11px;">Phone Confirmed</div>
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Phone Verification</span>
                         <div class="mt-1">
                             @if (Model.PhoneNumberConfirmed)
                             {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
-                                    <i class="bi bi-check-circle me-1"></i> Confirmed
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                                    <i class="bi bi-check-circle"></i> Verified
                                 </span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1 small">
-                                    Not Confirmed
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                    Not Verified
                                 </span>
                             }
                         </div>
                     </div>
 
+                    <div class="p-3.5 rounded-xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider block mb-1">Security Stamp</span>
+                        <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400 block truncate" title="@Model.SecurityStamp">
+                            @(string.IsNullOrEmpty(Model.SecurityStamp) ? "None" : Model.SecurityStamp[..Math.Min(Model.SecurityStamp.Length, 12)] + "...")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone / Delete Account -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">Danger Zone</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Permanently purge this user account and its authorization permissions.
+                    </p>
                 </div>
 
-                <hr class="my-4" />
-
-                <%-- Bottom actions --%>
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
                     @if (!isCurrent)
                     {
                         <a asp-action="Delete" asp-route-id="@Model.Id"
-                           class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                            <i class="bi bi-trash me-1"></i> Delete User
+                           class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-semibold transition">
+                            <i class="bi bi-trash"></i> Delete User
                         </a>
                     }
                     else
                     {
-                        <span class="text-muted small fst-italic">
-                            <i class="bi bi-info-circle me-1"></i> You cannot delete your own account.
+                        <span class="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 italic">
+                            <i class="bi bi-shield-check"></i> Self account deletion is protected
                         </span>
                     }
-                    <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
-                        Back to List
-                    </a>
                 </div>
-
             </div>
+
         </div>
     </div>
 </div>
 
-<%-- Modal: Reset Password --%>
+<!-- RESET PASSWORD MODAL -->
 @if (!isCurrent)
 {
     <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
                 <form method="post" asp-action="ResetPassword">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
 
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold" id="resetPasswordModalLabel">
-                            <i class="bi bi-key text-primary me-1"></i> Reset Password
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                                <i class="bi bi-key-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-base font-bold text-slate-900 dark:text-white" id="resetPasswordModalLabel">Reset Password</h5>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set a new password for @Model.FullName</p>
+                            </div>
+                        </div>
+                        <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
                     </div>
 
-                    <div class="modal-body py-3">
-                        <p class="text-muted small mb-3">
-                            Set a new password for <strong class="text-dark">@Model.FullName</strong>.
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small">New Password *</label>
-                            <input type="password" name="newPassword" class="form-control rounded-3" required minlength="6" placeholder="Minimum 6 characters" />
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">New Password *</label>
+                            <input type="password" name="newPassword" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required minlength="6" placeholder="Minimum 6 characters" />
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold small">Confirm Password *</label>
-                            <input type="password" name="confirmPassword" class="form-control rounded-3" required minlength="6" placeholder="Repeat new password" />
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Confirm Password *</label>
+                            <input type="password" name="confirmPassword" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required minlength="6" placeholder="Repeat new password" />
                         </div>
                     </div>
 
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-dark rounded-pill px-4">Update Password</button>
+                    <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-2.5">
+                        <button type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition">Update Password</button>
                     </div>
                 </form>
             </div>

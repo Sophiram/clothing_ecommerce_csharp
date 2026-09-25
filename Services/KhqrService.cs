@@ -49,11 +49,10 @@ namespace WebApplication_ClothingEcommerce.Services
         private const string SUBTAG_STORE_LABEL   = "03";
         private const string SUBTAG_REF_LABEL     = "05";
 
-        // Currencies & Country
         private const string USD_CODE             = "840";
         private const string KHR_CODE             = "116";
         private const string KH_COUNTRY           = "KH";
-        private const string DEFAULT_MCC          = "5691"; // Clothing retail
+        private const string DEFAULT_MCC          = "5999"; // Standard merchant category code for KHQR
 
         // ─────────────────────────────────────────────────────────────
         // Generate KHQR EMVCo Payload
@@ -80,18 +79,7 @@ namespace WebApplication_ClothingEcommerce.Services
 
             // 1. Tag 29: Merchant Account (Bakong Individual / Solo)
             var tag29Sb = new StringBuilder();
-            tag29Sb.Append(BuildTLV(SUBTAG_BAKONG_ID, config.BakongAccount));
-
-            // Extract acquiring bank code from bakongAccountId if available (e.g. sorn_sophiram@bkrt -> bkrt, 0969144183@abaa -> abaa)
-            var atIdx = config.BakongAccount.IndexOf('@');
-            if (atIdx > 0 && atIdx < config.BakongAccount.Length - 1)
-            {
-                var bankCode = config.BakongAccount[(atIdx + 1)..].Trim();
-                if (!string.IsNullOrWhiteSpace(bankCode))
-                {
-                    tag29Sb.Append(BuildTLV(SUBTAG_ACQUIRING_BANK, CleanAscii(bankCode, 32)));
-                }
-            }
+            tag29Sb.Append(BuildTLV(SUBTAG_BAKONG_ID, config.BakongAccount.Trim()));
             var tag29 = BuildTLV(TAG_INDIVIDUAL_ACC, tag29Sb.ToString());
 
             // 2. Build EMVCo TLV sequence
@@ -99,7 +87,7 @@ namespace WebApplication_ClothingEcommerce.Services
             sb.Append(BuildTLV(TAG_PAYLOAD_FORMAT, "01"));    // 000201
             sb.Append(BuildTLV(TAG_POI_METHOD, "12"));        // 010212 (Dynamic QR with embedded amount)
             sb.Append(tag29);                                 // 29...
-            sb.Append(BuildTLV(TAG_MCC, DEFAULT_MCC));        // 52045691
+            sb.Append(BuildTLV(TAG_MCC, DEFAULT_MCC));        // 52045999 (Standard default MCC)
             sb.Append(BuildTLV(TAG_CURRENCY, currencyCode));  // 5303840 (or 116)
             sb.Append(BuildTLV(TAG_AMOUNT, formattedAmount)); // 54...
             sb.Append(BuildTLV(TAG_COUNTRY, KH_COUNTRY));     // 5802KH
@@ -132,6 +120,9 @@ namespace WebApplication_ClothingEcommerce.Services
             {
                 sb.Append(BuildTLV(TAG_ADDITIONAL_DATA, sub62Sb.ToString()));
             }
+
+            // Tag 99: Dynamic KHQR Timestamp (Mandatory per NBC Bakong KHQR Specification)
+            sb.Append(BuildTag99());
 
             // Tag 63: CRC placeholder
             sb.Append(TAG_CRC + "04");
@@ -276,35 +267,51 @@ namespace WebApplication_ClothingEcommerce.Services
         // ─────────────────────────────────────────────────────────────
         public KhqrConfig GetConfig()
         {
-            var baseUrl = _configuration["KHQR_BASE_URL"]
+            var baseUrl = _configuration["BAKONG_BASE_URL"]
+                       ?? _configuration["KHQR_BASE_URL"]
+                       ?? _configuration["KHQR:BaseUrl"]
                        ?? "https://api-bakong.nbc.gov.kh";
 
-            var token = _configuration["KHQR_TOKEN"]?.Trim('"')
+            var token = _configuration["BAKONG_TOKEN"]?.Trim('"')
+                     ?? _configuration["KHQR_TOKEN"]?.Trim('"')
+                     ?? _configuration["KHQR_BAKONG_TOKEN"]?.Trim('"')
+                     ?? _configuration["KHQR:Token"]?.Trim('"')
                      ?? string.Empty;
 
-            var bakongAccount = _configuration["KHQR_ACCOUNT"]
+            var bakongAccount = _configuration["BAKONG_ACCOUNT_ID"]
+                             ?? _configuration["KHQR_BAKONG_ACCOUNT_ID"]
+                             ?? _configuration["KHQR_ACCOUNT"]
                              ?? _configuration["KHQR:BakongAccountId"]
                              ?? "sorn_sophiram@bkrt";
 
-            var merchantName = _configuration["KHQR_MERCHANT_NAME"]
+            var merchantName = _configuration["BAKONG_MERCHANT_NAME"]
+                            ?? _configuration["KHQR_MERCHANT_NAME"]
                             ?? _configuration["KHQR:MerchantName"]
                             ?? "SOPHIRAM SORN";
 
-            var storeLabel = _configuration["KHQR_STORE_LABEL"]
-                          ?? "Multi-Vendor Marketplace";
+            var storeLabel = _configuration["BAKONG_STORE_LABEL"]
+                          ?? _configuration["KHQR_STORE_LABEL"]
+                          ?? _configuration["KHQR:StoreLabel"]
+                          ?? "RS Clothing Store";
 
-            var phone = _configuration["KHQR_PHONE"]
+            var phone = _configuration["BAKONG_PHONE"]
+                     ?? _configuration["KHQR_PHONE"]
+                     ?? _configuration["KHQR:Phone"]
                      ?? "0969144183";
 
-            var city = _configuration["KHQR_CITY"]
+            var city = _configuration["BAKONG_MERCHANT_CITY"]
+                    ?? _configuration["KHQR_MERCHANT_CITY"]
+                    ?? _configuration["KHQR_CITY"]
                     ?? _configuration["KHQR:MerchantCity"]
                     ?? "Phnom Penh";
 
-            var currency = _configuration["KHQR_CURRENCY"]
+            var currency = _configuration["BAKONG_CURRENCY"]
+                        ?? _configuration["KHQR_CURRENCY"]
                         ?? _configuration["KHQR:Currency"]
                         ?? "USD";
 
-            var rateStr = _configuration["KHQR_USD_TO_KHR_RATE"]
+            var rateStr = _configuration["BAKONG_USD_TO_KHR_RATE"]
+                       ?? _configuration["KHQR_USD_TO_KHR_RATE"]
                        ?? _configuration["KHQR:UsdToKhrRate"];
 
             if (!decimal.TryParse(rateStr, out var rate) || rate <= 0)
@@ -383,7 +390,7 @@ namespace WebApplication_ClothingEcommerce.Services
         private static string BuildTag99()
         {
             var creation = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var expiration = creation + 5 * 60 * 1000; // 5 minutes default
+            var expiration = creation + 15 * 60 * 1000; // 15 minutes validity
             var sb = new StringBuilder();
             sb.Append(BuildTLV("00", creation.ToString())); // sub‑tag 00 creation timestamp
             sb.Append(BuildTLV("01", expiration.ToString())); // sub‑tag 01 expiration timestamp

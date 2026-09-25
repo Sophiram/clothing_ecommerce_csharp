@@ -1,6 +1,8 @@
 @model WebApplication_ClothingEcommerce.Models.Order
+@inject WebApplication_ClothingEcommerce.Services.Interfaces.IStoreSettingsService StoreSettingsService
 
 @{
+    var storeSettings = await StoreSettingsService.GetSettingsAsync();
     ViewData["Title"] = "Order Details";
 
     var orderNumber = Model.Id.ToString()[..8].ToUpper();
@@ -13,510 +15,838 @@
         deliveryFee = 0m;
     }
 
-    var statusClass = Model.Status.ToString() switch
+    var statusColor = Model.Status.ToString() switch
     {
-        "Pending" => "bg-warning-subtle text-warning-emphasis",
-        "Processing" => "bg-info-subtle text-info-emphasis",
-        "Shipped" => "bg-primary-subtle text-primary",
-        "Delivered" => "bg-success-subtle text-success",
-        "Cancelled" => "bg-danger-subtle text-danger",
-        _ => "bg-secondary-subtle text-secondary"
+        "Pending" => "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        "Processing" => "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        "Shipped" => "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+        "Delivered" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        "Cancelled" => "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        _ => "bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300 border-gray-200 dark:border-slate-700"
     };
 
-    var paymentStatusClass = Model.Payment?.PaymentStatus.ToString() switch
+    var paymentStatusColor = Model.Payment?.PaymentStatus.ToString() switch
     {
-        "Paid" => "bg-success-subtle text-success",
-        "Pending" => "bg-warning-subtle text-warning-emphasis",
-        "Failed" => "bg-danger-subtle text-danger",
-        "Refunded" => "bg-info-subtle text-info-emphasis",
-        _ => "bg-secondary-subtle text-secondary"
+        "Paid" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        "Pending" => "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        "Failed" => "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        "Refunded" => "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+        _ => "bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300 border-gray-200 dark:border-slate-700"
     };
 
-    var shipmentStatusClass = Model.Shipment?.ShipmentStatus.ToString() switch
+    var shipmentStatusColor = Model.Shipment?.ShipmentStatus.ToString() switch
     {
-        "Pending" => "bg-warning-subtle text-warning-emphasis",
-        "Processing" => "bg-info-subtle text-info-emphasis",
-        "Shipped" => "bg-primary-subtle text-primary",
-        "Delivered" => "bg-success-subtle text-success",
-        _ => "bg-secondary-subtle text-secondary"
+        "Pending" => "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        "Processing" => "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        "Shipped" => "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+        "Delivered" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        _ => "bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300 border-gray-200 dark:border-slate-700"
     };
 }
 
-<style>
-    .order-details-page {
-        background: #fff;
-    }
+<div class="min-h-[85vh] bg-slate-50 dark:bg-slate-950 py-6 lg:py-10 transition-colors duration-200">
+    <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
 
-    .order-details-hero {
-        background: linear-gradient(120deg, var(--blue-soft, #eaf2ff), #fff 60%);
-        border-bottom: 1px solid var(--border, #eeeeee);
-        padding: 32px 0;
-    }
+        <!-- BREADCRUMB -->
+        <nav class="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400 mb-6" aria-label="Breadcrumb">
+            <a asp-controller="Home" asp-action="Index" class="hover:text-blue-600 transition-colors flex items-center gap-1">
+                <i class="bi bi-house"></i>
+                <span data-en="Home" data-kh="ទំព័រដើម">Home</span>
+            </a>
+            <i class="bi bi-chevron-right text-[10px] text-gray-400"></i>
+            <a asp-controller="Orders" asp-action="Index" class="hover:text-blue-600 transition-colors flex items-center gap-1">
+                <i class="bi bi-box-seam"></i>
+                <span data-en="My Orders" data-kh="ការបញ្ជាទិញរបស់ខ្ញុំ">My Orders</span>
+            </a>
+            <i class="bi bi-chevron-right text-[10px] text-gray-400"></i>
+            <span class="text-gray-900 dark:text-white font-semibold" data-en="Order Details" data-kh="ព័ត៌មានលម្អិត">Order Details</span>
+        </nav>
 
-    .order-details-eyebrow {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .12em;
-        color: var(--google-blue, #4285F4);
-        margin-bottom: 4px;
-    }
-
-    .order-details-hero h1 {
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: var(--black, #202124);
-        margin-bottom: 4px;
-    }
-
-    .order-details-card {
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 20px;
-        background: #fff;
-    }
-
-    .order-details-section-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        color: #fff;
-    }
-
-        .order-details-section-icon.blue {
-            background: var(--google-blue, #4285F4);
-        }
-
-        .order-details-section-icon.green {
-            background: var(--google-green, #34A853);
-        }
-
-        .order-details-section-icon.yellow {
-            background: var(--google-yellow-dark, #F9AB00);
-        }
-
-        .order-details-section-icon.red {
-            background: var(--google-red, #EA4335);
-        }
-
-    .order-details-item-image {
-        width: 100%;
-        height: 110px;
-        object-fit: cover;
-        border-radius: 14px;
-        border: 1px solid var(--border, #eeeeee);
-    }
-
-    .order-details-item-image-placeholder {
-        height: 110px;
-        border-radius: 14px;
-        border: 1px solid var(--border, #eeeeee);
-        background: var(--light-gray, #f8f8f6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--gray, #999);
-    }
-
-    .order-details-brand-label {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .08em;
-        color: var(--google-blue, #4285F4);
-    }
-
-    .order-details-item-total {
-        color: var(--google-blue, #4285F4);
-        font-weight: 800;
-    }
-
-    .order-details-total-value {
-        color: var(--google-blue, #4285F4);
-        font-weight: 800;
-    }
-
-    .order-details-back-btn {
-        display: block;
-        width: 100%;
-        text-align: center;
-        border: 1px solid #dcdcdc;
-        border-radius: 12px;
-        padding: 13px;
-        color: var(--black, #202124);
-        text-decoration: none;
-        font-weight: 700;
-        transition: all .2s ease;
-    }
-
-        .order-details-back-btn:hover {
-            border-color: var(--google-blue, #4285F4);
-            color: var(--google-blue, #4285F4);
-        }
-
-    .order-details-continue-btn {
-        display: block;
-        width: 100%;
-        text-align: center;
-        border: 0;
-        border-radius: 12px;
-        padding: 14px;
-        background: var(--google-blue, #4285F4);
-        color: #fff;
-        text-decoration: none;
-        font-weight: 700;
-        box-shadow: 0 10px 24px rgba(66,133,244,.28);
-        transition: all .2s ease;
-    }
-
-        .order-details-continue-btn:hover {
-            background: var(--google-blue-dark, #3367D6);
-            color: #fff;
-            transform: translateY(-2px);
-        }
-</style>
-
-<div class="order-details-page">
-
-    <!-- =========================================================
-         BREADCRUMB
-    ========================================================= -->
-
-    <section class="py-3 border-bottom">
-        <div class="container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 small">
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Home" asp-action="Index" class="text-decoration-none text-secondary">
-                            <i class="bi bi-house me-1"></i> Home
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Orders" asp-action="Index" class="text-decoration-none text-secondary">
-                            <i class="bi bi-box-seam me-1"></i> My Orders
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active fw-semibold" aria-current="page" style="color: var(--google-blue, #4285F4);">
-                        Order Details
-                    </li>
-                </ol>
-            </nav>
-        </div>
-    </section>
-
-    <!-- =========================================================
-         HERO
-    ========================================================= -->
-
-    <section class="order-details-hero">
-        <div class="container">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <!-- HERO HEADER -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-6 sm:p-8 mb-8 shadow-xl border border-slate-700/50">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <div class="order-details-eyebrow">ORDER DETAILS</div>
-                    <h1>Order #@orderNumber</h1>
-                    <p class="text-secondary mb-0">
-                        Placed on @Model.OrderDate.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-2">
+                        <i class="bi bi-receipt text-blue-400"></i>
+                        <span data-en="Order Summary" data-kh="សេចក្តីសង្ខេបនៃការបញ្ជាទិញ">Order Summary</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1">
+                        <span data-en="Order" data-kh="ការបញ្ជាទិញ">Order</span> #@orderNumber
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 flex items-center gap-1.5">
+                        <i class="bi bi-calendar3"></i>
+                        <span data-en="Placed on" data-kh="បានដាក់បញ្ជាទិញនៅ">Placed on</span>
+                        @Model.OrderDate.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt")
                     </p>
                 </div>
 
-                <span class="badge rounded-pill px-4 py-2 fs-6 @statusClass">
-                    @Model.Status
-                </span>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <a asp-action="Receipt" asp-route-id="@Model.Id" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xs transition shadow-sm">
+                        <i class="bi bi-printer"></i>
+                        <span data-en="Digital Receipt" data-kh="បង្កាន់ដៃទូទាត់">Digital Receipt</span>
+                    </a>
+                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold border @statusColor">
+                        <i class="bi bi-circle-fill text-[8px]"></i>
+                        <span>@Model.Status</span>
+                    </span>
+                </div>
             </div>
         </div>
-    </section>
 
-    <section class="py-5">
-        <div class="container">
-
-            <!-- SUCCESS MESSAGE -->
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success border-0 shadow-sm rounded-3 d-flex align-items-center gap-2 mb-4">
-                    <i class="bi bi-check-circle-fill fs-5"></i>
-                    <span>@TempData["Success"]</span>
+        <!-- ALERTS -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="flex items-center justify-between gap-3 p-4 mb-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-xl text-emerald-500"></i>
+                    <span class="text-sm font-medium">@TempData["Success"]</span>
                 </div>
-            }
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 p-1">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        }
 
-            <div class="row g-4">
+        <!-- 2-COLUMN GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
 
-                <!-- LEFT COLUMN -->
-                <div class="col-lg-8">
+            <!-- LEFT COLUMN: ITEMS & SHIPPING -->
+            <div class="space-y-6">
 
-                    <!-- ORDER ITEMS -->
-                    <div class="order-details-card mb-4 p-4">
-
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div>
-                                <h5 class="fw-bold mb-1">Order Items</h5>
-                                <small class="text-secondary">
-                                    @(Model.Items?.Count ?? 0) @((Model.Items?.Count ?? 0) == 1 ? "item" : "items")
-                                </small>
-                            </div>
-                            <div class="order-details-section-icon blue">
-                                <i class="bi bi-bag-check"></i>
-                            </div>
+                <!-- ORDER ITEMS CARD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-en="Order Items" data-kh="មុខទំនិញដែលបានបញ្ជាទិញ">Order Items</h2>
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                                @(Model.Items?.Count ?? 0) @((Model.Items?.Count ?? 0) == 1 ? "item" : "items")
+                            </p>
                         </div>
+                        <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <i class="bi bi-bag-check text-lg"></i>
+                        </div>
+                    </div>
 
-                        @if (Model.Items != null && Model.Items.Any())
-                        {
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        <div class="divide-y divide-gray-100 dark:divide-slate-800">
                             @foreach (var item in Model.Items)
                             {
-                                var image =
-                                    item.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
-                                    ?? item.Variant?.Product?.Images?.FirstOrDefault();
-
+                                var image = item.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
+                                            ?? item.Variant?.Product?.Images?.FirstOrDefault();
                                 var itemTotal = item.UnitPrice * item.Quantity;
 
-                                <div class="row g-3 align-items-center border-bottom pb-4 mb-4">
-
-                                    <!-- IMAGE -->
-                                    <div class="col-4 col-sm-3 col-md-2">
-                                        @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
-                                        {
-                                            <img src="@image.ImageUrl"
-                                                 alt="@item.Variant?.Product?.Name"
-                                                 class="order-details-item-image" />
-                                        }
-                                        else
-                                        {
-                                            <div class="order-details-item-image-placeholder">
-                                                <i class="bi bi-image fs-2"></i>
-                                            </div>
-                                        }
-                                    </div>
-
-                                    <!-- PRODUCT INFO -->
-                                    <div class="col-8 col-sm-5 col-md-5">
-                                        <div class="order-details-brand-label mb-1">
-                                            @(item.Variant?.Product?.Brand?.Name ?? "CLOTHÉ")
-                                        </div>
-                                        <h6 class="fw-bold mb-1">
-                                            @(item.Variant?.Product?.Name ?? "Product")
-                                        </h6>
-
-                                        <div class="small text-secondary">
-                                            @if (item.Variant?.Size != null)
+                                <div class="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div class="flex items-center gap-4 min-w-0 flex-1">
+                                        <!-- Thumbnail -->
+                                        <div class="w-16 h-20 sm:w-18 sm:h-22 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-gray-200/60 dark:border-slate-700 overflow-hidden flex-shrink-0">
+                                            @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
                                             {
-                                                <span class="me-3">
-                                                    Size: <strong class="text-dark">@item.Variant.Size.Name</strong>
-                                                </span>
+                                                <img src="@image.ImageUrl" alt="@item.Variant?.Product?.Name" class="w-full h-full object-cover" />
                                             }
-                                            @if (item.Variant?.Color != null)
+                                            else
                                             {
-                                                <span>
-                                                    Color: <strong class="text-dark">@item.Variant.Color.Name</strong>
-                                                </span>
+                                                <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-600">
+                                                    <i class="bi bi-image text-2xl"></i>
+                                                </div>
                                             }
                                         </div>
 
-                                        @if (item.Variant != null)
-                                        {
-                                            <div class="small text-secondary mt-1">
-                                                SKU: @item.Variant.SKU
-                                            </div>
-                                        }
+                                        <!-- Info -->
+                                        <div class="min-w-0 flex-1">
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                                @(item.Variant?.Product?.Brand?.Name ?? "CLOTHÉ")
+                                            </span>
+                                            <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate mt-0.5">
+                                                @(item.Variant?.Product?.Name ?? "Product Item")
+                                            </h3>
 
-                                        <div class="small text-secondary mt-1">
-                                            Quantity: <strong class="text-dark">@item.Quantity</strong>
+                                            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                                @if (item.Variant?.Size != null)
+                                                {
+                                                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200/60 dark:border-slate-700">
+                                                        Size: @item.Variant.Size.Name
+                                                    </span>
+                                                }
+                                                @if (item.Variant?.Color != null)
+                                                {
+                                                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200/60 dark:border-slate-700">
+                                                        Color: @item.Variant.Color.Name
+                                                    </span>
+                                                }
+                                                <span class="text-[11px] text-gray-500 dark:text-slate-400">
+                                                    Qty: <strong class="text-gray-900 dark:text-white">@item.Quantity</strong>
+                                                </span>
+                                            </div>
+
+                                            @if (item.Variant != null && !string.IsNullOrEmpty(item.Variant.SKU))
+                                            {
+                                                <p class="text-[10px] text-gray-400 dark:text-slate-500 font-mono mt-1">SKU: @item.Variant.SKU</p>
+                                            }
                                         </div>
                                     </div>
 
-                                    <!-- UNIT PRICE -->
-                                    <div class="col-6 col-md-2">
-                                        <small class="text-secondary d-block">Unit Price</small>
-                                        <strong>$@item.UnitPrice.ToString("0.00")</strong>
-                                    </div>
-
-                                    <!-- TOTAL -->
-                                    <div class="col-6 col-md-3 text-end">
-                                        <small class="text-secondary d-block">Total</small>
-                                        <strong class="fs-5 order-details-item-total">
+                                    <!-- Pricing -->
+                                    <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-slate-800">
+                                        <div class="text-xs text-gray-500 dark:text-slate-400">
+                                            $@item.UnitPrice.ToString("0.00") × @item.Quantity
+                                        </div>
+                                        <div class="text-base sm:text-lg font-extrabold text-gray-900 dark:text-white mt-0.5">
                                             $@itemTotal.ToString("0.00")
-                                        </strong>
+                                        </div>
                                     </div>
-
                                 </div>
                             }
-                        }
-                        else
-                        {
-                            <div class="text-center py-4">
-                                <i class="bi bi-bag-x display-5 text-secondary"></i>
-                                <p class="text-secondary mb-0 mt-2">No order items found.</p>
-                            </div>
-                        }
-
-                    </div>
-
-                    <!-- SHIPPING ADDRESS -->
-                    <div class="order-details-card mb-4 p-4">
-
-                        <div class="d-flex align-items-center gap-3 mb-4">
-                            <div class="order-details-section-icon green">
-                                <i class="bi bi-geo-alt-fill"></i>
-                            </div>
-                            <div>
-                                <h5 class="fw-bold mb-0">Shipping Address</h5>
-                                <small class="text-secondary">Delivery destination</small>
-                            </div>
                         </div>
-
-                        @if (Model.Address != null)
-                        {
-                            <div class="ps-1">
-                                <strong class="d-block mb-1">Delivery Address</strong>
-                                <div class="text-secondary">
-                                    @Model.Address.Street
-                                    @if (!string.IsNullOrWhiteSpace(Model.Address.City))
-                                    {
-                                        <span>, @Model.Address.City</span>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(Model.Address.Province))
-                                    {
-                                        <span>, @Model.Address.Province</span>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(Model.Address.PostalCode))
-                                    {
-                                        <span>, @Model.Address.PostalCode</span>
-                                    }
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-light border rounded-3 mb-0">
-                                <i class="bi bi-info-circle me-2"></i>
-                                Shipping address is unavailable.
-                            </div>
-                        }
-
-                    </div>
-
+                    }
+                    else
+                    {
+                        <div class="text-center py-8 text-gray-400 dark:text-slate-500">
+                            <i class="bi bi-bag-x text-4xl"></i>
+                            <p class="text-sm mt-2" data-en="No order items found." data-kh="រកមិនឃើញមុខទំនិញទេ។">No order items found.</p>
+                        </div>
+                    }
                 </div>
 
-                <!-- RIGHT COLUMN -->
-                <div class="col-lg-4">
+                <!-- SHIPPING ADDRESS CARD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <i class="bi bi-geo-alt-fill text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-gray-900 dark:text-white" data-en="Shipping Destination" data-kh="អាសយដ្ឋានដឹកជញ្ជូន">Shipping Destination</h2>
+                            <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Delivery address for this parcel" data-kh="អាសយដ្ឋានទទួលកញ្ចប់ទំនិញ">Delivery address for this parcel</p>
+                        </div>
+                    </div>
 
-                    <!-- ORDER SUMMARY -->
-                    <div class="order-details-card mb-4 p-4">
-                        <h5 class="fw-bold mb-4">Order Summary</h5>
+                    @if (Model.Address != null)
+                    {
+                        <div class="p-4 rounded-2xl bg-gray-50/70 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-800">
+                            <p class="text-sm font-medium text-gray-800 dark:text-slate-200 leading-relaxed">
+                                @Model.Address.Street
+                                @if (!string.IsNullOrWhiteSpace(Model.Address.City))
+                                {
+                                    <span>, @Model.Address.City</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.Address.Province))
+                                {
+                                    <span>, @Model.Address.Province</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.Address.PostalCode))
+                                {
+                                    <span class="block text-xs text-gray-500 dark:text-slate-400 mt-1 font-mono">Postal Code: @Model.Address.PostalCode</span>
+                                }
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-slate-800/40 text-xs text-gray-500 dark:text-slate-400 flex items-center gap-2">
+                            <i class="bi bi-info-circle"></i>
+                            <span data-en="Shipping address information is unavailable." data-kh="មិនមានព័ត៌មានអាសយដ្ឋានដឹកជញ្ជូនទេ។">Shipping address information is unavailable.</span>
+                        </div>
+                    }
+                </div>
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-secondary">Subtotal</span>
-                            <strong>$@subtotal.ToString("0.00")</strong>
+            </div>
+
+            <!-- RIGHT COLUMN: SUMMARY, PAYMENT, SHIPMENT, ACTIONS -->
+            <div class="space-y-6">
+
+                <!-- ORDER SUMMARY CARD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white mb-4" data-en="Financial Summary" data-kh="សេចក្តីសង្ខេបតម្លៃ">Financial Summary</h2>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                            <span data-en="Subtotal" data-kh="តម្លៃទំនិញ">Subtotal</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">$@subtotal.ToString("0.00")</span>
                         </div>
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-secondary">Delivery</span>
+                        <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                            <span data-en="Delivery Fee" data-kh="ថ្លៃដឹកជញ្ជូន">Delivery Fee</span>
                             @if (deliveryFee > 0)
                             {
-                                <strong>$@deliveryFee.ToString("0.00")</strong>
+                                <span class="font-semibold text-gray-900 dark:text-white">$@deliveryFee.ToString("0.00")</span>
                             }
                             else
                             {
-                                <strong style="color: var(--google-green, #34A853);">Free</strong>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase text-xs" data-en="Free Delivery" data-kh="ដឹកជញ្ជូនឥតគិតថ្លៃ">Free Delivery</span>
                             }
                         </div>
 
-                        <hr />
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold fs-5">Total</span>
-                            <strong class="fs-3 order-details-total-value">
+                        <div class="pt-3 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                            <span class="text-base font-bold text-gray-900 dark:text-white" data-en="Total" data-kh="សរុបចុងក្រោយ">Total</span>
+                            <span class="text-2xl font-extrabold text-gray-900 dark:text-white">
                                 $@Model.TotalAmount.ToString("0.00")
-                            </strong>
+                            </span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- PAYMENT -->
-                    <div class="order-details-card mb-4 p-4">
-
-                        <div class="d-flex align-items-center gap-2 mb-4">
-                            <div class="order-details-section-icon yellow" style="width:38px;height:38px;font-size:15px;">
-                                <i class="bi bi-credit-card"></i>
-                            </div>
-                            <h5 class="fw-bold mb-0">Payment</h5>
+                <!-- PAYMENT CARD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm">
+                            <i class="bi bi-credit-card"></i>
                         </div>
+                        <h2 class="text-sm font-bold text-gray-900 dark:text-white" data-en="Payment" data-kh="ការទូទាត់">Payment</h2>
+                    </div>
 
-                        @if (Model.Payment != null)
-                        {
-                            <div class="d-flex justify-content-between mb-3">
-                                <span class="text-secondary">Method</span>
-                                <strong>@(Model.Payment.PaymentMethod?.Name ?? "Credit / Debit Card")</strong>
+                    @if (Model.Payment != null)
+                    {
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                                <span data-en="Method" data-kh="វិធីសាស្ត្រ">Method</span>
+                                <strong class="text-gray-900 dark:text-white">@(Model.Payment.PaymentMethod?.Name ?? "Card / QR Payment")</strong>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-secondary">Status</span>
-                                <span class="badge rounded-pill px-3 py-2 @paymentStatusClass">
+                            <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                                <span data-en="Status" data-kh="ស្ថានភាព">Status</span>
+                                <span class="px-2.5 py-1 rounded-full font-bold border text-[11px] @paymentStatusColor">
                                     @Model.Payment.PaymentStatus
                                 </span>
                             </div>
-                        }
-                        else
-                        {
-                            <p class="text-secondary mb-0">Payment information unavailable.</p>
-                        }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Payment details unavailable." data-kh="មិនមានព័ត៌មានទូទាត់ទេ។">Payment details unavailable.</p>
+                    }
 
+                    @if (Model.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending && (Model.Payment == null || Model.Payment.PaymentStatus != WebApplication_ClothingEcommerce.Data.Enums.PaymentStatus.Paid))
+                    {
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+                            <button type="button" onclick="openOrderKhqrPayment('@Model.Id')" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-rose-600 via-rose-500 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-xs sm:text-sm shadow-xl shadow-rose-500/25 hover:shadow-2xl hover:shadow-rose-500/35 transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
+                                <i class="bi bi-qr-code-scan text-base"></i>
+                                <span data-kh="ស្កែនទូទាត់ជាមួយ KHQR" data-en="Pay with Bakong KHQR">ស្កែនទូទាត់ជាមួយ KHQR</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                <!-- SHIPMENT CARD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-6 shadow-sm">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/50 flex items-center justify-center text-rose-600 dark:text-rose-400 text-sm">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h2 class="text-sm font-bold text-gray-900 dark:text-white" data-en="Shipment" data-kh="ការដឹកជញ្ជូន">Shipment</h2>
                     </div>
 
-                    <!-- SHIPMENT -->
-                    <div class="order-details-card mb-4 p-4">
-
-                        <div class="d-flex align-items-center gap-2 mb-4">
-                            <div class="order-details-section-icon red" style="width:38px;height:38px;font-size:15px;">
-                                <i class="bi bi-truck"></i>
-                            </div>
-                            <h5 class="fw-bold mb-0">Shipment</h5>
-                        </div>
-
-                        @if (Model.Shipment != null)
-                        {
-                            <div class="mb-3">
-                                <span class="text-secondary small d-block">Shipping Company</span>
-                                <strong>@Model.Shipment.ShippingCompany</strong>
+                    @if (Model.Shipment != null)
+                    {
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                                <span data-en="Carrier" data-kh="ក្រុមហ៊ុនដឹក">Carrier</span>
+                                <strong class="text-gray-900 dark:text-white">@Model.Shipment.ShippingCompany</strong>
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(Model.Shipment.TrackingNumber))
                             {
-                                <div class="mb-3">
-                                    <span class="text-secondary small d-block">Tracking Number</span>
-                                    <code>@Model.Shipment.TrackingNumber</code>
+                                <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                                    <span data-en="Tracking #" data-kh="លេខតាមដាន">Tracking #</span>
+                                    <code class="px-2 py-0.5 rounded bg-gray-100 dark:bg-slate-800 font-mono text-gray-800 dark:text-slate-200">@Model.Shipment.TrackingNumber</code>
                                 </div>
                             }
 
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-secondary">Status</span>
-                                <span class="badge rounded-pill px-3 py-2 @shipmentStatusClass">
+                            <div class="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                                <span data-en="Status" data-kh="ស្ថានភាព">Status</span>
+                                <span class="px-2.5 py-1 rounded-full font-bold border text-[11px] @shipmentStatusColor">
                                     @Model.Shipment.ShipmentStatus
                                 </span>
                             </div>
-                        }
-                        else
-                        {
-                            <p class="text-secondary mb-0">Shipment information unavailable.</p>
-                        }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-xs text-gray-500 dark:text-slate-400" data-en="Shipment details will be posted once dispatched." data-kh="ព័ត៌មានដឹកជញ្ជូននឹងត្រូវបានបង្ហោះនៅពេលបញ្ជូនចេញ។">Shipment details will be posted once dispatched.</p>
+                    }
+                </div>
 
-                    </div>
-
-                    <!-- ACTIONS -->
-                    <a asp-controller="Orders" asp-action="Index" class="order-details-back-btn mb-2">
-                        <i class="bi bi-arrow-left me-2"></i> Back to Orders
+                <!-- ACTIONS -->
+                <div class="space-y-2 pt-2">
+                    <a asp-action="Receipt" asp-route-id="@Model.Id" target="_blank"
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 dark:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors shadow-sm">
+                        <i class="bi bi-printer-fill text-blue-600 dark:text-blue-400"></i>
+                        <span data-en="Print / View Receipt" data-kh="បោះពុម្ព / មើលបង្កាន់ដៃ">Print / View Receipt</span>
                     </a>
 
-                    <a asp-controller="Shop" asp-action="Index" class="order-details-continue-btn">
-                        <i class="bi bi-bag me-2"></i> Continue Shopping
+                    <a asp-controller="Orders" asp-action="Index"
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                        <i class="bi bi-arrow-left"></i>
+                        <span data-en="Back to Orders" data-kh="ត្រឡប់ទៅការបញ្ជាទិញ">Back to Orders</span>
                     </a>
 
+                    <a asp-controller="Shop" asp-action="Index"
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors shadow-md">
+                        <i class="bi bi-bag"></i>
+                        <span data-en="Continue Shopping" data-kh="បន្តទិញទំនិញ">Continue Shopping</span>
+                    </a>
                 </div>
 
             </div>
 
         </div>
-    </section>
 
+    </div>
 </div>
+
+<!-- DYNAMIC BAKONG KHQR MODAL FOR ORDER PAYMENT -->
+<div id="khqrModalOverlay" class="fixed inset-0 z-50 items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md transition-opacity duration-300" style="display: none;" role="dialog" aria-modal="true">
+    <div id="khqrModalCard" class="relative bg-gradient-to-b from-[#0B1528] via-[#0E1E38] to-[#070F1E] border border-blue-900/50 rounded-3xl shadow-2xl p-4 overflow-hidden transform transition-all duration-200 scale-95 opacity-0 my-auto text-white" style="width: 100%; max-width: 350px; margin: auto;">
+
+        <!-- Top Header & Close -->
+        <div class="flex items-center justify-between pb-3 px-1">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-base text-white tracking-wide" style="font-family: 'Kantumruy Pro', sans-serif;">@(storeSettings?.StoreNameKh ?? "ហាងសម្លៀកបំពាក់ CLOTHÉ")</span>
+                <span class="text-[11px] font-black text-slate-300 tracking-wider uppercase">@(storeSettings?.StoreName ?? "CLOTHÉ")</span>
+                <div class="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-bold shadow-xs">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-mono font-bold text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30" id="khqrTimerText">05:00</span>
+                <button type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer" onclick="cancelAndCloseKhqrModal()" aria-label="Close modal">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Standee Card -->
+        <div class="rounded-3xl bg-white shadow-2xl overflow-hidden text-slate-900 transition-all duration-300" id="khqrStandee">
+
+            <!-- Card Red Header Banner (NBC KHQR Standard) -->
+            <div class="bg-[#E1251B] text-white py-2.5 px-4 flex items-center justify-between relative shadow-sm">
+                <span class="font-black text-xl tracking-widest text-white">KHQR</span>
+                <span class="text-[10px] font-mono font-bold bg-black/20 text-white px-2 py-0.5 rounded-full" id="khqrOrderRefBadge">#@orderNumber</span>
+            </div>
+
+            <!-- 1. LOADING STATE -->
+            <div id="khqrStateLoading" class="py-12 px-4 text-center">
+                <div class="w-10 h-10 border-3 border-[#E1251B] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <div class="text-slate-800 text-xs font-bold" id="khqrLoadingText" style="font-family: 'Kantumruy Pro', sans-serif;">កំពុងបង្កើត KHQR មានសុវត្ថិភាព…</div>
+                <div class="text-[10px] text-slate-400 mt-1">EMVCo Dynamic Payment Request</div>
+            </div>
+
+            <!-- 2. QR READY / WAITING STATE -->
+            <div id="khqrStateQr" class="hidden px-4 pt-3 pb-4 text-center">
+                <div class="text-slate-900 font-extrabold text-base leading-tight tracking-tight" style="font-family: 'Kantumruy Pro', sans-serif;" id="khqrMerchantKhmer">
+                    @(storeSettings?.StoreNameKh ?? "ហាងសម្លៀកបំពាក់ CLOTHÉ")
+                </div>
+                <div class="text-[10px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 uppercase" id="khqrMerchantName">
+                    @(storeSettings?.StoreName ?? "CLOTHÉ") STORE
+                </div>
+
+                <div class="mt-2 text-2xl font-black text-slate-900 tracking-tight flex items-baseline justify-center gap-1.5" id="khqrAmountContainer">
+                    <span id="khqrAmountUsd" class="font-mono font-black">@Model.TotalAmount.ToString("0.00")</span>
+                    <span class="text-sm font-extrabold text-slate-800" style="font-family: 'Kantumruy Pro', sans-serif;">ដុល្លារ</span>
+                </div>
+                <div class="text-[11px] font-bold text-slate-500 mt-0.5" id="khqrAmountKhr" style="font-family: 'Kantumruy Pro', sans-serif;">
+                    ~ ៛@(Math.Round(Model.TotalAmount * 4100).ToString("N0")) រៀល
+                </div>
+
+                <div class="text-[10px] font-mono text-slate-400 mt-1" id="khqrRefLine">
+                    Ref: <span id="khqrReferenceCode">--</span>
+                </div>
+
+                <div class="border-b border-dashed border-slate-300 my-2 mx-2"></div>
+
+                <div class="relative flex items-center justify-center p-1 bg-white rounded-2xl min-h-[185px]">
+                    <div id="khqrCanvasWrap" class="relative inline-block">
+                        <canvas id="khqrCanvas" width="180" height="180" class="rounded-xl mx-auto"></canvas>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-8 h-8 rounded-full bg-[#E1251B] p-1 border-2 border-white shadow-md flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" class="w-4 h-4 text-white fill-current">
+                                    <path d="M12 2L14.4 7.2L20 8L16 12L17 17.6L12 15L7 17.6L8 12L4 8L9.6 7.2L12 2Z"/>
+                                    <circle cx="12" cy="12" r="2" fill="#E1251B"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PAID / SUCCESS CELEBRATION STATE -->
+            <div id="khqrStatePaid" class="hidden py-8 px-4 text-center">
+                <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                    <div class="relative w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-3xl shadow-xl shadow-emerald-500/40">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                </div>
+                <h4 class="font-extrabold text-lg text-slate-900 mb-1 tracking-tight" style="font-family: 'Kantumruy Pro', sans-serif;">ការទូទាត់ទទួលបានជោគជ័យ!</h4>
+                <p class="text-emerald-600 font-bold text-xs uppercase tracking-wider mb-2">Bakong KHQR Confirmed</p>
+                <p class="text-slate-500 text-xs max-w-xs mx-auto mb-4" id="khqrSuccessTxInfo">
+                    Transaction verified by Bakong.
+                </p>
+                <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-50 text-emerald-800 font-semibold text-xs border border-emerald-200">
+                    <div class="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Updating order details…</span>
+                </div>
+            </div>
+
+            <!-- 4. EXPIRED STATE -->
+            <div id="khqrStateExpired" class="hidden py-8 px-4 text-center">
+                <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-3xl mx-auto mb-3 border border-rose-200">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h4 class="font-extrabold text-base text-slate-900 mb-1" style="font-family: 'Kantumruy Pro', sans-serif;">កូដ QR បានផុតកំណត់ហើយ</h4>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto mb-4">
+                    The 5-minute payment session has expired.
+                </p>
+                <button type="button" onclick="generateNewKhqrAttempt()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="bi bi-arrow-repeat text-sm"></i>
+                    <span style="font-family: 'Kantumruy Pro', sans-serif;">បង្កើតកូដ QR ថ្មី (Generate New QR)</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Live Auto-Detection Radar Status -->
+        <div class="mt-2 py-1.5 px-3 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 flex items-center justify-center gap-2 text-xs text-white" id="khqrStatusBadgeWrap">
+            <span class="relative flex h-2 w-2 flex-shrink-0" id="khqrRadarDot">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span id="khqrLiveStatus" class="font-medium text-[11px] text-center" style="font-family: 'Kantumruy Pro', sans-serif;">
+                រង់ចាំការស្កេនទូទាត់... Auto-submits when paid
+            </span>
+        </div>
+
+        <!-- Utility Buttons -->
+        <div class="grid grid-cols-3 gap-2 mt-2.5" id="khqrUtilityButtons">
+            <button type="button" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer" onclick="downloadKhqr()">
+                <i class="bi bi-download"></i> <span>Save QR</span>
+            </button>
+            <button type="button" id="btnCopyKhqr" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer" onclick="copyKhqrData()">
+                <i class="bi bi-clipboard"></i> <span>Copy</span>
+            </button>
+            <a id="lnkOpenAba" href="aba://" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1">
+                <i class="bi bi-phone"></i> <span>App</span>
+            </a>
+        </div>
+
+        <!-- Testing Tools Accordion / Quick Simulate -->
+        <div class="mt-2 pt-2 border-t border-white/10" id="khqrSimulateWrap">
+            <button type="button" class="w-full py-1.5 px-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5" onclick="simulateKhqrPayment()">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>⚡ Quick Test Auto-Paid (Sandbox Simulation)</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
+    <script>
+        let currentOrderId = '@Model.Id';
+        let activePaymentId = null;
+        let activeQrString = '';
+        let khqrTimerInterval = null;
+        let pollTimeoutId = null;
+        let isPollingActive = false;
+        let remainingSeconds = 300;
+
+        function stopPolling() {
+            isPollingActive = false;
+            if (pollTimeoutId) {
+                clearTimeout(pollTimeoutId);
+                pollTimeoutId = null;
+            }
+        }
+
+        function stopTimer() {
+            if (khqrTimerInterval) {
+                clearInterval(khqrTimerInterval);
+                khqrTimerInterval = null;
+            }
+        }
+
+        function setModalView(state) {
+            const elLoading = document.getElementById('khqrStateLoading');
+            const elQr = document.getElementById('khqrStateQr');
+            const elPaid = document.getElementById('khqrStatePaid');
+            const elExpired = document.getElementById('khqrStateExpired');
+            const elUtility = document.getElementById('khqrUtilityButtons');
+            const elSimulate = document.getElementById('khqrSimulateWrap');
+            const elStatusBadge = document.getElementById('khqrStatusBadgeWrap');
+
+            if (elLoading) elLoading.classList.toggle('hidden', state !== 'loading');
+            if (elQr) elQr.classList.toggle('hidden', state !== 'qr');
+            if (elPaid) elPaid.classList.toggle('hidden', state !== 'paid');
+            if (elExpired) elExpired.classList.toggle('hidden', state !== 'expired');
+
+            if (elUtility) elUtility.style.display = (state === 'qr') ? 'grid' : 'none';
+            if (elSimulate) elSimulate.style.display = (state === 'qr') ? 'block' : 'none';
+            if (elStatusBadge) elStatusBadge.style.display = (state === 'qr' || state === 'loading') ? 'flex' : 'none';
+        }
+
+        function showKhqrModal() {
+            const overlay = document.getElementById('khqrModalOverlay');
+            const card = document.getElementById('khqrModalCard');
+            if (!overlay || !card) return;
+
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 20);
+        }
+
+        function hideKhqrModal() {
+            const overlay = document.getElementById('khqrModalOverlay');
+            const card = document.getElementById('khqrModalCard');
+            if (!overlay || !card) return;
+
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 200);
+        }
+
+        function openOrderKhqrPayment(orderId) {
+            currentOrderId = orderId;
+            showKhqrModal();
+            createBakongPaymentAttempt(orderId);
+        }
+
+        async function createBakongPaymentAttempt(orderId) {
+            stopPolling();
+            stopTimer();
+            setModalView('loading');
+
+            const loadingText = document.getElementById('khqrLoadingText');
+            if (loadingText) loadingText.textContent = 'កំពុងបង្កើត KHQR មានសុវត្ថិភាព (Generating KHQR)…';
+
+            try {
+                const res = await fetch('/api/payments/bakong/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: orderId, currency: 'USD' })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    alert(data.message || 'Failed to generate dynamic Bakong QR.');
+                    hideKhqrModal();
+                    return;
+                }
+
+                activePaymentId = data.paymentId;
+                activeQrString = data.qrCode;
+
+                const badgeEl = document.getElementById('khqrOrderRefBadge');
+                if (badgeEl && data.orderNumber) badgeEl.textContent = data.orderNumber;
+
+                const mEl = document.getElementById('khqrMerchantName');
+                if (mEl && data.merchantName) mEl.textContent = data.merchantName;
+
+                const usdEl = document.getElementById('khqrAmountUsd');
+                if (usdEl) usdEl.textContent = parseFloat(data.amount).toFixed(2);
+
+                const khrEl = document.getElementById('khqrAmountKhr');
+                if (khrEl && data.khrAmount) khrEl.textContent = '~ ៛' + Number(data.khrAmount).toLocaleString() + ' រៀល';
+
+                const refCodeEl = document.getElementById('khqrReferenceCode');
+                if (refCodeEl) refCodeEl.textContent = data.reference || '--';
+
+                const abaLink = document.getElementById('lnkOpenAba');
+                if (abaLink && data.abaDeepLink) abaLink.href = data.abaDeepLink;
+
+                renderQrToCanvas(data.qrCode);
+                setModalView('qr');
+
+                remainingSeconds = data.expiresInSeconds || 300;
+                startKhqrTimer(remainingSeconds);
+                startBakongPolling(activePaymentId);
+
+            } catch (err) {
+                console.error('Bakong QR creation error:', err);
+                alert('Could not establish connection with payment service.');
+                hideKhqrModal();
+            }
+        }
+
+        function renderQrToCanvas(qrString) {
+            const canvas = document.getElementById('khqrCanvas');
+            if (!canvas) return;
+
+            if (typeof QRious !== 'undefined') {
+                new QRious({
+                    element: canvas,
+                    value: qrString,
+                    size: 180,
+                    level: 'M',
+                    background: '#ffffff',
+                    foreground: '#0f172a',
+                    padding: 0
+                });
+            } else {
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    ctx.drawImage(img, 0, 0, 180, 180);
+                };
+                img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(qrString);
+            }
+        }
+
+        function startKhqrTimer(durationSecs) {
+            stopTimer();
+            remainingSeconds = durationSecs;
+            const timerEl = document.getElementById('khqrTimerText');
+
+            const updateDisplay = () => {
+                const m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+                const s = (remainingSeconds % 60).toString().padStart(2, '0');
+                if (timerEl) timerEl.textContent = `${m}:${s}`;
+            };
+            updateDisplay();
+
+            khqrTimerInterval = setInterval(() => {
+                remainingSeconds--;
+                if (remainingSeconds <= 0) {
+                    stopTimer();
+                    if (timerEl) timerEl.textContent = '00:00';
+                    handleExpiredState();
+                    return;
+                }
+                updateDisplay();
+            }, 1000);
+        }
+
+        function startBakongPolling(paymentId) {
+            stopPolling();
+            isPollingActive = true;
+            pollBakongStatus(paymentId);
+        }
+
+        async function pollBakongStatus(paymentId) {
+            if (!isPollingActive || !paymentId) return;
+
+            try {
+                const res = await fetch(`/api/payments/${paymentId}/status`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'PAID' || data.isPaid === true) {
+                        handlePaidSuccess(data);
+                        return;
+                    } else if (data.status === 'EXPIRED') {
+                        handleExpiredState();
+                        return;
+                    } else if (data.status === 'CANCELLED') {
+                        stopPolling();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Bakong poll check:', e);
+            }
+
+            if (isPollingActive) {
+                pollTimeoutId = setTimeout(() => pollBakongStatus(paymentId), 2500);
+            }
+        }
+
+        function handlePaidSuccess(data) {
+            stopPolling();
+            stopTimer();
+
+            const timerEl = document.getElementById('khqrTimerText');
+            if (timerEl) timerEl.textContent = 'PAID';
+
+            const txInfo = document.getElementById('khqrSuccessTxInfo');
+            if (txInfo) {
+                txInfo.textContent = data.reference
+                    ? `Ref: ${data.reference} • Transaction verified.`
+                    : 'Transaction verified by Bakong Open API.';
+            }
+
+            setModalView('paid');
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1600);
+        }
+
+        function handleExpiredState() {
+            stopPolling();
+            stopTimer();
+            setModalView('expired');
+        }
+
+        function generateNewKhqrAttempt() {
+            if (!currentOrderId) return;
+            createBakongPaymentAttempt(currentOrderId);
+        }
+
+        async function cancelAndCloseKhqrModal() {
+            stopPolling();
+            stopTimer();
+
+            if (activePaymentId) {
+                try {
+                    await fetch(`/api/payments/${activePaymentId}/cancel`, { method: 'POST' });
+                } catch (e) { }
+            }
+
+            hideKhqrModal();
+        }
+
+        async function simulateKhqrPayment() {
+            if (!activePaymentId) return;
+
+            const liveStatus = document.getElementById('khqrLiveStatus');
+            if (liveStatus) {
+                liveStatus.innerHTML = '<div class="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block"></div> Simulating Bakong payment confirmation…';
+            }
+
+            try {
+                const res = await fetch(`/api/payments/${activePaymentId}/simulate-confirm`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'PAID' || data.isPaid === true) {
+                        handlePaidSuccess(data);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Simulation error:', err);
+            }
+        }
+
+        function downloadKhqr() {
+            const canvas = document.getElementById('khqrCanvas');
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = 'Bakong-KHQR.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function copyKhqrData() {
+            if (!activeQrString) return;
+            navigator.clipboard.writeText(activeQrString).then(() => {
+                const btn = document.getElementById('btnCopyKhqr');
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check2 text-emerald-500"></i> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy QR string:', err);
+            });
+        }
+    </script>
+}

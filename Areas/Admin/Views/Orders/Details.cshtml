@@ -36,6 +36,9 @@
         </div>
 
         <div class="d-flex gap-2">
+            <a asp-action="Receipt" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-primary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-printer me-1"></i> Print / Receipt
+            </a>
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning rounded-pill px-3 fw-semibold">
                 <i class="bi bi-pencil-square me-1"></i> Update Status
             </a>
@@ -264,17 +267,36 @@
                                 @(string.IsNullOrWhiteSpace(Model.Shipment.TrackingNumber) ? "Pending Generation" : Model.Shipment.TrackingNumber)
                             </span>
                         </div>
-                        <a asp-area="Admin" asp-controller="Shipments" asp-action="Details" asp-route-id="@Model.Shipment.Id" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                        <a asp-area="Admin" asp-controller="Shipments" asp-action="Edit" asp-route-id="@Model.Shipment.Id" class="btn btn-sm btn-outline-primary w-100 rounded-pill mt-2">
+                            <i class="bi bi-pencil me-1"></i> Edit Shipment &amp; Carrier
+                        </a>
+                        <a asp-area="Admin" asp-controller="Shipments" asp-action="Details" asp-route-id="@Model.Shipment.Id" class="btn btn-sm btn-light w-100 rounded-pill mt-1">
                             <i class="bi bi-box-arrow-up-right me-1"></i> View Shipment Log
                         </a>
                     }
                     else
                     {
-                        <p class="text-muted small mb-3">No shipment record has been generated for this order.</p>
+                        <p class="text-muted small mb-2">No shipment record has been generated for this order.</p>
                         <form asp-area="Admin" asp-controller="Shipments" asp-action="Fulfill" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="orderId" value="@Model.Id" />
                             <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                            
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold text-muted mb-1">Select Shipping Carrier</label>
+                                <select name="carrier" class="form-select form-select-sm rounded-3">
+                                    <option value="VET Express (VET)">VET Express (VET)</option>
+                                    <option value="J&T Express" selected>J&T Express (J&T)</option>
+                                    <option value="Virak Buntham Logistics">Virak Buntham Logistics</option>
+                                    <option value="Standard Courier">Standard Courier</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted mb-1">Tracking Number (Optional)</label>
+                                <input type="text" name="trackingNumber" class="form-control form-control-sm rounded-3" placeholder="e.g. VET987654321 / JT12345" />
+                            </div>
+
                             <button type="submit" class="btn btn-sm btn-primary w-100 rounded-pill">
                                 <i class="bi bi-box-seam me-1"></i> Create &amp; Dispatch Shipment
                             </button>

@@ -4,16 +4,30 @@ using WebApplication_ClothingEcommerce.Data.Enums;
 using WebApplication_ClothingEcommerce.Models;
 using WebApplication_ClothingEcommerce.Models.ViewModels;
 
+using WebApplication_ClothingEcommerce.Services.Interfaces;
+
 namespace WebApplication_ClothingEcommerce.Services
 {
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
-        private const decimal DeliveryFee = 3.00m;
+        private readonly ITelegramService _telegramService;
+        private readonly IEmailService _emailService;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<OrderService> _logger;
 
-        public OrderService(AppDbContext context)
+        public OrderService(
+            AppDbContext context, 
+            ITelegramService telegramService,
+            IEmailService emailService,
+            IServiceScopeFactory scopeFactory,
+            ILogger<OrderService> logger)
         {
             _context = context;
+            _telegramService = telegramService;
+            _emailService = emailService;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         // =========================================================
@@ -62,11 +76,14 @@ namespace WebApplication_ClothingEcommerce.Services
                 LastName = customer.LastName,
                 Phone = customer.Phone,
                 Email = customer.Email,
-                Province = address?.Province ?? string.Empty,
-                City = address?.City ?? string.Empty,
+                Province = address?.Province ?? "រាជធានីភ្នំពេញ",
+                City = address?.City ?? "Phnom Penh",
                 Street = address?.Street ?? string.Empty,
                 PostalCode = address?.PostalCode ?? string.Empty,
-                PaymentMethodId = paymentMethods.FirstOrDefault()?.Id
+                PaymentMethodId = paymentMethods.FirstOrDefault()?.Id,
+                DeliveryType = "ExpressDelivery",
+                CarrierCode = "VETExpress",
+                SelectedProvince = "រាជធានីភ្នំពេញ"
             };
 
             foreach (var item in cart.Items)
@@ -90,8 +107,22 @@ namespace WebApplication_ClothingEcommerce.Services
                 });
             }
 
+            var activeDeliveryMethods = await _context.DeliveryMethods
+                .AsNoTracking()
+                .Where(d => d.IsActive)
+                .OrderBy(d => d.DisplayOrder)
+                .ToListAsync();
+
+            var defaultDelivery = activeDeliveryMethods.FirstOrDefault(d => d.Code == "VETExpress")
+                               ?? activeDeliveryMethods.FirstOrDefault(d => d.Code == "ExpressDelivery")
+                               ?? activeDeliveryMethods.FirstOrDefault();
+
+            var defaultFee = defaultDelivery?.BaseFee ?? 2.00m;
+
+            model.DeliveryType = defaultDelivery?.Code ?? "VETExpress";
+            model.CarrierCode = defaultDelivery?.Code ?? "VETExpress";
             model.SubTotal = model.Items.Sum(i => i.Subtotal);
-            model.DeliveryFee = model.Items.Count > 0 ? DeliveryFee : 0m;
+            model.DeliveryFee = model.Items.Count > 0 ? defaultFee : 0m;
             model.Total = model.SubTotal + model.DeliveryFee;
 
             return model;
@@ -170,55 +201,90 @@ namespace WebApplication_ClothingEcommerce.Services
 
             try
             {
+                // Resolve Delivery Type & Carrier Name
+                var isStorePickup = string.Equals(model.DeliveryType, "StorePickup", StringComparison.OrdinalIgnoreCase);
+                var carrierName = "Standard Express";
+                var addressStreet = model.Street?.Trim() ?? string.Empty;
+                var addressCity = model.City?.Trim() ?? string.Empty;
+                var addressProvince = model.Province?.Trim() ?? string.Empty;
+
+                var deliveryCode = !string.IsNullOrWhiteSpace(model.DeliveryType) ? model.DeliveryType : model.CarrierCode;
+
+                if (isStorePickup || deliveryCode == "StorePickup")
+                {
+                    carrierName = "Store Pickup (មកយកនៅហាងផ្ទាល់)";
+                    addressStreet = "Store Pickup - Main Branch";
+                    addressCity = "Phnom Penh";
+                    addressProvince = "Phnom Penh";
+                }
+                else if (deliveryCode == "VETExpress" || model.CarrierCode == "VETExpress")
+                {
+                    var branchText = !string.IsNullOrWhiteSpace(model.SelectedBranchName) ? model.SelectedBranchName : "Main Branch";
+                    carrierName = $"VET Express ({model.SelectedProvince} - {branchText})";
+                    addressStreet = branchText;
+                    addressProvince = string.IsNullOrWhiteSpace(model.SelectedProvince) ? addressProvince : model.SelectedProvince;
+                }
+                else if (deliveryCode == "CityDelivery" || model.CarrierCode == "CityDelivery")
+                {
+                    carrierName = "Phnom Penh City Express (Grab/Lalamove)";
+                }
+                else if (deliveryCode == "OtherExpress" || model.CarrierCode == "OtherExpress")
+                {
+                    carrierName = !string.IsNullOrWhiteSpace(model.SelectedBranchName) ? model.SelectedBranchName : "Other Express Courier (J&T / Capitol)";
+                }
+
                 // 1. Resolve or Create Address
-                var address = await _context.Addresses
-                    .FirstOrDefaultAsync(a =>
-                        a.CustomerId == customerId &&
-                        a.Street == model.Street &&
-                        a.City == model.City &&
-                        a.Province == model.Province);
-
-                if (address == null)
+                var address = new Address
                 {
-                    var hasExisting = await _context.Addresses.AnyAsync(a => a.CustomerId == customerId);
-                    address = new Address
-                    {
-                        Id = Guid.NewGuid(),
-                        CustomerId = customerId,
-                        Province = model.Province.Trim(),
-                        City = model.City.Trim(),
-                        Street = model.Street.Trim(),
-                        PostalCode = model.PostalCode?.Trim() ?? string.Empty,
-                        IsDefault = !hasExisting
-                    };
-                    _context.Addresses.Add(address);
-                }
-                else if (!string.IsNullOrWhiteSpace(model.PostalCode))
-                {
-                    address.PostalCode = model.PostalCode.Trim();
-                }
+                    Id = Guid.NewGuid(),
+                    CustomerId = customerId,
+                    Province = string.IsNullOrWhiteSpace(addressProvince) ? "Phnom Penh" : addressProvince,
+                    City = string.IsNullOrWhiteSpace(addressCity) ? "Phnom Penh" : addressCity,
+                    Street = string.IsNullOrWhiteSpace(addressStreet) ? "Standard Delivery Address" : addressStreet,
+                    PostalCode = model.PostalCode?.Trim() ?? string.Empty,
+                    IsDefault = false
+                };
+                _context.Addresses.Add(address);
 
-                // 2. Update Customer Profile info
+                // 2. Update Customer Profile info (preserve primary account email)
                 customer.FirstName = model.FirstName.Trim();
                 customer.LastName = model.LastName.Trim();
-                customer.Phone = model.Phone?.Trim();
-                customer.Email = model.Email.Trim();
+                if (!string.IsNullOrWhiteSpace(model.Phone))
+                {
+                    customer.Phone = model.Phone.Trim();
+                }
+                if (string.IsNullOrWhiteSpace(customer.Email) && !string.IsNullOrWhiteSpace(model.Email))
+                {
+                    customer.Email = model.Email.Trim();
+                }
 
                 // 3. Calculate Totals
                 var subtotal = cart.Items
                     .Where(i => i.Variant != null)
                     .Sum(i => i.Quantity * i.Variant!.Price);
 
-                var deliveryFee = subtotal > 0 ? DeliveryFee : 0m;
+                // Resolve dynamic delivery fee from DeliveryMethods table
+                var selectedDeliveryMethod = await _context.DeliveryMethods
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => (d.Code == deliveryCode || d.Code == model.DeliveryType || d.Code == model.CarrierCode) && d.IsActive);
+
+                var deliveryFee = selectedDeliveryMethod?.BaseFee ?? (isStorePickup ? 0.00m : 2.00m);
                 var total = subtotal + deliveryFee;
 
                 // 4. Resolve Payment & Order Status
-                var isKhqrOrAba = paymentMethod.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase)
-                               || paymentMethod.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase);
+                var isCashOnDelivery = paymentMethod.Name.Contains("Cash", StringComparison.OrdinalIgnoreCase)
+                                    || paymentMethod.Name.Contains("COD", StringComparison.OrdinalIgnoreCase);
 
-                var isPaidOnline = model.IsPaymentConfirmed && isKhqrOrAba;
-                var paymentStatus = isPaidOnline ? PaymentStatus.Paid : PaymentStatus.Pending;
-                var orderStatus = isPaidOnline ? OrderStatus.Confirmed : OrderStatus.Pending;
+                var isOnlinePayment = paymentMethod.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase)
+                                   || paymentMethod.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase)
+                                   || paymentMethod.Name.Contains("ACLEDA", StringComparison.OrdinalIgnoreCase)
+                                   || paymentMethod.Name.Contains("Wing", StringComparison.OrdinalIgnoreCase)
+                                   || paymentMethod.Name.Contains("Bakong", StringComparison.OrdinalIgnoreCase);
+
+                // Security: Payment status starts as Pending. Online payments (Bakong KHQR) must be verified
+                // by the payment service before transitioning to Paid and Processing.
+                var paymentStatus = PaymentStatus.Pending;
+                var orderStatus = OrderStatus.Pending;
 
                 var order = new Order
                 {
@@ -271,7 +337,7 @@ namespace WebApplication_ClothingEcommerce.Services
                 {
                     Id = Guid.NewGuid(),
                     OrderId = order.Id,
-                    ShippingCompany = "Standard Courier",
+                    ShippingCompany = carrierName,
                     TrackingNumber = string.Empty,
                     ShipmentStatus = ShipmentStatus.Pending,
                     ShippedAt = null,
@@ -285,6 +351,40 @@ namespace WebApplication_ClothingEcommerce.Services
                 // Commit Transaction
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                var orderId = order.Id;
+                // Trigger Telegram Bot & SMTP Email Order Alerts asynchronously with dedicated scope
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var scopedTelegram = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                        var scopedEmail = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                        try
+                        {
+                            await scopedTelegram.SendOrderNotificationByIdAsync(orderId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send Telegram notification for order {OrderId}", orderId);
+                        }
+
+                        try
+                        {
+                            await scopedEmail.SendOrderConfirmationByIdAsync(orderId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send email confirmation for order {OrderId}", orderId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to execute notification scope for order {OrderId}", orderId);
+                    }
+                });
 
                 result.Success = true;
                 result.OrderId = order.Id;
@@ -375,6 +475,7 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             return await _context.Orders
                 .AsNoTracking()
+                .Include(o => o.Customer)
                 .Include(o => o.Address)
                 .Include(o => o.Payment)
                     .ThenInclude(p => p!.PaymentMethod)

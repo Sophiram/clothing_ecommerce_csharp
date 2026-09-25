@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply font-sans antialiased bg-white text-gray-900 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  /* Khmer Font Automatic Assignment */
+  :lang(km), [lang="km"], .font-khmer, html[lang="km"], html[lang="km"] * {
+    font-family: 'Kantumruy Pro', system-ui, sans-serif !important;
+  }
+
+  /* Safe Image Constraints to prevent any unstyled image explosion */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Custom Clean Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-slate-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-slate-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-slate-600;
+  }
+
+  ::selection {
+    background-color: rgba(66, 133, 244, 0.35);
+    color: inherit;
+  }
+}
+
+@layer components {
+  /* ── BRAND LOGO SIZING ── */
+  .clothe-logo-img {
+    height: 36px;
+    width: auto;
+    max-height: 40px;
+    object-fit: contain;
+  }
+
+  /* ── NAVBAR LINKS ── */
+  .nav-link-clothe {
+    @apply relative text-sm font-medium text-gray-700 dark:text-slate-300 hover:text-[#4285F4] dark:hover:text-blue-400 transition-colors duration-200 py-1 inline-flex items-center gap-1;
+  }
+  .nav-link-clothe.active {
+    @apply text-[#4285F4] dark:text-blue-400 font-semibold;
+  }
+  .nav-link-clothe::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-[#4285F4] dark:bg-blue-400 scale-x-0 transition-transform duration-200 rounded-full;
+  }
+  .nav-link-clothe.active::after,
+  .nav-link-clothe:hover::after {
+    @apply scale-x-100;
+  }
+
+  /* ── NAVBAR ACTION BUTTONS ── */
+  .nav-action-btn {
+    @apply relative flex items-center justify-center w-10 h-10 rounded-xl text-gray-600 dark:text-slate-400 hover:text-[#4285F4] dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all duration-200 cursor-pointer border-0 bg-transparent;
+  }
+
+  .nav-badge {
+    @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white rounded-full bg-red-500;
+  }
+
+  /* ── DROPDOWNS ── */
+  .dropdown-panel {
+    @apply absolute right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 py-2 z-50 opacity-0 invisible translate-y-1 transition-all duration-200 shadow-xl;
+  }
+  .dropdown-trigger:focus-within .dropdown-panel,
+  .dropdown-trigger:hover .dropdown-panel {
+    @apply opacity-100 visible translate-y-0;
+  }
+  .dropdown-item-clothe {
+    @apply flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-[#4285F4] dark:hover:text-blue-400 transition-colors duration-150 w-full text-left;
+  }
+
+  /* ── SALE PILL ── */
+  .sale-pill {
+    @apply inline-block ml-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white bg-red-500 rounded-full align-middle;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-primary-clothe {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#4285F4] hover:bg-[#3367D6] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+  .btn-outline-clothe {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:border-[#4285F4] hover:text-[#4285F4] dark:hover:text-blue-400 rounded-xl transition-all duration-200 bg-transparent active:scale-95;
+  }
+
+  /* ── DRAWERS (MOBILE & CART) ── */
+  .drawer-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 opacity-0 invisible transition-all duration-300;
+  }
+  .drawer-overlay.open {
+    @apply opacity-100 visible;
+  }
+
+  .drawer-panel {
+    @apply fixed top-0 h-full bg-white dark:bg-slate-900 z-50 shadow-2xl transition-transform duration-300 overflow-y-auto;
+  }
+  .drawer-panel.left {
+    @apply left-0 -translate-x-full w-80 max-w-[85vw];
+  }
+  .drawer-panel.right {
+    @apply right-0 translate-x-full w-96 max-w-[90vw];
+  }
+  .drawer-panel.open {
+    @apply translate-x-0;
+  }
+
+  /* ── FORM INPUTS ── */
+  .input-clothe {
+    @apply w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#4285F4]/30 focus:border-[#4285F4] dark:focus:border-blue-500 transition-all duration-200;
+  }
+
+  /* ── USER AVATAR ── */
+  .user-avatar {
+    @apply flex items-center justify-center w-9 h-9 rounded-full bg-[#4285F4] text-white text-sm font-bold overflow-hidden flex-shrink-0;
+  }
+
+  /* ── PROMO BAR ── */
+  .promo-bar {
+    @apply flex items-center justify-between gap-3 px-4 py-2 bg-slate-900 dark:bg-slate-950 text-white text-xs;
+  }
+
+  /* ── ADMIN SIDEBAR & CARDS ── */
+  .admin-sidebar-link {
+    @apply flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-150 w-full;
+  }
+  .admin-sidebar-link.active {
+    @apply text-white bg-slate-800 border-l-4 border-[#4285F4];
+  }
+  .admin-sidebar-link i {
+    @apply w-5 text-center flex-shrink-0 text-base;
+  }
+
+  .admin-stat-card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow;
+  }
+  .admin-table-wrapper {
+    @apply bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm;
+  }
+
+  /* ── PRODUCT CARD ── */
+  .product-card-tw {
+    @apply bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:border-[#4285F4] hover:shadow-xl flex flex-col;
+  }
+
+  /* ── AUTH PAGES (LOGIN / REGISTER) DARK MODE COMPAT ── */
+  html.dark .auth-page-modern {
+    background: #020617 !important;
+  }
+  html.dark .auth-split-container {
+    background: #0f172a !important;
+    border-color: #1e293b !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  }
+  html.dark .auth-form-panel {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+  }
+  html.dark .auth-header h1 {
+    color: #f8fafc !important;
+  }
+  html.dark .auth-header p {
+    color: #94a3b8 !important;
+  }
+  html.dark .auth-form-group label {
+    color: #cbd5e1 !important;
+  }
+  html.dark .auth-input-control {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+  html.dark .auth-input-control:focus {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25) !important;
+  }
+  html.dark .auth-field-icon {
+    color: #64748b !important;
+  }
+  html.dark .auth-toggle-btn {
+    color: #94a3b8 !important;
+  }
+  html.dark .auth-checkbox-group span {
+    color: #94a3b8 !important;
+  }
+  html.dark .auth-forgot-link {
+    color: #60a5fa !important;
+  }
+  html.dark .auth-divider::before {
+    background: #334155 !important;
+  }
+  html.dark .auth-divider span {
+    background: #0f172a !important;
+    color: #64748b !important;
+  }
+  html.dark .auth-social-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+  html.dark .auth-social-btn:hover {
+    background: #334155 !important;
+  }
+  html.dark .auth-footer-prompt {
+    color: #94a3b8 !important;
+  }
+  html.dark .auth-footer-prompt a {
+    color: #60a5fa !important;
+  }
+  html.dark .auth-demo-helper {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+  }
+  html.dark .auth-demo-title span {
+    color: #f8fafc !important;
+  }
+  html.dark .auth-demo-chip {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+  }
+
+  /* ── TELEGRAM WIDGETS & BUTTONS ── */
+  .telegram-gradient-card {
+    background: linear-gradient(135deg, #229ED9 0%, #1b8bc2 50%, #0d6fa0 100%) !important;
+    color: #ffffff !important;
+  }
+  .telegram-action-btn {
+    background-color: #ffffff !important;
+    color: #0284c7 !important;
+  }
+  .telegram-action-btn:hover {
+    background-color: #f0f9ff !important;
+    color: #0369a1 !important;
+  }
+}
+

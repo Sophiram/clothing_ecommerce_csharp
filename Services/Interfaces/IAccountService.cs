@@ -14,6 +14,7 @@ namespace WebApplication_ClothingEcommerce.Services
     {
         Task<AuthResult> RegisterAsync(RegisterViewModel model);
         Task<AuthResult> LoginAsync(LoginViewModel model);
+        Task<AuthResult> ExternalLoginSignInAsync(Microsoft.AspNetCore.Identity.ExternalLoginInfo info);
         Task LogoutAsync();
     }
 }

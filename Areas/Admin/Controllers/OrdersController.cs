@@ -63,6 +63,22 @@ namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
             return View(order);
         }
 
+        // GET: Admin/Orders/Receipt/5
+        public async Task<IActionResult> Receipt(Guid? id)
+        {
+            if (id == null) return NotFound();
+
+            var order = await _orderService.GetAdminOrderByIdAsync(id.Value);
+            if (order == null) return NotFound();
+
+            if (order.Customer != null && !string.IsNullOrEmpty(order.Customer.ApplicationUserId))
+            {
+                ViewBag.CustomerAvatarUrl = _avatarService.GetAvatarUrl(order.Customer.ApplicationUserId);
+            }
+
+            return View(order);
+        }
+
         // GET: Admin/Orders/Create
         public async Task<IActionResult> Create()
         {

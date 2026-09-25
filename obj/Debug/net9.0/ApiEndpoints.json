@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "ContainingType": "WebApplication_ClothingEcommerce.Controllers.Api.BakongPaymentsApiController",
+    "Method": "Cancel",
+    "RelativePath": "api/payments/{paymentId}/cancel",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "paymentId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApplication_ClothingEcommerce.Controllers.Api.BakongPaymentsApiController",
+    "Method": "SimulateConfirm",
+    "RelativePath": "api/payments/{paymentId}/simulate-confirm",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "paymentId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApplication_ClothingEcommerce.Controllers.Api.BakongPaymentsApiController",
+    "Method": "GetStatus",
+    "RelativePath": "api/payments/{paymentId}/status",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "paymentId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApplication_ClothingEcommerce.Controllers.Api.BakongPaymentsApiController",
+    "Method": "Callback",
+    "RelativePath": "api/payments/bakong/callback",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "payload",
+        "Type": "System.Nullable\u00601[[System.Text.Json.JsonElement, System.Text.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "WebApplication_ClothingEcommerce.Controllers.Api.BakongPaymentsApiController",
+    "Method": "Create",
+    "RelativePath": "api/payments/bakong/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "WebApplication_ClothingEcommerce.Services.CreateBakongPaymentRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

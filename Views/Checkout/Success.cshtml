@@ -1,53 +1,93 @@
-﻿@model WebApplication_ClothingEcommerce.Models.Order
+@model WebApplication_ClothingEcommerce.Models.Order
 
 @{
     ViewData["Title"] = "Order Confirmed";
+    var orderShortCode = Model.Id.ToString()[..8].ToUpper();
 }
 
-<div class="container py-5">
+<div class="min-h-[85vh] bg-slate-50 dark:bg-slate-950 py-12 lg:py-16 transition-colors duration-200 flex items-center justify-center">
+    <div class="max-w-lg w-full mx-auto px-4">
 
-    <div class="empty-state">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-8 sm:p-10 text-center shadow-xl relative overflow-hidden">
+            <!-- Glow effect -->
+            <div class="absolute -top-20 -right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <i class="bi bi-check-circle text-success"></i>
+            <!-- Success Icon -->
+            <div class="w-20 h-20 rounded-3xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-6 text-3xl shadow-sm">
+                <i class="bi bi-check2-circle"></i>
+            </div>
 
-        <h1 class="fw-bold mt-4">
-            Order Confirmed!
-        </h1>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">
+                <i class="bi bi-check-circle-fill"></i>
+                <span data-en="Payment & Order Success" data-kh="ការបញ្ជាទិញទទួលបានជោគជ័យ">Payment & Order Success</span>
+            </div>
 
-        <p class="lead text-secondary">
-            Thank you for your purchase.
-        </p>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-2"
+                data-en="Order Confirmed!" data-kh="ការបញ្ជាទិញបានបញ្ជាក់!">
+                Order Confirmed!
+            </h1>
 
-        <p>
-            Order ID:
-            <strong>@Model.Id</strong>
-        </p>
+            <p class="text-sm text-gray-500 dark:text-slate-400 mb-6 max-w-sm mx-auto"
+               data-en="Thank you for shopping with CLOTHÉ. We have received your order and our atelier is preparing it with care."
+               data-kh="សូមអរគុណសម្រាប់ការទិញទំនិញនៅ CLOTHÉ។ យើងបានទទួលការបញ្ជាទិញរបស់អ្នកហើយ ហើយកំពុងរៀបចំវាដោយយកចិត្តទុកដាក់។">
+                Thank you for shopping with CLOTHÉ. We have received your order and our atelier is preparing it with care.
+            </p>
 
-        <h3 class="fw-bold">
-            $@Model.TotalAmount.ToString("0.00")
-        </h3>
+            <!-- Order Receipt Slip Box -->
+            <div class="p-5 rounded-2xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 text-left mb-6 space-y-3">
+                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-slate-400">
+                    <span data-en="Order Reference" data-kh="លេខកូដបញ្ជាទិញ">Order Reference</span>
+                    <code class="px-2 py-0.5 rounded bg-white dark:bg-slate-900 font-mono font-bold text-gray-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
+                        #@orderShortCode
+                    </code>
+                </div>
 
-        <div class="d-flex justify-content-center gap-2 mt-4">
+                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-slate-400">
+                    <span data-en="Order Date" data-kh="កាលបរិច្ឆេទ">Order Date</span>
+                    <span class="font-medium text-gray-700 dark:text-slate-300">
+                        @Model.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")
+                    </span>
+                </div>
 
-            <a asp-controller="Orders"
-               asp-action="Details"
-               asp-route-id="@Model.Id"
-               class="btn btn-dark">
+                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-slate-400">
+                    <span data-en="Payment Status" data-kh="ស្ថានភាពទូទាត់">Payment Status</span>
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                        @(Model.Payment?.PaymentStatus.ToString() ?? "Processing")
+                    </span>
+                </div>
 
-                View Order
+                <div class="pt-2.5 border-t border-gray-200/80 dark:border-slate-700 flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-900 dark:text-white" data-en="Total Paid" data-kh="ទឹកប្រាក់សរុប">Total Paid</span>
+                    <span class="text-xl font-extrabold text-gray-900 dark:text-white">
+                        $@Model.TotalAmount.ToString("0.00")
+                    </span>
+                </div>
+            </div>
 
-            </a>
+            <!-- CTAs -->
+            <div class="space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.Id"
+                       class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-all shadow-md">
+                        <i class="bi bi-box-seam"></i>
+                        <span data-en="Order Details" data-kh="មើលការបញ្ជាទិញ">Order Details</span>
+                    </a>
 
-            <a asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-outline-dark">
+                    <a asp-controller="Orders" asp-action="Receipt" asp-route-id="@Model.Id" target="_blank"
+                       class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all border border-slate-200/80 dark:border-slate-700">
+                        <i class="bi bi-printer-fill text-blue-600 dark:text-blue-400"></i>
+                        <span data-en="Print Receipt" data-kh="បោះពុម្ពបង្កាន់ដៃ">Print Receipt</span>
+                    </a>
+                </div>
 
-                Continue Shopping
-
-            </a>
+                <a asp-controller="Shop" asp-action="Index"
+                   class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white bg-transparent hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="bi bi-bag"></i>
+                    <span data-en="Continue Shopping" data-kh="បន្តទិញទំនិញ">Continue Shopping</span>
+                </a>
+            </div>
 
         </div>
 
     </div>
-
 </div>

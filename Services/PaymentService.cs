@@ -3,15 +3,30 @@ using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Data.Enums;
 using WebApplication_ClothingEcommerce.Models;
 
+using WebApplication_ClothingEcommerce.Services.Interfaces;
+
 namespace WebApplication_ClothingEcommerce.Services
 {
     public class PaymentService : IPaymentService
     {
         private readonly AppDbContext _context;
+        private readonly ITelegramService _telegramService;
+        private readonly IEmailService _emailService;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(AppDbContext context)
+        public PaymentService(
+            AppDbContext context, 
+            ITelegramService telegramService,
+            IEmailService emailService,
+            IServiceScopeFactory scopeFactory,
+            ILogger<PaymentService> logger)
         {
             _context = context;
+            _telegramService = telegramService;
+            _emailService = emailService;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
         }
 
         // =========================================================
@@ -127,6 +142,7 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             var query = _context.Payments
                 .Include(p => p.Order)
+                    .ThenInclude(o => o.Customer)
                 .Include(p => p.PaymentMethod)
                 .AsNoTracking()
                 .AsQueryable();
@@ -172,6 +188,7 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             return await _context.Payments
                 .Include(p => p.Order)
+                    .ThenInclude(o => o.Customer)
                 .Include(p => p.PaymentMethod)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id);
@@ -193,6 +210,43 @@ namespace WebApplication_ClothingEcommerce.Services
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
+
+            if (payment.PaymentStatus == PaymentStatus.Paid || payment.PaymentStatus == PaymentStatus.Completed)
+            {
+                var paymentId = payment.Id;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var scopedTelegram = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                        var scopedEmail = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                        try
+                        {
+                            await scopedTelegram.SendPaymentNotificationAsync(paymentId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send Telegram payment notification for {PaymentId}", paymentId);
+                        }
+
+                        try
+                        {
+                            await scopedEmail.SendPaymentReceiptByIdAsync(paymentId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send receipt email for payment {PaymentId}", paymentId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed in background notification scope for payment {PaymentId}", paymentId);
+                    }
+                });
+            }
+
             return ServiceResult.Ok("Payment recorded successfully.");
         }
 
@@ -201,11 +255,14 @@ namespace WebApplication_ClothingEcommerce.Services
             var existing = await _context.Payments.FirstOrDefaultAsync(p => p.Id == payment.Id);
             if (existing == null) return ServiceResult.Fail("Payment record not found.");
 
+            var wasPaid = existing.PaymentStatus == PaymentStatus.Paid || existing.PaymentStatus == PaymentStatus.Completed;
+            var isNowPaid = payment.PaymentStatus == PaymentStatus.Paid || payment.PaymentStatus == PaymentStatus.Completed;
+
             existing.PaymentMethodId = payment.PaymentMethodId;
             existing.PaymentStatus = payment.PaymentStatus;
             existing.Amount = payment.Amount;
 
-            if ((payment.PaymentStatus == PaymentStatus.Paid || payment.PaymentStatus == PaymentStatus.Completed) && existing.PaidAt == null)
+            if (isNowPaid && existing.PaidAt == null)
             {
                 existing.PaidAt = DateTime.UtcNow;
             }
@@ -215,6 +272,43 @@ namespace WebApplication_ClothingEcommerce.Services
             }
 
             await _context.SaveChangesAsync();
+
+            if (!wasPaid && isNowPaid)
+            {
+                var paymentId = existing.Id;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _scopeFactory.CreateScope();
+                        var scopedTelegram = scope.ServiceProvider.GetRequiredService<ITelegramService>();
+                        var scopedEmail = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                        try
+                        {
+                            await scopedTelegram.SendPaymentNotificationAsync(paymentId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send Telegram payment notification for {PaymentId}", paymentId);
+                        }
+
+                        try
+                        {
+                            await scopedEmail.SendPaymentReceiptByIdAsync(paymentId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send receipt email for payment {PaymentId}", paymentId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed in background notification scope for payment {PaymentId}", paymentId);
+                    }
+                });
+            }
+
             return ServiceResult.Ok("Payment updated successfully.");
         }
 

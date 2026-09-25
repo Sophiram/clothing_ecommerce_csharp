@@ -1,0 +1,496 @@
+@model WebApplication_ClothingEcommerce.Models.SmtpSettings
+
+@{
+    ViewData["Title"] = "Mail Service & Notifications";
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                <i class="bi bi-envelope-at"></i>
+                <span class="tracking-wider uppercase" data-en="Communications &amp; Notifications" data-kh="ការទំនាក់ទំនង &amp; ការជូនដំណឹង">Communications &amp; Notifications</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span>SMTP Mail Service &amp; Notifications</span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl" data-en="Manage outgoing SMTP mail services, notification triggers, environment credentials, and live test delivery." data-kh="គ្រប់គ្រងសេវាផ្ញើអ៊ីមែល SMTP ការជូនដំណឹង ការកំណត់ .env និងសាកល្បងការផ្ញើ។">
+                Manage outgoing SMTP mail services, notification triggers, environment credentials, and live test delivery.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            @if (Model.IsConfigured)
+            {
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span data-en="SMTP Operational • Ready" data-kh="SMTP ដំណើរការធម្មតា">SMTP Operational • Ready</span>
+                </span>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span data-en="Needs .env Configuration" data-kh="ត្រូវការកំណត់ .env">Needs .env Configuration</span>
+                </span>
+            }
+
+            <a href="#testEmailCard"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                <i class="bi bi-send text-blue-600 dark:text-blue-400"></i>
+                <span>Send Test Email</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ALERTS (SUCCESS & ERROR FLASH MESSAGES) -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-2xs">
+            <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-base shrink-0"></i>
+            <div class="flex-1">@TempData["Success"]</div>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-2xs">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-base shrink-0"></i>
+            <div class="flex-1">@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- =====================================================
+         TOP 4 STATS & DIAGNOSTIC CARDS
+    ====================================================== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. SMTP Host -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">SMTP Host &amp; Port</span>
+                <span class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-server"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-lg font-black font-mono text-slate-900 dark:text-white truncate" title="@Model.Host:@Model.Port">
+                    @Model.Host:@Model.Port
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Protocol:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">SMTP / STARTTLS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Sender Identity -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sender Identity</span>
+                <span class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-send-check"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-lg font-black text-slate-900 dark:text-white truncate" title="@Model.SenderEmail">
+                    @Model.SenderEmail
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Display:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[130px]" title="@Model.SenderName">@Model.SenderName</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Encryption (SSL/TLS) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Security / SSL</span>
+                <span class="w-10 h-10 rounded-xl @(Model.EnableSsl ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400") flex items-center justify-center text-lg">
+                    <i class="bi @(Model.EnableSsl ? "bi-shield-check" : "bi-shield-x")"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-lg font-black @(Model.EnableSsl ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")">
+                    @(Model.EnableSsl ? "TLS / SSL Enabled" : "Unencrypted (Disabled)")
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Encrypted Tunnel:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">Port @Model.Port</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Admin Alerts Email -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Admin Notification Email</span>
+                <span class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-bell-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-lg font-black text-slate-900 dark:text-white truncate" title="@Model.AdminEmail">
+                    @Model.AdminEmail
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Target:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">Store Operator</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKFLOW -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: ENVIRONMENT VARIABLES & EMAIL PREVIEW (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- ENVIRONMENT SETTINGS TABLE -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-file-earmark-code text-blue-600 dark:text-blue-400"></i>
+                            <span>Environment Settings (.env)</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Loaded securely from your project's root <code>.env</code> file or host environment variables
+                        </p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        Read-Only View
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                                <th class="py-3 px-4">Environment Variable</th>
+                                <th class="py-3 px-4">Configured Value</th>
+                                <th class="py-3 px-4 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_HOST</td>
+                                <td class="py-3 px-4 text-slate-800 dark:text-slate-200">@Model.Host</td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Active
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_PORT</td>
+                                <td class="py-3 px-4 text-slate-800 dark:text-slate-200">@Model.Port</td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Active
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_USERNAME</td>
+                                <td class="py-3 px-4">
+                                    @if (!string.IsNullOrWhiteSpace(Model.Username))
+                                    {
+                                        <span class="text-slate-800 dark:text-slate-200">@Model.Username</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-rose-500 font-sans italic">Not specified in .env</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold @(!string.IsNullOrWhiteSpace(Model.Username) ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60" : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60") px-2 py-0.5 rounded-full font-sans">
+                                        @(!string.IsNullOrWhiteSpace(Model.Username) ? "Loaded" : "Missing")
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_PASSWORD</td>
+                                <td class="py-3 px-4">
+                                    @if (!string.IsNullOrWhiteSpace(Model.Password))
+                                    {
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono tracking-widest text-[11px]">
+                                            @Model.MaskedPassword
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-rose-500 font-sans italic">Not specified in .env</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold @(!string.IsNullOrWhiteSpace(Model.Password) ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60" : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60") px-2 py-0.5 rounded-full font-sans">
+                                        @(!string.IsNullOrWhiteSpace(Model.Password) ? "Protected" : "Missing")
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_FROM_EMAIL</td>
+                                <td class="py-3 px-4 text-slate-800 dark:text-slate-200">@Model.SenderEmail</td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Active
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_FROM_NAME</td>
+                                <td class="py-3 px-4 font-sans text-slate-800 dark:text-slate-200">@Model.SenderName</td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Active
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_ENABLE_SSL</td>
+                                <td class="py-3 px-4">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold @(Model.EnableSsl ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60" : "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60") px-2 py-0.5 rounded-full font-sans">
+                                        @(Model.EnableSsl ? "true (STARTTLS)" : "false")
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Enforced
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">SMTP_ADMIN_EMAIL</td>
+                                <td class="py-3 px-4 text-slate-800 dark:text-slate-200">@Model.AdminEmail</td>
+                                <td class="py-3 px-4 text-right">
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-sans">
+                                        <i class="bi bi-check2"></i> Recipient
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Google App Password Tip -->
+                <div class="flex items-start gap-3 p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 text-xs text-slate-600 dark:text-slate-300">
+                    <i class="bi bi-google text-blue-600 dark:text-blue-400 text-base shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong class="text-slate-900 dark:text-white font-bold block mb-0.5">Gmail &amp; Google Workspace Tip:</strong>
+                        <span>To authenticate via Gmail, generate an <b>App Password</b> in your Google Account (Security &gt; 2-Step Verification &gt; App Passwords). Use your email as <code>SMTP_USERNAME</code> and the 16-character generated key as <code>SMTP_PASSWORD</code> in your <code>.env</code> file.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HTML EMAIL RECEIPT MOCKUP PREVIEW -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <i class="bi bi-file-earmark-richtext text-blue-600 dark:text-blue-400"></i>
+                        <span>Customer Email Notification Preview</span>
+                    </h3>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                        HTML Template
+                    </span>
+                </div>
+
+                <!-- Email Message Wrapper Mockup -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50 dark:bg-slate-950/60">
+                    <!-- Fake Email Client Header -->
+                    <div class="px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <span class="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">C</span>
+                            <div class="truncate">
+                                <span class="font-bold text-slate-900 dark:text-white">@Model.SenderName</span>
+                                <span class="text-slate-400 text-[11px]">&lt;@Model.SenderEmail&gt;</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono shrink-0">To: customer@@email.com</span>
+                    </div>
+
+                    <!-- Inner Email Content -->
+                    <div class="p-6 max-w-lg mx-auto bg-white dark:bg-slate-900 my-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <div class="font-black text-base text-slate-900 dark:text-white tracking-wider">CLOTHÉ</div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">Order Confirmed</span>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Thank you for your order!</h4>
+                            <p class="text-slate-500 dark:text-slate-400 text-[11px]">We're preparing your items for delivery. Here is your purchase receipt:</p>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg text-[11px] space-y-1">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Order ID:</span>
+                                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">#9E4B20A1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Date:</span>
+                                <span class="text-slate-800 dark:text-slate-200">@DateTime.Now.ToString("dd MMM yyyy")</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Payment:</span>
+                                <span class="text-slate-800 dark:text-slate-200 font-semibold">Bakong KHQR</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between items-center font-bold">
+                            <span class="text-slate-900 dark:text-white">Total Paid:</span>
+                            <span class="text-base text-emerald-600 dark:text-emerald-400 font-black">$100.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: LIVE TEST EMAIL & AUTOMATED TRIGGERS (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+            <!-- TEST DISPATCH CARD -->
+            <div id="testEmailCard" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-send-fill text-blue-600 dark:text-blue-400"></i>
+                        <span>Send Live Test Email</span>
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-400">Instant Dispatch</span>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Verify that your SMTP host credentials, port routing, and credentials can establish an authenticated TLS connection.
+                </p>
+
+                <form asp-area="Admin" asp-controller="EmailNotifications" asp-action="SendTestEmail" method="post" class="space-y-4">
+                    @Html.AntiForgeryToken()
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Recipient Email Address" data-kh="អាសយដ្ឋានអ៊ីមែលទទួល">
+                            Recipient Email Address <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="email" name="recipientEmail" value="@Model.AdminEmail" required
+                                   placeholder="admin@yourdomain.com"
+                                   class="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                        <i class="bi bi-send"></i>
+                        <span data-en="Dispatch Test Email" data-kh="ផ្ញើសារសាកល្បង">Dispatch Test Email</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- AUTOMATED EMAIL NOTIFICATION TRIGGERS -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-bell-check text-emerald-500"></i>
+                        <span>Automated Email Triggers</span>
+                    </h3>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                        4 Events
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Trigger 1: Order Confirmation -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-bag-check"></i>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">Order Confirmation</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">Dispatched to customer upon checkout</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.NotifyOnNewOrder ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(Model.NotifyOnNewOrder ? "Active" : "Disabled")
+                        </span>
+                    </div>
+
+                    <!-- Trigger 2: Admin New Order Alert -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-bell"></i>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">Admin Order Notice</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">Alert to @Model.AdminEmail on purchase</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.NotifyOnNewOrder ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(Model.NotifyOnNewOrder ? "Active" : "Disabled")
+                        </span>
+                    </div>
+
+                    <!-- Trigger 3: Payment Receipt -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-receipt"></i>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">Payment Receipt</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">Sent upon verified KHQR / Card transaction</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.NotifyOnPaymentSuccess ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(Model.NotifyOnPaymentSuccess ? "Active" : "Disabled")
+                        </span>
+                    </div>
+
+                    <!-- Trigger 4: Low Stock Alert -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-exclamation-octagon"></i>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">Low Stock Warning</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">Alert to admin when variant stock &le; 5</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.NotifyOnLowStock ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(Model.NotifyOnLowStock ? "Active" : "Disabled")
+                        </span>
+                    </div>
+
+                    <!-- Trigger 5: Shipment Tracking -->
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-sm shrink-0">
+                                <i class="bi bi-truck"></i>
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900 dark:text-white">Shipment Tracking</div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400">Sent when parcel is assigned tracking #</div>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.NotifyOnShipmentUpdate ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(Model.NotifyOnShipmentUpdate ? "Active" : "Disabled")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

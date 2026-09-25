@@ -11,10 +11,12 @@ namespace WebApplication_ClothingEcommerce.Controllers
     public class KhqrController : Controller
     {
         private readonly IKhqrService _khqrService;
+        private readonly IWebHostEnvironment _environment;
 
-        public KhqrController(IKhqrService khqrService)
+        public KhqrController(IKhqrService khqrService, IWebHostEnvironment environment)
         {
             _khqrService = khqrService;
+            _environment = environment;
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -54,9 +56,65 @@ namespace WebApplication_ClothingEcommerce.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────
-        // POST: /Khqr/CheckTransaction
+        // GET & POST: /Khqr/CheckPayment & /Khqr/CheckTransaction
         // Polls the Bakong Open API check_transaction_by_md5 endpoint
         // ─────────────────────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> CheckPayment([FromQuery] string? md5, [FromQuery] bool simulate = false)
+        {
+            if (simulate)
+            {
+                if (!_environment.IsDevelopment() || (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin")))
+                {
+                    return NotFound(new { error = "Payment simulation is disabled." });
+                }
+
+                return Ok(new
+                {
+                    paid = true,
+                    status = "PAID",
+                    responseCode = 0,
+                    message = "Simulated local payment verified.",
+                    data = new
+                    {
+                        hash = "sim_" + Guid.NewGuid().ToString("N")[..16],
+                        fromAccountId = "client_mobile@abaa",
+                        toAccountId = "sorn_sophiram@bkrt",
+                        amount = 0,
+                        currency = "USD",
+                        description = "Simulated Auto-Payment Test",
+                        createdDateMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                    }
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(md5))
+            {
+                return BadRequest(new { error = "MD5 hash is required." });
+            }
+
+            var config = _khqrService.GetConfig();
+            var result = await _khqrService.CheckTransactionByMd5Async(md5);
+            return Ok(new
+            {
+                paid = result.IsPaid,
+                status = result.IsPaid ? "PAID" : "PENDING",
+                responseCode = result.ResponseCode,
+                message = result.ResponseMessage,
+                tokenConfigured = !string.IsNullOrWhiteSpace(config.Token),
+                data = result.IsPaid ? new
+                {
+                    hash = result.Hash,
+                    fromAccountId = result.FromAccountId,
+                    toAccountId = result.ToAccountId,
+                    amount = result.Amount,
+                    currency = result.Currency,
+                    description = result.Description,
+                    createdDateMs = result.CreatedDateMs
+                } : null
+            });
+        }
+
         [HttpPost]
         public async Task<IActionResult> CheckTransaction([FromBody] CheckTransactionRequest request)
         {
@@ -70,6 +128,7 @@ namespace WebApplication_ClothingEcommerce.Controllers
             return Ok(new
             {
                 paid = result.IsPaid,
+                status = result.IsPaid ? "PAID" : "PENDING",
                 responseCode = result.ResponseCode,
                 message = result.ResponseMessage,
                 data = result.IsPaid ? new

@@ -61,6 +61,14 @@ namespace WebApplication_ClothingEcommerce.Services
                     .ThenInclude(o => o.Items)
                         .ThenInclude(i => i.Variant)
                             .ThenInclude(v => v.Product)
+                .Include(s => s.Order)
+                    .ThenInclude(o => o.Items)
+                        .ThenInclude(i => i.Variant)
+                            .ThenInclude(v => v.Size)
+                .Include(s => s.Order)
+                    .ThenInclude(o => o.Items)
+                        .ThenInclude(i => i.Variant)
+                            .ThenInclude(v => v.Color)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 

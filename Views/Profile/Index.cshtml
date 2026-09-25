@@ -2,1134 +2,579 @@
 
 @{
     ViewData["Title"] = "My Account";
+    ViewData["AccountActiveSection"] = "Profile";
     var activeTab = Model.ActiveTab?.ToLowerInvariant() ?? "overview";
     var userInitial = !string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName.Substring(0, 1).ToUpper() : "U";
     var fullName = $"{Model.FirstName} {Model.LastName}".Trim();
     if (string.IsNullOrEmpty(fullName)) { fullName = "Valued Customer"; }
 }
 
-<style>
-    .account-page {
-        background-color: #f8fafc;
-        min-height: 85vh;
-    }
+<div class="min-h-[85vh] bg-gray-50/50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
 
-    /* Hero Banner */
-    .profile-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border-radius: 28px;
-        position: relative;
-        overflow: hidden;
-        color: #ffffff;
-        box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.25);
-        padding: 2.5rem;
-    }
-
-    .profile-hero::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
-        pointer-events: none;
-    }
-
-    .profile-avatar-wrap {
-        position: relative;
-        flex-shrink: 0;
-    }
-
-    .profile-avatar {
-        width: 88px;
-        height: 88px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        color: #fff;
-        font-size: 32px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 4px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
-    }
-
-    .profile-avatar-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-    }
-
-    .profile-avatar-badge {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: #ffffff;
-        color: #0f172a;
-        border: 2px solid #0f172a;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 0;
-    }
-
-    .profile-avatar-badge:hover {
-        background: #3b82f6;
-        color: #ffffff;
-        transform: scale(1.1);
-    }
-
-    .profile-verified-pill {
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(8px);
-        color: #93c5fd;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    /* KPI Metric Cards */
-    .metric-card {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 20px;
-        padding: 1.25rem 1.5rem;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        text-decoration: none;
-        color: inherit;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
-    }
-
-    .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
-        border-color: rgba(59, 130, 246, 0.25);
-        color: inherit;
-    }
-
-    .metric-icon-wrap {
-        width: 52px;
-        height: 52px;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        flex-shrink: 0;
-    }
-
-    .metric-blue { background: #eff6ff; color: #2563eb; }
-    .metric-amber { background: #fffbeb; color: #d97706; }
-    .metric-rose { background: #fff1f2; color: #e11d48; }
-    .metric-emerald { background: #ecfdf5; color: #059669; }
-
-    /* Account Tabs */
-    .profile-tabs {
-        border-bottom: 0;
-        gap: 6px;
-        background: #ffffff;
-        padding: 6px;
-        border-radius: 16px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    }
-
-    .profile-tabs .nav-link {
-        border: 0;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.875rem;
-        padding: 10px 18px;
-        border-radius: 12px;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        white-space: nowrap;
-    }
-
-    .profile-tabs .nav-link:hover {
-        color: #0f172a;
-        background: #f1f5f9;
-    }
-
-    .profile-tabs .nav-link.active {
-        color: #ffffff;
-        background: #0f172a;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-    }
-
-    /* Cards & Panels */
-    .profile-panel-card {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 22px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-        overflow: hidden;
-    }
-
-    .panel-header {
-        padding: 1.25rem 1.75rem;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .panel-body {
-        padding: 1.75rem;
-    }
-
-    /* Status Pills */
-    .status-badge {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 5px 12px;
-        border-radius: 9999px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .status-badge-pending { background: #fef3c7; color: #92400e; }
-    .status-badge-processing { background: #e0f2fe; color: #075985; }
-    .status-badge-shipped { background: #e0e7ff; color: #3730a3; }
-    .status-badge-delivered { background: #dcfce7; color: #166534; }
-    .status-badge-cancelled { background: #fee2e2; color: #991b1b; }
-
-    /* Address Box */
-    .address-card {
-        border: 2px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 1.25rem;
-        position: relative;
-        background: #ffffff;
-        transition: all 0.22s ease;
-    }
-
-    .address-card.is-default {
-        border-color: #3b82f6;
-        background: #f8faff;
-    }
-
-    .address-default-tag {
-        font-size: 10.5px;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        background: #dbeafe;
-        color: #1d4ed8;
-        padding: 3px 10px;
-        border-radius: 9999px;
-    }
-
-    /* Form Controls */
-    .profile-input {
-        border: 1px solid #cbd5e1;
-        border-radius: 12px;
-        padding: 11px 16px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-    }
-
-    .profile-input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-    }
-
-    .profile-submit-btn {
-        background: #0f172a;
-        border: 0;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 14px;
-        padding: 11px 26px;
-        border-radius: 9999px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s ease;
-    }
-
-    .profile-submit-btn:hover {
-        background: #1e293b;
-        color: #ffffff;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
-    }
-
-    @@media (max-width: 768px) {
-        .profile-hero {
-            padding: 1.5rem;
-            border-radius: 20px;
-        }
-
-        .panel-header, .panel-body {
-            padding: 1.25rem;
-        }
-    }
-</style>
-
-<div class="account-page py-4 py-lg-5">
-    <div class="container">
-        @{
-            ViewData["AccountActiveSection"] = "Profile";
-        }
+        <!-- 4 TABS GLOBAL ACCOUNT HUB NAV -->
         <partial name="_AccountNav" />
-
-        <!-- HERO BANNER -->
-        <div class="profile-hero mb-4">
-            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 position-relative" style="z-index: 1;">
-                <div class="d-flex align-items-center gap-3 gap-md-4">
-                    <div class="profile-avatar-wrap">
-                        <div class="profile-avatar">
-                            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
-                            {
-                                <img src="@Model.ProfileImageUrl" alt="@fullName" class="profile-avatar-img" />
-                            }
-                            else
-                            {
-                                @userInitial
-                            }
-                        </div>
-                        <button type="button" class="profile-avatar-badge" data-bs-toggle="modal" data-bs-target="#avatarModal" title="Update Profile Picture">
-                            <i class="bi bi-camera-fill"></i>
-                        </button>
-                    </div>
-
-                    <div>
-                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                            <span class="profile-verified-pill">
-                                <i class="bi bi-patch-check-fill"></i>Verified Customer
-                            </span>
-                            <span class="small text-white-50">
-                                Member since @Model.MemberSince.ToString("MMM yyyy")
-                            </span>
-                        </div>
-                        <h1 class="h3 fw-bold mb-1 text-white">@fullName</h1>
-                        <p class="mb-0 text-white-50 small">
-                            <i class="bi bi-envelope me-1"></i>@Model.Email
-                            @if (!string.IsNullOrEmpty(Model.Phone))
-                            {
-                                <span class="ms-3"><i class="bi bi-telephone me-1"></i>@Model.Phone</span>
-                            }
-                        </p>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-2">
-                    <a asp-controller="Shop" asp-action="Index" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-dark btn-sm shadow-sm">
-                        <i class="bi bi-bag me-1"></i>Browse Catalog
-                    </a>
-                    <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-light rounded-pill px-3 py-2 btn-sm fw-semibold">
-                        <i class="bi bi-cart3 me-1"></i>Bag (@Model.CartCount)
-                    </a>
-                </div>
-            </div>
-        </div>
 
         <!-- ALERTS -->
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm mb-4 border-0 d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-check-circle-fill fs-5 text-success"></i>
-                <span class="fw-medium">@TempData["Success"]</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="mb-6 flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl shadow-sm text-emerald-800 dark:text-emerald-300">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <span class="text-sm font-semibold">@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
-
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm mb-4 border-0 d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
-                <span class="fw-medium">@TempData["Error"]</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="mb-6 flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl shadow-sm text-rose-800 dark:text-rose-300">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <span class="text-sm font-semibold">@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
 
-        <!-- METRIC CARDS -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-lg-3">
-                <a asp-controller="Orders" asp-action="Index" class="metric-card">
-                    <div class="metric-icon-wrap metric-blue">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                    <div>
-                        <span class="text-secondary small fw-medium d-block">Total Orders</span>
-                        <strong class="fs-4 fw-bold text-dark">@Model.TotalOrders</strong>
-                    </div>
-                </a>
-            </div>
+        <!-- =====================================================
+             1. USER PROFILE HEADER CARD
+        ====================================================== -->
+        <div class="relative overflow-hidden bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950 text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl mb-8 border border-white/10">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="col-6 col-lg-3">
-                <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending" class="metric-card">
-                    <div class="metric-icon-wrap metric-amber">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <div>
-                        <span class="text-secondary small fw-medium d-block">Pending Orders</span>
-                        <strong class="fs-4 fw-bold text-dark">@Model.PendingOrders</strong>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-6 col-lg-3">
-                <a asp-controller="Wishlist" asp-action="Index" class="metric-card">
-                    <div class="metric-icon-wrap metric-rose">
-                        <i class="bi bi-heart"></i>
-                    </div>
-                    <div>
-                        <span class="text-secondary small fw-medium d-block">Wishlist</span>
-                        <strong class="fs-4 fw-bold text-dark">@Model.WishlistCount</strong>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-6 col-lg-3">
-                <a href="#addressesTabPane" onclick="switchAccountTab('addresses')" class="metric-card">
-                    <div class="metric-icon-wrap metric-emerald">
-                        <i class="bi bi-geo-alt"></i>
-                    </div>
-                    <div>
-                        <span class="text-secondary small fw-medium d-block">Saved Addresses</span>
-                        <strong class="fs-4 fw-bold text-dark">@Model.Addresses.Count()</strong>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- PROFILE NAVIGATION TABS -->
-        <div class="overflow-x-auto pb-2 mb-4">
-            <ul class="nav profile-tabs flex-nowrap" id="accountTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @(activeTab == "overview" ? "active" : "")" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overviewTabPane" type="button" role="tab">
-                        <i class="bi bi-grid-1x2"></i> Overview
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @(activeTab == "profile" ? "active" : "")" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profileTabPane" type="button" role="tab">
-                        <i class="bi bi-person"></i> Personal Info
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @(activeTab == "addresses" ? "active" : "")" id="addresses-tab" data-bs-toggle="tab" data-bs-target="#addressesTabPane" type="button" role="tab">
-                        <i class="bi bi-geo-alt"></i> Address Book (@Model.Addresses.Count())
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link @(activeTab == "security" ? "active" : "")" id="security-tab" data-bs-toggle="tab" data-bs-target="#securityTabPane" type="button" role="tab">
-                        <i class="bi bi-shield-lock"></i> Security & Password
-                    </button>
-                </li>
-                <li class="nav-item ms-auto d-none d-md-block" role="presentation">
-                    <a asp-controller="Orders" asp-action="Index" class="nav-link text-secondary">
-                        <i class="bi bi-receipt"></i> Full Order History &rarr;
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- TAB CONTENT -->
-        <div class="tab-content" id="accountTabContent">
-
-            <!-- TAB 1: OVERVIEW -->
-            <div class="tab-pane fade @(activeTab == "overview" ? "show active" : "")" id="overviewTabPane" role="tabpanel">
-                <div class="row g-4">
-                    <div class="col-lg-8">
-                        <div class="profile-panel-card h-100">
-                            <div class="panel-header">
-                                <div>
-                                    <h5 class="fw-bold mb-0 text-dark">Recent Orders</h5>
-                                    <small class="text-secondary">Your latest orders and live shipment status</small>
-                                </div>
-                                <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold">
-                                    View All Orders
-                                </a>
-                            </div>
-
-                            <div class="panel-body p-0">
-                                @if (Model.RecentOrders != null && Model.RecentOrders.Any())
-                                {
-                                    <!-- Desktop View (Table) -->
-                                    <div class="table-responsive d-none d-md-block">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead class="bg-light border-0">
-                                                <tr>
-                                                    <th class="ps-4 text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Order Ref</th>
-                                                    <th class="text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Date</th>
-                                                    <th class="text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Items</th>
-                                                    <th class="text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Total</th>
-                                                    <th class="text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Status</th>
-                                                    <th class="text-end pe-4 text-secondary small fw-bold text-uppercase" style="font-size: 11px;">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var order in Model.RecentOrders)
-                                                {
-                                                    var statusBadgeClass = order.Status switch
-                                                    {
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending => "status-badge-pending",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing => "status-badge-processing",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped => "status-badge-shipped",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered => "status-badge-delivered",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled => "status-badge-cancelled",
-                                                        _ => "status-badge-pending"
-                                                    };
-
-                                                    var statusIcon = order.Status switch
-                                                    {
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending => "bi-clock",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing => "bi-gear",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped => "bi-truck",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered => "bi-check-circle",
-                                                        WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled => "bi-x-circle",
-                                                        _ => "bi-dot"
-                                                    };
-
-                                                    <tr>
-                                                        <td class="ps-4 fw-bold text-dark font-monospace small">
-                                                            #@order.Id.ToString("N").Substring(0, 8).ToUpper()
-                                                        </td>
-                                                        <td class="text-secondary small">
-                                                            @order.OrderDate.ToString("MMM dd, yyyy")
-                                                        </td>
-                                                        <td class="text-secondary small">
-                                                            @(order.Items?.Count ?? 0) @(order.Items?.Count == 1 ? "item" : "items")
-                                                        </td>
-                                                        <td class="fw-bold text-dark">
-                                                            $@order.TotalAmount.ToString("N2")
-                                                        </td>
-                                                        <td>
-                                                            <span class="status-badge @statusBadgeClass">
-                                                                <i class="bi @statusIcon"></i> @order.Status
-                                                            </span>
-                                                        </td>
-                                                        <td class="text-end pe-4">
-                                                            <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
-                                                               class="btn btn-sm btn-outline-dark rounded-pill px-3">
-                                                                View <i class="bi bi-chevron-right small"></i>
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Mobile View (Card list) -->
-                                    <div class="d-md-none p-3 d-flex flex-column gap-3">
-                                        @foreach (var order in Model.RecentOrders)
-                                        {
-                                            var statusBadgeClass = order.Status switch
-                                            {
-                                                WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending => "status-badge-pending",
-                                                WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing => "status-badge-processing",
-                                                WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped => "status-badge-shipped",
-                                                WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered => "status-badge-delivered",
-                                                WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled => "status-badge-cancelled",
-                                                _ => "status-badge-pending"
-                                            };
-
-                                            <div class="border rounded-4 p-3 bg-white shadow-sm">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="fw-bold font-monospace small text-dark">#@order.Id.ToString("N").Substring(0, 8).ToUpper()</span>
-                                                    <span class="status-badge @statusBadgeClass">@order.Status</span>
-                                                </div>
-                                                <div class="text-secondary small mb-2">
-                                                    <i class="bi bi-calendar3 me-1"></i>@order.OrderDate.ToString("MMM dd, yyyy") &bull; @(order.Items?.Count ?? 0) items
-                                                </div>
-                                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                                    <strong class="text-dark fs-6">$@order.TotalAmount.ToString("N2")</strong>
-                                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" class="btn btn-dark btn-sm rounded-pill px-3">
-                                                        View Details
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="text-center py-5 px-3">
-                                        <div class="metric-icon-wrap metric-blue mx-auto mb-3" style="width:64px;height:64px;font-size:28px;">
-                                            <i class="bi bi-bag"></i>
-                                        </div>
-                                        <h5 class="fw-bold">No orders placed yet</h5>
-                                        <p class="text-secondary small mb-4">Discover our top-rated collections and find your signature style.</p>
-                                        <a asp-controller="Shop" asp-action="Index" class="btn btn-dark rounded-pill px-4">
-                                            Start Shopping
-                                        </a>
-                                    </div>
-                                }
-                            </div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-5 sm:gap-6">
+                    <!-- Avatar with Upload Button -->
+                    <div class="relative flex-shrink-0">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-3xl font-bold flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
+                            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                            {
+                                <img src="@Model.ProfileImageUrl" alt="@fullName" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                <span>@userInitial</span>
+                            }
                         </div>
-                    </div>
-
-                    <!-- Right Sidebar Widgets -->
-                    <div class="col-lg-4 d-flex flex-column gap-4">
-                        <!-- Primary Address Card -->
-                        <div class="profile-panel-card">
-                            <div class="panel-header">
-                                <h6 class="fw-bold mb-0 text-dark">
-                                    <i class="bi bi-geo-alt me-1 text-primary"></i> Primary Delivery Address
-                                </h6>
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 text-primary fw-semibold" onclick="switchAccountTab('addresses')">
-                                    Manage
-                                </button>
-                            </div>
-                            <div class="panel-body">
-                                @if (Model.DefaultAddress != null)
-                                {
-                                    <div>
-                                        <span class="address-default-tag mb-2 d-inline-block">Default Address</span>
-                                        <p class="fw-semibold text-dark mb-1">@fullName</p>
-                                        <p class="text-secondary small mb-1">@Model.DefaultAddress.Street</p>
-                                        <p class="text-secondary small mb-0">@Model.DefaultAddress.City, @Model.DefaultAddress.Province @Model.DefaultAddress.PostalCode</p>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="text-center py-3">
-                                        <p class="text-secondary small mb-3">No delivery address saved yet.</p>
-                                        <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-semibold" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                                            + Add New Address
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Account Security Card -->
-                        <div class="profile-panel-card">
-                            <div class="panel-header">
-                                <h6 class="fw-bold mb-0 text-dark">
-                                    <i class="bi bi-shield-check me-1 text-success"></i> Account Security
-                                </h6>
-                            </div>
-                            <div class="panel-body">
-                                <div class="d-flex align-items-center gap-3 mb-3">
-                                    <div class="metric-icon-wrap metric-emerald" style="width:42px;height:42px;font-size:18px;">
-                                        <i class="bi bi-key"></i>
-                                    </div>
-                                    <div>
-                                        <strong class="d-block text-dark small">Password Protected</strong>
-                                        <small class="text-secondary">Keep credentials safe</small>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill w-100 fw-semibold" onclick="switchAccountTab('security')">
-                                    Update Password
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Wishlist Promo Tile -->
-                        <div class="profile-panel-card p-4 text-center" style="background: linear-gradient(135deg, #fff1f2 0%, #ffffff 100%);">
-                            <i class="bi bi-heart-fill text-danger fs-3 mb-2 d-block"></i>
-                            <h6 class="fw-bold mb-1">Saved Wishlist</h6>
-                            <p class="small text-secondary mb-3">Keep track of your favorite styles for later.</p>
-                            <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-semibold">
-                                View Wishlist (@Model.WishlistCount)
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: PERSONAL INFO -->
-            <div class="tab-pane fade @(activeTab == "profile" ? "show active" : "")" id="profileTabPane" role="tabpanel">
-                <div class="row justify-content-center">
-                    <div class="col-lg-8">
-                        <div class="profile-panel-card">
-                            <div class="panel-header">
-                                <div>
-                                    <h5 class="fw-bold mb-0 text-dark">Personal Information</h5>
-                                    <small class="text-secondary">Update your name, contact phone, and account details</small>
-                                </div>
-                            </div>
-                            <div class="panel-body">
-                                <form asp-controller="Profile" asp-action="Index" method="post" novalidate>
-                                    @Html.AntiForgeryToken()
-
-                                    <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3 py-2 small mb-3"></div>
-
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-md-6">
-                                            <label asp-for="FirstName" class="form-label small fw-bold text-secondary"></label>
-                                            <input asp-for="FirstName" class="form-control profile-input" placeholder="e.g. John" />
-                                            <span asp-validation-for="FirstName" class="text-danger small"></span>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <label asp-for="LastName" class="form-label small fw-bold text-secondary"></label>
-                                            <input asp-for="LastName" class="form-control profile-input" placeholder="e.g. Doe" />
-                                            <span asp-validation-for="LastName" class="text-danger small"></span>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <label asp-for="Email" class="form-label small fw-bold text-secondary"></label>
-                                            <div class="input-group">
-                                                <input asp-for="Email" class="form-control profile-input bg-light" readonly />
-                                                <span class="input-group-text bg-light text-success border-start-0" title="Verified email">
-                                                    <i class="bi bi-patch-check-fill"></i>
-                                                </span>
-                                            </div>
-                                            <small class="text-muted d-block mt-1">Email address is your primary login username.</small>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <label asp-for="Phone" class="form-label small fw-bold text-secondary"></label>
-                                            <input asp-for="Phone" class="form-control profile-input" placeholder="e.g. +855 12 345 678" />
-                                            <span asp-validation-for="Phone" class="text-danger small"></span>
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center justify-content-between pt-3 border-top">
-                                        <span class="text-muted small">
-                                            <i class="bi bi-shield-check me-1"></i>Changes update across your account immediately.
-                                        </span>
-                                        <button type="submit" class="profile-submit-btn">
-                                            <i class="bi bi-check2"></i> Save Changes
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 3: ADDRESS BOOK -->
-            <div class="tab-pane fade @(activeTab == "addresses" ? "show active" : "")" id="addressesTabPane" role="tabpanel">
-                <div class="profile-panel-card">
-                    <div class="panel-header">
-                        <div>
-                            <h5 class="fw-bold mb-0 text-dark">Address Book</h5>
-                            <small class="text-secondary">Saved shipping addresses for quick, one-click checkout</small>
-                        </div>
-                        <button type="button" class="profile-submit-btn btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                            <i class="bi bi-plus-lg"></i> Add New Address
+                        <button type="button" onclick="openAvatarModal()"
+                                class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white text-slate-900 border-2 border-slate-900 shadow-md flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
+                                title="Update avatar">
+                            <i class="bi bi-camera-fill text-xs"></i>
                         </button>
                     </div>
 
-                    <div class="panel-body">
-                        @if (Model.Addresses != null && Model.Addresses.Any())
-                        {
-                            <div class="row g-4">
-                                @foreach (var addr in Model.Addresses)
-                                {
-                                    <div class="col-md-6 col-lg-4">
-                                        <div class="address-card h-100 d-flex flex-column @(addr.IsDefault ? "is-default" : "")">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                @if (addr.IsDefault)
-                                                {
-                                                    <span class="address-default-tag">
-                                                        <i class="bi bi-check2 me-1"></i>Default Address
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <form asp-controller="Profile" asp-action="SetDefaultAddress" asp-route-id="@addr.Id" method="post">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit" class="btn btn-link btn-sm text-decoration-none p-0 text-secondary small" title="Make this your primary shipping address">
-                                                            Set as default
-                                                        </button>
-                                                    </form>
-                                                }
+                    <!-- User Info -->
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                                <i class="bi bi-patch-check-fill text-blue-400"></i> Verified Customer
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                Member since @Model.MemberSince.ToString("MMM yyyy")
+                            </span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">@fullName</h1>
+                        <div class="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-300">
+                            <span class="flex items-center gap-1.5">
+                                <i class="bi bi-envelope text-blue-400"></i> @Model.Email
+                            </span>
+                            @if (!string.IsNullOrEmpty(Model.Phone))
+                            {
+                                <span class="flex items-center gap-1.5">
+                                    <i class="bi bi-telephone text-blue-400"></i> @Model.Phone
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
 
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-light rounded-circle p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="bi bi-three-dots-vertical"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
-                                                        <li>
-                                                            <button class="dropdown-item small" type="button"
-                                                                    onclick="openEditAddressModal('@addr.Id', '@addr.Street', '@addr.City', '@addr.Province', '@addr.PostalCode', @(addr.IsDefault ? "true" : "false"))">
-                                                                <i class="bi bi-pencil me-2 text-primary"></i>Edit
-                                                            </button>
-                                                        </li>
-                                                        @if (!addr.IsDefault)
-                                                        {
-                                                            <li>
-                                                                <form asp-controller="Profile" asp-action="SetDefaultAddress" asp-route-id="@addr.Id" method="post">
-                                                                    @Html.AntiForgeryToken()
-                                                                    <button type="submit" class="dropdown-item small">
-                                                                        <i class="bi bi-star me-2 text-warning"></i>Set as default
-                                                                    </button>
-                                                                </form>
-                                                            </li>
-                                                        }
-                                                        <li><hr class="dropdown-divider" /></li>
-                                                        <li>
-                                                            <form asp-controller="Profile" asp-action="DeleteAddress" asp-route-id="@addr.Id" method="post"
-                                                                  onsubmit="return confirm('Are you sure you want to delete this address?');">
-                                                                @Html.AntiForgeryToken()
-                                                                <button type="submit" class="dropdown-item small text-danger">
-                                                                    <i class="bi bi-trash me-2"></i>Delete
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                    </ul>
+                <!-- Quick Action Buttons -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <a asp-controller="Shop" asp-action="Index"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-900 hover:bg-gray-100 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all duration-200">
+                        <i class="bi bi-bag"></i> Browse Shop
+                    </a>
+                    <a asp-controller="Cart" asp-action="Index"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs sm:text-sm font-semibold border border-white/20 transition-all duration-200">
+                        <i class="bi bi-cart3"></i> Bag (@Model.CartCount)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             2. 4 EXECUTIVE STAT METRIC CARDS
+        ====================================================== -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <!-- 1. Total Orders -->
+            <a asp-controller="Orders" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Total Orders</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.TotalOrders</strong>
+                </div>
+            </a>
+
+            <!-- 2. Pending Orders -->
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Pending Orders</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.PendingOrders</strong>
+                </div>
+            </a>
+
+            <!-- 3. Wishlist Items -->
+            <a asp-controller="Wishlist" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-heart"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Wishlist Items</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.WishlistCount</strong>
+                </div>
+            </a>
+
+            <!-- 4. Bag Items -->
+            <a asp-controller="Cart" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Shopping Bag</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.CartCount Items</strong>
+                </div>
+            </a>
+        </div>
+
+        <!-- =====================================================
+             3. PROFILE SECTION TABS & PANELS
+        ====================================================== -->
+        <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden mb-12">
+
+            <!-- Sub-tabs Navigation -->
+            <div class="border-b border-gray-100 dark:border-slate-800 px-6 pt-4 flex items-center gap-6 overflow-x-auto no-scrollbar">
+                <button type="button" onclick="switchProfileTab('overview')"
+                        id="tabBtn-overview"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "overview" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-grid-1x2"></i> Overview
+                </button>
+                <button type="button" onclick="switchProfileTab('profile')"
+                        id="tabBtn-profile"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "profile" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-person"></i> Edit Profile
+                </button>
+                <button type="button" onclick="switchProfileTab('security')"
+                        id="tabBtn-security"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "security" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-shield-lock"></i> Security &amp; Password
+                </button>
+                <button type="button" onclick="switchProfileTab('addresses')"
+                        id="tabBtn-addresses"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "addresses" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-geo-alt"></i> Address Book
+                </button>
+            </div>
+
+            <!-- Panel Contents -->
+            <div class="p-6 sm:p-8">
+
+                <!-- ── PANEL 1: OVERVIEW & RECENT ORDERS ── -->
+                <div id="panel-overview" class="profile-panel @(activeTab == "overview" ? "" : "hidden")">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                        <!-- Recent Orders Column -->
+                        <div class="lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white">Recent Orders</h3>
+                                <a asp-controller="Orders" asp-action="Index" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                    View All Orders &rarr;
+                                </a>
+                            </div>
+
+                            @if (Model.RecentOrders != null && Model.RecentOrders.Any())
+                            {
+                                <div class="space-y-3">
+                                    @foreach (var order in Model.RecentOrders.Take(4))
+                                    {
+                                        var shortOrderId = order.Id.ToString().Substring(0, 8).ToUpper();
+                                        <div class="p-4 rounded-2xl border border-gray-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600 transition-all flex items-center justify-between gap-4">
+                                            <div class="flex items-center gap-3.5">
+                                                <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold text-xs">
+                                                    #@shortOrderId.Substring(Math.Max(0, shortOrderId.Length - 4))
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-bold text-gray-900 dark:text-white">Order #@shortOrderId</div>
+                                                    <div class="text-xs text-gray-400">@order.OrderDate.ToString("MMM dd, yyyy") · @(order.Items?.Count ?? 0) items</div>
                                                 </div>
                                             </div>
-
-                                            <div class="flex-grow-1">
-                                                <strong class="d-block text-dark mb-1">@fullName</strong>
-                                                <p class="text-secondary small mb-1">@addr.Street</p>
-                                                <p class="text-secondary small mb-0">@addr.City, @addr.Province @addr.PostalCode</p>
-                                            </div>
-
-                                            <div class="pt-3 mt-3 border-top d-flex gap-2">
-                                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                                                        onclick="openEditAddressModal('@addr.Id', '@addr.Street', '@addr.City', '@addr.Province', '@addr.PostalCode', @(addr.IsDefault ? "true" : "false"))">
-                                                    <i class="bi bi-pencil me-1"></i>Edit
-                                                </button>
-                                                <form asp-controller="Profile" asp-action="DeleteAddress" asp-route-id="@addr.Id" method="post"
-                                                      onsubmit="return confirm('Delete this address?');" class="ms-auto">
-                                                    @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2" title="Delete address">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-sm font-bold text-gray-900 dark:text-white">$@order.TotalAmount.ToString("0.00")</span>
+                                                <span class="px-2.5 py-1 text-[11px] font-bold rounded-full
+                                                      @(order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400" :
+                                                        order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing ? "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400" :
+                                                        order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400" :
+                                                        "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300")">
+                                                    @order.Status
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-5">
-                                <div class="metric-icon-wrap metric-emerald mx-auto mb-3" style="width:64px;height:64px;font-size:28px;">
-                                    <i class="bi bi-geo-alt"></i>
+                                    }
                                 </div>
-                                <h5 class="fw-bold">No addresses saved yet</h5>
-                                <p class="text-secondary small mb-4">Add your shipping addresses now to make checkout effortless.</p>
-                                <button type="button" class="profile-submit-btn" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                                    <i class="bi bi-plus-lg"></i> Add New Address
+                            }
+                            else
+                            {
+                                <div class="text-center py-10 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                                    <i class="bi bi-box-seam text-3xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                                    <p class="text-sm text-gray-500 dark:text-slate-400 mb-3">You haven't placed any orders yet.</p>
+                                    <a asp-controller="Shop" asp-action="Index" class="btn-primary-clothe text-xs py-2 px-4">Start Shopping</a>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Default Shipping Address Card -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white">Default Address</h3>
+                                <button type="button" onclick="switchProfileTab('addresses')" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                    Manage &rarr;
                                 </button>
                             </div>
-                        }
+
+                            @if (Model.DefaultAddress != null)
+                            {
+                                <div class="p-5 rounded-2xl border-2 border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/10">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold uppercase rounded-full tracking-wider">
+                                            Default Shipping
+                                        </span>
+                                        <i class="bi bi-geo-alt-fill text-blue-600"></i>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-1">@fullName</h4>
+                                    <p class="text-xs text-gray-600 dark:text-slate-400 leading-relaxed mb-2">
+                                        @Model.DefaultAddress.Street<br />
+                                        @Model.DefaultAddress.City, @Model.DefaultAddress.Province @Model.DefaultAddress.PostalCode
+                                    </p>
+                                    <span class="text-xs text-gray-500 dark:text-slate-400">
+                                        <i class="bi bi-telephone text-gray-400 mr-1"></i>@Model.Phone
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-6 text-center bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                                    <i class="bi bi-geo-alt text-2xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">No default address set.</p>
+
+                                    <button type="button" onclick="openAddressModal()" class="btn-outline-clothe text-xs py-1.5 px-3">
+                                        Add Address
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
                     </div>
                 </div>
-            </div>
 
-            <!-- TAB 4: SECURITY & PASSWORD -->
-            <div class="tab-pane fade @(activeTab == "security" ? "show active" : "")" id="securityTabPane" role="tabpanel">
-                <div class="row justify-content-center">
-                    <div class="col-lg-7">
-                        <div class="profile-panel-card">
-                            <div class="panel-header">
+                <!-- ── PANEL 2: EDIT PROFILE FORM ── -->
+                <div id="panel-profile" class="profile-panel @(activeTab == "profile" ? "" : "hidden")">
+                    <div class="max-w-2xl">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Personal Information</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Update your account name, contact email and phone number.</p>
+                        </div>
+
+                        <form asp-action="Index" method="post" class="space-y-4">
+                            @Html.AntiForgeryToken()
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <h5 class="fw-bold mb-0 text-dark">Change Password</h5>
-                                    <small class="text-secondary">Keep your account safe by updating your password periodically</small>
+                                    <label asp-for="FirstName" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">First Name</label>
+                                    <input asp-for="FirstName" class="input-clothe text-sm" required />
+                                    <span asp-validation-for="FirstName" class="text-xs text-rose-500"></span>
+                                </div>
+                                <div>
+                                    <label asp-for="LastName" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Last Name</label>
+                                    <input asp-for="LastName" class="input-clothe text-sm" required />
+                                    <span asp-validation-for="LastName" class="text-xs text-rose-500"></span>
                                 </div>
                             </div>
-                            <div class="panel-body">
-                                <form asp-controller="Profile" asp-action="ChangePassword" method="post" novalidate>
-                                    @Html.AntiForgeryToken()
 
-                                    <div class="mb-3">
-                                        <label for="currentPasswordInput" class="form-label small fw-bold text-secondary">Current Password</label>
-                                        <div class="input-group">
-                                            <input type="password" name="CurrentPassword" id="currentPasswordInput" class="form-control profile-input" required autocomplete="current-password" />
-                                            <button class="btn btn-outline-secondary border" type="button" onclick="togglePasswordVisibility('currentPasswordInput', this)">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="newPasswordInput" class="form-label small fw-bold text-secondary">New Password</label>
-                                        <div class="input-group">
-                                            <input type="password" name="NewPassword" id="newPasswordInput" class="form-control profile-input" required autocomplete="new-password" minlength="6" />
-                                            <button class="btn btn-outline-secondary border" type="button" onclick="togglePasswordVisibility('newPasswordInput', this)">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted d-block mt-1">Must be at least 6 characters long.</small>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label for="confirmPasswordInput" class="form-label small fw-bold text-secondary">Confirm New Password</label>
-                                        <div class="input-group">
-                                            <input type="password" name="ConfirmPassword" id="confirmPasswordInput" class="form-control profile-input" required autocomplete="new-password" />
-                                            <button class="btn btn-outline-secondary border" type="button" onclick="togglePasswordVisibility('confirmPasswordInput', this)">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div class="p-3 bg-light rounded-3 mb-4 small text-secondary">
-                                        <strong class="d-block text-dark mb-1"><i class="bi bi-shield-check me-1"></i>Security Guidelines:</strong>
-                                        <ul class="mb-0 ps-3">
-                                            <li>Use at least 6 characters with mixed letters and numbers</li>
-                                            <li>Never share your credentials or use common dictionary words</li>
-                                            <li>Updating your password refreshes your authentication token securely</li>
-                                        </ul>
-                                    </div>
-
-                                    <div class="d-flex justify-content-end">
-                                        <button type="submit" class="profile-submit-btn">
-                                            <i class="bi bi-shield-lock"></i> Update Password
-                                        </button>
-                                    </div>
-                                </form>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="Email" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                                    <input asp-for="Email" class="input-clothe text-sm bg-gray-100 dark:bg-slate-800 text-gray-500 cursor-not-allowed" readonly />
+                                    <span class="text-[11px] text-gray-400 mt-1 block">Email is locked to your account.</span>
+                                </div>
+                                <div>
+                                    <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                                    <input asp-for="Phone" class="input-clothe text-sm" placeholder="+855 ..." required />
+                                    <span asp-validation-for="Phone" class="text-xs text-rose-500"></span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-        </div>
-
-    </div>
-</div>
-
-<!-- MODAL: ADD ADDRESS -->
-<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold" id="addAddressModalLabel">Add New Address</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form asp-controller="Profile" asp-action="AddAddress" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Street Address *</label>
-                        <input type="text" name="Street" class="form-control profile-input" placeholder="e.g. St. 271, Sangkat Phsar Doeum Thkov" required />
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary">City *</label>
-                            <input type="text" name="City" class="form-control profile-input" placeholder="e.g. Phnom Penh" required />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary">Province / State *</label>
-                            <input type="text" name="Province" class="form-control profile-input" placeholder="e.g. Phnom Penh" required />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Postal Code *</label>
-                        <input type="text" name="PostalCode" class="form-control profile-input" placeholder="e.g. 12000" required />
-                    </div>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="IsDefault" value="true" id="addIsDefaultCheck" />
-                        <label class="form-check-label small fw-semibold text-dark" for="addIsDefaultCheck">
-                            Set as default shipping address
-                        </label>
-                    </div>
-                </div>
-                <div class="modal-footer border-top px-4">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="profile-submit-btn">Save Address</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: EDIT ADDRESS -->
-<div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold" id="editAddressModalLabel">Edit Address</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form asp-controller="Profile" asp-action="EditAddress" method="post">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="Id" id="editAddressId" />
-
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Street Address *</label>
-                        <input type="text" name="Street" id="editAddressStreet" class="form-control profile-input" required />
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary">City *</label>
-                            <input type="text" name="City" id="editAddressCity" class="form-control profile-input" required />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-secondary">Province / State *</label>
-                            <input type="text" name="Province" id="editAddressProvince" class="form-control profile-input" required />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Postal Code *</label>
-                        <input type="text" name="PostalCode" id="editAddressPostalCode" class="form-control profile-input" required />
-                    </div>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="IsDefault" value="true" id="editIsDefaultCheck" />
-                        <label class="form-check-label small fw-semibold text-dark" for="editIsDefaultCheck">
-                            Set as default shipping address
-                        </label>
-                    </div>
-                </div>
-                <div class="modal-footer border-top px-4">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="profile-submit-btn">Update Address</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- AVATAR UPLOAD MODAL -->
-<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-bottom px-4 pt-4 pb-3">
-                <div>
-                    <h5 class="modal-title fw-bold mb-0" id="avatarModalLabel">Update Profile Photo</h5>
-                    <small class="text-secondary">Personalize your customer profile across CLOTHÉ</small>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data">
-                @Html.AntiForgeryToken()
-                <div class="modal-body p-4 text-center">
-                    <div class="mb-4 d-flex justify-content-center">
-                        <div class="position-relative" style="width: 120px; height: 120px;">
-                            <div id="avatarPreviewContainer" class="w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center shadow" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 4px solid #fff; font-size: 44px; font-weight: 700; color: #fff;">
-                                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
-                                {
-                                    <img id="avatarPreviewImg" src="@Model.ProfileImageUrl" alt="Avatar Preview" class="w-100 h-100" style="object-fit: cover;" />
-                                }
-                                else
-                                {
-                                    <span id="avatarPreviewInitial">@userInitial</span>
-                                    <img id="avatarPreviewImg" src="" alt="Avatar Preview" class="w-100 h-100 d-none" style="object-fit: cover;" />
-                                }
+                            <div class="pt-4">
+                                <button type="submit" class="btn-primary-clothe">
+                                    <i class="bi bi-check-lg"></i> Save Changes
+                                </button>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label class="form-label fw-bold small text-secondary">Choose Image File</label>
-                        <input type="file" name="avatar" id="avatarFileInput" class="form-control" accept="image/jpeg,image/png,image/webp" required onchange="previewAvatarImage(this)" />
-                        <div class="form-text small mt-1">Supported formats: JPG, PNG, WEBP (Max 5MB).</div>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between">
-                    <div>
-                        @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
-                        {
-                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="document.getElementById('removeAvatarForm').submit();">
-                                <i class="bi bi-trash3 me-1"></i>Remove Photo
+
+                <!-- ── PANEL 3: SECURITY & PASSWORD ── -->
+                <div id="panel-security" class="profile-panel @(activeTab == "security" ? "" : "hidden")">
+                    <div class="max-w-xl">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Security &amp; Password</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Ensure your account is protected with a strong, updated password.</p>
+                        </div>
+
+                        <form asp-action="ChangePassword" method="post" class="space-y-4">
+                            @Html.AntiForgeryToken()
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Current Password</label>
+                                <div class="relative">
+                                    <input type="password" name="CurrentPassword" id="currPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('currPassInput', 'currPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="currPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">New Password</label>
+                                <div class="relative">
+                                    <input type="password" name="NewPassword" id="newPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('newPassInput', 'newPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="newPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Confirm New Password</label>
+                                <div class="relative">
+                                    <input type="password" name="ConfirmPassword" id="confirmPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('confirmPassInput', 'confirmPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="confirmPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" class="btn-primary-clothe">
+                                    <i class="bi bi-shield-check"></i> Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ── PANEL 4: ADDRESS BOOK ── -->
+                <div id="panel-addresses" class="profile-panel @(activeTab == "addresses" ? "" : "hidden")">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Shipping Addresses</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Manage saved addresses for seamless express checkout.</p>
+                        </div>
+                        <button type="button" onclick="openAddressModal()" class="btn-primary-clothe text-xs py-2 px-4">
+                            <i class="bi bi-plus-lg"></i> Add Address
+                        </button>
+                    </div>
+
+                    @if (Model.Addresses != null && Model.Addresses.Any())
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var addr in Model.Addresses)
+                            {
+                                <div class="p-5 rounded-2xl border @(addr.IsDefault ? "border-blue-500 dark:border-blue-600 bg-blue-50/20 dark:bg-blue-950/10" : "border-gray-200 dark:border-slate-800") flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-bold text-gray-900 dark:text-white">@fullName</span>
+                                            @if (addr.IsDefault)
+                                            {
+                                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[10px] font-bold uppercase rounded-full">Default</span>
+                                            }
+                                        </div>
+                                        <p class="text-xs text-gray-600 dark:text-slate-400 leading-relaxed mb-3">
+                                            @addr.Street<br />
+                                            @addr.City, @addr.Province @addr.PostalCode
+                                        </p>
+                                        <div class="text-xs text-gray-500 dark:text-slate-400 mb-4">
+                                            <i class="bi bi-telephone mr-1"></i>@Model.Phone
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800 text-xs">
+                                        @if (!addr.IsDefault)
+                                        {
+                                            <form asp-action="SetDefaultAddress" asp-route-id="@addr.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
+                                                    Set as Default
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400 text-[11px]">Primary delivery address</span>
+                                        }
+
+                                        <form asp-action="DeleteAddress" asp-route-id="@addr.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="text-rose-500 hover:text-rose-700 font-semibold">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12 bg-gray-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                            <i class="bi bi-geo-alt text-4xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                            <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">No saved addresses yet.</p>
+                            <button type="button" onclick="openAddressModal()" class="btn-primary-clothe text-xs py-2 px-4">
+                                Add Your First Address
                             </button>
-                        }
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="profile-submit-btn">Upload Photo</button>
-                    </div>
+                        </div>
+                    }
                 </div>
-            </form>
 
-            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
-            {
-                <form id="removeAvatarForm" asp-action="RemoveAvatar" method="post" class="d-none">
-                    @Html.AntiForgeryToken()
-                </form>
-            }
+            </div>
+
         </div>
+
     </div>
 </div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<!-- =========================================================
+     MODAL: UPLOAD AVATAR
+========================================================= -->
+<div id="avatarModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Update Profile Picture</h3>
+            <button type="button" onclick="closeAvatarModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2">Select Image (JPG, PNG, WebP)</label>
+                <input type="file" name="avatar" accept="image/*" class="input-clothe text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" required />
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                {
+                    <button type="submit" formaction="@Url.Action("RemoveAvatar", "Profile")" class="px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors">
+                        Remove
+                    </button>
+                }
+                <button type="button" onclick="closeAvatarModal()" class="btn-outline-clothe text-xs py-2 px-4">Cancel</button>
+                <button type="submit" class="btn-primary-clothe text-xs py-2 px-4">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <script>
-        function previewAvatarImage(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var img = document.getElementById('avatarPreviewImg');
-                    var initial = document.getElementById('avatarPreviewInitial');
-                    if (img) {
-                        img.src = e.target.result;
-                        img.classList.remove('d-none');
-                    }
-                    if (initial) {
-                        initial.classList.add('d-none');
-                    }
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+<!-- =========================================================
+     MODAL: ADD ADDRESS
+========================================================= -->
+<div id="addressModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Add New Address</h3>
+            <button type="button" onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form asp-action="AddAddress" method="post" class="space-y-3.5">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Street Address</label>
+                <input type="text" name="Street" class="input-clothe text-sm" placeholder="House number, Street, Sangkat" required />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">City</label>
+                    <input type="text" name="City" class="input-clothe text-sm" placeholder="Phnom Penh" required />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Province</label>
+                    <input type="text" name="Province" class="input-clothe text-sm" placeholder="Phnom Penh / Kandal" required />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Postal Code</label>
+                <input type="text" name="PostalCode" class="input-clothe text-sm" placeholder="12000" />
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer pt-1">
+                <input type="checkbox" name="IsDefault" value="true" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                <span class="text-xs text-gray-700 dark:text-slate-300">Set as default shipping address</span>
+            </label>
+            <div class="flex items-center justify-end gap-2 pt-3">
+                <button type="button" onclick="closeAddressModal()" class="btn-outline-clothe text-xs py-2 px-4">Cancel</button>
+                <button type="submit" class="btn-primary-clothe text-xs py-2 px-4">Save Address</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-        function switchAccountTab(tabName) {
-            var tabBtn = document.getElementById(tabName + '-tab');
-            if (tabBtn) {
-                var tab = new bootstrap.Tab(tabBtn);
-                tab.show();
-                var url = new URL(window.location);
-                url.searchParams.set('tab', tabName);
-                window.history.replaceState({}, '', url);
-            }
-        }
 
-        document.querySelectorAll('#accountTab button[data-bs-toggle="tab"]').forEach(function (triggerEl) {
-            triggerEl.addEventListener('shown.bs.tab', function (event) {
-                var tabId = event.target.id.replace('-tab', '');
-                var url = new URL(window.location);
-                url.searchParams.set('tab', tabId);
-                window.history.replaceState({}, '', url);
-            });
+<script>
+    function switchProfileTab(tabName) {
+        document.querySelectorAll('.profile-subtab-btn').forEach(btn => {
+            btn.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btn.classList.add('border-transparent', 'text-gray-500', 'dark:text-slate-400');
         });
+        document.querySelectorAll('.profile-panel').forEach(p => p.classList.add('hidden'));
 
-        function togglePasswordVisibility(inputId, btn) {
-            var input = document.getElementById(inputId);
-            var icon = btn.querySelector('i');
-            if (!input) return;
-
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye');
-            }
+        const targetBtn = document.getElementById('tabBtn-' + tabName);
+        const targetPanel = document.getElementById('panel-' + tabName);
+        if (targetBtn && targetPanel) {
+            targetBtn.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            targetBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-slate-400');
+            targetPanel.classList.remove('hidden');
         }
+    }
 
-        function openEditAddressModal(id, street, city, province, postalCode, isDefault) {
-            document.getElementById('editAddressId').value = id;
-            document.getElementById('editAddressStreet').value = street;
-            document.getElementById('editAddressCity').value = city;
-            document.getElementById('editAddressProvince').value = province;
-            document.getElementById('editAddressPostalCode').value = postalCode;
-            document.getElementById('editIsDefaultCheck').checked = isDefault;
+    function togglePass(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        icon.classList.toggle('bi-eye', !isPass);
+        icon.classList.toggle('bi-eye-slash', isPass);
+    }
 
-            var editModal = new bootstrap.Modal(document.getElementById('editAddressModal'));
-            editModal.show();
-        }
-    </script>
-}
+    function openAvatarModal() { document.getElementById('avatarModal').classList.remove('hidden'); }
+    function closeAvatarModal() { document.getElementById('avatarModal').classList.add('hidden'); }
 
+    function openAddressModal() { document.getElementById('addressModal').classList.remove('hidden'); }
+    function closeAddressModal() { document.getElementById('addressModal').classList.add('hidden'); }
+</script>

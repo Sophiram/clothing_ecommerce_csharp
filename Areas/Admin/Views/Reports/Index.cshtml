@@ -1,0 +1,413 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.AdminReportsViewModel
+
+@{
+    ViewData["Title"] = "Financial & Sales Reports";
+    var maxTimelineValue = Model.Timeline.Any() ? Math.Max(1, Model.Timeline.Max(t => Math.Max(t.Income, t.Outcome))) : 1;
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>FINANCIAL INTELLIGENCE & ANALYTICS</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Financial & Sales Reports
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Showing data from <strong class="text-slate-700 dark:text-slate-200">@Model.StartDate.ToString("dd MMM yyyy")</strong> to <strong class="text-slate-700 dark:text-slate-200">@Model.EndDate.ToString("dd MMM yyyy")</strong>
+            </p>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer">
+                <i class="bi bi-printer"></i>
+                <span>Print Report</span>
+            </button>
+            <a asp-action="ExportCsv"
+               asp-route-range="@Model.Range"
+               asp-route-startDate="@Model.StartDate.ToString("yyyy-MM-dd")"
+               asp-route-endDate="@Model.EndDate.ToString("yyyy-MM-dd")"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <!-- Preset Pills -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mr-2">Range:</span>
+                <a asp-action="Index" asp-route-range="1week"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(Model.Range == "1week" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    1 Week
+                </a>
+                <a asp-action="Index" asp-route-range="1month"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(Model.Range == "1month" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    1 Month
+                </a>
+                <a asp-action="Index" asp-route-range="6months"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(Model.Range == "6months" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    6 Months
+                </a>
+                <a asp-action="Index" asp-route-range="year"
+                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(Model.Range == "year" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    1 Year
+                </a>
+                <button type="button" onclick="toggleCustomFilter()"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(Model.Range == "custom" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                    <i class="bi bi-calendar3 mr-1"></i> Custom Range
+                </button>
+            </div>
+
+            <!-- Total period indicator -->
+            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <i class="bi bi-clock-history mr-1"></i> @Model.TotalOrders total order@(Model.TotalOrders == 1 ? "" : "s") analyzed
+            </div>
+        </div>
+
+        <!-- Custom Date Range Form (collapsible) -->
+        <div id="customFilterBox" class="@(Model.Range == "custom" ? "" : "hidden") pt-3 border-t border-slate-100 dark:border-slate-800">
+            <form asp-action="Index" method="get" class="flex flex-col sm:flex-row items-end gap-3">
+                <input type="hidden" name="range" value="custom" />
+                <div class="flex-1 w-full sm:w-auto">
+                    <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Start Date</label>
+                    <input type="date" name="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")"
+                           class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div class="flex-1 w-full sm:w-auto">
+                    <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">End Date</label>
+                    <input type="date" name="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")"
+                           class="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <button type="submit"
+                        class="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> Apply Filter
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4 KEY FINANCIAL METRICS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. GROSS INCOME -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gross Income</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-wallet-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white">
+                    $@Model.GrossIncome.ToString("N2")
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>@Model.PaidOrdersCount paid order@(Model.PaidOrdersCount == 1 ? "" : "s")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. TOTAL OUTCOME / COSTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Outcome</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                    <i class="bi bi-graph-down-arrow"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400">
+                    $@Model.TotalOutcome.ToString("N2")
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>COGS, Delivery & Fees</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. NET PROFIT -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Profit</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-cash-stack"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-blue-600 dark:text-blue-400">
+                    $@Model.NetProfit.ToString("N2")
+                </div>
+                <div class="flex items-center gap-1.5 text-xs font-bold mt-1">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                        @Model.ProfitMargin% Margin
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ORDERS & AOV -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Orders & AOV</span>
+                <span class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base">
+                    <i class="bi bi-cart4"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white">
+                    $@Model.AverageOrderValue.ToString("N2") <span class="text-xs font-semibold text-slate-400 font-normal">AOV</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>@Model.TotalItemsSold item@(Model.TotalItemsSold == 1 ? "" : "s") sold</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TIMELINE COMPARATIVE CHART (INCOME VS OUTCOME) -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-bar-chart-line-fill text-blue-600"></i> Income vs Outcome Timeline
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Chronological comparison of sales revenue vs operating costs</p>
+            </div>
+            <!-- Legend -->
+            <div class="flex items-center gap-4 text-xs font-semibold">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <span class="text-slate-600 dark:text-slate-300">Income</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                    <span class="text-slate-600 dark:text-slate-300">Outcome</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <span class="text-slate-600 dark:text-slate-300">Net Profit</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Timeline.Any())
+        {
+            <div class="overflow-x-auto pb-2">
+                <div class="min-w-[600px] flex items-end justify-between gap-2 pt-6 h-56">
+                    @foreach (var point in Model.Timeline)
+                    {
+                        var incomeHeight = (int)((point.Income / maxTimelineValue) * 160);
+                        var outcomeHeight = (int)((point.Outcome / maxTimelineValue) * 160);
+                        var profitHeight = Math.Max(0, (int)((point.Profit / maxTimelineValue) * 160));
+
+                        <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                            <!-- Tooltip on hover -->
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-full mb-2 bg-slate-900 text-white text-[10px] rounded-lg p-2 shadow-xl pointer-events-none whitespace-nowrap z-20">
+                                <div class="font-bold border-b border-slate-700 pb-1 mb-1">@point.Label (@point.OrdersCount orders)</div>
+                                <div>Income: <strong class="text-emerald-400">$@point.Income.ToString("N2")</strong></div>
+                                <div>Outcome: <strong class="text-rose-400">$@point.Outcome.ToString("N2")</strong></div>
+                                <div>Profit: <strong class="text-blue-400">$@point.Profit.ToString("N2")</strong></div>
+                            </div>
+
+                            <!-- Bar Group -->
+                            <div class="flex items-end gap-1 h-44 w-full justify-center">
+                                <div class="w-2.5 sm:w-3.5 bg-emerald-500 rounded-t-sm transition-all duration-300 hover:brightness-110"
+                                     style="height: @(Math.Max(4, incomeHeight))px" title="Income: $@point.Income.ToString("N2")"></div>
+                                <div class="w-2.5 sm:w-3.5 bg-rose-500 rounded-t-sm transition-all duration-300 hover:brightness-110"
+                                     style="height: @(Math.Max(4, outcomeHeight))px" title="Outcome: $@point.Outcome.ToString("N2")"></div>
+                                <div class="w-2.5 sm:w-3.5 bg-blue-500 rounded-t-sm transition-all duration-300 hover:brightness-110"
+                                     style="height: @(Math.Max(4, profitHeight))px" title="Profit: $@point.Profit.ToString("N2")"></div>
+                            </div>
+
+                            <!-- Label -->
+                            <span class="text-[10px] text-slate-400 truncate max-w-[50px] block mt-1">@point.Label</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-10 text-slate-400 text-xs">
+                No transaction data available for this range.
+            </div>
+        }
+    </div>
+
+    <!-- 2 COLUMN BREAKDOWN: PAYMENT METHODS & TOP PRODUCTS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- PAYMENT METHODS DISTRIBUTION -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-wallet2 text-blue-600"></i> Payment Methods Breakdown
+            </h3>
+            @if (Model.PaymentBreakdown.Any())
+            {
+                <div class="space-y-3">
+                    @foreach (var p in Model.PaymentBreakdown)
+                    {
+                        <div>
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200">@p.MethodName</span>
+                                <span class="text-slate-500 dark:text-slate-400 font-semibold">$@p.TotalAmount.ToString("N2") (@p.Percentage%)</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: @p.Percentage%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-xs text-slate-400">No payment data in this period.</div>
+            }
+        </div>
+
+        <!-- TOP SELLING PRODUCTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-fire text-amber-500"></i> Top Selling Products
+            </h3>
+            @if (Model.TopProducts.Any())
+            {
+                <div class="divide-y divide-slate-100 dark:divide-slate-800 space-y-2">
+                    @foreach (var prod in Model.TopProducts)
+                    {
+                        <div class="pt-2 first:pt-0 flex items-center justify-between text-xs">
+                            <div class="font-bold text-slate-900 dark:text-white truncate max-w-[240px]">
+                                @prod.ProductName
+                            </div>
+                            <div class="text-right flex items-center gap-3">
+                                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                    @prod.QuantitySold sold
+                                </span>
+                                <span class="font-extrabold text-blue-600 dark:text-blue-400">
+                                    $@prod.TotalRevenue.ToString("N2")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-8 text-xs text-slate-400">No product sales in this period.</div>
+            }
+        </div>
+
+    </div>
+
+    <!-- DETAILED ORDERS & TRANSACTIONS TABLE -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-table text-blue-600"></i> Financial Transaction Ledger
+            </h3>
+            <span class="text-xs font-semibold text-slate-500">
+                @Model.Orders.Count order@(Model.Orders.Count == 1 ? "" : "s") recorded
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200/80 dark:border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">Order ID</th>
+                        <th class="py-3 px-4">Date</th>
+                        <th class="py-3 px-4">Customer</th>
+                        <th class="py-3 px-4">Payment</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Gross Income</th>
+                        <th class="py-3 px-4 text-right">Outcome / Cost</th>
+                        <th class="py-3 px-4 text-right">Net Profit</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @if (Model.Orders.Any())
+                    {
+                        @foreach (var ord in Model.Orders)
+                        {
+                            var custName = ord.Customer != null ? $"{ord.Customer.FirstName} {ord.Customer.LastName}".Trim() : "Guest";
+                            var ordOutcome = ord.Status != WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled
+                                ? Math.Round((ord.Items.Sum(i => i.Quantity * i.UnitPrice) * 0.50m) + 2.00m + (ord.TotalAmount * 0.015m), 2)
+                                : 0m;
+                            var ordProfit = ord.Status != WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled
+                                ? Math.Round(ord.TotalAmount - ordOutcome, 2)
+                                : 0m;
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@ord.Id" class="text-blue-600 hover:underline">
+                                        #@ord.Id.ToString().Substring(0, 8).ToUpper()
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 text-slate-500 dark:text-slate-400">
+                                    @ord.OrderDate.ToString("dd MMM yyyy HH:mm")
+                                </td>
+                                <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                                    @custName
+                                </td>
+                                <td class="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                                    @(ord.Payment?.PaymentMethod?.Name ?? "COD")
+                                </td>
+                                <td class="py-3 px-4">
+                                    @if (ord.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered)
+                                    {
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">Delivered</span>
+                                    }
+                                    else if (ord.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled)
+                                    {
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">@ord.Status</span>
+                                    }
+                                </td>
+                                <td class="py-3 px-4 text-right font-bold text-slate-900 dark:text-white">
+                                    $@ord.TotalAmount.ToString("N2")
+                                </td>
+                                <td class="py-3 px-4 text-right font-bold text-rose-600 dark:text-rose-400">
+                                    $@ordOutcome.ToString("N2")
+                                </td>
+                                <td class="py-3 px-4 text-right font-extrabold text-blue-600 dark:text-blue-400">
+                                    $@ordProfit.ToString("N2")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-10 text-slate-400">
+                                No orders found within the selected date range.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function toggleCustomFilter() {
+        var box = document.getElementById('customFilterBox');
+        if (box) box.classList.toggle('hidden');
+    }
+</script>

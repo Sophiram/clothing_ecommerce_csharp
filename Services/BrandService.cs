@@ -1,44 +1,35 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
+using WebApplication_ClothingEcommerce.Data.Repositories.Interfaces;
 using WebApplication_ClothingEcommerce.Models;
 
 namespace WebApplication_ClothingEcommerce.Services
 {
     public class BrandService : IBrandService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".svg" };
         private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
 
-        public BrandService(AppDbContext context)
+        public BrandService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<Brand>> GetBrandsAsync(string? search = null)
         {
-            var query = _context.Brands
-                .Include(b => b.Products)
-                .AsNoTracking()
-                .AsQueryable();
-
+            var brands = await _unitOfWork.Brands.GetAllWithProductsAsync();
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim();
-                query = query.Where(b => b.Name.Contains(s) || (b.Description != null && b.Description.Contains(s)));
+                var s = search.Trim().ToLower();
+                return brands.Where(b => b.Name.ToLower().Contains(s) || (b.Description != null && b.Description.ToLower().Contains(s))).ToList();
             }
-
-            return await query.OrderBy(b => b.Name).ToListAsync();
+            return brands.ToList();
         }
 
         public async Task<Brand?> GetBrandDetailsAsync(Guid id)
         {
-            return await _context.Brands
-                .Include(b => b.Products).ThenInclude(p => p.Category)
-                .Include(b => b.Products).ThenInclude(p => p.Variants)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(b => b.Id == id);
+            return await _unitOfWork.Brands.GetBrandWithProductsAsync(id);
         }
 
         public async Task<BrandResult> CreateBrandAsync(Brand brand, IFormFile? logo, string? logoUrl, string webRootPath)
@@ -55,7 +46,6 @@ namespace WebApplication_ClothingEcommerce.Services
             }
             else if (!string.IsNullOrWhiteSpace(logoUrl))
             {
-                // Validate it's a proper URL
                 if (Uri.TryCreate(logoUrl.Trim(), UriKind.Absolute, out var uri) &&
                     (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
                 {
@@ -68,8 +58,8 @@ namespace WebApplication_ClothingEcommerce.Services
             }
 
             brand.Id = Guid.NewGuid();
-            _context.Brands.Add(brand);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Brands.AddAsync(brand);
+            await _unitOfWork.SaveChangesAsync();
 
             return new BrandResult
             {
@@ -81,7 +71,7 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<BrandResult> UpdateBrandAsync(Guid id, Brand brand, IFormFile? logo, string? logoUrl, bool removeLogo, string webRootPath)
         {
-            var existingBrand = await _context.Brands.FirstOrDefaultAsync(b => b.Id == id);
+            var existingBrand = await _unitOfWork.Brands.GetByIdAsync(id);
             if (existingBrand == null)
             {
                 return new BrandResult { Success = false, Errors = new List<string> { "Brand not found." } };
@@ -97,7 +87,6 @@ namespace WebApplication_ClothingEcommerce.Services
 
                 var oldLogo = existingBrand.Logo;
                 existingBrand.Logo = await SaveLogoAsync(logo, webRootPath);
-                // Only delete old logo if it was a local file (not an external URL)
                 if (!string.IsNullOrWhiteSpace(oldLogo) && oldLogo.StartsWith("/images/"))
                     DeleteLogo(oldLogo, webRootPath);
             }
@@ -106,7 +95,6 @@ namespace WebApplication_ClothingEcommerce.Services
                 if (Uri.TryCreate(logoUrl.Trim(), UriKind.Absolute, out var uri) &&
                     (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
                 {
-                    // Delete old local file if replacing with URL
                     if (!string.IsNullOrWhiteSpace(existingBrand.Logo) && existingBrand.Logo.StartsWith("/images/"))
                         DeleteLogo(existingBrand.Logo, webRootPath);
                     existingBrand.Logo = logoUrl.Trim();
@@ -126,7 +114,8 @@ namespace WebApplication_ClothingEcommerce.Services
             existingBrand.Name = brand.Name;
             existingBrand.Description = brand.Description;
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.Brands.Update(existingBrand);
+            await _unitOfWork.SaveChangesAsync();
 
             return new BrandResult
             {
@@ -138,68 +127,61 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<ServiceResult> DeleteBrandAsync(Guid id, string webRootPath)
         {
-            var brand = await _context.Brands.FirstOrDefaultAsync(b => b.Id == id);
+            var brand = await _unitOfWork.Brands.GetBrandWithProductsAsync(id);
             if (brand == null)
             {
                 return ServiceResult.Fail("Brand not found.");
             }
 
-            var hasProducts = await _context.Products.AnyAsync(p => p.BrandId == id);
-            if (hasProducts)
+            if (brand.Products.Any())
             {
                 return ServiceResult.Fail("This brand cannot be deleted because it has products.");
             }
 
             var name = brand.Name;
             DeleteLogo(brand.Logo, webRootPath);
-            _context.Brands.Remove(brand);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Brands.Remove(brand);
+            await _unitOfWork.SaveChangesAsync();
 
             return ServiceResult.Ok($"Brand '{name}' was deleted successfully.");
         }
 
-        private string? ValidateLogo(IFormFile logo)
+        private string? ValidateLogo(IFormFile file)
         {
-            if (logo.Length > MaxFileSize)
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!_allowedExtensions.Contains(ext))
             {
-                return "Logo image must be smaller than 5 MB.";
+                return $"Invalid file type '{ext}'. Allowed: {string.Join(", ", _allowedExtensions)}";
             }
-
-            var extension = Path.GetExtension(logo.FileName).ToLowerInvariant();
-            if (!_allowedExtensions.Contains(extension))
+            if (file.Length > MaxFileSize)
             {
-                return "Only JPG, JPEG, PNG, WEBP and SVG images are allowed.";
+                return $"File size ({file.Length / 1024 / 1024} MB) exceeds maximum 5 MB.";
             }
-
             return null;
         }
 
-        private static async Task<string> SaveLogoAsync(IFormFile logo, string webRootPath)
+        private async Task<string> SaveLogoAsync(IFormFile file, string webRootPath)
         {
-            var folder = Path.Combine(webRootPath, "images", "brands");
-            if (!Directory.Exists(folder))
-                Directory.CreateDirectory(folder);
+            var uploadsFolder = Path.Combine(webRootPath, "images", "brands");
+            Directory.CreateDirectory(uploadsFolder);
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var uniqueFileName = $"brand_{Guid.NewGuid():N}{ext}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            var extension = Path.GetExtension(logo.FileName).ToLowerInvariant();
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-            var filePath = Path.Combine(folder, fileName);
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
 
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await logo.CopyToAsync(stream);
-
-            return $"/images/brands/{fileName}";
+            return $"/images/brands/{uniqueFileName}";
         }
 
-        private static void DeleteLogo(string? logoPath, string webRootPath)
+        private void DeleteLogo(string? relativePath, string webRootPath)
         {
-            if (string.IsNullOrWhiteSpace(logoPath))
-                return;
-
-            var fileName = Path.GetFileName(logoPath);
-            var filePath = Path.Combine(webRootPath, "images", "brands", fileName);
-
-            if (File.Exists(filePath))
-                File.Delete(filePath);
+            if (string.IsNullOrWhiteSpace(relativePath)) return;
+            var fullPath = Path.Combine(webRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(fullPath))
+            {
+                try { File.Delete(fullPath); } catch { }
+            }
         }
     }
 }

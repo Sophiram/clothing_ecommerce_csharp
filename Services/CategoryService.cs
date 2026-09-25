@@ -1,46 +1,39 @@
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using WebApplication_ClothingEcommerce.Data.Repositories.Interfaces;
 using WebApplication_ClothingEcommerce.Models;
 
 namespace WebApplication_ClothingEcommerce.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CategoryService(AppDbContext context)
+        public CategoryService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<Category>> GetCategoriesAsync(string? search = null)
         {
-            var query = _context.Categories
-                .AsNoTracking()
-                .Include(c => c.Products)
-                .AsQueryable();
-
+            var categories = await _unitOfWork.Categories.GetAllWithProductsAsync();
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim();
-                query = query.Where(c => c.Name.Contains(s));
+                var s = search.Trim().ToLower();
+                return categories.Where(c => c.Name.ToLower().Contains(s)).ToList();
             }
-
-            return await query.OrderBy(c => c.Name).ToListAsync();
+            return categories.ToList();
         }
 
         public async Task<Category?> GetByIdAsync(Guid id)
         {
-            return await _context.Categories
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            return await _unitOfWork.Categories.GetCategoryWithProductsAsync(id);
         }
 
         public async Task<ServiceResult> CreateAsync(Category category)
         {
             category.Id = Guid.NewGuid();
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Categories.AddAsync(category);
+            await _unitOfWork.SaveChangesAsync();
 
             return ServiceResult.Ok($"Category '{category.Name}' was created successfully.");
         }
@@ -49,7 +42,7 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             try
             {
-                var existing = await _context.Categories.FindAsync(id);
+                var existing = await _unitOfWork.Categories.GetByIdAsync(id);
                 if (existing == null)
                 {
                     return ServiceResult.Fail("Category not found.");
@@ -58,7 +51,8 @@ namespace WebApplication_ClothingEcommerce.Services
                 existing.Name = category.Name;
                 existing.Description = category.Description;
 
-                await _context.SaveChangesAsync();
+                _unitOfWork.Categories.Update(existing);
+                await _unitOfWork.SaveChangesAsync();
                 return ServiceResult.Ok($"Category '{existing.Name}' was updated successfully.");
             }
             catch (DbUpdateException ex)
@@ -71,15 +65,20 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             try
             {
-                var category = await _context.Categories.FindAsync(id);
+                var category = await _unitOfWork.Categories.GetCategoryWithProductsAsync(id);
                 if (category == null)
                 {
                     return ServiceResult.Fail("Category not found.");
                 }
 
+                if (category.Products.Any())
+                {
+                    return ServiceResult.Fail("Cannot delete this category because it has products assigned to it.");
+                }
+
                 var name = category.Name;
-                _context.Categories.Remove(category);
-                await _context.SaveChangesAsync();
+                _unitOfWork.Categories.Remove(category);
+                await _unitOfWork.SaveChangesAsync();
 
                 return ServiceResult.Ok($"Category '{name}' was deleted successfully.");
             }

@@ -97,6 +97,36 @@ namespace WebApplication_ClothingEcommerce.Controllers
         }
 
         // =========================================================
+        // ORDER RECEIPT
+        // GET: /Orders/Receipt/{id}
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Receipt(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                TempData["Error"] = "Invalid order.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null)
+            {
+                TempData["Error"] = "Customer profile was not found.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var order = await _orderService.GetCustomerOrderByIdAsync(customer.Id, id);
+            if (order == null)
+            {
+                TempData["Error"] = "Order was not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(order);
+        }
+
+        // =========================================================
         // CANCEL ORDER
         // POST: /Orders/Cancel/{id}
         // =========================================================

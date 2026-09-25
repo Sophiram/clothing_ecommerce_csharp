@@ -1,9 +1,8 @@
 @model WebApplication_ClothingEcommerce.Models.ViewModels.ShopViewModel
-
 @using WebApplication_ClothingEcommerce.Data.Enums
 
 @{
-    ViewData["Title"] = "Shop";
+    ViewData["Title"] = "Shop Catalog - CLOTHÉ";
 
     var selectedCategory = Model.CategoryId.HasValue ? Model.Categories.FirstOrDefault(c => c.Id == Model.CategoryId) : null;
     var selectedBrand = Model.BrandId.HasValue ? Model.Brands.FirstOrDefault(b => b.Id == Model.BrandId) : null;
@@ -24,688 +23,459 @@
     int endItem = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalProducts);
 }
 
-<style>
-    .shop-page {
-        background: #fdfdfc;
-        min-height: 85vh;
-    }
+<div class="min-h-screen bg-gray-50/60 dark:bg-slate-950 py-6 sm:py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-screen-xl mx-auto px-3.5 sm:px-6 lg:px-8">
 
-    .shop-hero {
-        background: linear-gradient(135deg, #18191b 0%, #2b2d31 100%);
-        border-radius: 24px;
-        position: relative;
-        overflow: hidden;
-        color: #ffffff;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    }
+        <!-- =====================================================
+             EDITORIAL SHOP BANNER
+        ====================================================== -->
+        <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950 text-white p-5 sm:p-8 lg:p-12 mb-5 sm:mb-8 shadow-xl border border-white/10">
+            <!-- Decorative Glow -->
+            <div class="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-    .shop-hero::after {
-        content: "";
-        position: absolute;
-        top: -40px;
-        right: -40px;
-        width: 220px;
-        height: 220px;
-        background: radial-gradient(circle, rgba(66, 133, 244, 0.25) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    .shop-sidebar-card {
-        background: #ffffff;
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.02);
-    }
-
-    /* ACTIVE FILTER CHIP */
-    .active-filter-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #fff;
-        border: 1px solid #dadce0;
-        border-radius: 50px;
-        padding: 5px 12px;
-        font-size: 13px;
-        font-weight: 500;
-        color: #3c4043;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-
-    .active-filter-chip a {
-        color: #70757a;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        transition: color .15s ease;
-    }
-
-    .active-filter-chip a:hover {
-        color: var(--google-red, #EA4335);
-    }
-
-    /* TOOLBAR CONTROLS */
-    .shop-toolbar {
-        background: #ffffff;
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 16px;
-        padding: 14px 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-    }
-
-    .view-mode-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        border: 1px solid #dadce0;
-        background: #fff;
-        color: #5f6368;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        transition: all .2s ease;
-    }
-
-    .view-mode-btn:hover {
-        border-color: var(--google-blue, #4285F4);
-        color: var(--google-blue, #4285F4);
-    }
-
-    .view-mode-btn.active {
-        background: var(--google-blue, #4285F4);
-        border-color: var(--google-blue, #4285F4);
-        color: #fff;
-    }
-
-    /* LIST VIEW PRODUCT CARD */
-    .shop-list-card {
-        background: #fff;
-        border: 1px solid var(--border, #eeeeee);
-        border-radius: 20px;
-        overflow: hidden;
-        transition: transform .2s ease, box-shadow .2s ease;
-    }
-
-    .shop-list-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 24px rgba(0,0,0,0.06);
-    }
-
-    .shop-list-media {
-        width: 220px;
-        min-width: 220px;
-        height: 220px;
-        position: relative;
-        background: #f8f9fa;
-        overflow: hidden;
-    }
-
-    .shop-list-media img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform .4s ease;
-    }
-
-    .shop-list-card:hover .shop-list-media img {
-        transform: scale(1.05);
-    }
-
-    /* PAGINATION */
-    .shop-pagination .page-link {
-        color: #3c4043;
-        border: 1px solid #dadce0;
-        border-radius: 8px;
-        margin: 0 3px;
-        font-weight: 600;
-        font-size: 13.5px;
-        padding: 8px 14px;
-        transition: all .2s ease;
-    }
-
-    .shop-pagination .page-link:hover {
-        background: #f1f3f4;
-        color: var(--google-blue, #4285F4);
-        border-color: var(--google-blue, #4285F4);
-    }
-
-    .shop-pagination .page-item.active .page-link {
-        background: var(--google-blue, #4285F4);
-        border-color: var(--google-blue, #4285F4);
-        color: #fff;
-        box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3);
-    }
-
-    .shop-pagination .page-item.disabled .page-link {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-</style>
-
-<div class="shop-page py-4 py-lg-5">
-    <div class="container">
-
-        <!-- =========================================================
-             HERO HEADER
-        ========================================================== -->
-        <div class="shop-hero p-4 p-md-5 mb-4">
-            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 position-relative" style="z-index: 1;">
-                <div>
-                    <span class="badge bg-warning text-dark rounded-pill px-3 py-1 mb-2 fw-bold" style="font-size: 11px; letter-spacing: .06em;">
-                        <i class="bi bi-stars me-1"></i>CURATED COLLECTION
-                    </span>
-                    <h1 class="h2 fw-bold mb-1 text-white">
-                        @(selectedCategory != null ? selectedCategory.Name : (selectedBrand != null ? selectedBrand.Name : "Shop All Styles"))
-                    </h1>
-                    <p class="mb-0 text-white-50 small">
-                        Showing @Model.TotalProducts products — premium garments crafted for everyday elegance.
-                    </p>
-                </div>
-
-                <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-light rounded-pill px-4 py-2 fw-bold d-lg-none" type="button"
-                            data-bs-toggle="offcanvas" data-bs-target="#shopFilterOffcanvas">
-                        <i class="bi bi-sliders me-2"></i>Filters
-                        @if (hasAnyFilter)
-                        {
-                            <span class="badge bg-primary rounded-pill ms-1">Active</span>
-                        }
-                    </button>
-                </div>
+            <div class="relative z-10 max-w-xl">
+                <span class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-blue-300 mb-2 sm:mb-3">
+                    <i class="bi bi-collection"></i> CURATED CATALOG
+                </span>
+                <h1 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight mb-2">
+                    Discover Everyday Luxury.
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Explore our versatile collection of contemporary clothing, premium fabrics, and signature silhouettes designed to empower your unique presence.
+                </p>
             </div>
         </div>
 
-        <div class="row g-4">
+        <!-- =====================================================
+             QUICK CATEGORY HORIZONTAL STRIP (MOBILE & TABLET)
+        ====================================================== -->
+        <div class="lg:hidden mb-5">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+                <a asp-controller="Shop" asp-action="Index"
+                   asp-route-brandId="@Model.BrandId"
+                   asp-route-sizeId="@Model.SizeId"
+                   asp-route-colorId="@Model.ColorId"
+                   asp-route-minPrice="@Model.MinPrice"
+                   asp-route-maxPrice="@Model.MaxPrice"
+                   asp-route-inStock="@Model.InStock"
+                   asp-route-onSale="@Model.OnSale"
+                   asp-route-search="@Model.Search"
+                   asp-route-sort="@Model.Sort"
+                   class="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm @(!Model.CategoryId.HasValue ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 hover:border-blue-500")">
+                    All Categories
+                </a>
+                @foreach (var cat in Model.Categories)
+                {
+                    <a asp-controller="Shop" asp-action="Index"
+                       asp-route-categoryId="@cat.Id"
+                       asp-route-brandId="@Model.BrandId"
+                       asp-route-sizeId="@Model.SizeId"
+                       asp-route-colorId="@Model.ColorId"
+                       asp-route-minPrice="@Model.MinPrice"
+                       asp-route-maxPrice="@Model.MaxPrice"
+                       asp-route-inStock="@Model.InStock"
+                       asp-route-onSale="@Model.OnSale"
+                       asp-route-search="@Model.Search"
+                       asp-route-sort="@Model.Sort"
+                       class="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm @(Model.CategoryId == cat.Id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 hover:border-blue-500")">
+                        @cat.Name
+                    </a>
+                }
+            </div>
+        </div>
 
-            <!-- =========================================================
-                 SIDEBAR FILTERS (DESKTOP)
-            ========================================================== -->
-            <div class="col-lg-3 d-none d-lg-block">
-                <div class="shop-sidebar-card">
-                    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
-                        <h5 class="fw-bold mb-0 text-dark">
-                            <i class="bi bi-sliders me-2 text-primary"></i>Filters
-                        </h5>
+        <!-- =====================================================
+             MAIN SHOP LAYOUT (GRID WITH SIDEBAR)
+        ====================================================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+            <!-- ── LEFT FILTER SIDEBAR (3 COLS, DESKTOP ONLY) ── -->
+            <aside class="hidden lg:block lg:col-span-3 space-y-6 sticky top-24">
+                <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100 dark:border-slate-800">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-sliders text-blue-600 dark:text-blue-400"></i> Filters
+                        </h2>
                         @if (hasAnyFilter)
                         {
-                            <a asp-controller="Shop" asp-action="Index" class="small text-danger text-decoration-none fw-semibold">
-                                Clear All
+                            <a asp-controller="Shop" asp-action="Index"
+                               class="text-xs font-semibold text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors">
+                                Reset All
                             </a>
                         }
                     </div>
 
-                    @await Html.PartialAsync("_ShopFiltersPlaceholder", Model)
-                </div>
-            </div>
+                    <form asp-controller="Shop" asp-action="Index" method="get" id="filterForm" class="space-y-6">
+                        <!-- Retain state -->
+                        <input type="hidden" name="sort" value="@Model.Sort" />
+                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        <input type="hidden" name="viewMode" value="@Model.ViewMode" />
 
-            <!-- =========================================================
-                 MAIN PRODUCTS AREA
-            ========================================================== -->
-            <div class="col-lg-9">
-
-                <!-- TOOLBAR (Active chips, Sort, View mode) -->
-                <div class="shop-toolbar mb-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-
-                        <!-- Left: Item count & active filter summary -->
-                        <div class="small text-secondary">
-                            Showing <strong class="text-dark">@startItem–@endItem</strong> of <strong class="text-dark">@Model.TotalProducts</strong> results
-                        </div>
-
-                        <!-- Right: Sort, PageSize, View Mode -->
-                        <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
-
-                            <!-- Sort Form -->
-                            <form asp-controller="Shop" asp-action="Index" method="get" class="d-flex align-items-center gap-1">
-                                <input type="hidden" name="categoryId" value="@Model.CategoryId" />
-                                <input type="hidden" name="brandId" value="@Model.BrandId" />
-                                <input type="hidden" name="sizeId" value="@Model.SizeId" />
-                                <input type="hidden" name="colorId" value="@Model.ColorId" />
-                                <input type="hidden" name="minPrice" value="@Model.MinPrice" />
-                                <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
-                                <input type="hidden" name="inStock" value="@Model.InStock" />
-                                <input type="hidden" name="onSale" value="@Model.OnSale" />
-                                <input type="hidden" name="search" value="@Model.Search" />
-                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
-                                <input type="hidden" name="viewMode" value="@Model.ViewMode" />
-
-                                <label class="text-muted small text-nowrap me-1">Sort:</label>
-                                <select name="sort" class="form-select form-select-sm rounded-pill" style="min-width: 150px; font-size: 13px;" onchange="this.form.submit()">
-                                    <option value="" selected="@(string.IsNullOrEmpty(Model.Sort))">Latest Arrivals</option>
-                                    <option value="price-low" selected="@(Model.Sort == "price-low")">Price: Low to High</option>
-                                    <option value="price-high" selected="@(Model.Sort == "price-high")">Price: High to Low</option>
-                                    <option value="name" selected="@(Model.Sort == "name")">Name: A to Z</option>
-                                    <option value="name-desc" selected="@(Model.Sort == "name-desc")">Name: Z to A</option>
-                                    <option value="rating" selected="@(Model.Sort == "rating")">Highest Rated</option>
-                                    <option value="oldest" selected="@(Model.Sort == "oldest")">Oldest</option>
-                                </select>
-                            </form>
-
-                            <!-- View Mode Switch -->
-                            <div class="d-flex align-items-center gap-1 border-start ps-2 ms-1">
-                                <a asp-controller="Shop" asp-action="Index"
-                                   asp-route-categoryId="@Model.CategoryId"
-                                   asp-route-brandId="@Model.BrandId"
-                                   asp-route-sizeId="@Model.SizeId"
-                                   asp-route-colorId="@Model.ColorId"
-                                   asp-route-minPrice="@Model.MinPrice"
-                                   asp-route-maxPrice="@Model.MaxPrice"
-                                   asp-route-inStock="@Model.InStock"
-                                   asp-route-onSale="@Model.OnSale"
-                                   asp-route-search="@Model.Search"
-                                   asp-route-sort="@Model.Sort"
-                                   asp-route-page="@Model.CurrentPage"
-                                   asp-route-pageSize="@Model.PageSize"
-                                   asp-route-viewMode="grid"
-                                   class="view-mode-btn @(Model.ViewMode == "grid" ? "active" : "")"
-                                   title="Grid View">
-                                    <i class="bi bi-grid-3x3-gap-fill"></i>
-                                </a>
-
-                                <a asp-controller="Shop" asp-action="Index"
-                                   asp-route-categoryId="@Model.CategoryId"
-                                   asp-route-brandId="@Model.BrandId"
-                                   asp-route-sizeId="@Model.SizeId"
-                                   asp-route-colorId="@Model.ColorId"
-                                   asp-route-minPrice="@Model.MinPrice"
-                                   asp-route-maxPrice="@Model.MaxPrice"
-                                   asp-route-inStock="@Model.InStock"
-                                   asp-route-onSale="@Model.OnSale"
-                                   asp-route-search="@Model.Search"
-                                   asp-route-sort="@Model.Sort"
-                                   asp-route-page="@Model.CurrentPage"
-                                   asp-route-pageSize="@Model.PageSize"
-                                   asp-route-viewMode="list"
-                                   class="view-mode-btn @(Model.ViewMode == "list" ? "active" : "")"
-                                   title="List View">
-                                    <i class="bi bi-list-ul"></i>
-                                </a>
+                        <!-- Search Filter -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Keyword</label>
+                            <div class="relative">
+                                <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <input type="text" name="search" value="@Model.Search" placeholder="Search clothes..."
+                                       class="input-clothe pl-9 pr-3 py-2 text-xs" />
                             </div>
-
                         </div>
-                    </div>
 
-                    <!-- ACTIVE FILTER BADGES ROW -->
-                    @if (hasAnyFilter)
-                    {
-                        <div class="d-flex flex-wrap align-items-center gap-2 pt-3 mt-3 border-top">
-                            <span class="small text-muted fw-bold">Active:</span>
-
-                            @if (selectedCategory != null)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-tag text-primary"></i> @selectedCategory.Name
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (selectedBrand != null)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-award text-primary"></i> @selectedBrand.Name
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (selectedSize != null)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-rulers text-secondary"></i> Size: @selectedSize.Name
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (selectedColor != null)
-                            {
-                                <span class="active-filter-chip">
-                                    <span class="rounded-circle d-inline-block" style="width:10px;height:10px;background-color:@selectedColor.HexCode;border:1px solid #ccc;"></span> @selectedColor.Name
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (Model.MinPrice.HasValue || Model.MaxPrice.HasValue)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-currency-dollar text-success"></i>
-                                    @(Model.MinPrice.HasValue ? $"${Model.MinPrice}" : "$0") – @(Model.MaxPrice.HasValue ? $"${Model.MaxPrice}" : "Any")
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (Model.InStock == true)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-box-seam text-success"></i> In Stock
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (Model.OnSale == true)
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-lightning-charge-fill text-danger"></i> On Sale
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            @if (!string.IsNullOrWhiteSpace(Model.Search))
-                            {
-                                <span class="active-filter-chip">
-                                    <i class="bi bi-search text-secondary"></i> "@Model.Search"
-                                    <a asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"><i class="bi bi-x"></i></a>
-                                </span>
-                            }
-
-                            <a asp-controller="Shop" asp-action="Index" class="btn btn-outline-danger btn-sm rounded-pill py-0 px-2 fw-semibold" style="font-size:12px;">
-                                Clear All
-                            </a>
+                        <!-- Categories Filter -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2.5">Category</label>
+                            <div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                                <label class="flex items-center justify-between text-xs py-1 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(!Model.CategoryId.HasValue ? "font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800" : "text-gray-600 dark:text-slate-400")">
+                                    <span class="flex items-center gap-2">
+                                        <input type="radio" name="categoryId" value="" @(!Model.CategoryId.HasValue ? "checked" : "") onchange="this.form.submit()" class="text-blue-600" />
+                                        All Categories
+                                    </span>
+                                </label>
+                                @foreach (var cat in Model.Categories)
+                                {
+                                    <label class="flex items-center justify-between text-xs py-1 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(Model.CategoryId == cat.Id ? "font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800" : "text-gray-600 dark:text-slate-400")">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <input type="radio" name="categoryId" value="@cat.Id" @(Model.CategoryId == cat.Id ? "checked" : "") onchange="this.form.submit()" class="text-blue-600" />
+                                            @cat.Name
+                                        </span>
+                                    </label>
+                                }
+                            </div>
                         </div>
-                    }
-                </div>
 
-                <!-- PRODUCTS DISPLAY -->
-                @if (Model.Products == null || !Model.Products.Any())
-                {
-                    <div class="shop-sidebar-card text-center py-5">
-                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:72px;height:72px;">
-                            <i class="bi bi-search text-secondary display-6"></i>
+                        <!-- Brands Filter -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2.5">Brand</label>
+                            <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                <label class="flex items-center text-xs py-1 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(!Model.BrandId.HasValue ? "font-bold text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-slate-400")">
+                                    <input type="radio" name="brandId" value="" @(!Model.BrandId.HasValue ? "checked" : "") onchange="this.form.submit()" class="mr-2 text-blue-600" />
+                                    All Brands
+                                </label>
+                                @foreach (var brand in Model.Brands)
+                                {
+                                    <label class="flex items-center text-xs py-1 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(Model.BrandId == brand.Id ? "font-bold text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-slate-400")">
+                                        <input type="radio" name="brandId" value="@brand.Id" @(Model.BrandId == brand.Id ? "checked" : "") onchange="this.form.submit()" class="mr-2 text-blue-600" />
+                                        <span class="truncate">@brand.Name</span>
+                                    </label>
+                                }
+                            </div>
                         </div>
-                        <h4 class="fw-bold mb-2">No Products Match Your Criteria</h4>
-                        <p class="text-secondary small mb-4">Try broadening your filters or searching for another garment style or brand.</p>
-                        <a asp-controller="Shop" asp-action="Index" class="btn btn-primary rounded-pill px-4 fw-bold">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
-                        </a>
-                    </div>
-                }
-                else if (Model.ViewMode == "list")
-                {
-                    <!-- LIST VIEW -->
-                    <div class="d-flex flex-column gap-3 mb-4">
-                        @foreach (var product in Model.Products)
-                        {
-                            var primaryImg = product.Images?.FirstOrDefault(x => x.IsPrimary) ?? product.Images?.FirstOrDefault();
-                            var availableVariants = product.Variants?.Where(v => v.Status == VariantStatus.Available).ToList() ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
-                            var minPrice = availableVariants.Select(v => v.Price).DefaultIfEmpty(0).Min();
-                            var compareAt = availableVariants.Where(v => v.CompareAtPrice.HasValue && v.CompareAtPrice > v.Price).Select(v => v.CompareAtPrice).FirstOrDefault();
-                            var inStock = availableVariants.Sum(v => v.Inventory?.AvailableQuantity ?? 0) > 0;
-                            var reviews = product.Reviews ?? new List<WebApplication_ClothingEcommerce.Models.Review>();
-                            var avgRating = reviews.Any() ? reviews.Average(x => x.Rating) : 0;
-                            var fullStars = (int)Math.Floor(avgRating);
 
-                            <div class="shop-list-card d-flex flex-column flex-md-row">
-                                <div class="shop-list-media position-relative">
-                                    <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="d-block w-100 h-100">
-                                        @if (primaryImg != null && !string.IsNullOrWhiteSpace(primaryImg.ImageUrl))
+                        <!-- Size Pills Filter -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2.5">Size</label>
+                            <div class="flex flex-wrap gap-1.5">
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-brandId="@Model.BrandId"
+                                   asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock"
+                                   asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-sort="@Model.Sort"
+                                   class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all @(!Model.SizeId.HasValue ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-sm" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-blue-500")">
+                                    All
+                                </a>
+                                @foreach (var size in Model.Sizes)
+                                {
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@size.Id"
+                                       asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all @(Model.SizeId == size.Id ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-sm" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-blue-500")">
+                                        @size.Name
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Color Swatches Filter -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2.5">Color</label>
+                            <div class="flex flex-wrap gap-2">
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-brandId="@Model.BrandId"
+                                   asp-route-sizeId="@Model.SizeId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock"
+                                   asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search"
+                                   asp-route-sort="@Model.Sort"
+                                   class="px-2 py-0.5 rounded-full text-[11px] font-semibold border transition-all @(!Model.ColorId.HasValue ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300")">
+                                    All
+                                </a>
+                                @foreach (var color in Model.Colors)
+                                {
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId"
+                                       asp-route-colorId="@color.Id"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock"
+                                       asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search"
+                                       asp-route-sort="@Model.Sort"
+                                       class="w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center @(Model.ColorId == color.Id ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900 scale-110" : "border-gray-300 dark:border-slate-600 hover:scale-110")"
+                                       style="background-color: @color.HexCode;"
+                                       title="@color.Name">
+                                        @if (Model.ColorId == color.Id)
                                         {
-                                            <img src="@primaryImg.ImageUrl" alt="@product.Name" loading="lazy" />
-                                        }
-                                        else
-                                        {
-                                            <div class="d-flex align-items-center justify-content-center h-100 text-secondary">
-                                                <i class="bi bi-image display-6"></i>
-                                            </div>
+                                            <i class="bi bi-check text-white text-xs drop-shadow"></i>
                                         }
                                     </a>
-                                    @if (compareAt != null)
-                                    {
-                                        <span class="position-absolute top-0 start-0 m-2 badge bg-danger rounded-pill fw-bold" style="font-size:10px;">SALE</span>
-                                    }
-                                </div>
-
-                                <div class="p-3 p-md-4 flex-grow-1 d-flex flex-column justify-content-between">
-                                    <div>
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <span class="small fw-bold text-primary text-uppercase" style="letter-spacing: .06em;">
-                                                @(product.Brand?.Name ?? "CLOTHÉ")
-                                            </span>
-                                            <span class="text-muted small">•</span>
-                                            <span class="small text-secondary">@(product.Category?.Name ?? "Apparel")</span>
-                                        </div>
-
-                                        <h5 class="fw-bold mb-2">
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="text-dark text-decoration-none">
-                                                @product.Name
-                                            </a>
-                                        </h5>
-
-                                        <p class="text-secondary small mb-3 text-truncate-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                            @(string.IsNullOrWhiteSpace(product.Description) ? "Contemporary style crafted from premium materials for all-day comfort." : product.Description)
-                                        </p>
-
-                                        <!-- Reviews & Stock -->
-                                        <div class="d-flex flex-wrap align-items-center gap-3 mb-2 small">
-                                            @if (reviews.Any())
-                                            {
-                                                <div class="text-warning">
-                                                    @for (int i = 0; i < fullStars; i++) { <i class="bi bi-star-fill"></i> }
-                                                    @if (avgRating - fullStars >= 0.5) { <i class="bi bi-star-half"></i> }
-                                                    <span class="text-secondary ms-1">(@reviews.Count)</span>
-                                                </div>
-                                            }
-                                            <div>
-                                                @if (inStock)
-                                                {
-                                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>In Stock</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-danger fw-semibold"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-2">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <strong class="fs-4 fw-bold text-dark">
-                                                @(minPrice > 0 ? $"${minPrice:0.00}" : "Price on request")
-                                            </strong>
-                                            @if (compareAt != null)
-                                            {
-                                                <del class="text-secondary small">$@compareAt.Value.ToString("0.00")</del>
-                                            }
-                                        </div>
-
-                                        <div class="d-flex gap-2">
-                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product.Id" class="btn btn-dark rounded-pill px-4 btn-sm fw-semibold">
-                                                View Product <i class="bi bi-arrow-right ms-1"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                                }
                             </div>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Price Range ($)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" name="minPrice" value="@Model.MinPrice" placeholder="Min" class="input-clothe py-1.5 px-3 text-xs" />
+                                <input type="number" name="maxPrice" value="@Model.MaxPrice" placeholder="Max" class="input-clothe py-1.5 px-3 text-xs" />
+                            </div>
+                        </div>
+
+                        <!-- Quick Toggles -->
+                        <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-slate-300">
+                                <input type="checkbox" name="inStock" value="true" @(Model.InStock == true ? "checked" : "") onchange="this.form.submit()" class="rounded text-blue-600" />
+                                <span>In Stock Only</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-slate-300">
+                                <input type="checkbox" name="onSale" value="true" @(Model.OnSale == true ? "checked" : "") onchange="this.form.submit()" class="rounded text-rose-600" />
+                                <span class="flex items-center gap-1">
+                                    On Sale <span class="sale-pill">HOT</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-primary-clothe w-full py-2.5 text-xs font-bold">
+                            Apply Filters
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- ── RIGHT PRODUCT CONTENT (9 COLS) ── -->
+            <main class="lg:col-span-9 space-y-6">
+
+                <!-- TOP TOOLBAR -->
+                <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+                    <!-- Left: Mobile Filter Button + Item Count Indicator -->
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="openMobileFilters()"
+                                class="lg:hidden inline-flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-bold text-gray-800 dark:text-slate-200 hover:border-blue-500 shadow-sm transition-all">
+                            <i class="bi bi-sliders text-blue-600 dark:text-blue-400"></i>
+                            <span>Filters</span>
+                            @if (hasAnyFilter)
+                            {
+                                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                            }
+                        </button>
+
+                        <div class="text-xs text-gray-500 dark:text-slate-400">
+                            Showing <strong class="text-gray-900 dark:text-white">@startItem–@endItem</strong> of <strong class="text-gray-900 dark:text-white">@Model.TotalProducts</strong> items
+                        </div>
+                    </div>
+
+                    <!-- Right: Sorting Controls -->
+                    <div class="flex items-center gap-2 ml-auto sm:ml-0">
+                        <form asp-controller="Shop" asp-action="Index" method="get" class="flex items-center gap-2">
+                            <!-- Retain filters -->
+                            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                            <input type="hidden" name="brandId" value="@Model.BrandId" />
+                            <input type="hidden" name="sizeId" value="@Model.SizeId" />
+                            <input type="hidden" name="colorId" value="@Model.ColorId" />
+                            <input type="hidden" name="minPrice" value="@Model.MinPrice" />
+                            <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+                            <input type="hidden" name="inStock" value="@Model.InStock" />
+                            <input type="hidden" name="onSale" value="@Model.OnSale" />
+                            <input type="hidden" name="search" value="@Model.Search" />
+
+                            <label class="text-xs text-gray-500 dark:text-slate-400 hidden sm:inline">Sort:</label>
+                            <select name="sort" onchange="this.form.submit()"
+                                    class="input-clothe py-1.5 px-2.5 sm:px-3 text-xs w-auto bg-white dark:bg-slate-800 cursor-pointer rounded-xl">
+                                <option value="newest" selected="@(Model.Sort == "newest")">Newest Arrivals</option>
+                                <option value="price_asc" selected="@(Model.Sort == "price_asc")">Price: Low to High</option>
+                                <option value="price_desc" selected="@(Model.Sort == "price_desc")">Price: High to Low</option>
+                                <option value="popular" selected="@(Model.Sort == "popular")">Most Popular</option>
+                                <option value="rating" selected="@(Model.Sort == "rating")">Highest Rated</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ACTIVE FILTER CHIPS ROW -->
+                @if (hasAnyFilter)
+                {
+                    <div class="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-xs">
+                        <span class="font-bold text-gray-500 dark:text-slate-400 mr-1">Active:</span>
+
+                        @if (selectedCategory != null)
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-semibold">
+                                <i class="bi bi-tag text-xs"></i> @selectedCategory.Name
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-brandId="@Model.BrandId" asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort" class="hover:text-rose-500 ml-1">&times;</a>
+                            </span>
+                        }
+
+                        @if (selectedBrand != null)
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-semibold">
+                                <i class="bi bi-award text-xs"></i> @selectedBrand.Name
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort" class="hover:text-rose-500 ml-1">&times;</a>
+                            </span>
+                        }
+
+                        @if (selectedSize != null)
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 font-semibold">
+                                Size: @selectedSize.Name
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort" class="hover:text-rose-500 ml-1">&times;</a>
+                            </span>
+                        }
+
+                        @if (selectedColor != null)
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 font-semibold">
+                                <span class="w-2.5 h-2.5 rounded-full" style="background-color: @selectedColor.HexCode;"></span> @selectedColor.Name
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId" asp-route-sizeId="@Model.SizeId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort" class="hover:text-rose-500 ml-1">&times;</a>
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Search))
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-semibold">
+                                "@Model.Search"
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId" asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-sort="@Model.Sort" class="hover:text-rose-500 ml-1">&times;</a>
+                            </span>
+                        }
+
+                        <a asp-controller="Shop" asp-action="Index" class="text-rose-500 hover:underline font-bold ml-auto">Clear all</a>
+                    </div>
+                }
+
+                <!-- PRODUCT GRID -->
+                @if (Model.Products != null && Model.Products.Any())
+                {
+                    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3.5 sm:gap-6">
+                        @foreach (var product in Model.Products)
+                        {
+                            @await Html.PartialAsync("_ProductCard", product)
                         }
                     </div>
+
+                    <!-- PAGINATION -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        <div class="pt-8 sm:pt-10 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                            <!-- Prev -->
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-page="@(Model.CurrentPage - 1)"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId"
+                                   asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort"
+                                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-slate-300 hover:border-blue-600 hover:text-blue-600 transition-colors">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            }
+
+                            <!-- Page Numbers -->
+                            @for (int p = 1; p <= Model.TotalPages; p++)
+                            {
+                                if (p == Model.CurrentPage)
+                                {
+                                    <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-xs font-extrabold shadow-md">
+                                        @p
+                                    </span>
+                                }
+                                else if (p <= 3 || p >= Model.TotalPages - 2 || Math.Abs(p - Model.CurrentPage) <= 1)
+                                {
+                                    <a asp-controller="Shop" asp-action="Index"
+                                       asp-route-page="@p"
+                                       asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId"
+                                       asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                       asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                       asp-route-search="@Model.Search" asp-route-sort="@Model.Sort"
+                                       class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-slate-300 hover:border-blue-600 hover:text-blue-600 transition-colors">
+                                        @p
+                                    </a>
+                                }
+                                else if (p == 4 || p == Model.TotalPages - 3)
+                                {
+                                    <span class="w-6 sm:w-8 text-center text-gray-400 text-xs">...</span>
+                                }
+                            }
+
+                            <!-- Next -->
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <a asp-controller="Shop" asp-action="Index"
+                                   asp-route-page="@(Model.CurrentPage + 1)"
+                                   asp-route-categoryId="@Model.CategoryId" asp-route-brandId="@Model.BrandId"
+                                   asp-route-sizeId="@Model.SizeId" asp-route-colorId="@Model.ColorId"
+                                   asp-route-minPrice="@Model.MinPrice" asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStock="@Model.InStock" asp-route-onSale="@Model.OnSale"
+                                   asp-route-search="@Model.Search" asp-route-sort="@Model.Sort"
+                                   class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-gray-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-gray-700 dark:text-slate-300 hover:border-blue-600 hover:text-blue-600 transition-colors">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            }
+                        </div>
+                    }
                 }
                 else
                 {
-                    <!-- GRID VIEW -->
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 mb-4">
-                        @foreach (var product in Model.Products)
-                        {
-                            <div class="col">
-                                @await Html.PartialAsync("_ProductCard", product)
-                            </div>
-                        }
+                    <div class="text-center py-16 sm:py-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm px-4">
+                        <i class="bi bi-search text-4xl text-gray-300 dark:text-slate-600 block mb-3"></i>
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1">No products match your filters</h3>
+                        <p class="text-xs text-gray-500 dark:text-slate-400 mb-6">Try adjusting or clearing your active filters to see more items.</p>
+                        <a asp-controller="Shop" asp-action="Index" class="btn-primary-clothe text-xs py-2 px-6">
+                            Clear All Filters
+                        </a>
                     </div>
                 }
 
-                <!-- =========================================================
-                     PAGINATION
-                ========================================================== -->
-                @if (Model.TotalPages > 1)
-                {
-                    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 pt-3">
-                        <div class="small text-secondary">
-                            Page <strong class="text-dark">@Model.CurrentPage</strong> of <strong class="text-dark">@Model.TotalPages</strong>
-                        </div>
-
-                        <nav aria-label="Shop catalog pagination">
-                            <ul class="pagination shop-pagination mb-0">
-                                <!-- Previous -->
-                                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"
-                                       asp-route-page="@(Model.CurrentPage - 1)">
-                                        <i class="bi bi-chevron-left"></i>
-                                    </a>
-                                </li>
-
-                                @for (int p = 1; p <= Model.TotalPages; p++)
-                                {
-                                    if (p == 1 || p == Model.TotalPages || (p >= Model.CurrentPage - 2 && p <= Model.CurrentPage + 2))
-                                    {
-                                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
-                                            <a class="page-link" asp-controller="Shop" asp-action="Index"
-                                               asp-route-categoryId="@Model.CategoryId"
-                                               asp-route-brandId="@Model.BrandId"
-                                               asp-route-sizeId="@Model.SizeId"
-                                               asp-route-colorId="@Model.ColorId"
-                                               asp-route-minPrice="@Model.MinPrice"
-                                               asp-route-maxPrice="@Model.MaxPrice"
-                                               asp-route-inStock="@Model.InStock"
-                                               asp-route-onSale="@Model.OnSale"
-                                               asp-route-search="@Model.Search"
-                                               asp-route-sort="@Model.Sort"
-                                               asp-route-pageSize="@Model.PageSize"
-                                               asp-route-viewMode="@Model.ViewMode"
-                                               asp-route-page="@p">
-                                                @p
-                                            </a>
-                                        </li>
-                                    }
-                                    else if (p == Model.CurrentPage - 3 || p == Model.CurrentPage + 3)
-                                    {
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                    }
-                                }
-
-                                <!-- Next -->
-                                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                                    <a class="page-link" asp-controller="Shop" asp-action="Index"
-                                       asp-route-categoryId="@Model.CategoryId"
-                                       asp-route-brandId="@Model.BrandId"
-                                       asp-route-sizeId="@Model.SizeId"
-                                       asp-route-colorId="@Model.ColorId"
-                                       asp-route-minPrice="@Model.MinPrice"
-                                       asp-route-maxPrice="@Model.MaxPrice"
-                                       asp-route-inStock="@Model.InStock"
-                                       asp-route-onSale="@Model.OnSale"
-                                       asp-route-search="@Model.Search"
-                                       asp-route-sort="@Model.Sort"
-                                       asp-route-pageSize="@Model.PageSize"
-                                       asp-route-viewMode="@Model.ViewMode"
-                                       asp-route-page="@(Model.CurrentPage + 1)">
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                }
-
-            </div>
+            </main>
 
         </div>
 
@@ -713,16 +483,198 @@
 </div>
 
 <!-- =========================================================
-     OFFCANVAS: MOBILE FILTERS DRAWER
-========================================================== -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="shopFilterOffcanvas" aria-labelledby="shopFilterOffcanvasLabel">
-    <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold" id="shopFilterOffcanvasLabel">
-            <i class="bi bi-sliders me-2 text-primary"></i>Filters
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body p-4">
-        @await Html.PartialAsync("_ShopFiltersPlaceholder", Model)
+     MOBILE FILTER DRAWER (SLIDE-OVER)
+========================================================= -->
+<div id="mobileFilterDrawer" class="fixed inset-0 z-50 overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div id="mobileFilterBackdrop" onclick="closeMobileFilters()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity opacity-0 duration-300"></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-8 sm:pl-10">
+        <div id="mobileFilterPanel" class="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out border-l border-gray-100 dark:border-slate-800">
+            <!-- Header -->
+            <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-sliders text-blue-600 dark:text-blue-400 text-lg"></i>
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white" id="slide-over-title">Filters</h2>
+                    @if (hasAnyFilter)
+                    {
+                        <a asp-controller="Shop" asp-action="Index" class="ml-2 text-xs font-semibold text-rose-500 hover:underline">Reset All</a>
+                    }
+                </div>
+                <button type="button" onclick="closeMobileFilters()" class="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="bi bi-x-lg text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Body with Mobile Filter Form -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+                <form asp-controller="Shop" asp-action="Index" method="get" id="mobileFilterForm" class="space-y-5">
+                    <!-- Retain sort -->
+                    <input type="hidden" name="sort" value="@Model.Sort" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <input type="hidden" name="viewMode" value="@Model.ViewMode" />
+
+                    <!-- Search Filter -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Keyword</label>
+                        <div class="relative">
+                            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" name="search" value="@Model.Search" placeholder="Search clothes..."
+                                   class="input-clothe pl-9 pr-3 py-2 text-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Categories Filter -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Category</label>
+                        <div class="space-y-1 max-h-48 overflow-y-auto pr-1">
+                            <label class="flex items-center text-xs py-1.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(!Model.CategoryId.HasValue ? "font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800" : "text-gray-600 dark:text-slate-400")">
+                                <input type="radio" name="categoryId" value="" @(!Model.CategoryId.HasValue ? "checked" : "") class="mr-2 text-blue-600" />
+                                All Categories
+                            </label>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <label class="flex items-center text-xs py-1.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(Model.CategoryId == cat.Id ? "font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-slate-800" : "text-gray-600 dark:text-slate-400")">
+                                    <input type="radio" name="categoryId" value="@cat.Id" @(Model.CategoryId == cat.Id ? "checked" : "") class="mr-2 text-blue-600" />
+                                    <span class="truncate">@cat.Name</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Brands Filter -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Brand</label>
+                        <div class="space-y-1 max-h-40 overflow-y-auto pr-1">
+                            <label class="flex items-center text-xs py-1.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(!Model.BrandId.HasValue ? "font-bold text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-slate-400")">
+                                <input type="radio" name="brandId" value="" @(!Model.BrandId.HasValue ? "checked" : "") class="mr-2 text-blue-600" />
+                                All Brands
+                            </label>
+                            @foreach (var brand in Model.Brands)
+                            {
+                                <label class="flex items-center text-xs py-1.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors @(Model.BrandId == brand.Id ? "font-bold text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-slate-400")">
+                                    <input type="radio" name="brandId" value="@brand.Id" @(Model.BrandId == brand.Id ? "checked" : "") class="mr-2 text-blue-600" />
+                                    <span class="truncate">@brand.Name</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Sizes -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Size</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="sizeId" value="" @(!Model.SizeId.HasValue ? "checked" : "") class="sr-only peer" />
+                                <span class="px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer transition-all peer-checked:bg-slate-900 peer-checked:dark:bg-white peer-checked:text-white peer-checked:dark:text-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300">
+                                    All
+                                </span>
+                            </label>
+                            @foreach (var size in Model.Sizes)
+                            {
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="sizeId" value="@size.Id" @(Model.SizeId == size.Id ? "checked" : "") class="sr-only peer" />
+                                    <span class="px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer transition-all peer-checked:bg-slate-900 peer-checked:dark:bg-white peer-checked:text-white peer-checked:dark:text-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300">
+                                        @size.Name
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Colors -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Color</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="colorId" value="" @(!Model.ColorId.HasValue ? "checked" : "") class="sr-only peer" />
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer transition-all peer-checked:bg-slate-900 peer-checked:dark:bg-white peer-checked:text-white peer-checked:dark:text-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300">
+                                    All
+                                </span>
+                            </label>
+                            @foreach (var color in Model.Colors)
+                            {
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="colorId" value="@color.Id" @(Model.ColorId == color.Id ? "checked" : "") class="sr-only peer" />
+                                    <span class="w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center peer-checked:ring-2 peer-checked:ring-blue-500 peer-checked:ring-offset-2 dark:ring-offset-slate-900 peer-checked:scale-110 border-gray-300 dark:border-slate-600"
+                                          style="background-color: @color.HexCode;"
+                                          title="@color.Name"></span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-400 mb-2">Price Range ($)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" name="minPrice" value="@Model.MinPrice" placeholder="Min" class="input-clothe py-2 px-3 text-xs" />
+                            <input type="number" name="maxPrice" value="@Model.MaxPrice" placeholder="Max" class="input-clothe py-2 px-3 text-xs" />
+                        </div>
+                    </div>
+
+                    <!-- Quick Toggles -->
+                    <div class="space-y-2 pt-2 border-t border-gray-100 dark:border-slate-800">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-slate-300">
+                            <input type="checkbox" name="inStock" value="true" @(Model.InStock == true ? "checked" : "") class="rounded text-blue-600" />
+                            <span>In Stock Only</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-700 dark:text-slate-300">
+                            <input type="checkbox" name="onSale" value="true" @(Model.OnSale == true ? "checked" : "") class="rounded text-rose-600" />
+                            <span class="flex items-center gap-1">
+                                On Sale <span class="sale-pill">HOT</span>
+                            </span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer Action Button -->
+            <div class="p-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50">
+                <button type="button" onclick="document.getElementById('mobileFilterForm').submit()" class="btn-primary-clothe w-full py-3 text-sm font-bold shadow-lg shadow-blue-500/20">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function openMobileFilters() {
+            const drawer = document.getElementById('mobileFilterDrawer');
+            const backdrop = document.getElementById('mobileFilterBackdrop');
+            const panel = document.getElementById('mobileFilterPanel');
+            if (!drawer || !backdrop || !panel) return;
+            drawer.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+                panel.classList.remove('translate-x-full');
+                panel.classList.add('translate-x-0');
+            }, 10);
+        }
+
+        function closeMobileFilters() {
+            const drawer = document.getElementById('mobileFilterDrawer');
+            const backdrop = document.getElementById('mobileFilterBackdrop');
+            const panel = document.getElementById('mobileFilterPanel');
+            if (!drawer || !backdrop || !panel) return;
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+            panel.classList.remove('translate-x-0');
+            panel.classList.add('translate-x-full');
+            setTimeout(() => {
+                drawer.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMobileFilters();
+            }
+        });
+    </script>
+}

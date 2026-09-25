@@ -12,20 +12,29 @@
     var totalRevenue = (decimal)(ViewBag.TotalRevenue ?? Model?.Where(o => o.Status != OrderStatus.Cancelled).Sum(o => o.TotalAmount) ?? 0);
 }
 
-<div class="admin-page">
+<div class="space-y-6">
 
     <!-- PAGE HEADER -->
-    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <div class="page-eyebrow">SALES &amp; FULFILLMENT</div>
-            <h1 class="page-title">Orders</h1>
-            <p class="page-description">Manage customer purchases, track fulfillment progression, and update statuses.</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-cart-check"></i>
+                <span>SALES &amp; FULFILLMENT</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Orders Management
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Manage customer purchases, track fulfillment progression, and update statuses.
+            </p>
         </div>
 
-        <div class="d-flex gap-2">
-            <a asp-action="Create" class="btn-primary-custom">
+        <!-- ACTIONS -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-action="Create"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
                 <i class="bi bi-plus-lg"></i>
-                Create Order
+                <span>Create Order</span>
             </a>
         </div>
     </div>
@@ -33,191 +42,193 @@
     <!-- ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="admin-alert admin-alert-success">
-            <i class="bi bi-check-circle-fill"></i>
-            @TempData["Success"]
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-check-circle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Success"]</span>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="admin-alert admin-alert-danger">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            @TempData["Error"]
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-exclamation-triangle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Error"]</span>
         </div>
     }
 
-    <!-- KPI STAT CARDS -->
-    <div class="row g-3 mb-4">
-        <!-- TOTAL ORDERS -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Total Orders</small>
-                        <h3 class="fw-bold mb-0 mt-1">@totalCount</h3>
-                        <small class="text-muted" style="font-size: 0.75rem;">Lifetime customer orders</small>
-                    </div>
-                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                        <i class="bi bi-bag-check fs-4"></i>
-                    </div>
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORT LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. TOTAL ORDERS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Orders</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-bag-check-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white">
+                    @totalCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Lifetime customer orders</span>
                 </div>
             </div>
         </div>
 
-        <!-- PENDING APPROVAL -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Pending</small>
-                        <h3 class="fw-bold mb-0 mt-1 text-warning">@pendingCount</h3>
-                        <small class="text-warning-emphasis" style="font-size: 0.75rem;">Requires confirmation</small>
-                    </div>
-                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                        <i class="bi bi-clock-history fs-4"></i>
-                    </div>
+        <!-- 2. PENDING CONFIRMATION -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-clock-history"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400">
+                    @pendingCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-bold mt-1">
+                    <span>Requires confirmation</span>
                 </div>
             </div>
         </div>
 
-        <!-- IN FULFILLMENT -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Fulfillment</small>
-                        <h3 class="fw-bold mb-0 mt-1 text-info">@(processingCount + shippedCount)</h3>
-                        <small class="text-muted" style="font-size: 0.75rem;">@processingCount processing &middot; @shippedCount shipped</small>
-                    </div>
-                    <div class="p-3 bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                        <i class="bi bi-truck fs-4"></i>
-                    </div>
+        <!-- 3. IN FULFILLMENT -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fulfillment</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-truck"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                    @(processingCount + shippedCount)
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>@processingCount processing &bull; @shippedCount shipped</span>
                 </div>
             </div>
         </div>
 
-        <!-- TOTAL SALES REVENUE -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">Delivered Sales</small>
-                        <h3 class="fw-bold mb-0 mt-1 text-success">@totalRevenue.ToString("C")</h3>
-                        <small class="text-success" style="font-size: 0.75rem;">@deliveredCount delivered orders</small>
-                    </div>
-                    <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                        <i class="bi bi-cash-coin fs-4"></i>
-                    </div>
+        <!-- 4. TOTAL REVENUE -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Delivered Revenue</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-cash-stack"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                    $@totalRevenue.ToString("N2")
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <span>@deliveredCount delivered orders</span>
                 </div>
             </div>
+        </div>
+
+    </div>
+
+    <!-- SEARCH & STATUS FILTERS TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+        <form asp-action="Index" method="get" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text"
+                       name="search"
+                       value="@ViewBag.Search"
+                       class="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       placeholder="Search Order ID, customer name or email..." />
+            </div>
+
+            <select name="status"
+                    class="w-full sm:w-48 text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All Statuses</option>
+                @foreach (OrderStatus st in Enum.GetValues<OrderStatus>())
+                {
+                    <option value="@st" selected="@(currentStatus.HasValue && currentStatus.Value == st)">
+                        @st
+                    </option>
+                }
+            </select>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="submit"
+                        class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="bi bi-funnel-fill"></i> Filter
+                </button>
+                <a asp-action="Index"
+                   class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-arrow-repeat"></i> Reset
+                </a>
+            </div>
+        </form>
+
+        <!-- Status Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="font-bold text-slate-400 mr-1 text-[11px] uppercase tracking-wider">Status:</span>
+            <a asp-action="Index" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(!currentStatus.HasValue ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200")">
+                All (@totalCount)
+            </a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Pending" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(currentStatus == OrderStatus.Pending ? "bg-amber-500 text-white shadow-sm" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 hover:bg-amber-100")">
+                Pending (@pendingCount)
+            </a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Processing" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(currentStatus == OrderStatus.Processing ? "bg-blue-600 text-white shadow-sm" : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 hover:bg-blue-100")">
+                Processing (@processingCount)
+            </a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Shipped" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(currentStatus == OrderStatus.Shipped ? "bg-indigo-600 text-white shadow-sm" : "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100")">
+                Shipped (@shippedCount)
+            </a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Delivered" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(currentStatus == OrderStatus.Delivered ? "bg-emerald-600 text-white shadow-sm" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100")">
+                Delivered (@deliveredCount)
+            </a>
+            <a asp-action="Index" asp-route-status="@OrderStatus.Cancelled" asp-route-search="@ViewBag.Search"
+               class="px-2.5 py-1 rounded-full text-xs font-bold transition @(currentStatus == OrderStatus.Cancelled ? "bg-rose-600 text-white shadow-sm" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 hover:bg-rose-100")">
+                Cancelled (@cancelledCount)
+            </a>
         </div>
     </div>
 
-    <!-- MAIN ORDERS CARD -->
-    <div class="admin-card">
-
-        <div class="admin-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <!-- MAIN ORDERS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div>
-                <h3 class="admin-card-title">Customer Orders</h3>
-                <p class="admin-card-subtitle">Showing @(Model?.Count() ?? 0) order@(Model?.Count() == 1 ? "" : "s") matching criteria</p>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-table text-blue-600"></i> Customer Orders
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Showing @(Model?.Count() ?? 0) record@(Model?.Count() == 1 ? "" : "s") matching criteria</p>
             </div>
-            <div class="admin-card-count">
-                <span>@(Model?.Count() ?? 0)</span>
-                <small>records</small>
-            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                @(Model?.Count() ?? 0) total
+            </span>
         </div>
 
-        <!-- SEARCH & STATUS FILTERS -->
-        <div class="search-wrapper border-bottom pb-3">
-            <form asp-action="Index" method="get" class="search-form flex-wrap gap-2 align-items-center mb-3">
-                <div class="search-input-wrapper" style="flex: 2; min-width: 240px;">
-                    <i class="bi bi-search"></i>
-                    <input type="text"
-                           name="search"
-                           value="@ViewBag.Search"
-                           class="search-input"
-                           placeholder="Search Order ID, customer name or email..." />
-                </div>
-
-                <select name="status" class="search-input" style="flex: 1; min-width: 170px;">
-                    <option value="">All Statuses</option>
-                    @foreach (OrderStatus st in Enum.GetValues<OrderStatus>())
-                    {
-                        <option value="@st" selected="@(currentStatus.HasValue && currentStatus.Value == st)">
-                            @st
-                        </option>
-                    }
-                </select>
-
-                <button type="submit" class="btn-search">
-                    <i class="bi bi-funnel"></i> Filter
-                </button>
-
-                <a asp-action="Index" class="btn-reset">
-                    <i class="bi bi-arrow-repeat"></i> Reset
-                </a>
-            </form>
-
-            <!-- QUICK FILTER STATUS PILLS -->
-            <div class="d-flex flex-wrap gap-1 align-items-center pt-1">
-                <span class="text-muted small me-2 fw-semibold" style="font-size: 0.75rem;">Status:</span>
-                <a asp-action="Index" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(!currentStatus.HasValue ? "btn-dark text-white fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    All (@totalCount)
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Pending" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Pending ? "btn-warning text-dark fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    Pending (@pendingCount)
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Confirmed" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Confirmed ? "btn-info text-dark fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    Confirmed
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Processing" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Processing ? "btn-primary text-white fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    Processing (@processingCount)
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Shipped" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Shipped ? "btn-indigo text-white fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem; @(currentStatus == OrderStatus.Shipped ? "background-color: #6610f2; color: #fff;" : "")">
-                    Shipped (@shippedCount)
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Delivered" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Delivered ? "btn-success text-white fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    Delivered (@deliveredCount)
-                </a>
-                <a asp-action="Index" asp-route-status="@OrderStatus.Cancelled" asp-route-search="@ViewBag.Search"
-                   class="btn btn-sm rounded-pill py-0 px-2.5 @(currentStatus == OrderStatus.Cancelled ? "btn-danger text-white fw-bold" : "btn-light border text-muted")"
-                   style="font-size: 0.75rem;">
-                    Cancelled (@cancelledCount)
-                </a>
-            </div>
-        </div>
-
-        <!-- TABLE -->
         @if (Model != null && Model.Any())
         {
-            <div class="table-responsive">
-                <table class="admin-table">
-                    <thead>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200/80 dark:border-slate-800">
                         <tr>
-                            <th class="ps-4">ORDER ID</th>
-                            <th>CUSTOMER</th>
-                            <th>DATE PLACED</th>
-                            <th class="text-center">ITEMS</th>
-                            <th>AMOUNT</th>
-                            <th>PAYMENT</th>
-                            <th>ORDER STATUS</th>
-                            <th class="text-end pe-4">ACTIONS</th>
+                            <th class="py-3 px-4">Order ID</th>
+                            <th class="py-3 px-4">Customer</th>
+                            <th class="py-3 px-4">Date Placed</th>
+                            <th class="py-3 px-4 text-center">Items</th>
+                            <th class="py-3 px-4 text-right">Amount</th>
+                            <th class="py-3 px-4">Payment</th>
+                            <th class="py-3 px-4">Order Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach (var item in Model)
                         {
                             var customerName = $"{item.Customer?.FirstName} {item.Customer?.LastName}".Trim();
@@ -229,153 +240,173 @@
                                 ? item.Customer.FirstName.Substring(0, 1).ToUpper()
                                 : (customerName.Length > 0 ? customerName.Substring(0, 1).ToUpper() : "C");
 
-                            <tr>
-                                <!-- ORDER ID -->
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="fw-bold font-monospace text-primary text-decoration-none" title="View Order #@item.Id">
-                                            #@item.Id.ToString()[..8].ToUpper()
-                                        </a>
-                                    </div>
-                                    <small class="text-muted font-monospace" style="font-size: 0.7rem;">@item.Id</small>
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <!-- Order ID -->
+                                <td class="py-3 px-4">
+                                    <a asp-action="Details" asp-route-id="@item.Id"
+                                       class="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                                        #@item.Id.ToString()[..8].ToUpper()
+                                    </a>
                                 </td>
 
-                                <!-- CUSTOMER -->
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0"
-                                             style="width: 32px; height: 32px; font-size: 13px; background: linear-gradient(135deg, #4285F4, #34A853);">
+                                <!-- Customer -->
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-[11px] flex items-center justify-center flex-shrink-0 shadow-xs">
                                             @customerInitial
                                         </div>
-                                        <div class="overflow-hidden" style="min-width: 0; max-width: 180px;">
-                                            <div class="fw-semibold text-truncate small text-dark">@customerName</div>
-                                            <div class="text-muted small text-truncate" style="font-size: 0.75rem;">@(item.Customer?.Email ?? "-")</div>
+                                        <div class="truncate max-w-[160px]">
+                                            <div class="font-bold text-slate-900 dark:text-white truncate">@customerName</div>
+                                            <div class="text-[11px] text-slate-400 truncate">@(item.Customer?.Email ?? "-")</div>
                                         </div>
                                     </div>
                                 </td>
 
-                                <!-- DATE -->
-                                <td>
-                                    <div class="small fw-semibold text-dark">@item.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</div>
-                                    <small class="text-muted" style="font-size: 0.72rem;">@item.OrderDate.ToLocalTime().ToString("hh:mm tt")</small>
+                                <!-- Date -->
+                                <td class="py-3 px-4 text-slate-500 dark:text-slate-400">
+                                    <div class="font-medium text-slate-800 dark:text-slate-200">@item.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</div>
+                                    <div class="text-[10px]">@item.OrderDate.ToLocalTime().ToString("hh:mm tt")</div>
                                 </td>
 
-                                <!-- ITEMS -->
-                                <td class="text-center">
-                                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">
-                                        <i class="bi bi-box-seam me-1 text-muted"></i>@(item.Items?.Count ?? 0)
+                                <!-- Items -->
+                                <td class="py-3 px-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                        @(item.Items?.Count ?? 0)
                                     </span>
                                 </td>
 
-                                <!-- TOTAL AMOUNT -->
-                                <td>
-                                    <span class="fw-bold text-success fs-6">@item.TotalAmount.ToString("C")</span>
+                                <!-- Amount -->
+                                <td class="py-3 px-4 text-right font-black text-slate-900 dark:text-white">
+                                    $@item.TotalAmount.ToString("N2")
                                 </td>
 
-                                <!-- PAYMENT INDICATOR -->
-                                <td>
+                                <!-- Payment -->
+                                <td class="py-3 px-4">
                                     @if (item.Payment != null)
                                     {
                                         var pStatus = item.Payment.PaymentStatus.ToString();
-                                        var pBadgeClass = pStatus.ToLower() switch
+                                        if (pStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase) || pStatus.Equals("Paid", StringComparison.OrdinalIgnoreCase))
                                         {
-                                            "paid" or "completed" or "successful" => "bg-success-subtle text-success border border-success-subtle",
-                                            "pending" => "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
-                                            "failed" => "bg-danger-subtle text-danger border border-danger-subtle",
-                                            "refunded" => "bg-info-subtle text-info-emphasis border border-info-subtle",
-                                            _ => "bg-secondary-subtle text-secondary border border-secondary-subtle"
-                                        };
-                                        <span class="badge @pBadgeClass rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
-                                            <i class="bi bi-credit-card me-1"></i>@item.Payment.PaymentStatus
-                                        </span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                <i class="bi bi-credit-card"></i> Paid
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                <i class="bi bi-clock"></i> @item.Payment.PaymentStatus
+                                            </span>
+                                        }
                                     }
                                     else
                                     {
-                                        <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
-                                            <i class="bi bi-dash-circle me-1"></i>Unpaid
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                            COD
                                         </span>
                                     }
                                 </td>
 
-                                <!-- ORDER STATUS -->
-                                <td>
-                                    @{
-                                        var (badgeClass, iconClass) = item.Status switch
-                                        {
-                                            OrderStatus.Pending => ("bg-warning-subtle text-warning-emphasis border border-warning-subtle", "bi-clock-history"),
-                                            OrderStatus.Confirmed => ("bg-info-subtle text-info-emphasis border border-info-subtle", "bi-check2"),
-                                            OrderStatus.Processing => ("bg-primary-subtle text-primary border border-primary-subtle", "bi-arrow-repeat"),
-                                            OrderStatus.Shipped => ("bg-primary text-white", "bi-truck"),
-                                            OrderStatus.Delivered => ("bg-success-subtle text-success border border-success-subtle", "bi-check2-circle"),
-                                            OrderStatus.Cancelled => ("bg-danger-subtle text-danger border border-danger-subtle", "bi-x-circle"),
-                                            _ => ("bg-secondary-subtle text-secondary border border-secondary-subtle", "bi-question-circle")
-                                        };
+                                <!-- Order Status -->
+                                <td class="py-3 px-4">
+                                    @switch (item.Status)
+                                    {
+                                        case OrderStatus.Delivered:
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                <i class="bi bi-check2-circle"></i> Delivered
+                                            </span>
+                                            break;
+                                        case OrderStatus.Shipped:
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                                <i class="bi bi-truck"></i> Shipped
+                                            </span>
+                                            break;
+                                        case OrderStatus.Processing:
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                <i class="bi bi-arrow-repeat"></i> Processing
+                                            </span>
+                                            break;
+                                        case OrderStatus.Cancelled:
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                                <i class="bi bi-x-circle"></i> Cancelled
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                <i class="bi bi-clock-history"></i> @item.Status
+                                            </span>
+                                            break;
                                     }
-                                    <span class="badge @badgeClass rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;">
-                                        <i class="bi @iconClass me-1"></i>@item.Status
-                                    </span>
                                 </td>
 
-                                <!-- ACTIONS -->
-                                <td class="text-end pe-4">
-                                    <div class="dropdown">
-                                        <button class="action-meatball-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                <!-- Actions -->
+                                <td class="py-3 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a asp-action="Details" asp-route-id="@item.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center justify-center text-xs transition"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Receipt" asp-route-id="@item.Id" target="_blank"
+                                           class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-emerald-600 text-slate-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center text-xs transition"
+                                           title="Print / View Receipt">
+                                            <i class="bi bi-printer"></i>
+                                        </a>
+                                        <button type="button" onclick="openStatusModal('@item.Id')"
+                                                class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-amber-500 text-slate-600 dark:text-slate-300 hover:text-amber-600 flex items-center justify-center text-xs transition cursor-pointer"
+                                                title="Quick Status Update">
+                                            <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
-                                            <li>
-                                                <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
-                                                    <i class="bi bi-eye text-primary"></i> <span>View Details</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#statusModal-@item.Id">
-                                                    <i class="bi bi-pencil-square text-warning"></i> <span>Update Status</span>
-                                                </button>
-                                            </li>
-                                            <li><hr class="dropdown-divider my-1" /></li>
-                                            <li>
-                                                <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.Id">
-                                                    <i class="bi bi-trash"></i> <span>Delete Order</span>
-                                                </a>
-                                            </li>
-                                        </ul>
+                                        <a asp-action="Delete" asp-route-id="@item.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-rose-500 text-slate-600 dark:text-slate-300 hover:text-rose-600 flex items-center justify-center text-xs transition"
+                                           title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
                                     </div>
 
-                                    <!-- QUICK STATUS UPDATE MODAL -->
-                                    <div class="modal fade text-start" id="statusModal-@item.Id" tabindex="-1" aria-labelledby="modalLabel-@item.Id" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm">
-                                            <div class="modal-content border-0 shadow">
-                                                <form asp-action="Edit" method="post">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="id" value="@item.Id" />
-                                                    <div class="modal-header py-2.5 px-3 bg-light">
-                                                        <h6 class="modal-title fw-bold small mb-0" id="modalLabel-@item.Id">
-                                                            <i class="bi bi-pencil-square me-1 text-primary"></i> Order Status #@item.Id.ToString()[..8]
-                                                        </h6>
-                                                        <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <!-- Tailwind Status Update Modal -->
+                                    <div id="statusModal_@item.Id" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs text-left">
+                                        <div class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4">
+                                            <form asp-action="Edit" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                
+                                                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                        <i class="bi bi-pencil-square text-blue-600"></i> Update Order #@item.Id.ToString()[..8].ToUpper()
+                                                    </h4>
+                                                    <button type="button" onclick="closeStatusModal('@item.Id')" class="text-slate-400 hover:text-slate-600 text-xs">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div class="space-y-3 py-2">
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Select New Status</label>
+                                                        <select name="status" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                                                            @foreach (OrderStatus s in Enum.GetValues<OrderStatus>())
+                                                            {
+                                                                <option value="@s" selected="@(item.Status == s)">@s</option>
+                                                            }
+                                                        </select>
                                                     </div>
-                                                    <div class="modal-body p-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem;">Select New Status</label>
-                                                            <select name="status" class="form-select form-select-sm">
-                                                                @foreach (OrderStatus s in Enum.GetValues<OrderStatus>())
-                                                                {
-                                                                    <option value="@s" selected="@(item.Status == s)">@s</option>
-                                                                }
-                                                            </select>
-                                                        </div>
-                                                        <div class="p-2 bg-light rounded small text-muted" style="font-size: 0.75rem;">
-                                                            Customer: <strong>@customerName</strong><br />
-                                                            Total: <strong class="text-success">@item.TotalAmount.ToString("C")</strong>
-                                                        </div>
+
+                                                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+                                                        <div>Customer: <strong class="text-slate-700 dark:text-slate-200">@customerName</strong></div>
+                                                        <div>Total: <strong class="text-emerald-600 font-bold">$@item.TotalAmount.ToString("N2")</strong></div>
                                                     </div>
-                                                    <div class="modal-footer py-2 px-3 bg-light d-flex justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
-                                                    </div>
-                                                </form>
-                                            </div>
+                                                </div>
+
+                                                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                    <button type="button" onclick="closeStatusModal('@item.Id')"
+                                                            class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                        Cancel
+                                                    </button>
+                                                    <button type="submit"
+                                                            class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow">
+                                                        Save Changes
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
                                 </td>
@@ -388,18 +419,35 @@
         else
         {
             <!-- EMPTY STATE -->
-            <div class="text-center py-5 px-3">
-                <div class="mb-3">
-                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 72px; height: 72px;">
-                        <i class="bi bi-bag-x fs-1"></i>
-                    </div>
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-bag-x text-2xl"></i>
                 </div>
-                <h5 class="fw-bold text-dark">No orders found</h5>
-                <p class="text-muted small mb-3">No orders matched your active search or status filters.</p>
-                <a asp-action="Index" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                    <i class="bi bi-arrow-repeat me-1"></i> Reset All Filters
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">No orders found</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">No orders matched your active search or status filters.</p>
+                <a asp-action="Index"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-arrow-repeat"></i> Reset All Filters
                 </a>
             </div>
         }
     </div>
+
 </div>
+
+<script>
+    function openStatusModal(id) {
+        var modal = document.getElementById('statusModal_' + id);
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+    function closeStatusModal(id) {
+        var modal = document.getElementById('statusModal_' + id);
+        if (modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+    }
+</script>

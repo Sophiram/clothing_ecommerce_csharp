@@ -2,78 +2,172 @@
 
 @{
     ViewData["Title"] = "Review Details";
+    var productImg = Model.Product?.Images?.FirstOrDefault(x => x.IsPrimary)?.ImageUrl 
+                   ?? Model.Product?.Images?.FirstOrDefault()?.ImageUrl;
+    var customerName = Model.Customer != null ? $"{Model.Customer.FirstName} {Model.Customer.LastName}".Trim() : "Anonymous Customer";
+    var customerInitial = !string.IsNullOrEmpty(customerName) ? customerName[..1].ToUpper() : "C";
 }
 
-<div class="admin-page">
-    <div class="page-header">
+<div class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- PAGE HEADER & BREADCRUMB -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <div class="page-eyebrow">CUSTOMERS & SOCIAL PROOF</div>
-            <h1 class="page-title">Review Details</h1>
-            <p class="page-description">Customer rating breakdown and comment details.</p>
+            <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5" aria-label="Breadcrumb">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Admin</a>
+                <span class="text-slate-300 dark:text-slate-600">/</span>
+                <a asp-area="Admin" asp-controller="Reviews" asp-action="Index" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors" data-en="Reviews" data-kh="ការវាយតម្លៃ">Reviews</a>
+                <span class="text-slate-300 dark:text-slate-600">/</span>
+                <span class="text-slate-800 dark:text-slate-200 font-semibold" data-en="Details" data-kh="លម្អិត">Details</span>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                <i class="bi bi-star-half text-amber-500"></i>
+                <span data-en="Review & Feedback Details" data-kh="ព័ត៌មានលម្អិតនៃការវាយតម្លៃ">Review Details</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1" data-en="Customer rating breakdown, feedback comment, and associated product info." data-kh="ព័ត៌មានលម្អិតអំពីពិន្ទុ មតិយោបល់ និងទំនិញពាក់ព័ន្ធ។">
+                Customer rating breakdown, feedback comment, and associated product info.
+            </p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to Reviews
+
+        <div class="flex items-center gap-3">
+            <a asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition">
+                <i class="bi bi-arrow-left"></i>
+                <span data-en="Back to Reviews" data-kh="ត្រឡប់ទៅការវាយតម្លៃ">Back to Reviews</span>
             </a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline" onsubmit="return confirm('Permanently delete this customer review?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 hover:bg-rose-100 dark:hover:bg-rose-900/50 shadow-sm transition">
+                    <i class="bi bi-trash"></i>
+                    <span data-en="Delete Review" data-kh="លុបការវាយតម្លៃ">Delete Review</span>
+                </button>
+            </form>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm col-lg-8 mx-auto">
-        <div class="card-body p-4">
-            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                @if (Model.Product?.Images?.FirstOrDefault() != null)
-                {
-                    <img src="@Model.Product.Images.FirstOrDefault()!.ImageUrl" alt="@Model.Product.Name" class="rounded border" style="width: 72px; height: 72px; object-fit: cover;" />
-                }
+    <!-- MAIN TWO-COLUMN CONTENT -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT: CUSTOMER RATING & COMMENT (7 COLS) -->
+        <div class="lg:col-span-7">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm h-full flex flex-col justify-between space-y-6">
                 <div>
-                    <h5 class="fw-bold mb-1">@Model.Product?.Name</h5>
-                    <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.ProductId" class="small text-decoration-none">
-                        View Product <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    <!-- Customer Bar -->
+                    <div class="flex items-center justify-between pb-5 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold text-lg flex items-center justify-center shrink-0">
+                                @customerInitial
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white">@customerName</h2>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">@(Model.Customer?.Email ?? "Anonymous Reviewer")</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <i class="bi bi-patch-check-fill"></i> Verified Review
+                        </span>
+                    </div>
+
+                    <!-- Rating Hero Display -->
+                    <div class="mt-6 p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 text-center">
+                        <div class="flex items-center justify-center gap-1 text-2xl sm:text-3xl text-amber-400 mb-2">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                if (i <= Model.Rating)
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star text-slate-300 dark:text-slate-600"></i>
+                                }
+                            }
+                        </div>
+                        <div class="text-xl font-extrabold text-slate-900 dark:text-white">
+                            @Model.Rating out of 5 Stars
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Submitted on @Model.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                        </div>
+                    </div>
+
+                    <!-- Feedback Comment -->
+                    <div class="mt-6">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 block" data-en="Customer Feedback Message" data-kh="មតិយោបល់របស់អតិថិជន">
+                            Customer Feedback Message
+                        </label>
+                        <div class="relative p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-slate-700 dark:text-slate-200 text-sm leading-relaxed">
+                            <i class="bi bi-quote text-3xl text-blue-500/20 absolute top-3 right-4 pointer-events-none"></i>
+                            @if (string.IsNullOrWhiteSpace(Model.Comment))
+                            {
+                                <span class="italic text-slate-400 dark:text-slate-500">No written comment was provided with this star rating.</span>
+                            }
+                            else
+                            {
+                                <p class="whitespace-pre-line m-0">@Model.Comment</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>Review ID: <span class="font-mono">@Model.Id</span></span>
+                    <span>Status: <strong class="text-emerald-600 dark:text-emerald-400 font-semibold">Published</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: ASSOCIATED PRODUCT SUMMARY (5 COLS) -->
+        <div class="lg:col-span-5">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm h-full flex flex-col justify-between space-y-6">
+                <div>
+                    <div class="flex items-center gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <i class="bi bi-tag-fill text-blue-600 dark:text-blue-400"></i>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white" data-en="Associated Product" data-kh="ទំនិញដែលបានវាយតម្លៃ">
+                            Associated Product
+                        </h2>
+                    </div>
+
+                    <div class="text-center pt-6 pb-2">
+                        @if (!string.IsNullOrEmpty(productImg))
+                        {
+                            <img src="@productImg" alt="@Model.Product?.Name" class="w-36 h-44 mx-auto rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm mb-4" />
+                        }
+                        else
+                        {
+                            <div class="w-36 h-44 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-3xl mb-4">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        }
+
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1.5">
+                            @(Model.Product?.Name ?? "Product")
+                        </h3>
+
+                        @if (Model.Product?.Category != null)
+                        {
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-3">
+                                @Model.Product.Category.Name
+                            </span>
+                        }
+
+                        @if (Model.Product?.Description != null)
+                        {
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 max-w-xs mx-auto leading-relaxed mt-2">
+                                @Model.Product.Description
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-800">
+                    <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.ProductId" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-900 transition shadow-sm">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span data-en="View Product in Catalog" data-kh="មើលទំនិញក្នុងកាតាឡុក">View Product in Catalog</span>
                     </a>
                 </div>
             </div>
-
-            <div class="row g-3 mb-4">
-                <div class="col-sm-6">
-                    <label class="text-muted small text-uppercase fw-semibold">Reviewer</label>
-                    <div class="fw-bold mt-1">@(Model.Customer != null ? $"{Model.Customer.FirstName} {Model.Customer.LastName}".Trim() : "Anonymous")</div>
-                    <small class="text-muted">@(Model.Customer?.Email ?? "N/A")</small>
-                </div>
-
-                <div class="col-sm-6">
-                    <label class="text-muted small text-uppercase fw-semibold">Rating</label>
-                    <div class="text-warning fs-5 mt-1">
-                        @for (var i = 1; i <= 5; i++)
-                        {
-                            <i class="bi @(i <= Model.Rating ? "bi-star-fill" : "bi-star text-muted")"></i>
-                        }
-                        <span class="text-dark fw-bold ms-2">@Model.Rating out of 5</span>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <label class="text-muted small text-uppercase fw-semibold">Date Submitted</label>
-                    <div class="mt-1">@Model.CreatedAt.ToLocalTime().ToString("f")</div>
-                </div>
-
-                <div class="col-12">
-                    <label class="text-muted small text-uppercase fw-semibold">Customer Feedback</label>
-                    <div class="p-3 bg-light rounded-3 mt-1 border">
-                        <p class="mb-0 fs-6">
-                            @(string.IsNullOrWhiteSpace(Model.Comment) ? "No written text was provided with this star rating." : Model.Comment)
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-end">
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this review?');">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash me-1"></i> Delete Review
-                    </button>
-                </form>
-            </div>
         </div>
+
     </div>
+
 </div>

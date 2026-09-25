@@ -44,7 +44,11 @@ public class UsersController : Controller
     // =====================================================
     public async Task<IActionResult> Details(string? id)
     {
-        if (string.IsNullOrEmpty(id)) return NotFound();
+        if (string.IsNullOrEmpty(id))
+        {
+            id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id)) return NotFound();
+        }
 
         var (user, roles) = await _adminUserService.GetUserDetailsAsync(id);
         if (user == null) return NotFound();

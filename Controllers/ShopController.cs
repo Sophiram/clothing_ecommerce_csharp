@@ -87,12 +87,21 @@ namespace WebApplication_ClothingEcommerce.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid? id)
         {
-            if (!id.HasValue || id.Value == Guid.Empty)
+            ProductDetailsResult result;
+            if (id.HasValue && id.Value != Guid.Empty)
             {
-                return RedirectToAction("Index");
+                result = await _shopService.GetProductDetailsAsync(id.Value);
+            }
+            else
+            {
+                result = await _shopService.GetFirstProductDetailsAsync();
             }
 
-            var result = await _shopService.GetProductDetailsAsync(id.Value);
+            if (result.Product == null)
+            {
+                result = await _shopService.GetFirstProductDetailsAsync();
+            }
+
             if (result.Product == null)
             {
                 TempData["Error"] = "Product was not found or is no longer available.";

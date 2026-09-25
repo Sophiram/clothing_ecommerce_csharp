@@ -1,859 +1,1014 @@
-﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.CheckoutViewModel
+@model WebApplication_ClothingEcommerce.Models.ViewModels.CheckoutViewModel
+@inject WebApplication_ClothingEcommerce.Services.Interfaces.IStoreSettingsService StoreSettingsService
 
 @{
-    ViewData["Title"] = "Checkout";
+    var storeSettings = await StoreSettingsService.GetSettingsAsync();
+    ViewData["Title"] = $"Checkout - {storeSettings?.StoreName ?? "CLOTHÉ Store"}";
 
     var paymentMethods =
         ViewBag.PaymentMethods
         as List<WebApplication_ClothingEcommerce.Models.PaymentMethod>
         ?? new List<WebApplication_ClothingEcommerce.Models.PaymentMethod>();
 
-    // Identify KHQR / ABA Pay methods
+    // Identify KHQR / ABA Pay / ACLEDA / Wing / Bakong methods
     var khqrMethods = paymentMethods
         .Where(m => m.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase)
-                 || m.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase))
+                 || m.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase)
+                 || m.Name.Contains("ACLEDA", StringComparison.OrdinalIgnoreCase)
+                 || m.Name.Contains("Wing", StringComparison.OrdinalIgnoreCase)
+                 || m.Name.Contains("Bakong", StringComparison.OrdinalIgnoreCase))
         .ToList();
 
     var khqrMethodIds = khqrMethods.Select(m => m.Id.ToString()).ToList();
 }
 
-<style>
-    .checkout-page { background: #f8fafc; min-height: 80vh; }
+<div class="min-h-[85vh] bg-slate-50/50 dark:bg-slate-950 py-6 sm:py-10 transition-colors duration-200">
 
-    .checkout-hero {
-        background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
-        border-bottom: 1px solid #e2e8f0;
-        padding: 28px 0;
-    }
+    <!-- STEPPER & TOOLBAR BAR -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Stepper -->
+            <div class="flex items-center gap-2 sm:gap-4 flex-wrap text-xs sm:text-sm font-semibold">
+                <a asp-controller="Cart" asp-action="Index" class="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline">
+                    <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-xs">
+                        <i class="bi bi-check-lg"></i>
+                    </span>
+                    <span data-kh="១. កន្ត្រកទំនិញ" data-en="1. Shopping Cart">១. កន្ត្រកទំនិញ</span>
+                </a>
+                <span class="w-6 sm:w-8 h-[2px] bg-slate-200 dark:bg-slate-700"></span>
+                <div class="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 font-bold">
+                    <span class="w-6 h-6 rounded-full bg-primary-600 text-white flex items-center justify-center text-xs shadow-sm ring-2 ring-primary-100 dark:ring-primary-950">
+                        2
+                    </span>
+                    <span data-kh="២. ការដឹកជញ្ជូន និងការទូទាត់" data-en="2. Shipping & Payment">២. ការដឹកជញ្ជូន និងការទូទាត់</span>
+                </div>
+                <span class="w-6 sm:w-8 h-[2px] bg-slate-200 dark:bg-slate-700"></span>
+                <div class="inline-flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <span class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-xs">
+                        3
+                    </span>
+                    <span data-kh="៣. ការបញ្ជាក់ការកុម្ម៉ង់" data-en="3. Order Confirmation">៣. ការបញ្ជាក់ការកុម្ម៉ង់</span>
+                </div>
+            </div>
 
-    .checkout-hero-eyebrow {
-        font-size: 11px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: .12em; color: #4285F4; margin-bottom: 4px;
-    }
-
-    .checkout-hero h1 {
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        font-weight: 800; letter-spacing: -0.03em;
-        color: #0f172a; margin-bottom: 0;
-    }
-
-    .checkout-card {
-        border: 1px solid #e2e8f0; border-radius: 16px; background: #fff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    .checkout-card-title {
-        font-size: 16px; font-weight: 800; color: #0f172a;
-        margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
-    }
-
-    .checkout-section-icon {
-        width: 34px; height: 34px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 15px; color: #fff; flex-shrink: 0;
-    }
-
-    .checkout-section-icon.blue   { background: #4285F4; }
-    .checkout-section-icon.green  { background: #34A853; }
-    .checkout-section-icon.yellow { background: #F9AB00; }
-    .checkout-section-icon.red    { background: #EA4335; }
-
-    .checkout-page .form-control,
-    .checkout-page .form-select {
-        border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 14px;
-        color: #0f172a; font-size: 14px;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .checkout-page .form-control:focus,
-    .checkout-page .form-select:focus {
-        border-color: #4285F4; box-shadow: 0 0 0 3px rgba(66,133,244,.12);
-        outline: none;
-    }
-
-    .checkout-page .form-label {
-        font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;
-    }
-
-    /* ── Payment method cards ── */
-    .payment-method-card {
-        display: flex; align-items: center; gap: 14px;
-        padding: 16px; border: 1.5px solid #e2e8f0; border-radius: 14px;
-        height: 100%; cursor: pointer; transition: all .2s ease;
-        background: #fff; position: relative;
-    }
-
-    .payment-method-card:hover {
-        border-color: #93c5fd; background: #f8faff;
-    }
-
-    .payment-method-card.selected,
-    .payment-method-card:has(input:checked) {
-        border-color: #4285F4; background: #f0f7ff;
-        box-shadow: 0 0 0 2px rgba(66,133,244,.2);
-    }
-
-    .payment-icon-wrap {
-        width: 44px; height: 44px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        background: #f8fafc; border: 1px solid #e2e8f0; flex-shrink: 0;
-        overflow: hidden;
-    }
-
-    .payment-icon-wrap img {
-        width: 100%; height: 100%; object-fit: contain;
-    }
-
-    .khqr-tag-pill {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-size: 10.5px; font-weight: 700; color: #d32f2f;
-        background: #fee2e2; padding: 2px 7px; border-radius: 6px;
-        letter-spacing: .02em;
-    }
-
-    .aba-tag-pill {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-size: 10.5px; font-weight: 700; color: #003764;
-        background: #e0f2fe; padding: 2px 7px; border-radius: 6px;
-        letter-spacing: .02em;
-    }
-
-    /* ── Place order button ── */
-    .checkout-place-order-btn {
-        width: 100%; border: 0; border-radius: 12px; padding: 15px;
-        background: #4285F4; color: #fff; font-weight: 800; font-size: 15px;
-        box-shadow: 0 8px 20px rgba(66,133,244,.28); transition: all .2s ease;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-
-    .checkout-place-order-btn:hover {
-        background: #3367D6; transform: translateY(-1px);
-        box-shadow: 0 12px 24px rgba(66,133,244,.35); color: #fff;
-    }
-
-    /* ── Order summary card ── */
-    .checkout-summary-card {
-        border: 1px solid #e2e8f0; border-radius: 16px;
-        background: #fff; position: sticky; top: 84px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    .checkout-summary-item-img {
-        width: 60px; height: 72px; object-fit: cover;
-        border-radius: 10px; border: 1px solid #e2e8f0;
-    }
-
-    .checkout-summary-row {
-        display: flex; justify-content: space-between;
-        margin-bottom: 10px; font-size: 13.5px; color: #64748b;
-    }
-
-    .checkout-summary-total {
-        display: flex; justify-content: space-between; align-items: center;
-        padding-top: 14px; border-top: 1px solid #e2e8f0;
-    }
-
-    .checkout-summary-total-value { font-size: 22px; font-weight: 800; color: #4285F4; }
-
-    /* ── KHQR Standee Card & Modal Redesign (Centered & Consistent) ── */
-    .khqr-modal-dialog {
-        max-width: 440px !important;
-        margin: 1.5rem auto;
-    }
-
-    .khqr-modal-content {
-        border-radius: 24px !important;
-        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18) !important;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        overflow: hidden;
-    }
-
-    .khqr-standee {
-        width: 100%;
-        margin: 0 auto;
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
-        overflow: hidden;
-        border: 1.5px solid #e2e8f0;
-        transition: all .25s ease;
-    }
-
-    .khqr-header-banner {
-        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-        padding: 13px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #ffffff;
-    }
-
-    .khqr-header-title {
-        font-weight: 900;
-        font-size: 19px;
-        letter-spacing: .06em;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .khqr-header-brand {
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: .08em;
-        color: rgba(255, 255, 255, 0.95);
-        background: rgba(255, 255, 255, 0.15);
-        padding: 3px 10px;
-        border-radius: 6px;
-    }
-
-    .khqr-merchant-info {
-        padding: 18px 20px 8px;
-        text-align: center;
-    }
-
-    .khqr-merchant-name {
-        font-size: 15px;
-        font-weight: 800;
-        color: #0f172a;
-        letter-spacing: .04em;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-    }
-
-    .khqr-amount-display {
-        font-size: 28px;
-        font-weight: 900;
-        color: #0f172a;
-        margin: 0 0 4px;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
-    }
-
-    .khqr-currency-label {
-        font-size: 14px;
-        font-weight: 700;
-        color: #64748b;
-        margin-left: 2px;
-    }
-
-    .khqr-khr-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 12.5px;
-        font-weight: 600;
-        color: #64748b;
-        background: #f1f5f9;
-        padding: 3px 12px;
-        border-radius: 12px;
-    }
-
-    .khqr-qr-container {
-        padding: 14px 20px 18px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    /* QR frame: red accent border, NOTHING placed on top — overlays block scanner cameras */
-    .khqr-qr-frame {
-        background: #ffffff;
-        padding: 8px;
-        border-radius: 14px;
-        border: 2.5px solid #e11d48;
-        box-shadow: 0 0 0 5px rgba(225,29,72,0.07), 0 8px 28px rgba(15,23,42,0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        width: 240px;
-        height: 240px;
-    }
-
-    #khqrCanvas {
-        display: block;
-        margin: 0 auto;
-        border-radius: 4px;
-        width: 220px !important;
-        height: 220px !important;
-        image-rendering: pixelated;
-    }
-
-    .khqr-scan-tip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        margin-top: 10px;
-        font-size: 11px;
-        font-weight: 700;
-        color: #e11d48;
-        background: #fff1f2;
-        padding: 4px 13px;
-        border-radius: 20px;
-        letter-spacing: .02em;
-    }
-
-    .khqr-footer-banner {
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
-        padding: 12px 16px;
-        text-align: center;
-        font-size: 11.5px;
-        font-weight: 600;
-        color: #64748b;
-    }
-
-    .khqr-banks-strip {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        margin-top: 6px;
-        flex-wrap: wrap;
-    }
-
-    .khqr-bank-tag {
-        font-size: 10.5px;
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 6px;
-        letter-spacing: .01em;
-    }
-
-    .khqr-countdown-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        font-weight: 700;
-        color: #0284c7;
-        background: #e0f2fe;
-        padding: 5px 12px;
-        border-radius: 20px;
-    }
-
-    .btn-khqr-confirm {
-        width: 100%;
-        padding: 14px 20px;
-        border: 0;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #16a34a, #15803d);
-        color: #ffffff;
-        font-weight: 800;
-        font-size: 15.5px;
-        box-shadow: 0 8px 24px rgba(22, 163, 74, 0.32);
-        transition: all .2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-    }
-
-    .btn-khqr-confirm:hover:not(:disabled) {
-        background: linear-gradient(135deg, #15803d, #166534);
-        transform: translateY(-1px);
-        box-shadow: 0 12px 28px rgba(22, 163, 74, 0.42);
-        color: #ffffff;
-    }
-
-    .btn-khqr-confirm:disabled {
-        opacity: 0.85;
-        cursor: not-allowed;
-    }
-
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #16a34a;
-        animation: pulseAnimation 1.6s infinite;
-        display: inline-block;
-    }
-
-    .khqr-success-card {
-        animation: fadeInScale 0.3s ease;
-    }
-
-    @@keyframes pulseAnimation {
-        0%   { transform: scale(0.85); opacity: 1; }
-        50%  { transform: scale(1.4); opacity: 0.4; }
-        100% { transform: scale(0.85); opacity: 1; }
-    }
-
-    @@keyframes fadeInScale {
-        from { opacity: 0; transform: scale(0.96); }
-        to   { opacity: 1; transform: scale(1); }
-    }
-</style>
-
-<div class="checkout-page">
-
-    <!-- BREADCRUMB -->
-    <section class="py-3 border-bottom bg-white">
-        <div class="container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 small">
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Shop" asp-action="Index" class="text-decoration-none text-secondary">
-                            <i class="bi bi-shop me-1"></i> Shop
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a asp-controller="Cart" asp-action="Index" class="text-decoration-none text-secondary">Cart</a>
-                    </li>
-                    <li class="breadcrumb-item active fw-semibold" aria-current="page" style="color:#4285F4;">
-                        Checkout
-                    </li>
-                </ol>
-            </nav>
+            <!-- SECURITY & TRUST BADGE (Replaced duplicate toggles) -->
+            <div class="flex items-center gap-2 self-start sm:self-center">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-semibold shadow-xs">
+                    <i class="bi bi-shield-lock-fill text-emerald-600 dark:text-emerald-400 text-sm"></i>
+                    <span data-en="256-Bit SSL Encrypted & Secure Checkout" data-kh="ការទូទាត់ប្រកបដោយសុវត្ថិភាព 256-Bit SSL">256-Bit SSL Encrypted & Secure Checkout</span>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 
-    <!-- HERO -->
-    <section class="checkout-hero">
-        <div class="container">
-            <div class="checkout-hero-eyebrow">STEP 2 OF 2</div>
-            <h1>Order Checkout</h1>
-        </div>
-    </section>
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    <section class="py-5">
-        <div class="container">
-            <div class="row g-4">
+        <form asp-controller="Checkout"
+              asp-action="Index"
+              method="post"
+              id="checkoutForm">
 
-                <!-- ========================= -->
-                <!-- CHECKOUT FORM             -->
-                <!-- ========================= -->
-                <div class="col-lg-8">
+            @Html.AntiForgeryToken()
 
-                    <form asp-controller="Checkout"
-                          asp-action="Index"
-                          method="post"
-                          id="checkoutForm">
+            <!-- Hidden fields for KHQR payment confirmation -->
+            <input type="hidden" asp-for="PaymentTransactionRef" id="hdnPaymentRef" value="" />
+            <input type="hidden" asp-for="IsPaymentConfirmed" id="hdnPaymentConfirmed" value="false" />
 
-                        @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="p-4 mb-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs"></div>
 
-                        <!-- Hidden fields for KHQR payment confirmation -->
-                        <input type="hidden" asp-for="PaymentTransactionRef" id="hdnPaymentRef" value="" />
-                        <input type="hidden" asp-for="IsPaymentConfirmed" id="hdnPaymentConfirmed" value="false" />
+            @if (TempData["Error"] != null)
+            {
+                <div class="p-4 mb-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-base flex-shrink-0"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+            }
 
-                        <div asp-validation-summary="ModelOnly"
-                             class="alert alert-danger border-0 rounded-3 mb-3">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <!-- LEFT COLUMN: FORM SECTIONS (8 COLS) -->
+                <div class="lg:col-span-8 space-y-6">
+
+                    <!-- 1. CUSTOMER INFORMATION -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white" data-kh="ព័ត៌មានអតិថិជន" data-en="Customer Profile">ព័ត៌មានអតិថិជន</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-kh="បញ្ចូលព័ត៌មានទំនាក់ទំនងសម្រាប់តាមដានការដឹកជញ្ជូន" data-en="Enter contact info for order tracking and receipts.">បញ្ចូលព័ត៌មានទំនាក់ទំនងសម្រាប់តាមដានការដឹកជញ្ជូន</p>
+                            </div>
                         </div>
 
-                        @if (TempData["Error"] != null)
-                        {
-                            <div class="alert alert-danger border-0 rounded-3 mb-3">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="FirstName" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-kh="នាមត្រកូល *" data-en="First Name *">នាមត្រកូល <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input asp-for="FirstName" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtFirstName" required placeholder="First Name" />
+                                </div>
+                                <span asp-validation-for="FirstName" class="text-rose-500 text-xs mt-1 block"></span>
                             </div>
+
+                            <div>
+                                <label asp-for="LastName" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-kh="នាមខ្លួន *" data-en="Last Name *">នាមខ្លួន <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input asp-for="LastName" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtLastName" required placeholder="Last Name" />
+                                </div>
+                                <span asp-validation-for="LastName" class="text-rose-500 text-xs mt-1 block"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="Phone" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-kh="លេខទូរស័ព្ទ *" data-en="Phone Number *">លេខទូរស័ព្ទ <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        <i class="bi bi-telephone"></i>
+                                    </span>
+                                    <input asp-for="Phone" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtPhone" required placeholder="012 345 678" />
+                                </div>
+                                <span asp-validation-for="Phone" class="text-rose-500 text-xs mt-1 block"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="Email" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-kh="អ៊ីមែល *" data-en="Email Address *">អ៊ីមែល <span class="text-rose-500">*</span></label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                    <input asp-for="Email" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtEmail" required type="email" placeholder="name@example.com" />
+                                </div>
+                                <span asp-validation-for="Email" class="text-rose-500 text-xs mt-1 block"></span>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                <label asp-for="DeliveryNote" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-kh="កំណត់សម្គាល់ការដឹកជញ្ជូន (ស្រេចចិត្ត)" data-en="Delivery Notes / Instructions (Optional)">កំណត់សម្គាល់ការដឹកជញ្ជូន (ស្រេចចិត្ត)</label>
+                                <div class="relative">
+                                    <textarea asp-for="DeliveryNote" rows="2" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition resize-none" placeholder="e.g. Call before delivery, drop off at reception..." data-placeholder-kh="ឧទាហរណ៍៖ ទូរស័ព្ទមកមុនមកដល់, ផ្ញើនៅកន្លែងទទួលភ្ញៀវ..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DELIVERY METHOD -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white" data-kh="តើអ្នកចង់ទទួលបានការកុម្ម៉ង់ដោយរបៀបណា?" data-en="How would you like to receive your order?">តើអ្នកចង់ទទួលបានការកុម្ម៉ង់ដោយរបៀបណា?</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-kh="ជ្រើសរើសវិធីសាស្ត្រទទួលបានទំនិញរបស់អ្នក" data-en="Select how you would like to receive your package.">ជ្រើសរើសវិធីសាស្ត្រទទួលបានទំនិញរបស់អ្នក</p>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="DeliveryType" id="hdnDeliveryType" value="VETExpress" />
+                        <input type="hidden" asp-for="CarrierCode" id="hdnCarrierCode" value="VETExpress" />
+                        <input type="hidden" asp-for="SelectedProvince" id="hdnSelectedProvince" value="រាជធានីភ្នំពេញ" />
+                        <input type="hidden" asp-for="SelectedBranchName" id="hdnSelectedBranchName" value="" />
+
+                        @{
+                            var deliveryMethodsList = ViewBag.DeliveryMethods as List<WebApplication_ClothingEcommerce.Models.DeliveryMethod>
+                                                      ?? new List<WebApplication_ClothingEcommerce.Models.DeliveryMethod>();
+                            var activeDeliveryCode = Model.DeliveryType ?? "VETExpress";
+                            if (!deliveryMethodsList.Any(d => d.Code == activeDeliveryCode) && deliveryMethodsList.Any())
+                            {
+                                activeDeliveryCode = deliveryMethodsList.First().Code;
+                            }
                         }
 
-                        <!-- 1. CUSTOMER INFORMATION -->
-                        <div class="checkout-card mb-4 p-4">
-                            <div class="checkout-card-title">
-                                <span class="checkout-section-icon blue">
-                                    <i class="bi bi-person" aria-hidden="true"></i>
-                                </span>
-                                Customer Information
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label asp-for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
-                                    <input asp-for="FirstName" class="form-control" id="txtFirstName" required />
-                                    <span asp-validation-for="FirstName" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                    <input asp-for="LastName" class="form-control" id="txtLastName" required />
-                                    <span asp-validation-for="LastName" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="Phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                    <input asp-for="Phone" class="form-control" id="txtPhone" required placeholder="012 345 678" />
-                                    <span asp-validation-for="Phone" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                    <input asp-for="Email" class="form-control" id="txtEmail" required type="email" />
-                                    <span asp-validation-for="Email" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. SHIPPING ADDRESS -->
-                        <div class="checkout-card mb-4 p-4">
-                            <div class="checkout-card-title">
-                                <span class="checkout-section-icon green">
-                                    <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                </span>
-                                Shipping Address
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label asp-for="Province" class="form-label">Province / State <span class="text-danger">*</span></label>
-                                    <input asp-for="Province" class="form-control" id="txtProvince" required placeholder="Phnom Penh" />
-                                    <span asp-validation-for="Province" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="City" class="form-label">City / Khan <span class="text-danger">*</span></label>
-                                    <input asp-for="City" class="form-control" id="txtCity" required placeholder="Daun Penh" />
-                                    <span asp-validation-for="City" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-8">
-                                    <label asp-for="Street" class="form-label">Street &amp; House No. <span class="text-danger">*</span></label>
-                                    <input asp-for="Street" class="form-control" id="txtStreet" required placeholder="St. 200, House 12A" />
-                                    <span asp-validation-for="Street" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-4">
-                                    <label asp-for="PostalCode" class="form-label">Postal Code</label>
-                                    <input asp-for="PostalCode" class="form-control" placeholder="12000" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3. PAYMENT METHOD -->
-                        <div class="checkout-card mb-4 p-4">
-                            <div class="checkout-card-title">
-                                <span class="checkout-section-icon yellow">
-                                    <i class="bi bi-credit-card" aria-hidden="true"></i>
-                                </span>
-                                Payment Method
-                            </div>
-
-                            @if (paymentMethods.Count == 0)
+                        <!-- 100% DYNAMIC DELIVERY METHOD CARDS FROM DATABASE -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5" id="deliveryMethodsContainer">
+                            @if (deliveryMethodsList.Any())
                             {
-                                <div class="alert alert-warning border-0 rounded-3">
-                                    No payment methods are currently active.
-                                </div>
+                                foreach (var dMethod in deliveryMethodsList)
+                                {
+                                    var isSelected = string.Equals(activeDeliveryCode, dMethod.Code, StringComparison.OrdinalIgnoreCase);
+                                    var feeDisplay = dMethod.BaseFee == 0 ? "Free ($0.00)" : $"${dMethod.BaseFee:0.00} Delivery Fee";
+                                    var feeDisplayKh = dMethod.BaseFee == 0 ? "មិនគិតថ្លៃ ($0.00)" : $"ថ្លៃដឹក ${dMethod.BaseFee:0.00}";
+
+                                    <div class="relative p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition @(isSelected ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm ring-2 ring-primary-500/20" : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700")"
+                                         id="cardDelivery_@dMethod.Code"
+                                         data-delivery-code="@dMethod.Code"
+                                         data-fee="@dMethod.BaseFee.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)"
+                                         data-requires-branch="@dMethod.RequiresBranchSelection.ToString().ToLower()"
+                                         onclick="selectDeliveryType('@dMethod.Code', @dMethod.BaseFee.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), @dMethod.RequiresBranchSelection.ToString().ToLower())">
+                                        <div class="flex items-center gap-3.5">
+                                            <div class="w-12 h-12 rounded-xl @(isSelected ? "bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300") flex items-center justify-center text-xl flex-shrink-0" id="iconWrap_@dMethod.Code">
+                                                @if (dMethod.Code == "StorePickup")
+                                                {
+                                                    <i class="bi bi-shop"></i>
+                                                }
+                                                else if (dMethod.Code == "VETExpress")
+                                                {
+                                                    <span class="px-1.5 py-0.5 rounded bg-rose-600 text-white font-black text-[10px] tracking-tight">VET</span>
+                                                }
+                                                else if (dMethod.Code == "CityDelivery")
+                                                {
+                                                    <i class="bi bi-send-fill text-sky-500"></i>
+                                                }
+                                                else if (dMethod.Code == "OtherExpress")
+                                                {
+                                                    <i class="bi bi-box-seam text-amber-500"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-truck"></i>
+                                                }
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-bold text-sm text-slate-900 dark:text-white" data-kh="@(string.IsNullOrWhiteSpace(dMethod.KhmerName) ? dMethod.Name : dMethod.KhmerName)" data-en="@dMethod.Name">
+                                                    @(string.IsNullOrWhiteSpace(dMethod.KhmerName) ? dMethod.Name : dMethod.KhmerName)
+                                                </div>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">@dMethod.EstimatedDeliveryTime</div>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(dMethod.BaseFee == 0 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50" : "bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200/60 dark:border-primary-900/50") mt-1"
+                                                      data-kh="@feeDisplayKh" data-en="@feeDisplay">
+                                                    @feeDisplay
+                                                </span>
+                                            </div>
+                                            <i class="bi bi-check-circle-fill text-primary-600 text-xl @(isSelected ? "" : "hidden")" id="checkDelivery_@dMethod.Code"></i>
+                                        </div>
+                                    </div>
+                                }
                             }
                             else
                             {
-                                <div class="row g-3">
-                                    @foreach (var method in paymentMethods)
-                                    {
-                                        var isKhqr = method.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase);
-                                        var isAba  = method.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase);
-                                        var isOnlineKhqr = isKhqr || isAba;
-
-                                        <div class="col-md-6">
-                                            <label class="payment-method-card" id="pmCard-@method.Id">
-                                                <input type="radio"
-                                                       asp-for="PaymentMethodId"
-                                                       value="@method.Id"
-                                                       class="form-check-input mt-0 me-1"
-                                                       data-is-khqr="@(isOnlineKhqr ? "true" : "false")"
-                                                       data-name="@method.Name"
-                                                       name="PaymentMethodId" />
-
-                                                <div class="payment-icon-wrap">
-                                                    @if (!string.IsNullOrWhiteSpace(method.Icon))
-                                                    {
-                                                        <img src="@method.Icon" 
-                                                             alt="@method.Name"
-                                                             onerror="this.onerror=null;this.src='@(isKhqr ? "/images/khqr-logo.svg" : (isAba ? "/images/aba-logo.svg" : "/images/khqr-logo.svg"))';" />
-                                                    }
-                                                    else if (isKhqr)
-                                                    {
-                                                        <img src="/images/khqr-logo.svg" alt="KHQR" />
-                                                    }
-                                                    else if (isAba)
-                                                    {
-                                                        <img src="/images/aba-logo.svg" alt="ABA Pay" />
-                                                    }
-                                                    else
-                                                    {
-                                                        <i class="bi bi-cash-stack" style="color:#64748b;font-size:18px;"></i>
-                                                    }
-                                                </div>
-
-                                                <div class="flex-grow-1">
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <strong style="font-size:14px;color:#0f172a;">@method.Name</strong>
-                                                        @if (isKhqr)
-                                                        {
-                                                            <span class="khqr-tag-pill">
-                                                                <i class="bi bi-qr-code"></i> KHQR
-                                                            </span>
-                                                        }
-                                                        else if (isAba)
-                                                        {
-                                                            <span class="aba-tag-pill">
-                                                                <i class="bi bi-phone"></i> ABA Mobile
-                                                            </span>
-                                                        }
-                                                    </div>
-
-                                                    <small class="text-muted d-block mt-1" style="font-size:11.5px;line-height:1.35;">
-                                                        @if (isKhqr || isAba)
-                                                        {
-                                                            <span>Scan to pay instantly with any Cambodian banking app</span>
-                                                        }
-                                                        else if (!string.IsNullOrWhiteSpace(method.Description))
-                                                        {
-                                                            <span>@method.Description</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span>Pay upon package arrival</span>
-                                                        }
-                                                    </small>
-                                                </div>
-                                            </label>
+                                <!-- Fallback Default Card -->
+                                <div class="relative p-5 rounded-2xl border-2 cursor-pointer transition border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm ring-2 ring-primary-500/20"
+                                     id="cardDelivery_VETExpress"
+                                     data-delivery-code="VETExpress"
+                                     data-fee="2.00"
+                                     data-requires-branch="true"
+                                     onclick="selectDeliveryType('VETExpress', 2.00, true)">
+                                    <div class="flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xl flex-shrink-0" id="iconWrap_VETExpress">
+                                            <span class="px-1.5 py-0.5 rounded bg-rose-600 text-white font-black text-[10px]">VET</span>
                                         </div>
-                                    }
-                                </div>
-                            }
-
-                            <span asp-validation-for="PaymentMethodId" class="text-danger small d-block mt-2"></span>
-                        </div>
-
-                        <!-- SUBMIT BUTTON -->
-                        <button type="button"
-                                class="checkout-place-order-btn"
-                                id="btnTriggerOrder"
-                                onclick="onPlaceOrderClicked()">
-                            <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-                            <span id="btnOrderText">Proceed to Payment</span>
-                            <i class="bi bi-arrow-right ms-1"></i>
-                        </button>
-
-                    </form>
-                </div>
-
-                <!-- ========================= -->
-                <!-- ORDER SUMMARY             -->
-                <!-- ========================= -->
-                <div class="col-lg-4">
-                    <div class="checkout-summary-card p-4">
-                        <h4 class="fw-bold mb-4" style="color:#0f172a;font-size:18px;">Order Summary</h4>
-
-                        <div class="d-flex flex-column gap-3 mb-3">
-                            @foreach (var item in Model.Items)
-                            {
-                                <div class="d-flex gap-3">
-                                    <img src="@item.ImageUrl"
-                                         alt="@item.ProductName"
-                                         class="checkout-summary-item-img" />
-                                    <div class="flex-grow-1">
-                                        <div class="fw-semibold text-truncate" style="color:#0f172a;max-width:180px;font-size:13.5px;">
-                                            @item.ProductName
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-bold text-sm text-slate-900 dark:text-white" data-kh="វីរៈ ប៊ុនថាំ អេចប្រេស" data-en="VET Express">វីរៈ ប៊ុនថាំ អេចប្រេស</div>
+                                            <div class="text-xs text-slate-500 dark:text-slate-400 truncate">1-2 Business days (24 Provinces)</div>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200/60 dark:border-primary-900/50 mt-1"
+                                                  data-kh="ថ្លៃដឹក $2.00" data-en="$2.00 Delivery Fee">
+                                                $2.00 Delivery Fee
+                                            </span>
                                         </div>
-                                        <div class="text-muted small mt-1" style="font-size:12px;">
-                                            Size: @item.Size &bull; @item.Color
-                                        </div>
-                                        <div class="small fw-semibold text-dark mt-1">
-                                            @item.Quantity &times; $@item.UnitPrice.ToString("0.00")
-                                        </div>
+                                        <i class="bi bi-check-circle-fill text-primary-600 text-xl" id="checkDelivery_VETExpress"></i>
                                     </div>
                                 </div>
                             }
                         </div>
 
-                        <hr class="my-3" style="border-color:#e2e8f0;" />
-
-                        <div class="checkout-summary-row">
-                            <span>Subtotal</span>
-                            <strong style="color:#0f172a;">$@Model.SubTotal.ToString("0.00")</strong>
-                        </div>
-                        <div class="checkout-summary-row">
-                            <span>Delivery Fee</span>
-                            <strong style="color:#0f172a;">$@Model.DeliveryFee.ToString("0.00")</strong>
-                        </div>
-
-                        <div class="checkout-summary-total">
-                            <strong class="fs-6" style="color:#0f172a;">Total Amount</strong>
-                            <strong class="checkout-summary-total-value">$@Model.Total.ToString("0.00")</strong>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2 mt-4 pt-3 border-top text-muted small">
-                            <i class="bi bi-shield-check text-success fs-5"></i>
-                            <span style="font-size:11.5px;">Bakong KHQR &amp; SSL 256-Bit Encrypted Secure Checkout</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-</div>
-
-
-<!-- ================================================================
-     AUTHENTIC BAKONG KHQR & ABA PAY PAYMENT MODAL
-================================================================ -->
-<div class="modal fade" id="khqrModal" tabindex="-1" aria-labelledby="khqrModalLabel" aria-hidden="true"
-     data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered khqr-modal-dialog">
-        <div class="modal-content khqr-modal-content">
-
-            <!-- Modal Header -->
-            <div class="modal-header border-0 pb-0 pt-3 px-4">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="khqr-countdown-pill" id="khqrTimer">
-                        <i class="bi bi-clock-history"></i> <span id="khqrTimerText">05:00</span>
-                    </span>
-                    <span class="d-flex align-items-center gap-2 text-success small fw-semibold ms-2" id="khqrLiveStatus">
-                        <span class="pulse-dot"></span> Ready to scan
-                    </span>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopPolling()"></button>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="modal-body p-4 pt-2">
-
-                <!-- Standee Card Container -->
-                <div class="khqr-standee" id="khqrStandee">
-
-                    <!-- Top Red Banner -->
-                    <div class="khqr-header-banner">
-                        <div class="khqr-header-title">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="24" height="24" rx="5" fill="white"/>
-                                <path d="M4 4H10V10H4V4ZM5.5 5.5V8.5H8.5V5.5H5.5ZM14 4H20V10H14V4ZM15.5 5.5V8.5H18.5V5.5H15.5ZM4 14H10V20H4V14ZM5.5 15.5V18.5H8.5V15.5H5.5ZM14 14H16V16H14V14ZM18 14H20V16H18V14ZM16 16H18V18H16V16ZM14 18H16V20H14V18ZM18 18H20V20H18V18Z" fill="#e11d48"/>
-                            </svg>
-                            <span>KHQR</span>
-                        </div>
-                        <span class="khqr-header-brand">BAKONG</span>
-                    </div>
-
-                    <!-- Merchant Info -->
-                    <div class="khqr-merchant-info">
-                        <div class="khqr-merchant-name" id="khqrMerchantName">CLOTHÉ STORE</div>
-                        <div class="khqr-amount-display" id="khqrAmountUsd">$@Model.Total.ToString("0.00") <span class="khqr-currency-label">USD</span></div>
-                        <div class="khqr-khr-pill" id="khqrAmountKhr">
-                            <i class="bi bi-arrow-repeat me-1"></i>~ ៛@(Math.Round(Model.Total * 4100).ToString("N0")) KHR
-                        </div>
-                    </div>
-
-                    <!-- QR Canvas Area (Centered) -->
-                    <div class="khqr-qr-container">
-                        <div id="khqrSpinner" class="py-5 text-center">
-                            <div class="spinner-border text-danger" role="status" style="width:2.4rem;height:2.4rem;"></div>
-                            <div class="text-muted small mt-2 fw-semibold">Generating Bakong KHQR…</div>
-                        </div>
-                        <div id="khqrCanvasWrap" style="display:none;">
-                            <div class="khqr-qr-frame">
-                                <canvas id="khqrCanvas" width="220" height="220"></canvas>
+                        <!-- STORE PICKUP LOCATION NOTICE CONTAINER -->
+                        <div id="storePickupInfoContainer" class="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 text-xs mb-4 hidden">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-lg flex-shrink-0">
+                                    <i class="bi bi-shop"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-sm text-emerald-950 dark:text-emerald-100 mb-0.5" data-kh="ទីតាំងទទួលទំនិញផ្ទាល់នៅហាង" data-en="In-Store Pickup Location">ទីតាំងទទួលទំនិញផ្ទាល់នៅហាង</div>
+                                    <div class="text-xs text-emerald-800 dark:text-emerald-300">CLOTHÉ Flagship Store: #128, Street 271, Sangkat Phsar Doeum Thkov, Khan Chamkarmon, Phnom Penh.</div>
+                                    <div class="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1 font-semibold">📞 +855 96 914 4183 • Open Daily 8:00 AM - 9:00 PM</div>
+                                </div>
                             </div>
-                            <div class="khqr-scan-tip">
-                                <i class="bi bi-camera me-1"></i> Open camera &amp; point at QR code
+                        </div>
+
+                        <!-- OTHER EXPRESS CUSTOM WRITE-IN INPUT CONTAINER -->
+                        <div id="otherExpressInputContainer" class="p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 mb-4 hidden">
+                            <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5" data-kh="បញ្ជូលឈ្មោះក្រុមហ៊ុនដឹកជញ្ជូនដែលអ្នកចង់បាន (ឧ. J&T Express, Capitol, G-GO)" data-en="Enter your preferred Express Courier (e.g. J&T Express, Capitol, G-GO)">
+                                <i class="bi bi-pencil-square text-amber-600 me-1"></i> បញ្ជូលឈ្មោះក្រុមហ៊ុនដឹកជញ្ជូនដែលអ្នកចង់បាន (Preferred Courier)
+                            </label>
+                            <input type="text" id="txtCustomExpressName" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition" placeholder="e.g. J&T Express, Capitol, G-GO, An Na Express..." oninput="onCustomCarrierInputChanged(this.value)" />
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" data-kh="អ្នកអាចសរសេរឈ្មោះក្រុមហ៊ុនដឹកជញ្ជូនដែលអ្នកចង់ឱ្យហាងផ្ញើទៅបាន" data-en="Write down the name of any courier service you prefer the shop to dispatch via.">
+                                អ្នកអាចសរសេរឈ្មោះក្រុមហ៊ុនដឹកជញ្ជូនដែលអ្នកចង់ឱ្យហាងផ្ញើទៅបាន
+                            </span>
+                        </div>
+
+                        <!-- VET BRANCH SELECTOR -->
+                        <div id="vetBranchContainer" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 mb-4">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px]">VET</span>
+                                <span class="text-xs font-bold text-slate-900 dark:text-white">ក្រុមហ៊ុន វីរៈ ប៊ុនថាំ អេចប្រេស</span>
+                                <span class="ml-auto px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold text-[10px]">២៤ ខេត្ត-ក្រុង</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-kh="១. ជ្រើសរើសខេត្ត/ក្រុង * (Province/City)" data-en="1. Select Province / City *">១. ជ្រើសរើសខេត្ត/ក្រុង * (Province/City)</label>
+                                    <select class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="selVetProvince" onchange="onVetProvinceChanged()">
+                                        @if (ViewBag.Provinces != null)
+                                        {
+                                            foreach (var p in (List<string>)ViewBag.Provinces)
+                                            {
+                                                <option value="@p">@p</option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="រាជធានីភ្នំពេញ">រាជធានីភ្នំពេញ</option>
+                                            <option value="ខេត្តសៀមរាប">ខេត្តសៀមរាប</option>
+                                            <option value="ខេត្តបាត់ដំបង">ខេត្តបាត់ដំបង</option>
+                                            <option value="ខេត្តព្រះសីហនុ">ខេត្តព្រះសីហនុ</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-kh="២. ជ្រើសរើសសាខា វីរៈ ប៊ុនថាំ * (Branch/Campus)" data-en="2. Select VET Branch Office *">២. ជ្រើសរើសសាខា វីរៈ ប៊ុនថាំ * (Branch/Campus)</label>
+                                    <select class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="selVetBranch" onchange="onVetBranchChanged()">
+                                        <option value="">-- ជ្រើសរើសសាខា --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="vetBranchInfo" class="mt-4 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 hidden">
+                                <div class="flex items-center gap-2 text-primary-600 dark:text-primary-400 font-bold text-xs mb-1">
+                                    <i class="bi bi-geo-alt-fill"></i> <span id="lblBranchName"></span>
+                                </div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400" id="lblBranchAddress"></div>
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-1" id="lblBranchPhone"></div>
+                            </div>
+                        </div>
+
+                        <!-- STANDARD STREET ADDRESS CONTAINER (FOR CITY & OTHER EXPRESS DELIVERY) -->
+                        <div id="standardAddressContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 hidden">
+                            <div>
+                                <label asp-for="Province" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-kh="ខេត្ត / ក្រុង *" data-en="Province / State *">Province / State <span class="text-rose-500">*</span></label>
+                                <input asp-for="Province" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtProvince" placeholder="Phnom Penh" />
+                                <span asp-validation-for="Province" class="text-rose-500 text-xs mt-1 block"></span>
+                            </div>
+                            <div>
+                                <label asp-for="City" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-kh="ក្រុង / ខណ្ឌ *" data-en="City / District *">City / Khan <span class="text-rose-500">*</span></label>
+                                <input asp-for="City" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtCity" placeholder="Daun Penh" />
+                                <span asp-validation-for="City" class="text-rose-500 text-xs mt-1 block"></span>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label asp-for="Street" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" data-kh="អាសយដ្ឋាន / ផ្ទះ លេខផ្លូវ *" data-en="Street & House No. *">Street &amp; House No. <span class="text-rose-500">*</span></label>
+                                <input asp-for="Street" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" id="txtStreet" placeholder="St. 200, House 12A" />
+                                <span asp-validation-for="Street" class="text-rose-500 text-xs mt-1 block"></span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Footer Strip -->
-                    <div class="khqr-footer-banner">
-                        <div class="text-muted" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;">Scan with any mobile banking app</div>
-                        <div class="khqr-banks-strip">
-                            <span class="khqr-bank-tag" style="background:#e0f2fe;color:#003764;">ABA Mobile</span>
-                            <span class="khqr-bank-tag" style="background:#fce7f3;color:#9d174d;">Bakong</span>
-                            <span class="khqr-bank-tag" style="background:#dcfce7;color:#166534;">ACLEDA</span>
-                            <span class="khqr-bank-tag" style="background:#fef9c3;color:#854d0e;">Wing Bank</span>
-                            <span class="khqr-bank-tag" style="background:#fee2e2;color:#991b1b;">Canadia</span>
+                    <!-- 3. PAYMENT METHOD -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-credit-card-fill"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white" data-kh="វិធីសាស្ត្រទូទាត់ប្រាក់" data-en="Payment Method">វិធីសាស្ត្រទូទាត់ប្រាក់</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-kh="ជ្រើសរើសវិធីសាស្ត្រទូទាត់ប្រាក់ដែលអ្នកពេញចិត្ត" data-en="Choose your preferred payment option.">ជ្រើសរើសវិធីសាស្ត្រទូទាត់ប្រាក់ដែលអ្នកពេញចិត្ត</p>
+                            </div>
                         </div>
+
+                        @if (paymentMethods.Count == 0)
+                        {
+                            <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs">
+                                No payment methods are currently active.
+                            </div>
+                        }
+                        else
+                        {
+                            var defaultMethodId = Model.PaymentMethodId ?? paymentMethods.FirstOrDefault()?.Id;
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach (var method in paymentMethods)
+                                {
+                                    var isKhqr = method.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase);
+                                    var isAba  = method.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase);
+                                    var isAcleda = method.Name.Contains("ACLEDA", StringComparison.OrdinalIgnoreCase);
+                                    var isWing = method.Name.Contains("Wing", StringComparison.OrdinalIgnoreCase);
+                                    var isBakong = method.Name.Contains("Bakong", StringComparison.OrdinalIgnoreCase);
+                                    var isOnlineKhqr = isKhqr || isAba || isAcleda || isWing || isBakong;
+                                    var isChecked = method.Id == defaultMethodId;
+
+                                    <label class="relative flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600 has-[:checked]:border-primary-600 has-[:checked]:bg-primary-50/20 dark:has-[:checked]:bg-primary-950/20 has-[:checked]:ring-2 has-[:checked]:ring-primary-500/20" id="pmCard-@method.Id">
+                                        <input type="radio"
+                                               asp-for="PaymentMethodId"
+                                               value="@method.Id"
+                                               class="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
+                                               data-is-khqr="@(isOnlineKhqr ? "true" : "false")"
+                                               data-name="@method.Name"
+                                               checked="@(isChecked ? "checked" : null)"
+                                               onchange="onPaymentMethodChanged(this)"
+                                               name="PaymentMethodId" />
+
+                                        <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            @if (isKhqr)
+                                            {
+                                                <img src="/images/khqr-logo.svg" alt="KHQR" class="w-7 h-7 object-contain" />
+                                            }
+                                            else if (isAba)
+                                            {
+                                                <img src="/images/aba-logo.svg" alt="ABA Pay" class="w-7 h-7 object-contain" />
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(method.Icon))
+                                            {
+                                                <img src="@method.Icon"
+                                                     alt="@method.Name"
+                                                     class="w-7 h-7 object-contain"
+                                                     onerror="this.onerror=null;this.src='/images/khqr-logo.svg';" />
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-cash-stack text-lg text-slate-400"></i>
+                                            }
+                                        </div>
+
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <strong class="text-xs font-bold text-slate-900 dark:text-white truncate">@method.Name</strong>
+                                                @if (isKhqr)
+                                                {
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 border border-rose-200 dark:border-rose-900/60"><i class="bi bi-qr-code"></i> KHQR</span>
+                                                }
+                                                else if (isAba)
+                                                {
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-600 border border-sky-200 dark:border-sky-900/60"><i class="bi bi-phone"></i> ABA Pay</span>
+                                                }
+                                            </div>
+
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                                @if (isKhqr || isAba)
+                                                {
+                                                    <span data-kh="ស្កែនទូទាត់ប្រាក់ភ្លាមៗជាមួយបាគង ឬគ្រប់កម្មវិធីធនាគារ" data-en="Scan & pay instantly with Bakong or any mobile banking app">ស្កែនទូទាត់ប្រាក់ភ្លាមៗជាមួយបាគង ឬគ្រប់កម្មវិធីធនាគារ</span>
+                                                }
+                                                else if (!string.IsNullOrWhiteSpace(method.Description))
+                                                {
+                                                    <span>@method.Description</span>
+                                                }
+                                                else
+                                                {
+                                                    <span data-kh="ទូទាត់ប្រាក់ពេលទំនិញមកដល់" data-en="Pay upon package delivery">ទូទាត់ប្រាក់ពេលទំនិញមកដល់</span>
+                                                }
+                                            </span>
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+                        }
+
+                        <span asp-validation-for="PaymentMethodId" class="text-rose-500 text-xs mt-2 block"></span>
                     </div>
+
+                    <!-- SUBMIT BUTTON -->
+                    <button type="button"
+                            class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-extrabold text-base shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/35 transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99]"
+                            id="btnTriggerOrder"
+                            onclick="onPlaceOrderClicked()">
+                        <i class="bi bi-shield-lock-fill text-lg"></i>
+                        <span id="btnOrderText">Proceed to Pay $@Model.Total.ToString("0.00")</span>
+                        <i class="bi bi-arrow-right text-lg"></i>
+                    </button>
+
                 </div>
 
-                <!-- Action Links (Save QR & Open ABA in 2 equal columns) -->
-                <div class="row g-2 mt-3">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-secondary btn-sm w-100 rounded-3 py-2 fw-semibold" onclick="downloadKhqr()">
-                            <i class="bi bi-download me-1"></i> Save QR
+                <!-- RIGHT COLUMN: ORDER SUMMARY (4 COLS) -->
+                <div class="lg:col-span-4 sticky top-24 space-y-4">
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-kh="សង្ខេបការកុម្ម៉ង់" data-en="Order Summary">សង្ខេបការកុម្ម៉ង់</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
+                                @Model.Items.Sum(i => i.Quantity) Item@(Model.Items.Sum(i => i.Quantity) == 1 ? "" : "s")
+                            </span>
+                        </div>
+
+                        <!-- ITEMS LIST -->
+                        <div class="space-y-3.5 max-h-80 overflow-y-auto pr-1 mb-4 divide-y divide-slate-100 dark:divide-slate-800/80">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="pt-3.5 first:pt-0 flex items-center gap-3">
+                                    <div class="w-14 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0 relative">
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.ProductName" class="w-full h-full object-cover" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full h-full flex items-center justify-center text-slate-400"><i class="bi bi-image"></i></div>
+                                        }
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-bold text-xs text-slate-900 dark:text-white truncate">@item.ProductName</div>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Size: <span class="font-semibold text-slate-700 dark:text-slate-300">@item.Size</span> &bull; Color: <span class="font-semibold text-slate-700 dark:text-slate-300">@item.Color</span>
+                                        </div>
+                                        <div class="font-bold text-primary-600 dark:text-primary-400 text-xs mt-1">
+                                            @item.Quantity &times; $@item.UnitPrice.ToString("0.00")
+                                        </div>
+                                    </div>
+                                    <div class="font-extrabold text-xs text-slate-900 dark:text-white">
+                                        $@item.Subtotal.ToString("0.00")
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2 text-xs mb-4">
+                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                                <span data-kh="សរុបទំនិញ" data-en="Subtotal">សរុបទំនិញ</span>
+                                <strong class="text-slate-900 dark:text-white font-bold">$@Model.SubTotal.ToString("0.00")</strong>
+                            </div>
+                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                                <span data-kh="ថ្លៃដឹកជញ្ជូន" data-en="Delivery Fee">ថ្លៃដឹកជញ្ជូន</span>
+                                <strong class="text-slate-900 dark:text-white font-bold" id="lblSummaryDeliveryFee">$@Model.DeliveryFee.ToString("0.00")</strong>
+                            </div>
+                        </div>
+
+                        <!-- Grand Total -->
+                        <div class="pt-2 pb-4 flex items-center justify-between">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white" data-kh="ប្រាក់សរុប" data-en="Total Amount">ប្រាក់សរុប</span>
+                            <span class="text-2xl font-black text-primary-600 dark:text-primary-400" id="lblSummaryTotal">$@Model.Total.ToString("0.00")</span>
+                        </div>
+
+                        <!-- PRIMARY PAY BUTTON (IN SUMMARY) -->
+                        <button type="button"
+                                id="btnSummaryPay"
+                                onclick="onPlaceOrderClicked()"
+                                class="w-full mb-4 py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black text-base shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/35 transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]">
+                            <i class="bi bi-shield-lock-fill text-lg"></i>
+                            <span id="btnSummaryOrderText">Proceed to Pay $@Model.Total.ToString("0.00")</span>
+                            <i class="bi bi-arrow-right text-lg"></i>
                         </button>
-                    </div>
-                    <div class="col-6">
-                        <a id="lnkOpenAba" href="aba://" class="btn btn-outline-primary btn-sm w-100 rounded-3 py-2 fw-semibold">
-                            <i class="bi bi-phone me-1"></i> Open ABA
-                        </a>
+
+                        <!-- TRUST BADGES -->
+                        <div class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-800/80 space-y-2">
+                            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                                <i class="bi bi-shield-check text-base"></i> <span data-kh="ប្រព័ន្ធទូទាត់ Bakong KHQR មានសុវត្ថិភាព" data-en="Official Bakong KHQR Encrypted Payment">ប្រព័ន្ធទូទាត់ Bakong KHQR មានសុវត្ថិភាព</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-[11px]">
+                                <i class="bi bi-lock-fill text-slate-400"></i> <span data-kh="ប្រព័ន្ធសុវត្ថិភាព SSL 256-Bit Encrypted" data-en="256-Bit SSL Encrypted & Verified Security">ប្រព័ន្ធសុវត្ថិភាព SSL 256-Bit Encrypted</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Developer / Instant Test Simulation button -->
-                <button type="button" class="btn btn-light btn-sm text-success border rounded-3 w-100 py-2 mt-2 fw-bold" onclick="simulateSuccessfulPayment()" title="Simulate payment confirmation for instant testing">
-                    <i class="bi bi-lightning-charge-fill me-1"></i> Test Pay (Simulate)
-                </button>
-
             </div>
+        </form>
 
-            <!-- Modal Footer -->
-            <div class="modal-footer border-0 px-4 pb-4 pt-1 flex-column gap-2">
-                <button type="button"
-                        class="btn-khqr-confirm w-100"
-                        id="btnConfirmPaid"
-                        onclick="onPaymentConfirmed()">
-                    <i class="bi bi-shield-check fs-5"></i>
-                    <span>I've Completed the Payment</span>
-                </button>
-                <button type="button"
-                        class="btn btn-link text-decoration-none text-muted w-100 py-1"
-                        data-bs-dismiss="modal"
-                        onclick="stopPolling()"
-                        style="font-size:13px;">
-                    Cancel &amp; Select Different Method
-                </button>
-            </div>
-
-        </div>
     </div>
 </div>
 
+<!-- ================================================================
+     AUTHENTIC COMPACT BAKONG KHQR STANDEE MODAL (MATCHING NBC / ACLEDA STANDARDS)
+================================================================ -->
+<div id="khqrModalOverlay" class="fixed inset-0 z-50 items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md transition-opacity duration-300" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="khqrMerchantName">
+    <!-- Compact Standee Container (Guaranteed centered floating popup) -->
+    <div id="khqrModalCard" class="relative bg-gradient-to-b from-[#0B1528] via-[#0E1E38] to-[#070F1E] border border-blue-900/50 rounded-3xl shadow-2xl p-4 overflow-hidden transform transition-all duration-200 scale-95 opacity-0 my-auto text-white" style="width: 100%; max-width: 350px; margin: auto;">
+
+        <!-- Top Bank / Brand Header & Close Button -->
+        <div class="flex items-center justify-between pb-3 px-1">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-base text-white tracking-wide" style="font-family: 'Kantumruy Pro', sans-serif;">@(storeSettings?.StoreNameKh ?? "ហាងសម្លៀកបំពាក់ CLOTHÉ")</span>
+                <span class="text-[11px] font-black text-slate-300 tracking-wider uppercase">@(storeSettings?.StoreName ?? "CLOTHÉ")</span>
+                <div class="w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-bold shadow-xs">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-mono font-bold text-amber-300 px-2.5 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30" id="khqrTimerText">05:00</span>
+                <button type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer" onclick="cancelAndCloseKhqrModal()" aria-label="Close modal">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- The Authentic White Standee Card -->
+        <div class="rounded-3xl bg-white shadow-2xl overflow-hidden text-slate-900 transition-all duration-300" id="khqrStandee">
+
+            <!-- Card Red Header Banner (NBC KHQR Standard) -->
+            <div class="bg-[#E1251B] text-white py-2.5 px-4 flex items-center justify-between relative shadow-sm">
+                <span class="font-black text-xl tracking-widest text-white">KHQR</span>
+                <span class="text-[10px] font-mono font-bold bg-black/20 text-white px-2 py-0.5 rounded-full" id="khqrOrderRefBadge">ORDER</span>
+            </div>
+
+            <!-- 1. LOADING STATE -->
+            <div id="khqrStateLoading" class="py-12 px-4 text-center">
+                <div class="w-10 h-10 border-3 border-[#E1251B] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <div class="text-slate-800 text-xs font-bold" id="khqrLoadingText" style="font-family: 'Kantumruy Pro', sans-serif;">កំពុងបង្កើត KHQR មានសុវត្ថិភាព…</div>
+                <div class="text-[10px] text-slate-400 mt-1">EMVCo Dynamic Payment Request</div>
+            </div>
+
+            <!-- 2. QR READY / WAITING STATE -->
+            <div id="khqrStateQr" class="hidden px-4 pt-3 pb-4 text-center">
+                <!-- Merchant Name -->
+                <div class="text-slate-900 font-extrabold text-base leading-tight tracking-tight" style="font-family: 'Kantumruy Pro', sans-serif;" id="khqrMerchantKhmer">
+                    @(storeSettings?.StoreNameKh ?? "ហាងសម្លៀកបំពាក់ CLOTHÉ")
+                </div>
+                <div class="text-[10px] font-semibold text-slate-400 font-mono tracking-wider mt-0.5 uppercase" id="khqrMerchantName">
+                    @(storeSettings?.StoreName ?? "CLOTHÉ") STORE
+                </div>
+
+                <!-- Amount -->
+                <div class="mt-2 text-2xl font-black text-slate-900 tracking-tight flex items-baseline justify-center gap-1.5" id="khqrAmountContainer">
+                    <span id="khqrAmountUsd" class="font-mono font-black">@Model.Total.ToString("0.00")</span>
+                    <span class="text-sm font-extrabold text-slate-800" style="font-family: 'Kantumruy Pro', sans-serif;">ដុល្លារ</span>
+                </div>
+                <div class="text-[11px] font-bold text-slate-500 mt-0.5" id="khqrAmountKhr" style="font-family: 'Kantumruy Pro', sans-serif;">
+                    ~ ៛@(Math.Round(Model.Total * 4100).ToString("N0")) រៀល
+                </div>
+
+                <!-- Reference line -->
+                <div class="text-[10px] font-mono text-slate-400 mt-1" id="khqrRefLine">
+                    Ref: <span id="khqrReferenceCode">--</span>
+                </div>
+
+                <!-- Dashed dividing line -->
+                <div class="border-b border-dashed border-slate-300 my-2 mx-2"></div>
+
+                <!-- QR Canvas Container -->
+                <div class="relative flex items-center justify-center p-1 bg-white rounded-2xl min-h-[185px]">
+                    <div id="khqrCanvasWrap" class="relative inline-block">
+                        <canvas id="khqrCanvas" width="180" height="180" class="rounded-xl mx-auto"></canvas>
+                        <!-- Authentic NBC Circular Red Lotus Flower Badge in center -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-8 h-8 rounded-full bg-[#E1251B] p-1 border-2 border-white shadow-md flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" class="w-4 h-4 text-white fill-current">
+                                    <path d="M12 2L14.4 7.2L20 8L16 12L17 17.6L12 15L7 17.6L8 12L4 8L9.6 7.2L12 2Z"/>
+                                    <circle cx="12" cy="12" r="2" fill="#E1251B"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PAID / SUCCESS CELEBRATION STATE -->
+            <div id="khqrStatePaid" class="hidden py-8 px-4 text-center">
+                <div class="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                    <div class="relative w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center text-3xl shadow-xl shadow-emerald-500/40">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                </div>
+                <h4 class="font-extrabold text-lg text-slate-900 mb-1 tracking-tight" style="font-family: 'Kantumruy Pro', sans-serif;">ការទូទាត់ទទួលបានជោគជ័យ!</h4>
+                <p class="text-emerald-600 font-bold text-xs uppercase tracking-wider mb-2">Bakong KHQR Confirmed</p>
+                <p class="text-slate-500 text-xs max-w-xs mx-auto mb-4" id="khqrSuccessTxInfo">
+                    Transaction verified by Bakong.
+                </p>
+                <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-50 text-emerald-800 font-semibold text-xs border border-emerald-200">
+                    <div class="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Redirecting to Order Receipt…</span>
+                </div>
+            </div>
+
+            <!-- 4. EXPIRED STATE -->
+            <div id="khqrStateExpired" class="hidden py-8 px-4 text-center">
+                <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-3xl mx-auto mb-3 border border-rose-200">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h4 class="font-extrabold text-base text-slate-900 mb-1" style="font-family: 'Kantumruy Pro', sans-serif;">កូដ QR បានផុតកំណត់ហើយ</h4>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto mb-4">
+                    The 5-minute payment session has expired. Your order is preserved.
+                </p>
+                <button type="button" onclick="generateNewKhqrAttempt()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="bi bi-arrow-repeat text-sm"></i>
+                    <span style="font-family: 'Kantumruy Pro', sans-serif;">បង្កើតកូដ QR ថ្មី (Generate New QR)</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Footer Text in Khmer (Below Card) -->
+        <p class="text-white text-xs font-semibold text-center mt-3 tracking-wide" style="font-family: 'Kantumruy Pro', sans-serif;">
+            ស្កេនទូទាត់ ជាមួយគ្រប់កម្មវិធីទូរស័ព្ទដែលគាំទ្រ KHQR
+        </p>
+
+        <!-- Live Auto-Detection Radar Status -->
+        <div class="mt-2 py-1.5 px-3 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 flex items-center justify-center gap-2 text-xs text-white" id="khqrStatusBadgeWrap">
+            <span class="relative flex h-2 w-2 flex-shrink-0" id="khqrRadarDot">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span id="khqrLiveStatus" class="font-medium text-[11px] text-center" style="font-family: 'Kantumruy Pro', sans-serif;">
+                រង់ចាំការស្កេនទូទាត់... Auto-submits when paid
+            </span>
+        </div>
+
+        <!-- Compact Utility Buttons -->
+        <div class="grid grid-cols-3 gap-2 mt-2.5" id="khqrUtilityButtons">
+            <button type="button" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer" onclick="downloadKhqr()">
+                <i class="bi bi-download"></i> <span>Save QR</span>
+            </button>
+            <button type="button" id="btnCopyKhqr" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer" onclick="copyKhqrData()">
+                <i class="bi bi-clipboard"></i> <span>Copy</span>
+            </button>
+            <a id="lnkOpenAba" href="aba://" class="py-1.5 px-1 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition flex items-center justify-center gap-1">
+                <i class="bi bi-phone"></i> <span>App</span>
+            </a>
+        </div>
+
+        <!-- Testing Tools Accordion / Quick Simulate -->
+        <div class="mt-2 pt-2 border-t border-white/10" id="khqrSimulateWrap">
+            <button type="button" class="w-full py-1.5 px-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5" onclick="simulateKhqrPayment()">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>⚡ Quick Test Auto-Paid (Sandbox Simulation)</span>
+            </button>
+        </div>
+
+    </div>
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <!-- QRious QR generator library (pure JavaScript, fast & lightweight) -->
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
     <script>
-        const KHQR_METHOD_IDS = new Set(@Html.Raw(
-            "[" + string.Join(",", khqrMethodIds.Select(id => $"\"{id}\"")) + "]"
-        ));
+        const KHQR_METHOD_IDS = new Set(@Html.Raw(Json.Serialize(khqrMethodIds)));
 
-        const ORDER_TOTAL = @Model.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
-
+        let khqrTimerInterval = null;
         let khqrModal = null;
-        let qrTimerInterval = null;
-        let isPollingActive = false;
         let pollTimeoutId = null;
-        let currentAbortController = null;
-        let generatedQrString = "";
-        let generatedMd5 = "";
-        let standeeOriginalHtml = "";
+        let isPollingActive = false;
+        let generatedQrString = '';
+        let generatedMd5 = '';
+        let standeeOriginalHtml = '';
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function getActiveLang() {
+            return localStorage.getItem('site_language') || 'kh';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
             const standeeEl = document.getElementById('khqrStandee');
             if (standeeEl) {
                 standeeOriginalHtml = standeeEl.innerHTML;
             }
 
-            const modalEl = document.getElementById('khqrModal');
-            if (modalEl) {
-                khqrModal = new bootstrap.Modal(modalEl);
-
-                modalEl.addEventListener('hidden.bs.modal', () => {
-                    stopPolling();
-                    if (qrTimerInterval) clearInterval(qrTimerInterval);
+            // Close modal when clicking backdrop overlay
+            const overlay = document.getElementById('khqrModalOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        closeKhqrModal();
+                    }
                 });
             }
 
-            // Sync visual selected state on radio cards
-            document.querySelectorAll('input[name="PaymentMethodId"]').forEach(radio => {
-                radio.addEventListener('change', () => {
-                    document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('selected'));
-                    const card = radio.closest('.payment-method-card');
-                    if (card) card.classList.add('selected');
-                });
+            // Close modal on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    closeKhqrModal();
+                }
             });
+
+            // Initialize active delivery method
+            const initialDeliveryCode = document.getElementById('hdnDeliveryType')?.value || 'VETExpress';
+            const initialCard = document.getElementById('cardDelivery_' + initialDeliveryCode);
+            if (initialCard) {
+                const fee = initialCard.getAttribute('data-fee');
+                const reqBranch = initialCard.getAttribute('data-requires-branch') === 'true';
+                selectDeliveryType(initialDeliveryCode, fee, reqBranch);
+            } else {
+                selectDeliveryType('VETExpress', 2.00, true);
+            }
+
+            // Set initial totals & button text
+            updateSummaryTotals();
         });
+
+        // Listen for global layout language toggles
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'site_language') {
+                updateSummaryTotals();
+            }
+        });
+
+        let ORDER_SUBTOTAL = @Model.SubTotal.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        let ORDER_DELIVERY_FEE = @Model.DeliveryFee.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        let ORDER_TOTAL = ORDER_SUBTOTAL + ORDER_DELIVERY_FEE;
+
+        function onPaymentMethodChanged(radio) {
+            updateSummaryTotals();
+        }
+
+        function selectDeliveryType(type, fee, requiresBranch) {
+            document.getElementById('hdnDeliveryType').value = type;
+            document.getElementById('hdnCarrierCode').value = type;
+
+            if (fee !== undefined && fee !== null) {
+                ORDER_DELIVERY_FEE = parseFloat(fee) || 0.00;
+            }
+
+            const activeClass = 'relative p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm ring-2 ring-primary-500/20';
+            const inactiveClass = 'relative p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700';
+
+            // Dynamically toggle styling for all rendered delivery method cards
+            document.querySelectorAll('[data-delivery-code]').forEach(card => {
+                const cCode = card.getAttribute('data-delivery-code');
+                const checkIcon = document.getElementById('checkDelivery_' + cCode);
+                const iconWrap = document.getElementById('iconWrap_' + cCode);
+
+                if (cCode === type) {
+                    card.className = activeClass;
+                    if (checkIcon) checkIcon.classList.remove('hidden');
+                    if (iconWrap) iconWrap.className = 'w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xl flex-shrink-0';
+                } else {
+                    card.className = inactiveClass;
+                    if (checkIcon) checkIcon.classList.add('hidden');
+                    if (iconWrap) iconWrap.className = 'w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-xl flex-shrink-0';
+                }
+            });
+
+            const vetContainer = document.getElementById('vetBranchContainer');
+            const stdAddress = document.getElementById('standardAddressContainer');
+            const otherInputContainer = document.getElementById('otherExpressInputContainer');
+            const pickupContainer = document.getElementById('storePickupInfoContainer');
+
+            const pEl = document.getElementById('txtProvince');
+            const cEl = document.getElementById('txtCity');
+            const sEl = document.getElementById('txtStreet');
+
+            if (type === 'StorePickup') {
+                if (vetContainer) vetContainer.style.display = 'none';
+                if (stdAddress) stdAddress.style.display = 'none';
+                if (otherInputContainer) otherInputContainer.style.display = 'none';
+                if (pickupContainer) {
+                    pickupContainer.classList.remove('hidden');
+                    pickupContainer.style.display = 'block';
+                }
+                if (pEl) pEl.value = 'រាជធានីភ្នំពេញ';
+                if (cEl) cEl.value = 'Phnom Penh';
+                if (sEl) sEl.value = 'Store Pickup - Main Branch';
+            } else if (type === 'VETExpress' || requiresBranch === true) {
+                if (pickupContainer) pickupContainer.style.display = 'none';
+                if (otherInputContainer) otherInputContainer.style.display = 'none';
+                if (stdAddress) stdAddress.style.display = 'none';
+                if (vetContainer) {
+                    vetContainer.classList.remove('hidden');
+                    vetContainer.style.display = 'block';
+                }
+                onVetProvinceChanged();
+            } else if (type === 'OtherExpress') {
+                if (pickupContainer) pickupContainer.style.display = 'none';
+                if (vetContainer) vetContainer.style.display = 'none';
+                if (stdAddress) {
+                    stdAddress.classList.remove('hidden');
+                    stdAddress.style.display = 'grid';
+                }
+                if (otherInputContainer) {
+                    otherInputContainer.classList.remove('hidden');
+                    otherInputContainer.style.display = 'block';
+                }
+                const inputVal = document.getElementById('txtCustomExpressName')?.value || '';
+                onCustomCarrierInputChanged(inputVal);
+            } else {
+                // CityDelivery or standard address delivery
+                if (pickupContainer) pickupContainer.style.display = 'none';
+                if (vetContainer) vetContainer.style.display = 'none';
+                if (otherInputContainer) otherInputContainer.style.display = 'none';
+                if (stdAddress) {
+                    stdAddress.classList.remove('hidden');
+                    stdAddress.style.display = 'grid';
+                }
+                if (type === 'CityDelivery') {
+                    if (pEl && !pEl.value) pEl.value = 'រាជធានីភ្នំពេញ';
+                    if (cEl && !cEl.value) cEl.value = 'Phnom Penh';
+                }
+            }
+
+            updateSummaryTotals();
+        }
+
+        function copyKhqrData() {
+            if (!generatedQrString) {
+                alert('Generating QR string, please wait a moment...');
+                return;
+            }
+            navigator.clipboard.writeText(generatedQrString).then(() => {
+                const btn = document.getElementById('btnCopyKhqr');
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check2 text-emerald-500"></i> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                }
+            }).catch(() => {
+                // Fallback prompt for environments where navigator.clipboard might be restricted
+                window.prompt("Copy Bakong KHQR String:", generatedQrString);
+            });
+        }
+
+        function onCustomCarrierInputChanged(val) {
+            val = val.trim();
+            if (val) {
+                document.getElementById('hdnSelectedBranchName').value = 'Custom Courier: ' + val;
+            } else {
+                document.getElementById('hdnSelectedBranchName').value = 'Other Express Courier';
+            }
+        }
+
+        function onVetProvinceChanged() {
+            const province = document.getElementById('selVetProvince').value;
+            document.getElementById('hdnSelectedProvince').value = province;
+            const txtProv = document.getElementById('txtProvince');
+            if (txtProv) txtProv.value = province;
+            fetchVetBranches(province);
+        }
+
+        async function fetchVetBranches(province) {
+            const selBranch = document.getElementById('selVetBranch');
+            selBranch.innerHTML = '<option value="">-- Loading branches... --</option>';
+
+            try {
+                const res = await fetch(`/Checkout/GetBranches?province=${encodeURIComponent(province)}`);
+                const branches = await res.json();
+
+                if (branches && branches.length > 0) {
+                    selBranch.innerHTML = '<option value="">-- ជ្រើសរើសសាខា --</option>';
+                    branches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.name;
+                        opt.textContent = b.name;
+                        opt.dataset.address = b.address || '';
+                        opt.dataset.phone = b.phone || '';
+                        selBranch.appendChild(opt);
+                    });
+                    selBranch.selectedIndex = 1;
+                    onVetBranchChanged();
+                } else {
+                    selBranch.innerHTML = '<option value="សាខាដើម (Main Branch)">សាខាដើម (Main Branch)</option>';
+                    onVetBranchChanged();
+                }
+            } catch (err) {
+                console.error(err);
+                selBranch.innerHTML = '<option value="សាខាដើម (Main Branch)">សាខាដើម (Main Branch)</option>';
+                onVetBranchChanged();
+            }
+        }
+
+        function onVetBranchChanged() {
+            const selBranch = document.getElementById('selVetBranch');
+            const selectedOpt = selBranch.options[selBranch.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) return;
+
+            const branchName = selectedOpt.value;
+            document.getElementById('hdnSelectedBranchName').value = branchName;
+
+            const txtCity = document.getElementById('txtCity');
+            if (txtCity) txtCity.value = branchName;
+            const txtStreet = document.getElementById('txtStreet');
+            if (txtStreet && !txtStreet.value) {
+                txtStreet.value = selectedOpt.dataset.address || branchName;
+            }
+
+            const infoBox = document.getElementById('vetBranchInfo');
+            const lblName = document.getElementById('lblBranchName');
+            const lblAddr = document.getElementById('lblBranchAddress');
+            const lblPhone = document.getElementById('lblBranchPhone');
+
+            if (infoBox) {
+                lblName.textContent = branchName;
+                lblAddr.textContent = selectedOpt.dataset.address || 'VET Express Branch Address';
+                lblPhone.textContent = selectedOpt.dataset.phone ? '📞 Phone: ' + selectedOpt.dataset.phone : '';
+                infoBox.classList.remove('hidden');
+                infoBox.style.display = 'block';
+            }
+        }
+
+        function updateSummaryTotals() {
+            ORDER_TOTAL = ORDER_SUBTOTAL + ORDER_DELIVERY_FEE;
+            const feeEl = document.getElementById('lblSummaryDeliveryFee');
+            const totalEl = document.getElementById('lblSummaryTotal');
+            const btnOrderText = document.getElementById('btnOrderText');
+            const btnSummaryOrderText = document.getElementById('btnSummaryOrderText');
+            const btnTriggerOrder = document.getElementById('btnTriggerOrder');
+            const btnSummaryPay = document.getElementById('btnSummaryPay');
+
+            if (feeEl) feeEl.textContent = '$' + ORDER_DELIVERY_FEE.toFixed(2);
+            if (totalEl) totalEl.textContent = '$' + ORDER_TOTAL.toFixed(2);
+
+            const isKh = getActiveLang() === 'kh';
+            const selectedMethod = document.querySelector('input[name="PaymentMethodId"]:checked');
+            const isKhqr = selectedMethod && (selectedMethod.getAttribute('data-is-khqr') === 'true' || KHQR_METHOD_IDS.has(selectedMethod.value));
+
+            const orderText = isKhqr
+                ? (isKh ? `ស្កែនទូទាត់ប្រាក់ KHQR $${ORDER_TOTAL.toFixed(2)}` : `Scan & Pay with KHQR $${ORDER_TOTAL.toFixed(2)}`)
+                : (isKh ? `បន្តទូទាត់ប្រាក់ $${ORDER_TOTAL.toFixed(2)}` : `Proceed to Pay $${ORDER_TOTAL.toFixed(2)}`);
+
+            if (btnOrderText) btnOrderText.textContent = orderText;
+            if (btnSummaryOrderText) btnSummaryOrderText.textContent = orderText;
+
+            // Apply dynamic visual flair: Rose for Bakong KHQR, Blue/Indigo for standard
+            [btnTriggerOrder, btnSummaryPay].forEach(btn => {
+                if (!btn) return;
+                if (isKhqr) {
+                    btn.className = "w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 via-rose-500 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-black text-base shadow-xl shadow-rose-500/30 hover:shadow-2xl hover:shadow-rose-500/40 transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]";
+                } else {
+                    btn.className = "w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black text-base shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/35 transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]";
+                }
+            });
+        }
+
+        let activeOrderId = null;
+        let activePaymentId = null;
+        let activeQrString = '';
+        let activeMd5 = '';
+        let remainingSeconds = 300;
 
         function stopPolling() {
             isPollingActive = false;
@@ -861,257 +1016,392 @@
                 clearTimeout(pollTimeoutId);
                 pollTimeoutId = null;
             }
-            if (currentAbortController) {
-                try {
-                    currentAbortController.abort();
-                } catch (e) {}
-                currentAbortController = null;
+        }
+
+        function stopTimer() {
+            if (khqrTimerInterval) {
+                clearInterval(khqrTimerInterval);
+                khqrTimerInterval = null;
             }
         }
 
-        // Triggered when user clicks the main "Proceed to Payment" button
+        function setModalView(state) {
+            const elLoading = document.getElementById('khqrStateLoading');
+            const elQr = document.getElementById('khqrStateQr');
+            const elPaid = document.getElementById('khqrStatePaid');
+            const elExpired = document.getElementById('khqrStateExpired');
+            const elUtility = document.getElementById('khqrUtilityButtons');
+            const elSimulate = document.getElementById('khqrSimulateWrap');
+            const elStatusBadge = document.getElementById('khqrStatusBadgeWrap');
+
+            if (elLoading) elLoading.classList.toggle('hidden', state !== 'loading');
+            if (elQr) elQr.classList.toggle('hidden', state !== 'qr');
+            if (elPaid) elPaid.classList.toggle('hidden', state !== 'paid');
+            if (elExpired) elExpired.classList.toggle('hidden', state !== 'expired');
+
+            if (elUtility) elUtility.style.display = (state === 'qr') ? 'grid' : 'none';
+            if (elSimulate) elSimulate.style.display = (state === 'qr') ? 'block' : 'none';
+            if (elStatusBadge) elStatusBadge.style.display = (state === 'qr' || state === 'loading') ? 'flex' : 'none';
+        }
+
         function onPlaceOrderClicked() {
-            // 1. Basic HTML5 validation of required inputs
             const form = document.getElementById('checkoutForm');
-            const requiredFields = ['txtFirstName', 'txtLastName', 'txtPhone', 'txtEmail', 'txtProvince', 'txtCity', 'txtStreet'];
+            const requiredFields = ['txtFirstName', 'txtLastName', 'txtPhone', 'txtEmail'];
             for (const id of requiredFields) {
                 const el = document.getElementById(id);
                 if (el && !el.value.trim()) {
                     el.focus();
-                    el.classList.add('is-invalid');
+                    el.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
                     return;
                 } else if (el) {
-                    el.classList.remove('is-invalid');
+                    el.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
                 }
             }
 
-            // 2. Check if a payment method is selected
             const selectedMethod = document.querySelector('input[name="PaymentMethodId"]:checked');
             if (!selectedMethod) {
-                alert('Please select a payment method.');
+                const isKh = getActiveLang() === 'kh';
+                alert(isKh ? 'សូមជ្រើសរើសវិធីសាស្ត្រទូទាត់ប្រាក់' : 'Please select a payment method.');
                 return;
             }
 
             const isKhqr = selectedMethod.getAttribute('data-is-khqr') === 'true' || KHQR_METHOD_IDS.has(selectedMethod.value);
 
             if (isKhqr) {
-                openKhqrModal();
+                startKhqrFlow();
             } else {
                 stopPolling();
-                document.getElementById('hdnPaymentConfirmed').value = 'false';
+                stopTimer();
                 form.submit();
             }
         }
 
-        // Open the KHQR payment modal and fetch payload
-        async function openKhqrModal() {
-            stopPolling();
-            if (standeeOriginalHtml && document.getElementById('khqrStandee')) {
-                document.getElementById('khqrStandee').innerHTML = standeeOriginalHtml;
-            }
+        function showKhqrModal() {
+            const overlay = document.getElementById('khqrModalOverlay');
+            const card = document.getElementById('khqrModalCard');
+            if (!overlay || !card) return;
 
-            // Reset live status badge
-            const statusEl = document.getElementById('khqrLiveStatus');
-            if (statusEl) {
-                statusEl.innerHTML = `<span class="pulse-dot"></span> Ready to scan`;
-            }
-
-            if (khqrModal) khqrModal.show();
-
-            const spinner = document.getElementById('khqrSpinner');
-            const canvasWrap = document.getElementById('khqrCanvasWrap');
-            if (spinner) spinner.style.display = 'block';
-            if (canvasWrap) canvasWrap.style.display = 'none';
-
-            // Start 5-minute countdown
-            startKhqrTimer(300);
-
-            try {
-                const orderRef = 'CLOTHE-' + Math.floor(100000 + Math.random() * 900000);
-                document.getElementById('hdnPaymentRef').value = orderRef;
-
-                const res = await fetch(`/Khqr/Generate?amount=${ORDER_TOTAL}&currency=USD&reference=${orderRef}`);
-                if (!res.ok) throw new Error('Failed to generate KHQR');
-
-                const data = await res.json();
-                generatedQrString = data.qrString;
-                generatedMd5 = data.md5;
-
-                // Update text elements
-                document.getElementById('khqrMerchantName').textContent = data.merchant;
-                document.getElementById('khqrAmountUsd').innerHTML = '$' + parseFloat(data.amount).toFixed(2) + ' <span class="khqr-currency-label">USD</span>';
-                document.getElementById('khqrAmountKhr').innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>~ ៛' + Number(data.khrAmount).toLocaleString() + ' KHR';
-
-                // Deep link update
-                const abaLink = document.getElementById('lnkOpenAba');
-                if (abaLink && data.abaDeepLink) {
-                    abaLink.href = data.abaDeepLink;
-                }
-
-                // Render centered QR code on canvas
-                const canvas = document.getElementById('khqrCanvas');
-                new QRious({
-                    element: canvas,
-                    value: data.qrString,
-                    size: 220,
-                    level: 'Q',
-                    background: '#ffffff',
-                    foreground: '#1a1a2e',
-                    padding: 4
-                });
-
-                document.getElementById('khqrSpinner').style.display = 'none';
-                document.getElementById('khqrCanvasWrap').style.display = 'flex';
-
-                // Start safe sequential polling via Bakong API check_transaction_by_md5
-                startBakongPolling(data.md5);
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('khqrSpinner').innerHTML =
-                    `<div class="text-danger small py-4">
-                        <i class="bi bi-exclamation-circle fs-4 d-block mb-1"></i> Failed to generate KHQR code. Please retry.
-                    </div>`;
-            }
-        }
-
-        // Safe, non-blocking sequential polling to Bakong Open API
-        function startBakongPolling(md5) {
-            stopPolling();
-            if (!md5) return;
-            isPollingActive = true;
-
-            async function checkOnce() {
-                if (!isPollingActive) return;
-
-                currentAbortController = new AbortController();
-                const timeoutId = setTimeout(() => {
-                    if (currentAbortController) {
-                        currentAbortController.abort();
-                    }
-                }, 3500);
-
-                try {
-                    const res = await fetch('/Khqr/CheckTransaction', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ md5: md5 }),
-                        signal: currentAbortController.signal
-                    });
-                    clearTimeout(timeoutId);
-
-                    if (res.ok) {
-                        const result = await res.json();
-                        if (result.paid && isPollingActive) {
-                            stopPolling();
-                            handlePaymentSuccess("Verified via Bakong Open API");
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    // Timeout or aborted, normal for polling when unpaid
-                } finally {
-                    clearTimeout(timeoutId);
-                    currentAbortController = null;
-                }
-
-                if (isPollingActive) {
-                    pollTimeoutId = setTimeout(checkOnce, 2500);
-                }
-            }
-
-            // Begin first poll after 2 seconds
-            pollTimeoutId = setTimeout(checkOnce, 2000);
-        }
-
-        // Universal Payment Success Handler
-        function handlePaymentSuccess(subtitle) {
-            stopPolling();
-            if (qrTimerInterval) clearInterval(qrTimerInterval);
-
-            // Update live status pill
-            const statusEl = document.getElementById('khqrLiveStatus');
-            if (statusEl) {
-                statusEl.innerHTML = `<span class="pulse-dot bg-success"></span> <span class="text-success fw-bold">Payment Verified!</span>`;
-            }
-
-            // Show celebratory UI state inside standee
-            const standee = document.getElementById('khqrStandee');
-            if (standee) {
-                standee.innerHTML = `
-                    <div class="p-4 py-5 text-center khqr-success-card">
-                        <div class="mb-3">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3.8rem;"></i>
-                        </div>
-                        <h4 class="fw-bold text-dark mb-1">Payment Received!</h4>
-                        <p class="text-muted small mb-1">${subtitle || 'Verified successfully.'}</p>
-                        <div class="badge bg-success-subtle text-success px-3 py-2 rounded-pill mt-2 mb-3 fw-semibold">
-                            <i class="bi bi-shield-check me-1"></i> KHQR Transaction Completed
-                        </div>
-                        <div class="d-flex align-items-center justify-content-center gap-2 text-muted small mt-2">
-                            <div class="spinner-border spinner-border-sm text-success" role="status"></div>
-                            <span>Finalizing your order…</span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            const btn = document.getElementById('btnConfirmPaid');
-            if (btn) {
-                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span> Finalizing Order…`;
-                btn.disabled = true;
-            }
-
-            document.getElementById('hdnPaymentConfirmed').value = 'true';
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
 
             setTimeout(() => {
-                document.getElementById('checkoutForm').submit();
-            }, 800);
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 20);
         }
 
-        // Countdown timer
-        function startKhqrTimer(durationSeconds) {
-            if (qrTimerInterval) clearInterval(qrTimerInterval);
-            let time = durationSeconds;
-            const timerEl = document.getElementById('khqrTimerText');
+        function hideKhqrModal() {
+            const overlay = document.getElementById('khqrModalOverlay');
+            const card = document.getElementById('khqrModalCard');
+            if (!overlay || !card) return;
 
-            qrTimerInterval = setInterval(() => {
-                const minutes = Math.floor(time / 60);
-                const seconds = time % 60;
-                timerEl.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
 
-                if (--time < 0) {
-                    clearInterval(qrTimerInterval);
-                    stopPolling();
-                    timerEl.textContent = 'Expired';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 200);
+        }
+
+        async function startKhqrFlow() {
+            stopPolling();
+            stopTimer();
+
+            showKhqrModal();
+            setModalView('loading');
+            const loadingText = document.getElementById('khqrLoadingText');
+            if (loadingText) loadingText.textContent = 'កំពុងរៀបចំការបញ្ជាទិញ (Creating Order)…';
+
+            // Ensure fallback address fields
+            const txtProv = document.getElementById('txtProvince');
+            const txtCity = document.getElementById('txtCity');
+            const txtStreet = document.getElementById('txtStreet');
+            const hdnProv = document.getElementById('hdnSelectedProvince');
+            const hdnBranch = document.getElementById('hdnSelectedBranchName');
+
+            if (txtProv && !txtProv.value.trim()) {
+                txtProv.value = (hdnProv && hdnProv.value) ? hdnProv.value : 'រាជធានីភ្នំពេញ';
+            }
+            if (txtCity && !txtCity.value.trim()) {
+                txtCity.value = (hdnBranch && hdnBranch.value) ? hdnBranch.value : 'Phnom Penh';
+            }
+            if (txtStreet && !txtStreet.value.trim()) {
+                txtStreet.value = (hdnBranch && hdnBranch.value) ? hdnBranch.value : 'Standard Delivery Address';
+            }
+
+            // Step 1: If activeOrderId not yet established, create the order in DB
+            if (!activeOrderId) {
+                try {
+                    const form = document.getElementById('checkoutForm');
+                    const formData = new FormData(form);
+
+                    const res = await fetch('/Checkout/CreateOrder', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        alert(data.message || 'Failed to initiate order. Please verify your fields.');
+                        hideKhqrModal();
+                        return;
+                    }
+
+                    activeOrderId = data.orderId;
+                } catch (err) {
+                    console.error('Order creation error:', err);
+                    alert('Network error while initiating order. Please try again.');
+                    hideKhqrModal();
+                    return;
                 }
-            }, 1000);
+            }
+
+            // Step 2: Create dynamic Bakong KHQR attempt for this activeOrderId
+            await createBakongPaymentAttempt(activeOrderId);
         }
 
-        // When user confirms payment in modal
-        function onPaymentConfirmed() {
-            handlePaymentSuccess("Payment confirmed by customer");
+        async function createBakongPaymentAttempt(orderId) {
+            stopPolling();
+            stopTimer();
+            setModalView('loading');
+
+            const loadingText = document.getElementById('khqrLoadingText');
+            if (loadingText) loadingText.textContent = 'កំពុងបង្កើត KHQR មានសុវត្ថិភាព (Generating KHQR)…';
+
+            try {
+                const res = await fetch('/api/payments/bakong/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId: orderId, currency: 'USD' })
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    alert(data.message || 'Failed to generate dynamic Bakong QR.');
+                    hideKhqrModal();
+                    return;
+                }
+
+                activePaymentId = data.paymentId;
+                activeQrString = data.qrCode;
+                activeMd5 = data.md5;
+
+                // Update UI elements
+                const badgeEl = document.getElementById('khqrOrderRefBadge');
+                if (badgeEl && data.orderNumber) badgeEl.textContent = data.orderNumber;
+
+                const mEl = document.getElementById('khqrMerchantName');
+                if (mEl && data.merchantName) mEl.textContent = data.merchantName;
+
+                const usdEl = document.getElementById('khqrAmountUsd');
+                if (usdEl) usdEl.textContent = parseFloat(data.amount).toFixed(2);
+
+                const khrEl = document.getElementById('khqrAmountKhr');
+                if (khrEl && data.khrAmount) khrEl.textContent = '~ ៛' + Number(data.khrAmount).toLocaleString() + ' រៀល';
+
+                const refCodeEl = document.getElementById('khqrReferenceCode');
+                if (refCodeEl) refCodeEl.textContent = data.reference || '--';
+
+                const abaLink = document.getElementById('lnkOpenAba');
+                if (abaLink && data.abaDeepLink) abaLink.href = data.abaDeepLink;
+
+                renderQrToCanvas(data.qrCode);
+                setModalView('qr');
+
+                // Start 5-minute timer
+                remainingSeconds = data.expiresInSeconds || 300;
+                startKhqrTimer(remainingSeconds);
+
+                // Start polling status
+                startBakongPolling(activePaymentId);
+
+            } catch (err) {
+                console.error('Bakong QR creation error:', err);
+                alert('Could not establish connection with payment service.');
+                hideKhqrModal();
+            }
         }
 
-        // Download KHQR image to device
-        function downloadKhqr() {
+        function renderQrToCanvas(qrString) {
             const canvas = document.getElementById('khqrCanvas');
             if (!canvas) return;
 
+            if (typeof QRious !== 'undefined') {
+                new QRious({
+                    element: canvas,
+                    value: qrString,
+                    size: 180,
+                    level: 'M',
+                    background: '#ffffff',
+                    foreground: '#0f172a',
+                    padding: 0
+                });
+            } else {
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    ctx.drawImage(img, 0, 0, 180, 180);
+                };
+                img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(qrString);
+            }
+        }
+
+        function startKhqrTimer(durationSecs) {
+            stopTimer();
+            remainingSeconds = durationSecs;
+            const timerEl = document.getElementById('khqrTimerText');
+
+            const updateDisplay = () => {
+                const m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+                const s = (remainingSeconds % 60).toString().padStart(2, '0');
+                if (timerEl) timerEl.textContent = `${m}:${s}`;
+            };
+            updateDisplay();
+
+            khqrTimerInterval = setInterval(() => {
+                remainingSeconds--;
+                if (remainingSeconds <= 0) {
+                    stopTimer();
+                    if (timerEl) timerEl.textContent = '00:00';
+                    handleExpiredState();
+                    return;
+                }
+                updateDisplay();
+            }, 1000);
+        }
+
+        function startBakongPolling(paymentId) {
+            stopPolling();
+            isPollingActive = true;
+            pollBakongStatus(paymentId);
+        }
+
+        async function pollBakongStatus(paymentId) {
+            if (!isPollingActive || !paymentId) return;
+
+            try {
+                const res = await fetch(`/api/payments/${paymentId}/status`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'PAID' || data.isPaid === true) {
+                        handlePaidSuccess(data);
+                        return;
+                    } else if (data.status === 'EXPIRED') {
+                        handleExpiredState();
+                        return;
+                    } else if (data.status === 'CANCELLED') {
+                        stopPolling();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Bakong poll check:', e);
+            }
+
+            if (isPollingActive) {
+                pollTimeoutId = setTimeout(() => pollBakongStatus(paymentId), 2500);
+            }
+        }
+
+        function handlePaidSuccess(data) {
+            stopPolling();
+            stopTimer();
+
+            const timerEl = document.getElementById('khqrTimerText');
+            if (timerEl) timerEl.textContent = 'PAID';
+
+            const txInfo = document.getElementById('khqrSuccessTxInfo');
+            if (txInfo) {
+                txInfo.textContent = data.reference
+                    ? `Ref: ${data.reference} • Transaction verified.`
+                    : 'Transaction verified by Bakong Open API.';
+            }
+
+            setModalView('paid');
+
+            // Redirect automatically after 1.6s to success receipt
+            setTimeout(() => {
+                if (activeOrderId) {
+                    window.location.href = `/Checkout/Success/${activeOrderId}`;
+                } else if (data.orderId) {
+                    window.location.href = `/Checkout/Success/${data.orderId}`;
+                } else {
+                    window.location.href = '/Orders';
+                }
+            }, 1600);
+        }
+
+        function handleExpiredState() {
+            stopPolling();
+            stopTimer();
+            setModalView('expired');
+        }
+
+        function generateNewKhqrAttempt() {
+            if (!activeOrderId) return;
+            createBakongPaymentAttempt(activeOrderId);
+        }
+
+        async function cancelAndCloseKhqrModal() {
+            stopPolling();
+            stopTimer();
+
+            if (activePaymentId) {
+                try {
+                    await fetch(`/api/payments/${activePaymentId}/cancel`, { method: 'POST' });
+                } catch (e) { }
+            }
+
+            hideKhqrModal();
+        }
+
+        const closeKhqrModal = cancelAndCloseKhqrModal;
+
+        async function simulateKhqrPayment() {
+            if (!activePaymentId) return;
+
+            const liveStatus = document.getElementById('khqrLiveStatus');
+            if (liveStatus) {
+                liveStatus.innerHTML = '<div class="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin inline-block"></div> Simulating Bakong payment confirmation…';
+            }
+
+            try {
+                const res = await fetch(`/api/payments/${activePaymentId}/simulate-confirm`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'PAID' || data.isPaid === true) {
+                        handlePaidSuccess(data);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Simulation error:', err);
+            }
+        }
+
+        function downloadKhqr() {
+            const canvas = document.getElementById('khqrCanvas');
+            if (!canvas) return;
             const link = document.createElement('a');
-            link.download = `KHQR-CLOTHE-${ORDER_TOTAL}USD.png`;
+            link.download = 'Bakong-KHQR.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
 
-        // Simulate successful payment for instant local testing
-        function simulateSuccessfulPayment() {
-            handlePaymentSuccess("Simulated payment confirmed (Demo Test)");
+        function copyKhqrData() {
+            if (!activeQrString) return;
+            navigator.clipboard.writeText(activeQrString).then(() => {
+                const btn = document.getElementById('btnCopyKhqr');
+                if (btn) {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check2 text-emerald-500"></i> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                }
+            }).catch(err => {
+                console.error('Failed to copy QR string:', err);
+            });
         }
     </script>
 }
-
-
-
-
-

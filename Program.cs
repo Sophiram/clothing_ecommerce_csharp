@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 var possibleEnvPaths = new[]
 {
     Path.Combine(builder.Environment.ContentRootPath, ".env"),
+    Path.Combine(builder.Environment.ContentRootPath, "..", ".env"),
     Path.Combine(Directory.GetCurrentDirectory(), ".env"),
     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env")
 };
@@ -41,7 +42,7 @@ foreach (var envPath in possibleEnvPaths)
 // Add HttpClient for Bakong Open API
 builder.Services.AddHttpClient("BakongApi", client =>
 {
-    var baseUrl = builder.Configuration["KHQR_BASE_URL"] ?? "https://api-bakong.nbc.gov.kh";
+    var baseUrl = builder.Configuration["BAKONG_BASE_URL"] ?? builder.Configuration["KHQR_BASE_URL"] ?? "https://api-bakong.nbc.gov.kh";
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(3);
 });
@@ -51,9 +52,10 @@ builder.Services.AddHttpClient("BakongApi", client =>
 // ========================================
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 
 // ========================================
@@ -64,10 +66,14 @@ builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
+        options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
 
         options.User.RequireUniqueEmail = true;
     })
@@ -89,8 +95,40 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
+
+// ========================================
+// EXTERNAL AUTHENTICATION (GOOGLE)
+// ========================================
+var googleClientId = builder.Configuration["GOOGLE_CLIENT_ID"];
+var googleClientSecret = builder.Configuration["GOOGLE_CLIENT_SECRET"];
+
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+            options.SignInScheme = IdentityConstants.ExternalScheme;
+        });
+}
+
+// ========================================
+// REPOSITORIES & UNIT OF WORK
+// ========================================
+builder.Services.AddScoped(typeof(WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IRepository<>), typeof(WebApplication_ClothingEcommerce.Data.Repositories.Implementations.Repository<>));
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.ICartRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.CartRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IProductRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.ProductRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.ICategoryRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.CategoryRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IBrandRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.BrandRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IOrderRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.OrderRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.ICustomerRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.CustomerRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IReviewRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.ReviewRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IWishlistRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.WishlistRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IInventoryRepository, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.InventoryRepository>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Data.Repositories.Interfaces.IUnitOfWork, WebApplication_ClothingEcommerce.Data.Repositories.Implementations.UnitOfWork>();
 
 // ========================================
 // SERVICES
@@ -112,13 +150,20 @@ builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IKhqrService, KhqrService>();
+builder.Services.AddScoped<IBakongPaymentService, BakongPaymentService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 builder.Services.AddScoped<WebApplication_ClothingEcommerce.Services.Interfaces.IAvatarService, AvatarService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IShopService, ShopService>();
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<IVetExpressService, VetExpressService>();
+builder.Services.AddHttpClient<ITelegramService, TelegramService>();
 builder.Services.AddScoped<ISizeService, SizeService>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Services.Interfaces.IEmailService, EmailService>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Services.Interfaces.IReportService, ReportService>();
+builder.Services.AddScoped<WebApplication_ClothingEcommerce.Services.Interfaces.IStoreSettingsService, WebApplication_ClothingEcommerce.Services.StoreSettingsService>();
 
 // ========================================
 // MVC
@@ -137,7 +182,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
 
 var app = builder.Build();
@@ -161,7 +206,7 @@ app.Use(async (context, next) =>
         "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://cdnjs.cloudflare.com; " +
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
-        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " +
+        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " +
         "img-src 'self' data: https: blob:; " +
         "connect-src 'self' https:;");
 

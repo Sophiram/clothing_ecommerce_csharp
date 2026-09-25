@@ -3,112 +3,209 @@
 
 @{
     ViewData["Title"] = $"Shipment #{Model.Id.ToString()[..8].ToUpper()}";
+
+    var (statusBadge, statusIcon) = Model.ShipmentStatus switch
+    {
+        ShipmentStatus.Pending => ("bg-warning-subtle text-warning-emphasis border border-warning-subtle", "bi-clock-history"),
+        ShipmentStatus.Shipped => ("bg-info-subtle text-info-emphasis border border-info-subtle", "bi-box-seam"),
+        ShipmentStatus.InTransit => ("bg-primary-subtle text-primary border border-primary-subtle", "bi-truck"),
+        ShipmentStatus.Delivered => ("bg-success-subtle text-success border border-success-subtle", "bi-check2-circle"),
+        _ => ("bg-secondary-subtle text-secondary border border-secondary-subtle", "bi-question-circle")
+    };
 }
 
 <div class="admin-page">
-    <div class="page-header">
+    <!-- PAGE HEADER -->
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
-            <div class="page-eyebrow">SALES & FULFILLMENT</div>
-            <h1 class="page-title">Shipment Details</h1>
-            <p class="page-description">Order #@Model.OrderId.ToString()[..8].ToUpper() parcel delivery status.</p>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center gap-1.5"
+                   data-en="Back to Shipments" data-kh="ត្រឡប់ទៅការដឹកជញ្ជូន">
+                    <i class="bi bi-arrow-left"></i>
+                    <span data-en="Back to Shipments" data-kh="ត្រឡប់ទៅការដឹកជញ្ជូន">Back to Shipments</span>
+                </a>
+                <span class="text-muted">&bull;</span>
+                <span class="badge @statusBadge rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.75rem;">
+                    <i class="bi @statusIcon me-1"></i>@Model.ShipmentStatus
+                </span>
+            </div>
+            <h1 class="page-title mt-2" data-en="Shipment #@Model.Id.ToString()[..8].ToUpper()" data-kh="ការដឹកជញ្ជូន #@Model.Id.ToString()[..8].ToUpper()">
+                Shipment #@Model.Id.ToString()[..8].ToUpper()
+            </h1>
+            <p class="page-description" data-en="Logistics fulfillment for Order #@Model.OrderId.ToString()[..8].ToUpper()" data-kh="ការដឹកជញ្ជូនសម្រាប់បញ្ជាទិញ #@Model.OrderId.ToString()[..8].ToUpper()">
+                Logistics fulfillment for Order #@Model.OrderId.ToString()[..8].ToUpper() &middot; Shipment ID: <span class="font-monospace small">@Model.Id</span>
+            </p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
-                <i class="bi bi-pencil me-1"></i> Edit Shipment
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning rounded-pill px-4 shadow-sm"
+               data-en="Edit Shipment" data-kh="កែប្រែការដឹកជញ្ជូន">
+                <i class="bi bi-pencil me-1.5"></i>
+                <span data-en="Edit Shipment" data-kh="កែប្រែការដឹកជញ្ជូន">Edit Shipment</span>
             </a>
-            <a asp-action="Index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i> Back to List
+            <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-outline-primary rounded-pill px-4 shadow-sm"
+               data-en="View Order" data-kh="មើលការបញ្ជាទិញ">
+                <i class="bi bi-bag-check me-1.5"></i>
+                <span data-en="View Order" data-kh="មើលការបញ្ជាទិញ">View Order</span>
             </a>
         </div>
     </div>
 
     <div class="row g-4">
-        <!-- Shipment Info -->
+        <!-- LEFT COLUMN: LOGISTICS & ITEMS -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0">Delivery Overview</h5>
+            <!-- DELIVERY OVERVIEW CARD -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: rgba(59, 130, 246, 0.1); color: #2563eb; width: 38px; height: 38px;">
+                            <i class="bi bi-truck fs-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="admin-card-title mb-0" data-en="Logistics Overview" data-kh="ទិដ្ឋភាពទូទៅនៃភស្តុភារ">Logistics Overview</h3>
+                            <p class="admin-card-subtitle mb-0" data-en="Courier dispatch & tracking timeline" data-kh="ពេលវេលាបញ្ជូន និងតាមដាន">Courier dispatch & tracking timeline</p>
+                        </div>
+                    </div>
+                    <span class="badge @statusBadge rounded-pill px-3 py-1.5 fw-semibold">
+                        @Model.ShipmentStatus
+                    </span>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Shipping Carrier</label>
-                            <div class="fw-bold fs-6 mt-1">
-                                <i class="bi bi-truck me-1 text-primary"></i>
-                                @(string.IsNullOrWhiteSpace(Model.ShippingCompany) ? "Standard Courier" : Model.ShippingCompany)
-                            </div>
-                        </div>
 
+                <div class="p-4">
+                    <div class="row g-4 mb-4">
                         <div class="col-sm-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Tracking Number</label>
-                            <div class="mt-1">
-                                @if (!string.IsNullOrWhiteSpace(Model.TrackingNumber))
-                                {
-                                    <span class="badge bg-light text-dark border font-monospace fs-6 px-3 py-2">
-                                        @Model.TrackingNumber
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No tracking code assigned yet</span>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="col-sm-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Current Status</label>
-                            <div class="mt-1">
-                                <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill">
-                                    @Model.ShipmentStatus
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1" data-en="Shipping Carrier" data-kh="ក្រុមហ៊ុនដឹកជញ្ជូន">Shipping Carrier</label>
+                            <div class="fw-bold fs-6 text-dark d-flex align-items-center gap-2">
+                                <span class="rounded-pill px-2.5 py-1 bg-primary-subtle text-primary border border-primary-subtle font-monospace small">
+                                    <i class="bi bi-building me-1"></i>@(string.IsNullOrWhiteSpace(Model.ShippingCompany) ? "Standard Courier" : Model.ShippingCompany)
                                 </span>
                             </div>
                         </div>
 
                         <div class="col-sm-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Shipped Timestamp</label>
-                            <div class="fw-semibold mt-1">
-                                @(Model.ShippedAt?.ToLocalTime().ToString("f") ?? "Not dispatched yet")
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1" data-en="Tracking Code" data-kh="លេខកូដតាមដាន">Tracking Code</label>
+                            <div>
+                                @if (!string.IsNullOrWhiteSpace(Model.TrackingNumber))
+                                {
+                                    <span class="badge bg-light text-dark border font-monospace fs-6 px-3 py-1.5 rounded-3">
+                                        @Model.TrackingNumber
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small italic" data-en="No tracking code assigned yet" data-kh="មិនទាន់មានលេខកូដតាមដាន">No tracking code assigned yet</span>
+                                }
                             </div>
                         </div>
 
                         <div class="col-sm-6">
-                            <label class="text-muted small text-uppercase fw-semibold">Delivered Timestamp</label>
-                            <div class="fw-semibold mt-1">
-                                @(Model.DeliveredAt?.ToLocalTime().ToString("f") ?? "Not delivered yet")
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1" data-en="Dispatched Timestamp" data-kh="កាលបរិច្ឆេទបញ្ជូន">Dispatched Timestamp</label>
+                            <div class="fw-semibold text-dark">
+                                @(Model.ShippedAt.HasValue ? Model.ShippedAt.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") : "Not dispatched yet")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold d-block mb-1" data-en="Delivered Timestamp" data-kh="កាលបរិច្ឆេទបានដឹកជញ្ជូន">Delivered Timestamp</label>
+                            <div class="fw-semibold text-dark">
+                                @(Model.DeliveredAt.HasValue ? Model.DeliveredAt.Value.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") : "Not delivered yet")
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Stepper -->
+                    <div class="p-3.5 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px;">
+                        <div class="d-flex justify-content-between text-center position-relative">
+                            <div class="flex-1">
+                                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center @(Model.ShipmentStatus >= ShipmentStatus.Pending ? "bg-primary text-white" : "bg-light text-muted border")" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-file-earmark-check"></i>
+                                </div>
+                                <span class="small fw-semibold mt-1 d-block" data-en="Order Placed" data-kh="បានបញ្ជាទិញ">Order Placed</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center @(Model.ShipmentStatus == ShipmentStatus.Shipped || Model.ShipmentStatus == ShipmentStatus.InTransit || Model.ShipmentStatus == ShipmentStatus.Delivered ? "bg-primary text-white" : "bg-light text-muted border")" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                <span class="small fw-semibold mt-1 d-block" data-en="Shipped" data-kh="បានបញ្ជូនចេញ">Shipped</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center @(Model.ShipmentStatus == ShipmentStatus.InTransit || Model.ShipmentStatus == ShipmentStatus.Delivered ? "bg-primary text-white" : "bg-light text-muted border")" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <span class="small fw-semibold mt-1 d-block" data-en="In Transit" data-kh="កំពុងដឹកជញ្ជូន">In Transit</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center @(Model.ShipmentStatus == ShipmentStatus.Delivered ? "bg-success text-white" : "bg-light text-muted border")" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-check2-circle"></i>
+                                </div>
+                                <span class="small fw-semibold mt-1 d-block" data-en="Delivered" data-kh="បានដល់">Delivered</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Ordered Items in this Shipment -->
+            <!-- ORDERED ITEMS IN THIS SHIPMENT -->
             @if (Model.Order?.Items != null && Model.Order.Items.Any())
             {
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="fw-bold mb-0">Items Included (@Model.Order.Items.Count)</h5>
+                <div class="admin-card">
+                    <div class="admin-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="admin-card-title" data-en="Package Contents" data-kh="ទំនិញក្នុងកញ្ចប់">Package Contents</h3>
+                            <p class="admin-card-subtitle" data-en="Products dispatched in this parcel" data-kh="ផលិតផលដែលបានផ្ញើក្នុងកញ្ចប់នេះ">Products dispatched in this parcel</p>
+                        </div>
+                        <span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-semibold">
+                            @(Model.Order.Items.Sum(i => i.Quantity)) units
+                        </span>
                     </div>
+
                     <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead class="table-light">
+                        <table class="admin-table">
+                            <thead>
                                 <tr>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Qty</th>
-                                    <th class="text-end">Unit Price</th>
+                                    <th class="ps-4" data-en="PRODUCT DETAILS" data-kh="ព័ត៌មានលម្អិតផលិតផល">PRODUCT DETAILS</th>
+                                    <th data-en="SKU" data-kh="លេខកូដ">SKU</th>
+                                    <th class="text-center" data-en="QTY" data-kh="ចំនួន">QTY</th>
+                                    <th class="text-end pe-4" data-en="UNIT PRICE" data-kh="តម្លៃឯកតា">UNIT PRICE</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var item in Model.Order.Items)
                                 {
+                                    var productName = item.Variant?.Product?.Name ?? "Product";
+                                    var sizeName = item.Variant?.Size?.Name ?? "—";
+                                    var colorName = item.Variant?.Color?.Name ?? "—";
+                                    var colorHex = item.Variant?.Color?.HexCode;
+
                                     <tr>
-                                        <td>
-                                            <div class="fw-bold">@item.Variant?.Product?.Name</div>
-                                            <small class="text-muted">Size: @(item.Variant?.Size?.Name ?? "—"), Color: @(item.Variant?.Color?.Name ?? "—")</small>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px;">
+                                                    <i class="bi bi-box-seam fs-5"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark">@productName</div>
+                                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                                        <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">
+                                                            Size: @sizeName
+                                                        </span>
+                                                        <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                                            @if (!string.IsNullOrEmpty(colorHex))
+                                                            {
+                                                                <span class="rounded-circle border" style="width: 10px; height: 10px; background-color: @colorHex; display: inline-block;"></span>
+                                                            }
+                                                            Color: @colorName
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td><code>@(item.Variant?.SKU ?? "—")</code></td>
-                                        <td><span class="badge bg-secondary rounded-pill">@item.Quantity</span></td>
-                                        <td class="text-end fw-bold">$@item.UnitPrice.ToString("N2")</td>
+                                        <td><code class="text-muted">@(item.Variant?.SKU ?? "—")</code></td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 fw-bold">
+                                                @item.Quantity
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4 fw-bold text-dark tabular-nums">$@item.UnitPrice.ToString("N2")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -118,60 +215,76 @@
             }
         </div>
 
-        <!-- Order & Customer Info -->
+        <!-- RIGHT COLUMN: RECIPIENT & ORDER REFERENCE -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0">Customer & Destination</h5>
+            <!-- RECIPIENT & DESTINATION -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title" data-en="Recipient & Destination" data-kh="អ្នកទទួល & គោលដៅ">Recipient &amp; Destination</h3>
+                    <p class="admin-card-subtitle" data-en="Delivery address and contact info" data-kh="អាសយដ្ឋានដឹកជញ្ជូន និងទំនាក់ទំនង">Delivery address and contact info</p>
                 </div>
-                <div class="card-body">
-                    <h6 class="fw-bold mb-1">
-                        @(Model.Order?.Customer != null ? $"{Model.Order.Customer.FirstName} {Model.Order.Customer.LastName}".Trim() : "Customer")
-                    </h6>
-                    <p class="text-muted small mb-3">
-                        <i class="bi bi-envelope me-1"></i> @(Model.Order?.Customer?.Email ?? "N/A")<br />
-                        <i class="bi bi-telephone me-1"></i> @(Model.Order?.Customer?.Phone ?? "N/A")
-                    </p>
+                <div class="p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white font-bold" style="width: 44px; height: 44px; background: linear-gradient(135deg, #3b82f6, #6366f1); font-weight: 700;">
+                            @((Model.Order?.Customer?.FirstName ?? "C").Substring(0, 1))
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">
+                                @(Model.Order?.Customer != null ? $"{Model.Order.Customer.FirstName} {Model.Order.Customer.LastName}".Trim() : "Guest Customer")
+                            </h5>
+                            <span class="text-muted small">Customer ID: #@(Model.Order?.CustomerId.ToString()[..8].ToUpper() ?? "—")</span>
+                        </div>
+                    </div>
 
-                    <hr />
+                    <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                        <div class="small mb-1 text-dark">
+                            <i class="bi bi-envelope me-1.5 text-primary"></i>@(Model.Order?.Customer?.Email ?? "N/A")
+                        </div>
+                        <div class="small text-dark font-monospace">
+                            <i class="bi bi-telephone me-1.5 text-success"></i>@(Model.Order?.Customer?.Phone ?? "N/A")
+                        </div>
+                    </div>
 
-                    <label class="text-muted small text-uppercase fw-semibold">Delivery Address</label>
+                    <label class="text-muted small text-uppercase fw-semibold d-block mb-1" data-en="Shipping Address" data-kh="អាសយដ្ឋានដឹកជញ្ជូន">Shipping Address</label>
                     @if (Model.Order?.Address != null)
                     {
-                        <p class="mb-0 mt-1">
-                            @Model.Order.Address.Street<br />
-                            @Model.Order.Address.City, @Model.Order.Address.Province<br />
-                            @Model.Order.Address.PostalCode
-                        </p>
+                        <div class="p-3 rounded-3 text-dark small" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; line-height: 1.5;">
+                            <div class="fw-semibold">@Model.Order.Address.Street</div>
+                            <div>@Model.Order.Address.City, @Model.Order.Address.Province</div>
+                            <div class="text-muted font-monospace">Postal: @Model.Order.Address.PostalCode</div>
+                        </div>
                     }
                     else
                     {
-                        <p class="text-muted mb-0">No address specified</p>
+                        <div class="text-muted small italic p-2 bg-light rounded" data-en="No delivery address specified" data-kh="មិនមានអាសយដ្ឋានដឹកជញ្ជូន">No delivery address specified</div>
                     }
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0">Order Reference</h5>
+            <!-- ORDER REFERENCE -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title" data-en="Order Reference" data-kh="ព័ត៌មានយោងបញ្ជាទិញ">Order Reference</h3>
+                    <p class="admin-card-subtitle" data-en="Parent order financials" data-kh="ហិរញ្ញវត្ថុបញ្ជាទិញមេ">Parent order financials</p>
                 </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Order ID:</span>
-                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="fw-bold font-monospace">
+                <div class="p-4">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span class="text-muted small" data-en="Order Number" data-kh="លេខបញ្ជាទិញ">Order Number</span>
+                        <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="fw-bold font-monospace text-primary text-decoration-none">
                             #@Model.OrderId.ToString()[..8].ToUpper()
                         </a>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Order Date:</span>
-                        <span>@(Model.Order?.OrderDate.ToLocalTime().ToString("MMM dd, yyyy") ?? "—")</span>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span class="text-muted small" data-en="Placed Date" data-kh="កាលបរិច្ឆេទបញ្ជាទិញ">Placed Date</span>
+                        <span class="text-dark small tabular-nums">@(Model.Order?.OrderDate.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</span>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Order Total:</span>
-                        <span class="fw-bold text-success">$@(Model.Order?.TotalAmount.ToString("N2") ?? "0.00")</span>
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <span class="text-muted small" data-en="Order Total" data-kh="សរុបបញ្ជាទិញ">Order Total</span>
+                        <span class="fw-bold text-success fs-5 tabular-nums">$@(Model.Order?.TotalAmount.ToString("N2") ?? "0.00")</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+

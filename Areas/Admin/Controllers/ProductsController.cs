@@ -136,20 +136,13 @@ public class ProductsController : Controller
     }
 
     // =========================================================
-    // EDIT - GET
+    // EDIT
     // =========================================================
 
     [HttpGet]
-    public async Task<IActionResult> Edit(Guid? id)
+    public async Task<IActionResult> Edit(Guid id)
     {
-        if (!id.HasValue)
-        {
-            TempData["Error"] = "Product ID is missing.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var product = await _productService.GetProductByIdAsync(id.Value);
-
+        var product = await _productService.GetProductByIdAsync(id);
         if (product == null)
         {
             TempData["Error"] = "Product not found.";
@@ -160,14 +153,15 @@ public class ProductsController : Controller
         return View(product);
     }
 
-    // =========================================================
-    // EDIT - POST
-    // =========================================================
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, Product product)
     {
+        if (id == Guid.Empty && product.Id != Guid.Empty)
+        {
+            id = product.Id;
+        }
+
         if (id != product.Id)
         {
             TempData["Error"] = "Invalid product ID.";
@@ -183,10 +177,28 @@ public class ProductsController : Controller
         ModelState.Remove(nameof(Product.CreatedAt));
         ModelState.Remove(nameof(Product.ModifiedAt));
 
+        if (product.Material == null)
+        {
+            product.Material = string.Empty;
+            ModelState.Remove(nameof(Product.Material));
+        }
+
+        if (string.IsNullOrWhiteSpace(product.Gender))
+        {
+            product.Gender = "Unisex";
+            ModelState.Remove(nameof(Product.Gender));
+        }
+
         if (!ModelState.IsValid)
         {
-            await LoadDropdownsAsync(product.CategoryId, product.BrandId);
-            return View(product);
+            var errors = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+            TempData["Error"] = $"Unable to update product: {errors}";
+            if (Request.Headers.Referer.ToString().Contains("/Products/Edit"))
+            {
+                await LoadDropdownsAsync(product.CategoryId, product.BrandId);
+                return View(product);
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -197,10 +209,13 @@ public class ProductsController : Controller
 
         if (!result.Success)
         {
-            ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Unable to update the product.");
             TempData["Error"] = result.ErrorMessage ?? "Unable to update the product.";
-            await LoadDropdownsAsync(product.CategoryId, product.BrandId);
-            return View(product);
+            if (Request.Headers.Referer.ToString().Contains("/Products/Edit"))
+            {
+                await LoadDropdownsAsync(product.CategoryId, product.BrandId);
+                return View(product);
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         TempData["Success"] = $"Product '{product.Name}' was updated successfully.";

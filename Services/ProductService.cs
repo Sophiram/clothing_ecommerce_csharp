@@ -1,18 +1,18 @@
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
+﻿using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Data.Enums;
+using WebApplication_ClothingEcommerce.Data.Repositories.Interfaces;
 using WebApplication_ClothingEcommerce.Models;
 
 namespace WebApplication_ClothingEcommerce.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IAuditService _auditService;
 
-        public ProductService(AppDbContext context, IAuditService auditService)
+        public ProductService(IUnitOfWork unitOfWork, IAuditService auditService)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _auditService = auditService;
         }
 
@@ -22,67 +22,28 @@ namespace WebApplication_ClothingEcommerce.Services
             string? search,
             ProductStatus? status)
         {
-            IQueryable<Product> query = _context.Products
-                .AsNoTracking()
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Images)
-                .Include(p => p.Variants);
+            var (products, total, active, outOfStock, inactive) = await _unitOfWork.Products.GetFilteredAdminProductsAsync(
+                categoryId, brandId, search, status);
 
-            if (categoryId.HasValue && categoryId.Value != Guid.Empty)
-            {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
-
-            if (brandId.HasValue && brandId.Value != Guid.Empty)
-            {
-                query = query.Where(p => p.BrandId == brandId.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var s = search.Trim();
-                query = query.Where(p => p.Name.Contains(s) || (p.Description != null && p.Description.Contains(s)));
-            }
-
-            if (status.HasValue)
-            {
-                query = query.Where(p => p.Status == status.Value);
-            }
-
-            var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
-
-            var all = await _context.Products.AsNoTracking().ToListAsync();
             var stats = new ProductAdminStatsDto
             {
-                TotalProducts = all.Count,
-                ActiveProducts = all.Count(p => p.Status == ProductStatus.Active),
-                OutOfStockProducts = all.Count(p => p.Status == ProductStatus.OutOfStock),
-                InactiveProducts = all.Count(p => p.Status == ProductStatus.Inactive)
+                TotalProducts = total,
+                ActiveProducts = active,
+                OutOfStockProducts = outOfStock,
+                InactiveProducts = inactive
             };
 
-            return (products, stats);
+            return (products.ToList(), stats);
         }
 
         public async Task<Product?> GetProductByIdAsync(Guid id)
         {
-            return await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == id);
+            return await _unitOfWork.Products.GetByIdAsync(id);
         }
 
         public async Task<Product?> GetProductDetailsAsync(Guid id)
         {
-            return await _context.Products
-                .AsNoTracking()
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Images)
-                .Include(p => p.Variants).ThenInclude(v => v.Size)
-                .Include(p => p.Variants).ThenInclude(v => v.Color)
-                .Include(p => p.Variants).ThenInclude(v => v.Inventory)
-                .Include(p => p.Reviews).ThenInclude(r => r.Customer)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            return await _unitOfWork.Products.GetProductWithDetailsAsync(id);
         }
 
         public async Task<ServiceResult> CreateProductAsync(Product product, string? userId = null, string? userEmail = null, string? ip = null)
@@ -90,8 +51,8 @@ namespace WebApplication_ClothingEcommerce.Services
             product.Id = Guid.NewGuid();
             product.CreatedAt = DateTime.UtcNow;
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Products.AddAsync(product);
+            await _unitOfWork.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 userId,
@@ -107,16 +68,19 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<ServiceResult> UpdateProductAsync(Guid id, Product product, string? userId = null, string? userEmail = null, string? ip = null)
         {
-            var existing = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            var existing = await _unitOfWork.Products.GetByIdAsync(id);
             if (existing == null) return ServiceResult.Fail("Product not found.");
 
             existing.Name = product.Name;
             existing.Description = product.Description;
             existing.CategoryId = product.CategoryId;
             existing.BrandId = product.BrandId;
+            existing.Gender = product.Gender;
+            existing.Material = product.Material;
             existing.Status = product.Status;
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.Products.Update(existing);
+            await _unitOfWork.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 userId,
@@ -132,22 +96,19 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<ServiceResult> DeleteProductAsync(Guid id, string? userId = null, string? userEmail = null, string? ip = null)
         {
-            var product = await _context.Products
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
             if (product == null) return ServiceResult.Fail("Product not found.");
 
             var variantIds = product.Variants.Select(v => v.Id).ToList();
-            var hasOrders = await _context.OrderItems.AnyAsync(oi => variantIds.Contains(oi.VariantId));
+            var hasOrders = (await _unitOfWork.Repository<OrderItem>().FindAsync(oi => variantIds.Contains(oi.VariantId))).Any();
             if (hasOrders)
             {
                 return ServiceResult.Fail("Cannot delete this product because it has associated customer orders. Change status to Inactive instead.");
             }
 
             var name = product.Name;
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Products.Remove(product);
+            await _unitOfWork.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 userId,
@@ -163,11 +124,12 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<ServiceResult> ToggleStatusAsync(Guid id, string? userId = null, string? userEmail = null, string? ip = null)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+            var product = await _unitOfWork.Products.GetByIdAsync(id);
             if (product == null) return ServiceResult.Fail("Product not found.");
 
             product.Status = product.Status == ProductStatus.Active ? ProductStatus.Inactive : ProductStatus.Active;
-            await _context.SaveChangesAsync();
+            _unitOfWork.Products.Update(product);
+            await _unitOfWork.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 userId,
@@ -183,12 +145,7 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<(ServiceResult Result, Guid? NewProductId)> DuplicateProductAsync(Guid id, string? userId = null, string? userEmail = null, string? ip = null)
         {
-            var original = await _context.Products
-                .AsNoTracking()
-                .Include(p => p.Images)
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var original = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
             if (original == null) return (ServiceResult.Fail("Original product not found."), null);
 
             var newProduct = new Product
@@ -213,8 +170,8 @@ namespace WebApplication_ClothingEcommerce.Services
                 });
             }
 
-            _context.Products.Add(newProduct);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Products.AddAsync(newProduct);
+            await _unitOfWork.SaveChangesAsync();
 
             await _auditService.LogAsync(
                 userId,
@@ -230,8 +187,8 @@ namespace WebApplication_ClothingEcommerce.Services
 
         public async Task<(List<Category> Categories, List<Brand> Brands)> GetCategoriesAndBrandsAsync()
         {
-            var categories = await _context.Categories.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
-            var brands = await _context.Brands.AsNoTracking().OrderBy(b => b.Name).ToListAsync();
+            var categories = (await _unitOfWork.Categories.GetAllAsync()).OrderBy(c => c.Name).ToList();
+            var brands = (await _unitOfWork.Brands.GetAllAsync()).OrderBy(b => b.Name).ToList();
             return (categories, brands);
         }
     }

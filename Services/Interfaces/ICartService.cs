@@ -17,6 +17,7 @@ namespace WebApplication_ClothingEcommerce.Services
         Task<CartResult> AddItemAsync(Guid customerId, Guid variantId, int quantity);
         Task<CartResult> UpdateQuantityAsync(Guid customerId, Guid cartItemId, int quantity);
         Task<CartResult> RemoveItemAsync(Guid customerId, Guid cartItemId);
+        Task<CartResult> ChangeVariantAsync(Guid customerId, Guid cartItemId, Guid newVariantId);
         Task<int> GetCartCountAsync(Guid customerId);
         Task ClearCartAsync(Guid customerId);
 
@@ -24,6 +25,8 @@ namespace WebApplication_ClothingEcommerce.Services
         Task<Cart?> GetAdminCustomerCartAsync(Guid customerId);
         Task<List<CartItem>> GetAllCartItemsAsync();
         Task<CartItem?> GetCartItemByIdAsync(Guid id);
+        Task<CartItem?> GetFirstCartItemAsync();
+        Task<CartItem?> EnsureSampleCartItemsAsync(Guid? customerId = null);
         Task<ServiceResult> CreateCartItemAsync(CartItem item);
         Task<ServiceResult> UpdateCartItemAsync(Guid id, CartItem item);
         Task<ServiceResult> DeleteCartItemAsync(Guid id);

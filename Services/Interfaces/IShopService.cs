@@ -32,6 +32,7 @@ namespace WebApplication_ClothingEcommerce.Services
     {
         Task<(ShopViewModel Model, HashSet<Guid>? WishlistedVariantIds)> GetShopViewModelAsync(ShopFilterParameters filter);
         Task<ProductDetailsResult> GetProductDetailsAsync(Guid id);
+        Task<ProductDetailsResult> GetFirstProductDetailsAsync();
         Task<(List<Product> Products, List<Category> Categories, List<Brand> Brands)> GetAdminShopDataAsync(Guid? categoryId, Guid? brandId, string? search);
         Task<Product?> GetAdminProductDetailsAsync(Guid id);
     }

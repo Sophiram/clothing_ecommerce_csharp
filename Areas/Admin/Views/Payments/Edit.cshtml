@@ -43,7 +43,7 @@
                             <!-- PAYMENT METHOD -->
                             <div class="col-md-6">
                                 <label asp-for="PaymentMethodId" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Payment Gateway / Method</label>
-                                <select asp-for="PaymentMethodId" class="form-select" asp-items="ViewBag.PaymentMethodId">
+                                <select asp-for="PaymentMethodId" class="form-select" asp-items="ViewBag.PaymentMethods">
                                     <option value="">Select payment method</option>
                                 </select>
                                 <span asp-validation-for="PaymentMethodId" class="text-danger small"></span>
@@ -52,7 +52,7 @@
                             <!-- STATUS -->
                             <div class="col-md-6">
                                 <label asp-for="PaymentStatus" class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">Settlement Status</label>
-                                <select asp-for="PaymentStatus" class="form-select" asp-items="ViewBag.PaymentStatus">
+                                <select asp-for="PaymentStatus" class="form-select" asp-items="ViewBag.PaymentStatusList">
                                     <option value="">Select status</option>
                                 </select>
                                 <span asp-validation-for="PaymentStatus" class="text-danger small"></span>

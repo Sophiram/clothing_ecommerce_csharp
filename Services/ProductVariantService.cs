@@ -17,7 +17,7 @@ namespace WebApplication_ClothingEcommerce.Services
         {
             var query = _context.ProductVariants
                 .AsNoTracking()
-                .Include(v => v.Product)
+                .Include(v => v.Product).ThenInclude(p => p.Images)
                 .Include(v => v.Size)
                 .Include(v => v.Color)
                 .Include(v => v.Inventory)
