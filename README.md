@@ -48,27 +48,29 @@ Featuring authentic **National Bank of Cambodia (NBC) Bakong KHQR** and **ABA Pa
 ## ⚙️ Environment Configuration (`.env`)
 
 The project supports environment variables via a `.env` file located in the project root.
+A template is available at `.env.example`.
 
-Create or edit your `.env` file with your credentials:
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
 
 ```env
 # =========================================================
-# APPLICATION CONFIGURATION
+# APPLICATION CONFIGURATION (See .env.example for all keys)
 # =========================================================
 SUPERADMIN_EMAIL=superadmin@clothe.com
-SUPERADMIN_PASSWORD=SuperAdmin@12345
+SUPERADMIN_PASSWORD=your_superadmin_password
 
 # =========================================================
-# BAKONG KHQR & ABA PAY CREDENTIALS
+# BAKONG KHQR & GOOGLE OAUTH CREDENTIALS
 # =========================================================
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
 KHQR_BASE_URL=https://api-bakong.nbc.gov.kh
-KHQR_TOKEN="YOUR_BAKONG_OPEN_API_JWT_TOKEN"
-KHQR_ACCOUNT="sorn_sophiram@bkrt"
-KHQR_MERCHANT_NAME="SOPHIRAM SORN"
-KHQR_STORE_LABEL="Clothing Store"
-KHQR_PHONE=0969144183
-KHQR_CURRENCY=USD
-KHQR_USD_TO_KHR_RATE=4100
+KHQR_TOKEN="your_bakong_token"
+KHQR_BAKONG_ACCOUNT_ID="your_account@bkrt"
 ```
 
 > [!TIP]
