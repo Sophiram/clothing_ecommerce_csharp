@@ -1,0 +1,224 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.ContactViewModel
+@{
+    ViewData["Title"] = "Contact Us - Customer Support & Telegram Chat";
+}
+
+<div class="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 transition-colors duration-200">
+
+    <!-- =====================================================
+         HERO SECTION
+    ====================================================== -->
+    <section class="relative overflow-hidden py-14 lg:py-20 border-b border-gray-100 dark:border-slate-800 bg-gradient-to-b from-blue-50/50 via-white to-white dark:from-slate-900/40 dark:via-slate-950 dark:to-slate-950">
+        <div class="absolute top-0 right-0 w-[450px] h-[450px] bg-sky-200/30 dark:bg-sky-900/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-100/40 dark:bg-indigo-900/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-screen-xl mx-auto px-4 lg:px-6 relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-5">
+                <span class="w-2 h-2 rounded-full bg-[#229ED9] animate-pulse"></span>
+                We're Here to Help · 24/7 Support
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mb-4">
+                Get in Touch with <span class="text-brand-blue">CLOTHÉ</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-gray-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed"
+               data-en="Have questions about your order, custom sizing, or styling advice? Reach out to us via Telegram, phone, or send an inquiry below."
+               data-kh="មានចម្ងល់អំពីការបញ្ជាទិញ ទំហំសម្លៀកបំពាក់ ឬត្រូវការការប្រឹក្សា? ទំនាក់ទំនងមកកាន់ពួកយើងតាម Telegram ទូរស័ព្ទ ឬផ្ញើសារខាងក្រោម។">
+                Have questions about your order, custom sizing, or styling advice? Reach out to us via Telegram, phone, or send an inquiry below.
+            </p>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         MAIN CONTENT: CONTACT CARDS & FORM
+    ====================================================== -->
+    <div class="max-w-screen-xl mx-auto px-4 lg:px-6 py-12 lg:py-16">
+        
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-8 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-start gap-3.5 shadow-sm">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="bi bi-check-lg text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Message Delivered!</h3>
+                    <p class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">@TempData["SuccessMessage"]</p>
+                </div>
+            </div>
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+
+            <!-- LEFT: CONTACT CARDS (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- FEATURED: TELEGRAM DIRECT CHAT -->
+                <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 telegram-gradient-card shadow-xl shadow-cyan-500/20"
+                     style="background: linear-gradient(135deg, #229ED9 0%, #1b8bc2 50%, #0d6fa0 100%) !important; color: #ffffff !important;">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-2xl shadow-inner">
+                            <i class="bi bi-telegram"></i>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold tracking-wide text-white">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            FASTEST REPLY
+                        </span>
+                    </div>
+
+                    <h2 class="text-xl font-bold mb-1 text-white">Telegram Support Bot</h2>
+                    <p class="text-sky-100 text-xs sm:text-sm mb-4 leading-relaxed">
+                        Chat directly with our support team or automated assistant on Telegram for order updates, KHQR payment queries, and sizing recommendations.
+                    </p>
+
+                    <div class="bg-black/20 rounded-2xl p-3 mb-5 border border-white/15 flex items-center justify-between text-white">
+                        <div class="flex items-center gap-2">
+                            <i class="bi bi-robot text-sky-200 text-lg"></i>
+                            <div>
+                                <div class="text-[10px] uppercase text-sky-200 font-bold tracking-wider">Official Bot</div>
+                                <div class="text-xs sm:text-sm font-mono font-semibold text-white">@@khmerclothingstore_bot</div>
+                            </div>
+                        </div>
+                        <span class="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-lg font-semibold">Online</span>
+                    </div>
+
+                    <a href="https://t.me/khmerclothingstore_bot" target="_blank" rel="noopener noreferrer"
+                       class="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl telegram-action-btn font-bold text-sm shadow-md transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer"
+                       style="background-color: #ffffff !important; color: #0284c7 !important;">
+                        <i class="bi bi-send-fill" style="color: #0284c7;"></i>
+                        <span style="color: #0284c7; font-weight: 700;">Chat on Telegram Now</span>
+                        <i class="bi bi-arrow-up-right text-xs" style="color: #0284c7;"></i>
+                    </a>
+                </div>
+
+                <!-- PHONE / HOTLINE CARD -->
+                <div class="rounded-3xl p-6 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 transition-all hover:border-blue-300 dark:hover:border-blue-700/50">
+                    <div class="flex items-start gap-4">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-brand-blue dark:text-blue-400 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="bi bi-telephone-fill"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-slate-100">Customer Hotline</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 mb-2">Speak directly with our store specialists.</p>
+                            <a href="tel:0969144183" class="inline-flex items-center gap-1.5 text-base font-bold text-brand-blue dark:text-blue-400 hover:underline">
+                                096 914 4183
+                                <span class="text-xs font-normal text-gray-400">(+855 96 914 4183)</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATELIER LOCATION & HOURS -->
+                <div class="rounded-3xl p-6 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-11 h-11 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-slate-100">Store Atelier</h3>
+                            <p class="text-xs text-gray-600 dark:text-slate-400 mt-1 leading-relaxed">
+                                Preah Norodom Blvd, Sangkat Tonle Bassac, Khan Chamkarmon, Phnom Penh, Cambodia.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200/60 dark:border-slate-800 pt-3 flex items-start gap-4">
+                        <div class="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="bi bi-clock-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-slate-100">Opening Hours</h3>
+                            <p class="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                                Monday – Sunday: <strong>8:00 AM – 10:00 PM</strong><br />
+                                Online Orders: <strong>24/7</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: INQUIRY FORM (7 cols) -->
+            <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-sm">
+                <div class="mb-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-blue dark:text-blue-400">Direct Inquiry</span>
+                    <h2 class="text-2xl font-extrabold text-gray-900 dark:text-slate-100 mt-1">Send Us a Message</h2>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
+                        Fill out the form below. Inquiries are instantly routed to our Telegram support desk for rapid review.
+                    </p>
+                </div>
+
+                <form asp-controller="Home" asp-action="Contact" method="post" class="space-y-4">
+                    @Html.AntiForgeryToken()
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="Name" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                Your Name <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="Name" class="input-clothe w-full text-sm" placeholder="e.g. Sokha Chan" required />
+                            <span asp-validation-for="Name" class="text-[11px] text-red-500 mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Email" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                Email Address <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="Email" type="email" class="input-clothe w-full text-sm" placeholder="name@example.com" required />
+                            <span asp-validation-for="Email" class="text-[11px] text-red-500 mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="Phone" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                Phone Number (optional)
+                            </label>
+                            <input asp-for="Phone" class="input-clothe w-full text-sm" placeholder="e.g. 096 914 4183" />
+                            <span asp-validation-for="Phone" class="text-[11px] text-red-500 mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Subject" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                Subject <span class="text-red-500">*</span>
+                            </label>
+                            <select asp-for="Subject" class="input-clothe w-full text-sm" required>
+                                <option value="">Select a topic...</option>
+                                <option value="Order Status & Delivery">Order Status &amp; Delivery</option>
+                                <option value="Bakong KHQR Payment Query">Bakong KHQR Payment Query</option>
+                                <option value="Product Sizing & Fit Advice">Product Sizing &amp; Fit Advice</option>
+                                <option value="Returns & Exchanges">Returns &amp; Exchanges</option>
+                                <option value="Wholesale / General Inquiry">Wholesale / General Inquiry</option>
+                            </select>
+                            <span asp-validation-for="Subject" class="text-[11px] text-red-500 mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label asp-for="Message" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                            Your Message <span class="text-red-500">*</span>
+                        </label>
+                        <textarea asp-for="Message" rows="5" class="input-clothe w-full text-sm resize-y" placeholder="Describe your question, order number, or feedback..." required></textarea>
+                        <span asp-validation-for="Message" class="text-[11px] text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-brand-blue hover:bg-brand-blue-dark text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all duration-200">
+                            <i class="bi bi-send-fill"></i>
+                            Send Message to Support
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

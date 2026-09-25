@@ -1,152 +1,161 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Data;
+using WebApplication_ClothingEcommerce.Data.Enums;
 using WebApplication_ClothingEcommerce.Models;
-[Area("Admin")]
-[Authorize(Roles = "Admin")]
-public class ShipmentsController : Controller
+using WebApplication_ClothingEcommerce.Services;
+
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public ShipmentsController(AppDbContext context)
+    [Area("Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public class ShipmentsController : Controller
     {
-        _context = context;
-    }
+        private readonly IShipmentService _shipmentService;
 
-    // GET: SHIPMENTS
-    public async Task<IActionResult> Index()    
-    {
-        return View(await _context.Shipments.ToListAsync());
-    }
-
-    // GET: SHIPMENTS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
-    {
-        if (id == null)
+        public ShipmentsController(IShipmentService shipmentService)
         {
-            return NotFound();
+            _shipmentService = shipmentService;
         }
 
-        var shipment = await _context.Shipments
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (shipment == null)
+        // =========================================================
+        // GET: /Admin/Shipments
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Index(string? search = null, ShipmentStatus? status = null)
         {
-            return NotFound();
+            var shipments = await _shipmentService.GetAllShipmentsAsync(search, status);
+
+            ViewBag.Search = search;
+            ViewBag.Status = status;
+            ViewBag.Statuses = Enum.GetValues<ShipmentStatus>()
+                .Select(s => new SelectListItem
+                {
+                    Text = s.ToString(),
+                    Value = s.ToString(),
+                    Selected = (status == s)
+                }).ToList();
+
+            ViewBag.TotalCount = shipments.Count;
+            ViewBag.PendingCount = shipments.Count(s => s.ShipmentStatus == ShipmentStatus.Pending);
+            ViewBag.InTransitCount = shipments.Count(s => s.ShipmentStatus == ShipmentStatus.InTransit);
+            ViewBag.DeliveredCount = shipments.Count(s => s.ShipmentStatus == ShipmentStatus.Delivered);
+
+            return View(shipments);
         }
 
-        return View(shipment);
-    }
-
-    // GET: SHIPMENTS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    // POST: SHIPMENTS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,OrderId,TrackingNumber,ShippingCompany,ShipmentStatus,ShippedAt,DeliveredAt,Order")] Shipment shipment)
-    {
-        if (ModelState.IsValid)
+        // =========================================================
+        // GET: /Admin/Shipments/Details/{id}
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid? id)
         {
-            _context.Add(shipment);
-            await _context.SaveChangesAsync();
+            if (id == null) return NotFound();
+
+            var shipment = await _shipmentService.GetShipmentByIdAsync(id.Value);
+            if (shipment == null) return NotFound();
+
+            return View(shipment);
+        }
+
+        // =========================================================
+        // GET: /Admin/Shipments/Edit/{id}
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid? id)
+        {
+            if (id == null) return NotFound();
+
+            var shipment = await _shipmentService.GetShipmentByIdAsync(id.Value);
+            if (shipment == null) return NotFound();
+
+            ViewBag.Statuses = new SelectList(Enum.GetValues<ShipmentStatus>(), shipment.ShipmentStatus);
+            return View(shipment);
+        }
+
+        // =========================================================
+        // POST: /Admin/Shipments/Edit/{id}
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,TrackingNumber,ShippingCompany,ShipmentStatus,ShippedAt,DeliveredAt")] Shipment model)
+        {
+            if (id != model.Id) return NotFound();
+
+            var success = await _shipmentService.UpdateShipmentAsync(
+                id,
+                model.TrackingNumber,
+                model.ShippingCompany,
+                model.ShipmentStatus,
+                model.ShippedAt,
+                model.DeliveredAt
+            );
+
+            if (!success) return NotFound();
+
+            TempData["Success"] = "Shipment details updated successfully.";
             return RedirectToAction(nameof(Index));
         }
-        return View(shipment);
-    }
 
-    // GET: SHIPMENTS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
-    {
-        if (id == null)
+        // =========================================================
+        // POST: /Admin/Shipments/QuickUpdate
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuickUpdate(Guid id, ShipmentStatus status, string? trackingNumber = null, string? returnUrl = null)
         {
-            return NotFound();
-        }
+            var success = await _shipmentService.QuickUpdateStatusAsync(id, status, trackingNumber);
+            if (!success) return NotFound();
 
-        var shipment = await _context.Shipments.FindAsync(id);
-        if (shipment == null)
-        {
-            return NotFound();
-        }
-        return View(shipment);
-    }
-
-    // POST: SHIPMENTS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,OrderId,TrackingNumber,ShippingCompany,ShipmentStatus,ShippedAt,DeliveredAt,Order")] Shipment shipment)
-    {
-        if (id != shipment.Id)
-        {
-            return NotFound();
-        }
-
-        if (ModelState.IsValid)
-        {
-            try
+            TempData["Success"] = $"Shipment status updated to {status}.";
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
-                _context.Update(shipment);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ShipmentExists(shipment.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return Redirect(returnUrl);
             }
             return RedirectToAction(nameof(Index));
         }
-        return View(shipment);
-    }
 
-    // GET: SHIPMENTS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
-    {
-        if (id == null)
+        // =========================================================
+        // POST: /Admin/Shipments/Fulfill
+        // Dispatch order fulfillment directly from Store Dashboard
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Fulfill(Guid orderId, string? carrier = null, string? trackingNumber = null, string? returnUrl = null)
         {
-            return NotFound();
+            var success = await _shipmentService.FulfillOrderAsync(orderId, carrier ?? "Standard Courier", trackingNumber ?? string.Empty);
+            if (!success)
+            {
+                TempData["Error"] = "Unable to process fulfillment for the selected order.";
+            }
+            else
+            {
+                TempData["Success"] = $"Order #{orderId.ToString()[..8].ToUpper()} has been dispatched and marked as Shipped!";
+            }
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            return RedirectToAction(nameof(Index));
         }
 
-        var shipment = await _context.Shipments
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (shipment == null)
+        // =========================================================
+        // POST: /Admin/Shipments/Delete/{id}
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
         {
-            return NotFound();
+            var success = await _shipmentService.DeleteShipmentAsync(id);
+            if (success)
+            {
+                TempData["Success"] = "Shipment record deleted successfully.";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
-
-        return View(shipment);
-    }
-
-    // POST: SHIPMENTS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
-    {
-        var shipment = await _context.Shipments.FindAsync(id);
-        if (shipment != null)
-        {
-            _context.Shipments.Remove(shipment);
-        }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-
-    private bool ShipmentExists(System.Guid? id)
-    {
-        return _context.Shipments.Any(e => e.Id == id);
     }
 }

@@ -1,394 +1,587 @@
 @model IEnumerable<WebApplication_ClothingEcommerce.Models.Payment>
-
+@using WebApplication_ClothingEcommerce.Data.Enums
+@using WebApplication_ClothingEcommerce.Services
 @{
     ViewData["Title"] = "Payments";
+    var stats = ViewBag.Stats as PaymentStatsDto;
+    var currentStatus = ViewBag.Status as PaymentStatus?;
+    var totalCount = Model?.Count() ?? 0;
+    var totalRevenue = stats?.TotalRevenue ?? Model?.Where(p => p.PaymentStatus == PaymentStatus.Paid || p.PaymentStatus == PaymentStatus.Completed).Sum(p => p.Amount) ?? 0;
+    var paidCount = stats?.PaidCount ?? Model?.Count(p => p.PaymentStatus == PaymentStatus.Paid || p.PaymentStatus == PaymentStatus.Completed) ?? 0;
+    var pendingCount = stats?.PendingCount ?? Model?.Count(p => p.PaymentStatus == PaymentStatus.Pending) ?? 0;
+    var failedCount = stats?.FailedCount ?? Model?.Count(p => p.PaymentStatus == PaymentStatus.Failed) ?? 0;
 }
 
-<div class="container-fluid py-4">
+<div class="space-y-6">
 
     <!-- PAGE HEADER -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <div class="text-uppercase text-muted small fw-bold mb-1">
-                Sales / Payments
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-credit-card-2-front-fill"></i>
+                <span>SALES &amp; TRANSACTIONS</span>
             </div>
-
-            <h1 class="h3 fw-bold mb-1">
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Payments
             </h1>
-
-            <p class="text-muted mb-0">
-                Manage customer payments and payment transactions.
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Monitor financial transactions, gateway reconciliation, and revenue settlements.
             </p>
         </div>
 
-        <a asp-controller="PaymentMethods"
-           asp-action="Index"
-           class="btn btn-outline-dark">
-
-            <i class="bi bi-credit-card me-1"></i>
-            Payment Methods
-
-        </a>
-
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-controller="PaymentMethods" asp-action="Index"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                <i class="bi bi-wallet2"></i>
+                <span>Payment Methods</span>
+            </a>
+            <a asp-action="Create"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition">
+                <i class="bi bi-plus-lg"></i>
+                <span>Record Payment</span>
+            </a>
+        </div>
     </div>
-
 
     <!-- ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
-            <i class="bi bi-check-circle-fill"></i>
+        <div class="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-xs">
+            <i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i>
             <span>@TempData["Success"]</span>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-            <i class="bi bi-exclamation-circle-fill"></i>
+        <div class="flex items-center gap-2.5 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-xs">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i>
             <span>@TempData["Error"]</span>
         </div>
     }
 
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-    <!-- PAYMENT CARD -->
-    <div class="card border-0 shadow-sm">
-
-        <!-- HEADER -->
-        <div class="card-header bg-white border-0 p-4">
-
-            <div class="d-flex justify-content-between align-items-center">
-
-                <div>
-                    <h5 class="fw-bold mb-1">
-                        Payment Transactions
-                    </h5>
-
-                    <p class="text-muted small mb-0">
-                        View and manage all customer payments.
-                    </p>
-                </div>
-
-                <span class="badge bg-dark rounded-pill px-3 py-2">
-                    @(Model?.Count() ?? 0) Payments
+        <!-- 1. TOTAL COLLECTED -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Collected</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-cash-stack"></i>
                 </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    $@totalRevenue.ToString("N2")
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>Verified captured revenue</span>
+                </div>
+            </div>
+        </div>
 
+        <!-- 2. SUCCESSFUL PAYMENTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Successful Payments</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-check2-circle"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-blue-600 dark:text-blue-400 tabular-nums">
+                    @paidCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Completed transactions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PENDING SETTLEMENTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending Clearance</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-hourglass-split"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    @pendingCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Awaiting gateway or COD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. FAILED / CANCELLED -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Failed / Cancelled</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400 tabular-nums">
+                    @failedCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Unsuccessful attempts</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FILTER & QUICK TABS TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+        <form method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search Order ID or Payment ID..."
+                       class="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
 
+            <select name="status" class="w-full md:w-44 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">All Statuses</option>
+                @if (ViewBag.PaymentStatuses != null)
+                {
+                    foreach (var item in ViewBag.PaymentStatuses)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                }
+            </select>
+
+            <select name="paymentMethodId" class="w-full md:w-48 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">All Payment Methods</option>
+                @if (ViewBag.PaymentMethods != null)
+                {
+                    foreach (var item in ViewBag.PaymentMethods)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                }
+            </select>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit"
+                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> <span>Filter</span>
+                </button>
+                <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Reset Filters">
+                    <i class="bi bi-arrow-repeat text-xs"></i>
+                </a>
+            </div>
+        </form>
+
+        <!-- Quick Filter Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800">
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mr-2">Quick View:</span>
+            <a asp-action="Index" asp-route-search="@ViewBag.Search"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(!currentStatus.HasValue ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                All Payments (@totalCount)
+            </a>
+            <a asp-action="Index" asp-route-status="Paid" asp-route-search="@ViewBag.Search"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(currentStatus?.ToString() == "Paid" ? "bg-emerald-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                Paid (@paidCount)
+            </a>
+            <a asp-action="Index" asp-route-status="Pending" asp-route-search="@ViewBag.Search"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(currentStatus?.ToString() == "Pending" ? "bg-amber-500 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                Pending (@pendingCount)
+            </a>
+            <a asp-action="Index" asp-route-status="Failed" asp-route-search="@ViewBag.Search"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition @(currentStatus?.ToString() == "Failed" ? "bg-rose-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                Failed (@failedCount)
+            </a>
+        </div>
+    </div>
+
+    <!-- TRANSACTIONS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Payment Transactions</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Real-time gateway settlements and customer payments</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                @totalCount records
+            </span>
         </div>
 
-
-        <!-- FILTER -->
-        <div class="px-4 pb-4">
-
-            <form method="get">
-
-                <div class="row g-2">
-
-                    <div class="col-lg-4">
-
-                        <div class="input-group">
-
-                            <span class="input-group-text bg-white">
-                                <i class="bi bi-search"></i>
-                            </span>
-
-                            <input name="search"
-                                   value="@ViewBag.Search"
-                                   class="form-control"
-                                   placeholder="Search Order ID..." />
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="col-lg-3">
-
-                        <select name="status"
-                                class="form-select">
-
-                            <option value="">
-                                All Statuses
-                            </option>
-
-                            @foreach (var item in ViewBag.PaymentStatuses)
-                            {
-                                <option value="@item.Value"
-                                        selected="@item.Selected">
-                                    @item.Text
-                                </option>
-                            }
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="col-lg-3">
-
-                        <select name="paymentMethodId"
-                                class="form-select">
-
-                            <option value="">
-                                All Payment Methods
-                            </option>
-
-                            @foreach (var item in ViewBag.PaymentMethods)
-                            {
-                                <option value="@item.Value"
-                                        selected="@item.Selected">
-                                    @item.Text
-                                </option>
-                            }
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="col-lg-2">
-
-                        <div class="d-flex gap-2">
-
-                            <button type="submit"
-                                    class="btn btn-dark flex-grow-1">
-
-                                <i class="bi bi-funnel me-1"></i>
-                                Filter
-
-                            </button>
-
-                            <a asp-action="Index"
-                               class="btn btn-outline-secondary"
-                               title="Reset">
-
-                                <i class="bi bi-arrow-counterclockwise"></i>
-
-                            </a>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </form>
-
-        </div>
-
-
-        <!-- TABLE -->
         @if (Model != null && Model.Any())
         {
-            <div class="table-responsive">
-
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
-
-                        <tr>
-
-                            <th class="px-4">
-                                ORDER
-                            </th>
-
-                            <th>
-                                PAYMENT METHOD
-                            </th>
-
-                            <th>
-                                STATUS
-                            </th>
-
-                            <th>
-                                AMOUNT
-                            </th>
-
-                            <th>
-                                PAID AT
-                            </th>
-
-                            <th class="text-end px-4">
-                                ACTIONS
-                            </th>
-
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-5">Order Reference</th>
+                            <th class="py-3 px-4">Customer</th>
+                            <th class="py-3 px-4">Method</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Amount</th>
+                            <th class="py-3 px-4">Paid At</th>
+                            <th class="py-3 px-5 text-right">Actions</th>
                         </tr>
-
                     </thead>
-
-                    <tbody>
-
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                         @foreach (var payment in Model)
                         {
-                            <tr>
+                            var statusStr = payment.PaymentStatus.ToString();
+                            var (badgeBg, badgeText, statusIcon) = statusStr.ToLower() switch
+                            {
+                                "paid" or "completed" or "successful" => ("bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800", "Paid", "bi-check2-circle"),
+                                "pending" => ("bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800", "Pending", "bi-clock-history"),
+                                "failed" => ("bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800", "Failed", "bi-exclamation-octagon"),
+                                "refunded" => ("bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800", "Refunded", "bi-arrow-counterclockwise"),
+                                _ => ("bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700", statusStr, "bi-question-circle")
+                            };
 
-                                <!-- ORDER -->
+                            var custName = $"{payment.Order?.Customer?.FirstName} {payment.Order?.Customer?.LastName}".Trim();
+                            if (string.IsNullOrWhiteSpace(custName)) custName = payment.Order?.Customer?.Email ?? "Guest Customer";
+                            var custEmail = payment.Order?.Customer?.Email ?? "—";
+                            var custPhone = payment.Order?.Customer?.Phone ?? "—";
+                            var paidIso = payment.PaidAt?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm") ?? "";
+                            var paidFormatted = payment.PaidAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "Pending / Unpaid";
+                            var pMethodName = payment.PaymentMethod?.Name ?? "Credit / Debit Card";
+                            var ordShort = payment.OrderId.ToString()[..8].ToUpper();
 
-                                <td class="px-4">
-
-                                    <code class="text-dark">
-                                        #@payment.OrderId
-                                    </code>
-
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <!-- ORDER REF -->
+                                <td class="py-3 px-5">
+                                    <div class="flex items-center gap-2">
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@payment.OrderId"
+                                           class="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                                            #@ordShort
+                                        </a>
+                                    </div>
+                                    <div class="font-mono text-[11px] text-slate-400">Tx: #@payment.Id.ToString()[..8]</div>
                                 </td>
 
+                                <!-- CUSTOMER -->
+                                <td class="py-3 px-4">
+                                    <div class="font-semibold text-slate-900 dark:text-white">@custName</div>
+                                    <div class="text-[11px] text-slate-400">@custEmail</div>
+                                </td>
 
                                 <!-- PAYMENT METHOD -->
-
-                                <td>
-
-                                    <div class="d-flex align-items-center gap-2">
-
-                                        <div class="bg-light rounded p-2">
-
-                                            <i class="bi bi-credit-card text-dark"></i>
-
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs">
+                                            <i class="bi bi-credit-card"></i>
                                         </div>
-
                                         <div>
-
-                                            <div class="fw-semibold">
-                                                @(payment.PaymentMethod?.Name ?? "Unknown")
-                                            </div>
-
-                                            <small class="text-muted">
-                                                ID #@payment.Id
-                                            </small>
-
+                                            <span class="font-semibold text-slate-800 dark:text-slate-200">@pMethodName</span>
                                         </div>
-
                                     </div>
-
                                 </td>
-
 
                                 <!-- STATUS -->
-
-                                <td>
-
-                                    @{
-                                        var status = payment.PaymentStatus.ToString();
-                                        var statusClass = status?.ToLower() switch
-                                        {
-                                            "paid" => "bg-success",
-                                            "completed" => "bg-success",
-                                            "successful" => "bg-success",
-                                            "pending" => "bg-warning text-dark",
-                                            "failed" => "bg-danger",
-                                            "cancelled" => "bg-secondary",
-                                            "refunded" => "bg-info text-dark",
-                                            _ => "bg-secondary"
-                                        };
-                                    }
-
-                                    <span class="badge @statusClass">
-                                        @payment.PaymentStatus
+                                <td class="py-3 px-4">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold @badgeBg">
+                                        <i class="bi @statusIcon"></i>
+                                        <span>@badgeText</span>
                                     </span>
-
                                 </td>
-
 
                                 <!-- AMOUNT -->
-
-                                <td>
-
-                                    <span class="fw-bold">
-                                        @payment.Amount.ToString("C")
+                                <td class="py-3 px-4">
+                                    <span class="font-black text-slate-900 dark:text-white text-sm tabular-nums">
+                                        $@payment.Amount.ToString("N2")
                                     </span>
-
                                 </td>
 
-
                                 <!-- PAID AT -->
-
-                                <td>
-
+                                <td class="py-3 px-4">
                                     @if (payment.PaidAt.HasValue)
                                     {
-                                        <span>
-                                            @payment.PaidAt.Value
-                                        </span>
+                                        <div class="font-semibold text-slate-800 dark:text-slate-200">@payment.PaidAt.Value.ToLocalTime().ToString("MMM dd, yyyy")</div>
+                                        <div class="text-[11px] text-slate-400">@payment.PaidAt.Value.ToLocalTime().ToString("hh:mm tt")</div>
                                     }
                                     else
                                     {
-                                        <span class="text-muted">
-                                            Not paid
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 text-[11px] font-medium">
+                                            <i class="bi bi-hourglass"></i> Awaiting Payment
                                         </span>
                                     }
-
                                 </td>
-
 
                                 <!-- ACTIONS -->
-
-                                <td class="text-end px-4">
-
-                                    <div class="btn-group">
-
-                                        <a asp-action="Details"
-                                           asp-route-id="@payment.Id"
-                                           class="btn btn-sm btn-outline-secondary"
-                                           title="Details">
-
+                                <td class="py-3 px-5 text-right">
+                                    <div class="inline-flex items-center gap-1">
+                                        <!-- Quick View Button -->
+                                        <button type="button"
+                                                onclick="openViewPaymentModal('@payment.Id', '@payment.OrderId', '@ordShort', '@Html.Raw(Html.Encode(custName))', '@Html.Raw(Html.Encode(custEmail))', '@Html.Raw(Html.Encode(custPhone))', '@Html.Raw(Html.Encode(pMethodName))', '@payment.PaymentStatus', '@payment.Amount.ToString("0.00")', '@paidFormatted', '@payment.PaymentMethodId', '@paidIso')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Quick View">
                                             <i class="bi bi-eye"></i>
+                                        </button>
 
-                                        </a>
-
-                                        <a asp-action="Edit"
-                                           asp-route-id="@payment.Id"
-                                           class="btn btn-sm btn-outline-primary"
-                                           title="Edit">
-
+                                        <!-- Edit Payment Button -->
+                                        <button type="button"
+                                                onclick="openEditPaymentModal('@payment.Id', '@payment.OrderId', '@ordShort', '@payment.PaymentMethodId', '@payment.PaymentStatus', '@payment.Amount.ToString("0.00")', '@paidIso')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Edit Payment">
                                             <i class="bi bi-pencil"></i>
+                                        </button>
 
+                                        <!-- Details Page Link -->
+                                        <a asp-action="Details" asp-route-id="@payment.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-400 transition flex items-center justify-center"
+                                           title="Full Details">
+                                            <i class="bi bi-box-arrow-up-right"></i>
                                         </a>
-
-                                        <a asp-action="Delete"
-                                           asp-route-id="@payment.Id"
-                                           class="btn btn-sm btn-outline-danger"
-                                           title="Delete">
-
-                                            <i class="bi bi-trash"></i>
-
-                                        </a>
-
                                     </div>
-
                                 </td>
-
                             </tr>
                         }
-
                     </tbody>
-
                 </table>
-
             </div>
         }
         else
         {
             <!-- EMPTY STATE -->
-
-            <div class="text-center py-5">
-
-                <div class="mb-3">
-                    <i class="bi bi-credit-card-2-front display-5 text-muted"></i>
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-credit-card-2-front text-2xl"></i>
                 </div>
-
-                <h5 class="fw-bold">
-                    No payments found
-                </h5>
-
-                <p class="text-muted mb-0">
-                    There are no payment transactions matching your search.
-                </p>
-
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">No payments found</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">No payment transactions match your selected search or filters.</p>
+                <a asp-action="Index"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-arrow-repeat"></i> Reset Filters
+                </a>
             </div>
         }
-
     </div>
 
 </div>
+
+<!-- =========================================================
+     MODERN TAILWIND EDIT PAYMENT POPUP MODAL
+========================================================= -->
+<div id="editPaymentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Payment Settlement</h3>
+                    <p class="text-[11px] text-slate-400 font-mono" id="modalPaymentOrderRef"></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditPaymentModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form asp-action="Edit" method="post" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="modalPaymentId" />
+            <input type="hidden" name="OrderId" id="modalPaymentOrderId" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- PAYMENT METHOD -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Payment Method</label>
+                    <select name="PaymentMethodId" id="modalPaymentMethodId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        @if (ViewBag.ActivePaymentMethods != null)
+                        {
+                            foreach (var pm in (IEnumerable<WebApplication_ClothingEcommerce.Models.PaymentMethod>)ViewBag.ActivePaymentMethods)
+                            {
+                                <option value="@pm.Id">@pm.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- SETTLEMENT STATUS -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Settlement Status</label>
+                    <select name="PaymentStatus" id="modalPaymentStatus" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        @foreach (var st in Enum.GetValues<WebApplication_ClothingEcommerce.Data.Enums.PaymentStatus>())
+                        {
+                            <option value="@st">@st</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- AMOUNT -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Captured Amount ($ USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                        <input type="number" step="0.01" min="0" name="Amount" id="modalPaymentAmount" class="w-full text-xs font-bold pl-7 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 tabular-nums" required />
+                    </div>
+                </div>
+
+                <!-- PAID AT -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Paid At (Local Time)</label>
+                    <input type="datetime-local" name="PaidAt" id="modalPaymentPaidAt" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditPaymentModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODERN TAILWIND QUICK VIEW PAYMENT DETAILS MODAL
+========================================================= -->
+<div id="viewPaymentModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Payment Details</h3>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-bold" id="viewPaymentOrderBadge"></span>
+                        <span id="viewPaymentStatusBadge"></span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="closeViewPaymentModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="mt-4 space-y-4">
+            <!-- AMOUNT BANNER -->
+            <div class="p-4 rounded-xl text-center bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-950/30 dark:to-blue-950/30 border border-dashed border-emerald-300 dark:border-emerald-800">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Captured Amount</span>
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5" id="viewPaymentAmountDisplay">$0.00</div>
+            </div>
+
+            <!-- DETAILS GRID -->
+            <div class="grid grid-cols-2 gap-2.5 text-xs">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Customer Name</span>
+                    <span class="font-bold text-slate-900 dark:text-white truncate block" id="viewPaymentCustName"></span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Payment Method</span>
+                    <span class="font-bold text-blue-600 dark:text-blue-400 truncate block" id="viewPaymentMethodName"></span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Email Address</span>
+                    <span class="text-slate-600 dark:text-slate-400 truncate block text-[11px]" id="viewPaymentCustEmail"></span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Settlement Time</span>
+                    <span class="text-slate-700 dark:text-slate-300 truncate block text-[11px]" id="viewPaymentPaidAt"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                <a id="viewPaymentFullLink" href="#" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span>Full Details Page</span>
+                </a>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeViewPaymentModal()"
+                            class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        Close
+                    </button>
+                    <button type="button" id="viewPaymentEditBtn"
+                            class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openEditPaymentModal(id, orderId, orderShort, methodId, status, amount, paidAt) {
+        document.getElementById('modalPaymentId').value = id;
+        document.getElementById('modalPaymentOrderId').value = orderId;
+        document.getElementById('modalPaymentOrderRef').textContent = 'Order #' + orderShort + ' • Tx: #' + id.substring(0, 8);
+        document.getElementById('modalPaymentMethodId').value = methodId;
+        document.getElementById('modalPaymentStatus').value = status;
+        document.getElementById('modalPaymentAmount').value = amount;
+        document.getElementById('modalPaymentPaidAt').value = paidAt || '';
+
+        var m = document.getElementById('editPaymentModal');
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+    }
+
+    function closeEditPaymentModal() {
+        var m = document.getElementById('editPaymentModal');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+    }
+
+    function openViewPaymentModal(id, orderId, orderShort, custName, custEmail, custPhone, methodName, status, amount, paidFormatted, methodId, paidAtIso) {
+        document.getElementById('viewPaymentOrderBadge').textContent = 'Order #' + orderShort;
+        document.getElementById('viewPaymentAmountDisplay').textContent = '$' + parseFloat(amount).toFixed(2);
+        document.getElementById('viewPaymentCustName').textContent = custName;
+        document.getElementById('viewPaymentCustEmail').textContent = custEmail;
+        document.getElementById('viewPaymentMethodName').textContent = methodName;
+        document.getElementById('viewPaymentPaidAt').textContent = paidFormatted;
+        document.getElementById('viewPaymentFullLink').href = '/Admin/Payments/Details/' + id;
+
+        var statusBadge = document.getElementById('viewPaymentStatusBadge');
+        var s = status.toLowerCase();
+        if (s === 'paid' || s === 'completed') {
+            statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800';
+            statusBadge.innerHTML = '<i class="bi bi-check2-circle"></i>' + status;
+        } else if (s === 'pending') {
+            statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800';
+            statusBadge.innerHTML = '<i class="bi bi-clock-history"></i>' + status;
+        } else {
+            statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800';
+            statusBadge.innerHTML = '<i class="bi bi-exclamation-octagon"></i>' + status;
+        }
+
+        var editBtn = document.getElementById('viewPaymentEditBtn');
+        editBtn.onclick = function() {
+            closeViewPaymentModal();
+            openEditPaymentModal(id, orderId, orderShort, methodId, status, amount, paidAtIso);
+        };
+
+        var m = document.getElementById('viewPaymentModal');
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+    }
+
+    function closeViewPaymentModal() {
+        var m = document.getElementById('viewPaymentModal');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+    }
+
+    // Close on backdrop click
+    window.addEventListener('click', function(e) {
+        var editM = document.getElementById('editPaymentModal');
+        var viewM = document.getElementById('viewPaymentModal');
+        if (e.target === editM) closeEditPaymentModal();
+        if (e.target === viewM) closeViewPaymentModal();
+    });
+</script>
+}

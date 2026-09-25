@@ -1,45 +1,31 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
-using WebApplication_ClothingEcommerce.Models.ViewModels;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class DashboardController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IDashboardService _dashboardService;
 
-        public DashboardController(AppDbContext context)
+        public DashboardController(IDashboardService dashboardService)
         {
-            _context = context;
+            _dashboardService = dashboardService;
         }
 
-        public async Task<IActionResult> Index()
+        // =========================================================
+        // DASHBOARD INDEX
+        // GET: /Admin/Dashboard?view=superadmin OR ?view=store
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Index(string? view = null)
         {
-            var viewModel = new DashboardViewModel
-            {
-                TotalOrders = await _context.Orders.CountAsync(),
+            var isSuperAdmin = User.IsInRole("SuperAdmin");
+            var model = await _dashboardService.GetDashboardAsync(isSuperAdmin, view);
 
-                TotalProducts = await _context.Products.CountAsync(),
-
-                TotalCustomers = await _context.Customers.CountAsync(),
-
-                TotalRevenue =
-                    await _context.Payments
-                        .SumAsync(p => (decimal?)p.Amount) ?? 0,
-
-                RecentOrders =
-                    await _context.Orders
-                        .Include(o => o.Customer)
-                        .OrderByDescending(o => o.OrderDate)
-                        .Take(5)
-                        .ToListAsync()
-            };
-
-            return View(viewModel);
+            return View(model);
         }
     }
 }

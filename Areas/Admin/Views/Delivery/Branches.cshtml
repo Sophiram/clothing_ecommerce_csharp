@@ -1,0 +1,186 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.DeliveryBranch>
+
+@{
+    ViewData["Title"] = "VET Express Branches";
+    var totalBranches = Model?.Count() ?? 0;
+    var provinceCount = Model?.Select(b => b.Province).Distinct().Count() ?? 0;
+}
+
+<div class="admin-page">
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <div class="page-eyebrow" data-en="LOGISTICS &amp; BRANCHES" data-kh="ភស្តុភារ &amp; សាខា">LOGISTICS &amp; BRANCHES</div>
+            <h1 class="page-title" data-en="VET Express Pickup Branches" data-kh="សាខាទទួល VET Express">
+                <i class="bi bi-geo-alt-fill text-danger me-2"></i>VET Express Pickup Branches
+            </h1>
+            <p class="page-description" data-en="Configure provinces and branch office locations available for customer pickup selection." data-kh="កំណត់រចនាសម្ព័ន្ធខេត្ត និងទីតាំងការិយាល័យសាខាដែលមានសម្រាប់អតិថិជនជ្រើសរើសទទួលទំនិញ។">
+                Configure provinces and branch office locations available for customer pickup selection.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="bi bi-arrow-left me-1"></i>
+                <span data-en="Back to Delivery" data-kh="ត្រឡប់ទៅការដឹកជញ្ជូន">Back to Delivery</span>
+            </a>
+            <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+                <i class="bi bi-plus-lg me-1"></i>
+                <span data-en="Add New Branch" data-kh="បន្ថែមសាខាថ្មី">Add New Branch</span>
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="admin-alert admin-alert-success mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+        </div>
+    }
+
+    <!-- KPI CHIPS -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-6">
+            <div class="card border shadow-sm p-3.5 bg-white rounded-4 h-100" style="border-radius: 18px; border-color: #e2e8f0 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;" data-en="Registered Branches" data-kh="សាខាដែលបានចុះឈ្មោះ">Registered Branches</small>
+                        <h3 class="fw-bold mb-0 mt-1 tabular-nums text-danger">@totalBranches</h3>
+                        <small class="text-muted" style="font-size: 0.75rem;">Active VET Express depots</small>
+                    </div>
+                    <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                        <i class="bi bi-geo-alt-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-6">
+            <div class="card border shadow-sm p-3.5 bg-white rounded-4 h-100" style="border-radius: 18px; border-color: #e2e8f0 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;" data-en="Provinces & Cities Covered" data-kh="ខេត្ត & ក្រុងគ្របដណ្តប់">Provinces &amp; Cities Covered</small>
+                        <h3 class="fw-bold mb-0 mt-1 tabular-nums text-primary">@provinceCount</h3>
+                        <small class="text-muted" style="font-size: 0.75rem;">Across Kingdom of Cambodia</small>
+                    </div>
+                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                        <i class="bi bi-map-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BRANCHES TABLE CARD -->
+    <div class="admin-card">
+        <div class="admin-card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="admin-card-title" data-en="VET Express Branch Directory" data-kh="បញ្ជីសាខា VET Express">VET Express Branch Directory</h2>
+                <p class="admin-card-subtitle" data-en="List of active hubs for checkout pickup selection" data-kh="បញ្ជីសាខាសម្រាប់ជ្រើសរើសពេលកុម្ម៉ង់">List of active hubs for checkout pickup selection</p>
+            </div>
+            <div class="admin-card-count">
+                <span>@totalBranches</span>
+                <small data-en="branches" data-kh="សាខា">branches</small>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th class="ps-4" data-en="PROVINCE / CITY" data-kh="ខេត្ត / ក្រុង">PROVINCE / CITY</th>
+                        <th data-en="BRANCH NAME" data-kh="ឈ្មោះសាខា">BRANCH NAME</th>
+                        <th data-en="ADDRESS" data-kh="អាសយដ្ឋាន">ADDRESS</th>
+                        <th data-en="PHONE" data-kh="លេខទូរស័ព្ទ">PHONE</th>
+                        <th class="text-end pe-4" data-en="ACTIONS" data-kh="សកម្មភាព">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var b in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill px-2.5 py-1 me-1 font-monospace">
+                                        VET
+                                    </span>
+                                    @b.Province
+                                </td>
+                                <td class="fw-semibold text-primary">@b.BranchName</td>
+                                <td class="text-muted small">@(string.IsNullOrWhiteSpace(b.Address) ? "—" : b.Address)</td>
+                                <td class="font-monospace small">@(string.IsNullOrWhiteSpace(b.Phone) ? "—" : b.Phone)</td>
+                                <td class="text-end pe-4">
+                                    <form asp-action="DeleteBranch" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@b.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Remove branch @b.BranchName?');">
+                                            <i class="bi bi-trash me-1"></i>
+                                            <span data-en="Delete" data-kh="លុប">Delete</span>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                No VET Express branches found. Click 'Add New Branch' above to register one.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ADD BRANCH MODAL -->
+<div class="modal fade" id="addBranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4">
+            <form asp-action="AddBranch" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark"><i class="bi bi-plus-circle text-primary me-2"></i>Add VET Express Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Province / City (ខេត្ត / ក្រុង)</label>
+                        <select name="Province" class="form-select rounded-3" required>
+                            <option value="រាជធានីភ្នំពេញ">រាជធានីភ្នំពេញ (Phnom Penh)</option>
+                            <option value="ខេត្តសៀមរាប">ខេត្តសៀមរាប (Siem Reap)</option>
+                            <option value="ខេត្តបាត់ដំបង">ខេត្តបាត់ដំបង (Battambang)</option>
+                            <option value="ខេត្តព្រះសីហនុ">ខេត្តព្រះសីហនុ (Sihanoukville)</option>
+                            <option value="ខេត្តកំពង់ចាម">ខេត្តកំពង់ចាម (Kampong Cham)</option>
+                            <option value="ខេត្តកំពត">ខេត្តកំពត (Kampot)</option>
+                            <option value="ខេត្តកណ្តាល">ខេត្តកណ្តាល (Kandal)</option>
+                            <option value="ខេត្តស្វាយរៀង">ខេត្តស្វាយរៀង (Svay Rieng)</option>
+                            <option value="ខេត្តតាកែវ">ខេត្តតាកែវ (Takeo)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Branch Name / Campus (ឈ្មោះសាខា)</label>
+                        <input type="text" name="BranchName" class="form-control rounded-3" placeholder="e.g. សាខាក្បាលថ្នល់ (ផ្លូវ ២៧១)" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Physical Address (Optional)</label>
+                        <input type="text" name="Address" class="form-control rounded-3" placeholder="e.g. Street 271, Khan Chamkarmon" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact Phone (Optional)</label>
+                        <input type="text" name="Phone" class="form-control rounded-3" placeholder="e.g. 012345678" />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4"><i class="bi bi-check-lg me-1"></i> Add Branch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

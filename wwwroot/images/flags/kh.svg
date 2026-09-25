@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 640" width="1000" height="640">
+  <!-- Top and Bottom Blue Bands -->
+  <rect width="1000" height="640" fill="#032ea6"/>
+  <!-- Middle Red Band -->
+  <rect y="160" width="1000" height="320" fill="#e00025"/>
+  <!-- Angkor Wat Motif in White -->
+  <g fill="#ffffff">
+    <!-- Plinth Base -->
+    <rect x="290" y="445" width="420" height="15"/>
+    <rect x="310" y="430" width="380" height="15"/>
+    <rect x="330" y="415" width="340" height="15"/>
+    
+    <!-- Central Tower Base and Tower -->
+    <rect x="465" y="300" width="70" height="115"/>
+    <path d="M465,300 L500,200 L535,300 Z"/>
+    <path d="M475,200 L500,165 L525,200 Z"/>
+    
+    <!-- Left Inner Tower -->
+    <rect x="400" y="325" width="50" height="90"/>
+    <path d="M400,325 L425,245 L450,325 Z"/>
+    <path d="M410,245 L425,220 L440,245 Z"/>
+    
+    <!-- Right Inner Tower -->
+    <rect x="550" y="325" width="50" height="90"/>
+    <path d="M550,325 L575,245 L600,325 Z"/>
+    <path d="M560,245 L575,220 L590,245 Z"/>
+    
+    <!-- Left Outer Tower -->
+    <rect x="345" y="355" width="40" height="60"/>
+    <path d="M345,355 L365,290 L385,355 Z"/>
+    <path d="M352,290 L365,270 L378,290 Z"/>
+    
+    <!-- Right Outer Tower -->
+    <rect x="615" y="355" width="40" height="60"/>
+    <path d="M615,355 L635,290 L655,355 Z"/>
+    <path d="M622,290 L635,270 L648,290 Z"/>
+    
+    <!-- Gallery Walls and Columns -->
+    <rect x="340" y="400" width="320" height="15"/>
+    <rect x="370" y="380" width="260" height="20"/>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebApplication_ClothingEcommerce.Models.ViewModels
 {
@@ -27,8 +27,8 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
         [Required(ErrorMessage = "Password is required.")]
         [StringLength(
             100,
-            MinimumLength = 6,
-            ErrorMessage = "Password must be at least 6 characters."
+            MinimumLength = 8,
+            ErrorMessage = "Password must be at least 8 characters."
         )]
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;

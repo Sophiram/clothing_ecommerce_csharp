@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using WebApplication_ClothingEcommerce.Models;
 
 namespace WebApplication_ClothingEcommerce.Models.ViewModels
@@ -26,5 +26,27 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
 
         public IEnumerable<Address> Addresses { get; set; }
             = new List<Address>();
+
+        // Default Address
+        public Address? DefaultAddress => Addresses.FirstOrDefault(a => a.IsDefault) ?? Addresses.FirstOrDefault();
+
+        // Dashboard Statistics
+        public int TotalOrders { get; set; }
+        public int PendingOrders { get; set; }
+        public int CompletedOrders { get; set; }
+        public decimal TotalSpent { get; set; }
+        public int WishlistCount { get; set; }
+        public int CartCount { get; set; }
+        public DateTime MemberSince { get; set; }
+        public string Status { get; set; } = "Active";
+
+        // Recent Orders
+        public IEnumerable<Order> RecentOrders { get; set; } = new List<Order>();
+
+        // Profile Image
+        public string? ProfileImageUrl { get; set; }
+
+        // Navigation State
+        public string ActiveTab { get; set; } = "overview";
     }
 }

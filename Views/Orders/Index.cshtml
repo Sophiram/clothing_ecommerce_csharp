@@ -1,566 +1,331 @@
-﻿@model IEnumerable<WebApplication_ClothingEcommerce.Models.Order>
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Order>
 
 @{
     ViewData["Title"] = "My Orders";
+    ViewData["AccountActiveSection"] = "Orders";
+    var currentStatus = ViewBag.CurrentStatus as WebApplication_ClothingEcommerce.Data.Enums.OrderStatus?;
+    int allCount = ViewBag.AllCount ?? 0;
+    int pendingCount = ViewBag.PendingCount ?? 0;
+    int processingCount = ViewBag.ProcessingCount ?? 0;
+    int shippedCount = ViewBag.ShippedCount ?? 0;
+    int deliveredCount = ViewBag.DeliveredCount ?? 0;
+    int cancelledCount = ViewBag.CancelledCount ?? 0;
+    int currentPage = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
 }
 
-<!-- =========================================================
-     BREADCRUMB
-========================================================= -->
+<div class="min-h-[85vh] bg-slate-50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
 
-<section class="py-3 bg-light border-bottom">
+        <!-- 4-Tab Customer Account Navigation -->
+        <partial name="_AccountNav" />
 
-    <div class="container">
+        <!-- HERO BANNER -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white p-6 sm:p-8 lg:p-10 mb-8 shadow-xl border border-slate-700/50">
+            <div class="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <nav aria-label="breadcrumb">
-
-            <ol class="breadcrumb mb-0">
-
-                <li class="breadcrumb-item">
-                    <a asp-controller="Home"
-                       asp-action="Index"
-                       class="text-decoration-none text-secondary">
-                        <i class="bi bi-house me-1"></i>
-                        Home
-                    </a>
-                </li>
-
-                <li class="breadcrumb-item active text-dark fw-semibold"
-                    aria-current="page">
-                    My Orders
-                </li>
-
-            </ol>
-
-        </nav>
-
-    </div>
-
-</section>
-
-<!-- =========================================================
-     MAIN
-========================================================= -->
-
-<section class="py-5 bg-light min-vh-100">
-
-    <div class="container">
-
-
-        <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-        <div class="d-flex
-            flex-column
-            flex-md-row
-            justify-content-between
-            align-items-md-center
-            gap-4
-            mb-5">
-
-            <div>
-
-                <div class="small
-                    text-uppercase
-                    fw-bold
-                    text-primary
-                    mb-2">
-
-                    <i class="bi bi-person-circle me-1"></i>
-                    ACCOUNT
-
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-3">
+                        <i class="bi bi-shield-check text-blue-400"></i>
+                        <span data-en="Order History & Tracking" data-kh="ប្រវត្តិនិងការតាមដានការបញ្ជាទិញ">Order History & Tracking</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2">
+                        <span data-en="My Orders" data-kh="ការបញ្ជាទិញរបស់ខ្ញុំ">My Orders</span>
+                    </h1>
+                    <p class="text-sm sm:text-base text-slate-300 max-w-xl"
+                       data-en="Track current shipments, review previous purchases, and manage order receipts."
+                       data-kh="តាមដានការដឹកជញ្ជូនបច្ចុប្បន្ន ពិនិត្យមើលការទិញពីមុន និងគ្រប់គ្រងវិក្កយបត្រ។">
+                        Track current shipments, review previous purchases, and manage order receipts.
+                    </p>
                 </div>
 
-                <h1 class="fw-bold mb-2">
-                    My Orders
-                </h1>
-
-                <p class="text-secondary mb-0">
-                    Track and view all your previous orders.
-                </p>
-
+                <div class="hidden md:flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-blue-400 text-2xl shadow-inner">
+                    <i class="bi bi-box-seam"></i>
+                </div>
             </div>
-
-
-            <div class="d-flex
-                align-items-center
-                justify-content-center
-                bg-white
-                rounded-circle
-                shadow-sm"
-                 style="width:64px;height:64px;">
-
-                <i class="bi bi-box-seam fs-3 text-primary"></i>
-
-            </div>
-
         </div>
 
-
-        <!-- =====================================================
-         ALERTS
-    ====================================================== -->
+        <!-- ALERTS -->
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success
-                border-0
-                shadow-sm
-                rounded-3
-                d-flex
-                align-items-center
-                gap-2
-                mb-4">
-
-                <i class="bi bi-check-circle-fill fs-5"></i>
-
-                <span>
-                    @TempData["Success"]
-                </span>
-
+            <div class="flex items-center justify-between gap-3 p-4 mb-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-xl text-emerald-500"></i>
+                    <span class="text-sm font-medium">@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 p-1">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
-
 
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger
-                border-0
-                shadow-sm
-                rounded-3
-                d-flex
-                align-items-center
-                gap-2
-                mb-4">
-
-                <i class="bi bi-exclamation-circle-fill fs-5"></i>
-
-                <span>
-                    @TempData["Error"]
-                </span>
-
+            <div class="flex items-center justify-between gap-3 p-4 mb-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill text-xl text-rose-500"></i>
+                    <span class="text-sm font-medium">@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 p-1">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
 
+        <!-- STATUS FILTER BAR -->
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-6">
+            <a asp-controller="Orders" asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == null 
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-grid"></i>
+                <span data-en="All Orders" data-kh="ការបញ្ជាទិញទាំងអស់">All Orders</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold @(currentStatus == null ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400")">@allCount</span>
+            </a>
 
-        <!-- =====================================================
-         EMPTY ORDERS
-    ====================================================== -->
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending 
+                          ? "bg-amber-500 text-white shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-clock"></i>
+                <span data-en="Pending" data-kh="រង់ចាំដំណើរការ">Pending</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">@pendingCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing 
+                          ? "bg-blue-600 text-white shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-gear"></i>
+                <span data-en="Processing" data-kh="កំពុងដំណើរការ">Processing</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">@processingCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Shipped 
+                          ? "bg-indigo-600 text-white shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-truck"></i>
+                <span data-en="Shipped" data-kh="បានផ្ញើចេញ">Shipped</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200">@shippedCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered 
+                          ? "bg-emerald-600 text-white shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-check-circle"></i>
+                <span data-en="Delivered" data-kh="បានប្រគល់">Delivered</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200">@deliveredCount</span>
+            </a>
+
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-sm
+                      @(currentStatus == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Cancelled 
+                          ? "bg-rose-600 text-white shadow-md" 
+                          : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200/80 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")">
+                <i class="bi bi-x-circle"></i>
+                <span data-en="Cancelled" data-kh="បានបោះបង់">Cancelled</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200">@cancelledCount</span>
+            </a>
+        </div>
+
+        <!-- ORDERS LIST OR EMPTY STATE -->
         @if (Model == null || !Model.Any())
         {
-            <div class="card
-                border-0
-                shadow-sm
-                rounded-4">
-
-                <div class="card-body
-                    text-center
-                    py-5
-                    px-4">
-
-                    <div class="d-inline-flex
-                        align-items-center
-                        justify-content-center
-                        rounded-circle
-                        bg-primary-subtle
-                        text-primary
-                        mb-4"
-                         style="width:96px;height:96px;">
-
-                        <i class="bi bi-bag-x display-6"></i>
-
-                    </div>
-
-
-                    <h3 class="fw-bold mb-2">
-                        No orders yet
-                    </h3>
-
-
-                    <p class="text-secondary
-                        mx-auto
-                        mb-4"
-                       style="max-width:500px;">
-
-                        You haven't placed any orders yet.
-                        Start shopping and your orders will appear here.
-
-                    </p>
-
-
-                    <a asp-controller="Shop"
-                       asp-action="Index"
-                       class="btn btn-dark px-4 py-2 rounded-3">
-
-                        <i class="bi bi-bag me-2"></i>
-
-                        Start Shopping
-
-                    </a>
-
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 p-8 sm:p-12 text-center shadow-sm max-w-2xl mx-auto my-6">
+                <div class="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center mx-auto mb-5 text-3xl shadow-sm">
+                    <i class="bi bi-box-seam"></i>
                 </div>
-
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2"
+                    data-en="No orders found" data-kh="មិនមានការបញ្ជាទិញទេ">
+                    No orders found
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto"
+                   data-en="@(currentStatus != null ? $"You have no orders currently in '{currentStatus}' status." : "You haven't placed any orders yet. Discover our fresh clothing drops today.")"
+                   data-kh="@(currentStatus != null ? $"អ្នកមិនមានការបញ្ជាទិញក្នុងស្ថានភាព '{currentStatus}' ទេ។" : "អ្នកមិនទាន់បានបញ្ជាទិញនៅឡើយទេ។ ស្វែងរកការទម្លាក់ម៉ូដថ្មីៗរបស់យើងនៅថ្ងៃនេះ។")">
+                    @(currentStatus != null ? $"You have no orders currently in '{currentStatus}' status." : "You haven't placed any orders yet. Discover our fresh clothing drops today.")
+                </p>
+                <a asp-controller="Shop" asp-action="Index"
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-lg hover:shadow-xl transition-all duration-200">
+                    <i class="bi bi-bag"></i>
+                    <span data-en="Start Shopping" data-kh="ចាប់ផ្តើមទិញទំនិញ">Start Shopping</span>
+                </a>
             </div>
         }
         else
         {
+            <div class="space-y-4 sm:space-y-6">
+                @foreach (var order in Model)
+                {
+                    var statusColor = order.Status.ToString() switch
+                    {
+                        "Pending" => "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+                        "Processing" => "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+                        "Shipped" => "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
+                        "Delivered" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+                        "Cancelled" => "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+                        _ => "bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-300 border-gray-200 dark:border-slate-700"
+                    };
 
-            <!-- =================================================
-             ORDER COUNT
-        ================================================== -->
+                    var statusIcon = order.Status.ToString() switch
+                    {
+                        "Pending" => "bi-clock",
+                        "Processing" => "bi-gear",
+                        "Shipped" => "bi-truck",
+                        "Delivered" => "bi-check-circle-fill",
+                        "Cancelled" => "bi-x-circle-fill",
+                        _ => "bi-dot"
+                    };
 
-            <div class="d-flex
-                justify-content-between
-                align-items-end
-                mb-4">
+                    var firstItem = order.Items?.FirstOrDefault();
+                    var image = firstItem?.Variant?.Product?.Images?.FirstOrDefault(x => x.IsPrimary)
+                                ?? firstItem?.Variant?.Product?.Images?.FirstOrDefault();
+                    var itemCount = order.Items?.Count ?? 0;
+                    var productName = firstItem?.Variant?.Product?.Name ?? "Order Items";
+                    var brandName = firstItem?.Variant?.Product?.Brand?.Name ?? "CLOTHÉ";
 
-                <div>
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200/80 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                        <!-- Order Card Header -->
+                        <div class="px-5 sm:px-6 py-4 bg-gray-50/70 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400" data-en="Order" data-kh="ការបញ្ជាទិញ">Order</span>
+                                    <code class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-slate-200">
+                                        #@order.Id.ToString()[..8].ToUpper()
+                                    </code>
+                                </div>
+                                <span class="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1.5">
+                                    <i class="bi bi-calendar3"></i>
+                                    @order.OrderDate.ToString("MMM dd, yyyy")
+                                </span>
+                            </div>
 
-                    <h5 class="fw-bold mb-1">
-                        Your Orders
-                    </h5>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border @statusColor">
+                                <i class="bi @statusIcon"></i>
+                                <span>@order.Status</span>
+                            </span>
+                        </div>
 
-                    <div class="small text-secondary">
+                        <!-- Order Card Body -->
+                        <div class="p-5 sm:p-6">
+                            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                                <div class="flex items-center gap-4 flex-1 min-w-0">
+                                    <!-- Thumbnail -->
+                                    <div class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-gray-200/60 dark:border-slate-700 overflow-hidden flex-shrink-0">
+                                        @if (!string.IsNullOrWhiteSpace(image?.ImageUrl))
+                                        {
+                                            <img src="@image.ImageUrl" alt="@productName" class="w-full h-full object-cover" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-600">
+                                                <i class="bi bi-image text-2xl"></i>
+                                            </div>
+                                        }
+                                    </div>
 
-                        <i class="bi bi-receipt me-1"></i>
+                                    <!-- Product Info -->
+                                    <div class="min-w-0 flex-1">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                            @brandName
+                                        </span>
+                                        <h4 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white truncate mt-0.5">
+                                            @productName
+                                        </h4>
 
-                        @Model.Count()
-                        @(Model.Count() == 1 ? "order" : "orders")
+                                        @if (firstItem?.Variant != null)
+                                        {
+                                            <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                                @if (firstItem.Variant.Color != null)
+                                                {
+                                                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200/60 dark:border-slate-700">
+                                                        Color: @firstItem.Variant.Color.Name
+                                                    </span>
+                                                }
+                                                @if (firstItem.Variant.Size != null)
+                                                {
+                                                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200/60 dark:border-slate-700">
+                                                        Size: @firstItem.Variant.Size.Name
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
 
+                                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">
+                                            @if (itemCount <= 1)
+                                            {
+                                                <span data-en="1 item in this order" data-kh="ទំនិញ ១ ក្នុងការបញ្ជាទិញនេះ">1 item in this order</span>
+                                            }
+                                            else
+                                            {
+                                                <span data-en="@itemCount items total" data-kh="សរុប @itemCount មុខ">@itemCount items total</span>
+                                                <span class="text-blue-600 dark:text-blue-400 font-medium">(+ @(itemCount - 1) more)</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Financials & Action -->
+                                <div class="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-slate-800 flex-shrink-0">
+                                    <div class="text-left md:text-right">
+                                        <span class="text-[11px] text-gray-500 dark:text-slate-400 block" data-en="Order Total" data-kh="សរុបទាំងអស់">Order Total</span>
+                                        <span class="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white">
+                                            $@order.TotalAmount.ToString("N2")
+                                        </span>
+                                    </div>
+
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-all shadow-sm">
+                                        <span data-en="View Details" data-kh="មើលព័ត៌មានលម្អិត">View Details</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                </div>
-
+                }
             </div>
 
-
-            <!-- =================================================
-             ORDER LIST
-        ================================================== -->
-            @foreach (var order in Model)
+            <!-- PAGINATION -->
+            @if (totalPages > 1)
             {
-                var statusClass = order.Status.ToString() switch
-                {
-                    "Pending" =>
-                        "bg-warning-subtle text-warning-emphasis",
-
-                    "Processing" =>
-                        "bg-info-subtle text-info-emphasis",
-
-                    "Shipped" =>
-                        "bg-primary-subtle text-primary",
-
-                    "Delivered" =>
-                        "bg-success-subtle text-success",
-
-                    "Cancelled" =>
-                        "bg-danger-subtle text-danger",
-
-                    _ =>
-                        "bg-secondary-subtle text-secondary"
-                };
-
-
-                var firstItem = order.Items?.FirstOrDefault();
-
-
-                var image =
-                    firstItem?.Variant?.Product?.Images?
-                        .FirstOrDefault(x => x.IsPrimary)
-                    ??
-                    firstItem?.Variant?.Product?.Images?
-                        .FirstOrDefault();
-
-
-                var itemCount = order.Items?.Count ?? 0;
-
-
-                var productName =
-                    firstItem?.Variant?.Product?.Name
-                    ?? "Order Items";
-
-
-                var brandName =
-                    firstItem?.Variant?.Product?.Brand?.Name
-                    ?? "CLOTHÉ";
-
-
-                <!-- =================================================
-                 ORDER CARD
-            ================================================== -->
-
-                <div class="card
-                    border-0
-                    shadow-sm
-                    rounded-4
-                    mb-4">
-
-                    <div class="card-body p-4">
-
-
-                        <!-- =================================================
-                         ORDER HEADER
-                    ================================================== -->
-
-                        <div class="d-flex
-                            flex-column
-                            flex-md-row
-                            justify-content-between
-                            align-items-md-center
-                            gap-3">
-
-                            <div>
-
-                                <div class="d-flex
-                                    align-items-center
-                                    gap-2
-                                    mb-2">
-
-                                    <span class="fw-bold">
-                                        Order
-                                    </span>
-
-                                    <code class="bg-light
-                                        px-2
-                                        py-1
-                                        rounded-2">
-
-                                        #@order.Id.ToString()[..8].ToUpper()
-
-                                    </code>
-
-                                </div>
-
-
-                                <div class="small text-secondary">
-
-                                    <i class="bi bi-calendar3 me-1"></i>
-
-                                    @order.OrderDate
-                                    @* .ToLocalTime()
-                                    .ToString("dd MMM yyyy, hh:mm tt") *@
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- STATUS -->
-
-                            <div>
-
-                                <span class="badge
-                                    rounded-pill
-                                    px-3
-                                    py-2
-                                    @statusClass">
-
-                                    @order.Status
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <hr class="my-4" />
-
-
-                        <!-- =================================================
-                         ORDER PRODUCT
-                    ================================================== -->
-
-                        <div class="row
-                            align-items-center
-                            g-4">
-
-
-                            <!-- PRODUCT IMAGE -->
-
-                            <div class="col-4 col-sm-3 col-md-2">
-
-                                @if (!string.IsNullOrWhiteSpace(
-                                    image?.ImageUrl))
-                                {
-                                    <img src="@image.ImageUrl"
-                                         alt="@productName"
-                                         class="img-fluid
-                                    rounded-3
-                                    border"
-                                         style="width:100%;
-                                    height:120px;
-                                    object-fit:cover;"
-                                         onerror="this.style.display='none';
-                                    this.nextElementSibling.style.display='flex';" />
-
-                                    <div class="bg-light
-                                        border
-                                        rounded-3
-                                        align-items-center
-                                        justify-content-center"
-                                         style="height:120px;
-                                        display:none;">
-
-                                        <i class="bi bi-image
-                                            fs-2
-                                            text-secondary">
-                                        </i>
-
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="bg-light
-                                        border
-                                        rounded-3
-                                        d-flex
-                                        align-items-center
-                                        justify-content-center"
-                                         style="height:120px;">
-
-                                        <i class="bi bi-image
-                                            fs-2
-                                            text-secondary">
-                                        </i>
-
-                                    </div>
-                                }
-
-                            </div>
-
-
-                            <!-- PRODUCT INFO -->
-
-                            <div class="col-8 col-md-5">
-
-                                <div class="small
-                                    text-uppercase
-                                    fw-bold
-                                    text-primary
-                                    mb-1">
-
-                                    @brandName
-
-                                </div>
-
-
-                                <h5 class="fw-bold mb-2">
-
-                                    @productName
-
-                                </h5>
-
-
-                                @if (firstItem?.Variant != null)
-                                {
-                                    <div class="small text-secondary mb-2">
-
-                                        @if (firstItem.Variant.Color != null)
-                                        {
-                                            <span class="me-3">
-
-                                                <i class="bi bi-palette me-1"></i>
-
-                                                @firstItem.Variant.Color.Name
-
-                                            </span>
-                                        }
-
-
-                                        @if (firstItem.Variant.Size != null)
-                                        {
-                                            <span>
-
-                                                <i class="bi bi-rulers me-1"></i>
-
-                                                @firstItem.Variant.Size.Name
-
-                                            </span>
-                                        }
-
-                                    </div>
-                                }
-
-
-                                <div class="small text-secondary">
-
-                                    @if (itemCount == 1)
-                                    {
-                                        <span>
-                                            1 item
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span>
-                                            @itemCount items
-                                        </span>
-                                    }
-
-                                </div>
-
-
-                                @if (itemCount > 1)
-                                {
-                                    <div class="small text-secondary mt-1">
-
-                                        + @(itemCount - 1)
-                                        more
-                                        @(itemCount - 1 == 1 ? "item" : "items")
-
-                                    </div>
-                                }
-
-                            </div>
-
-
-                            <!-- TOTAL -->
-
-                            <div class="col-6 col-md-2">
-
-                                <small class="text-secondary d-block mb-1">
-                                    Total
-                                </small>
-
-                                <strong class="fs-5 text-primary">
-
-                                    $@order.TotalAmount.ToString("0.00")
-
-                                </strong>
-
-                            </div>
-
-
-                            <!-- ACTION -->
-
-                            <div class="col-6 col-md-3 text-md-end">
-
-                                <a asp-controller="Orders"
-                                   asp-action="Details"
-                                   asp-route-id="@order.Id"
-                                   class="btn btn-dark
-                                    rounded-3
-                                    px-3">
-
-                                    View Order
-
-                                    <i class="bi bi-arrow-right ms-1"></i>
-
-                                </a>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
+                <nav class="flex justify-center items-center gap-1.5 mt-8" aria-label="Order pagination">
+                    @if (currentPage > 1)
+                    {
+                        <a class="px-3.5 py-2 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                           asp-controller="Orders" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-status="@currentStatus">
+                            <i class="bi bi-chevron-left mr-1"></i> <span data-en="Prev" data-kh="មុន">Prev</span>
+                        </a>
+                    }
+
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <a class="w-9 h-9 flex items-center justify-center rounded-full text-xs font-bold transition-all
+                                  @(p == currentPage 
+                                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md" 
+                                      : "bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800")"
+                           asp-controller="Orders" asp-action="Index" asp-route-page="@p" asp-route-status="@currentStatus">
+                            @p
+                        </a>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <a class="px-3.5 py-2 rounded-full text-xs font-semibold bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                           asp-controller="Orders" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-status="@currentStatus">
+                            <span data-en="Next" data-kh="បន្ទាប់">Next</span> <i class="bi bi-chevron-right ml-1"></i>
+                        </a>
+                    }
+                </nav>
             }
-
         }
-
     </div>
-   
-
-</section>
+</div>

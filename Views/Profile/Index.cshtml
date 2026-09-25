@@ -1,188 +1,466 @@
-﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.ProfileViewModel
+@model WebApplication_ClothingEcommerce.Models.ViewModels.ProfileViewModel
 
 @{
-    ViewData["Title"] = "My Profile";
+    ViewData["Title"] = "My Account";
+    ViewData["AccountActiveSection"] = "Profile";
+    var activeTab = Model.ActiveTab?.ToLowerInvariant() ?? "overview";
+    var userInitial = !string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName.Substring(0, 1).ToUpper() : "U";
+    var fullName = $"{Model.FirstName} {Model.LastName}".Trim();
+    if (string.IsNullOrEmpty(fullName)) { fullName = "Valued Customer"; }
 }
 
-<div class="profile-page">
+<div class="min-h-[85vh] bg-gray-50/50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
 
-    <div class="container py-5">
+        <!-- 4 TABS GLOBAL ACCOUNT HUB NAV -->
+        <partial name="_AccountNav" />
 
-        <div class="profile-header">
-
-            <div>
-
-                <span>
-                    ACCOUNT
-                </span>
-
-                <h1>
-                    My Profile
-                </h1>
-
-                <p>
-                    Manage your personal information.
-                </p>
-
-            </div>
-
-            <div class="google-avatar large">
-
-                @{
-                    var initial =
-                        !string.IsNullOrEmpty(Model.FirstName)
-                            ? Model.FirstName.Substring(0, 1).ToUpper()
-                            : "U";
-                }
-
-                @initial
-
-            </div>
-
-        </div>
-
-
+        <!-- ALERTS -->
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success modern-alert mb-4">
-
-                <i class="bi bi-check-circle-fill"></i>
-
-                @TempData["Success"]
-
+            <div class="mb-6 flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl shadow-sm text-emerald-800 dark:text-emerald-300">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                    <span class="text-sm font-semibold">@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-200">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl shadow-sm text-rose-800 dark:text-rose-300">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-lg"></i>
+                    <span class="text-sm font-semibold">@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800 dark:hover:text-rose-200">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
             </div>
         }
 
+        <!-- =====================================================
+             1. USER PROFILE HEADER CARD
+        ====================================================== -->
+        <div class="relative overflow-hidden bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950 text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl mb-8 border border-white/10">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="row g-4">
-
-            <div class="col-lg-8">
-
-                <div class="profile-card">
-
-                    <div class="profile-card-header">
-
-                        <h5>
-                            Personal Information
-                        </h5>
-
-                        <span>
-                            Your details
-                        </span>
-
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-5 sm:gap-6">
+                    <!-- Avatar with Upload Button -->
+                    <div class="relative flex-shrink-0">
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-3xl font-bold flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
+                            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                            {
+                                <img src="@Model.ProfileImageUrl" alt="@fullName" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                <span>@userInitial</span>
+                            }
+                        </div>
+                        <button type="button" onclick="openAvatarModal()"
+                                class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white text-slate-900 border-2 border-slate-900 shadow-md flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
+                                title="Update avatar">
+                            <i class="bi bi-camera-fill text-xs"></i>
+                        </button>
                     </div>
 
-
-                    <form asp-action="Profile"
-                          method="post">
-
-                        @Html.AntiForgeryToken()
-
-                        <div asp-validation-summary="ModelOnly"
-                             class="auth-validation">
+                    <!-- User Info -->
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                                <i class="bi bi-patch-check-fill text-blue-400"></i> Verified Customer
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                Member since @Model.MemberSince.ToString("MMM yyyy")
+                            </span>
                         </div>
-
-
-                        <div class="row g-3">
-
-                            <div class="col-md-6">
-
-                                <label asp-for="FirstName"
-                                       class="form-label">
-                                </label>
-
-                                <input asp-for="FirstName"
-                                       class="form-control" />
-
-                                <span asp-validation-for="FirstName"
-                                      class="text-danger">
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">@fullName</h1>
+                        <div class="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-300">
+                            <span class="flex items-center gap-1.5">
+                                <i class="bi bi-envelope text-blue-400"></i> @Model.Email
+                            </span>
+                            @if (!string.IsNullOrEmpty(Model.Phone))
+                            {
+                                <span class="flex items-center gap-1.5">
+                                    <i class="bi bi-telephone text-blue-400"></i> @Model.Phone
                                 </span>
-
-                            </div>
-
-
-                            <div class="col-md-6">
-
-                                <label asp-for="LastName"
-                                       class="form-label">
-                                </label>
-
-                                <input asp-for="LastName"
-                                       class="form-control" />
-
-                                <span asp-validation-for="LastName"
-                                      class="text-danger">
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-12">
-
-                                <label asp-for="Email"
-                                       class="form-label">
-                                </label>
-
-                                <input asp-for="Email"
-                                       class="form-control"
-                                       readonly />
-
-                            </div>
-
-
-                            <div class="col-12">
-
-                                <label asp-for="Phone"
-                                       class="form-label">
-                                </label>
-
-                                <input asp-for="Phone"
-                                       class="form-control" />
-
-                                <span asp-validation-for="Phone"
-                                      class="text-danger">
-                                </span>
-
-                            </div>
-
+                            }
                         </div>
-
-
-                        <button type="submit"
-                                class="auth-submit profile-submit">
-
-                            Save changes
-
-                            <i class="bi bi-check2"></i>
-
-                        </button>
-
-                    </form>
-
+                    </div>
                 </div>
 
+                <!-- Quick Action Buttons -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <a asp-controller="Shop" asp-action="Index"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-slate-900 hover:bg-gray-100 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all duration-200">
+                        <i class="bi bi-bag"></i> Browse Shop
+                    </a>
+                    <a asp-controller="Cart" asp-action="Index"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs sm:text-sm font-semibold border border-white/20 transition-all duration-200">
+                        <i class="bi bi-cart3"></i> Bag (@Model.CartCount)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             2. 4 EXECUTIVE STAT METRIC CARDS
+        ====================================================== -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <!-- 1. Total Orders -->
+            <a asp-controller="Orders" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Total Orders</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.TotalOrders</strong>
+                </div>
+            </a>
+
+            <!-- 2. Pending Orders -->
+            <a asp-controller="Orders" asp-action="Index" asp-route-status="@WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Pending Orders</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.PendingOrders</strong>
+                </div>
+            </a>
+
+            <!-- 3. Wishlist Items -->
+            <a asp-controller="Wishlist" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-heart"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Wishlist Items</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.WishlistCount</strong>
+                </div>
+            </a>
+
+            <!-- 4. Bag Items -->
+            <a asp-controller="Cart" asp-action="Index"
+               class="p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-gray-500 dark:text-slate-400 block mb-0.5">Shopping Bag</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">@Model.CartCount Items</strong>
+                </div>
+            </a>
+        </div>
+
+        <!-- =====================================================
+             3. PROFILE SECTION TABS & PANELS
+        ====================================================== -->
+        <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden mb-12">
+
+            <!-- Sub-tabs Navigation -->
+            <div class="border-b border-gray-100 dark:border-slate-800 px-6 pt-4 flex items-center gap-6 overflow-x-auto no-scrollbar">
+                <button type="button" onclick="switchProfileTab('overview')"
+                        id="tabBtn-overview"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "overview" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-grid-1x2"></i> Overview
+                </button>
+                <button type="button" onclick="switchProfileTab('profile')"
+                        id="tabBtn-profile"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "profile" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-person"></i> Edit Profile
+                </button>
+                <button type="button" onclick="switchProfileTab('security')"
+                        id="tabBtn-security"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "security" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-shield-lock"></i> Security &amp; Password
+                </button>
+                <button type="button" onclick="switchProfileTab('addresses')"
+                        id="tabBtn-addresses"
+                        class="profile-subtab-btn pb-4 text-sm font-semibold border-b-2 transition-colors duration-150 flex items-center gap-2 whitespace-nowrap
+                               @(activeTab == "addresses" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white")">
+                    <i class="bi bi-geo-alt"></i> Address Book
+                </button>
             </div>
 
+            <!-- Panel Contents -->
+            <div class="p-6 sm:p-8">
 
-            <div class="col-lg-4">
+                <!-- ── PANEL 1: OVERVIEW & RECENT ORDERS ── -->
+                <div id="panel-overview" class="profile-panel @(activeTab == "overview" ? "" : "hidden")">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                <div class="profile-side-card">
+                        <!-- Recent Orders Column -->
+                        <div class="lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white">Recent Orders</h3>
+                                <a asp-controller="Orders" asp-action="Index" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                    View All Orders &rarr;
+                                </a>
+                            </div>
 
-                    <div class="feature-icon">
+                            @if (Model.RecentOrders != null && Model.RecentOrders.Any())
+                            {
+                                <div class="space-y-3">
+                                    @foreach (var order in Model.RecentOrders.Take(4))
+                                    {
+                                        var shortOrderId = order.Id.ToString().Substring(0, 8).ToUpper();
+                                        <div class="p-4 rounded-2xl border border-gray-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600 transition-all flex items-center justify-between gap-4">
+                                            <div class="flex items-center gap-3.5">
+                                                <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-600 dark:text-slate-300 font-bold text-xs">
+                                                    #@shortOrderId.Substring(Math.Max(0, shortOrderId.Length - 4))
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-bold text-gray-900 dark:text-white">Order #@shortOrderId</div>
+                                                    <div class="text-xs text-gray-400">@order.OrderDate.ToString("MMM dd, yyyy") · @(order.Items?.Count ?? 0) items</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-sm font-bold text-gray-900 dark:text-white">$@order.TotalAmount.ToString("0.00")</span>
+                                                <span class="px-2.5 py-1 text-[11px] font-bold rounded-full
+                                                      @(order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Delivered ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400" :
+                                                        order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing ? "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400" :
+                                                        order.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400" :
+                                                        "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300")">
+                                                    @order.Status
+                                                </span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-10 bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                                    <i class="bi bi-box-seam text-3xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                                    <p class="text-sm text-gray-500 dark:text-slate-400 mb-3">You haven't placed any orders yet.</p>
+                                    <a asp-controller="Shop" asp-action="Index" class="btn-primary-clothe text-xs py-2 px-4">Start Shopping</a>
+                                </div>
+                            }
+                        </div>
 
-                        <i class="bi bi-shield-check"></i>
+                        <!-- Default Shipping Address Card -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white">Default Address</h3>
+                                <button type="button" onclick="switchProfileTab('addresses')" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                    Manage &rarr;
+                                </button>
+                            </div>
+
+                            @if (Model.DefaultAddress != null)
+                            {
+                                <div class="p-5 rounded-2xl border-2 border-blue-100 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/10">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold uppercase rounded-full tracking-wider">
+                                            Default Shipping
+                                        </span>
+                                        <i class="bi bi-geo-alt-fill text-blue-600"></i>
+                                    </div>
+                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-1">@fullName</h4>
+                                    <p class="text-xs text-gray-600 dark:text-slate-400 leading-relaxed mb-2">
+                                        @Model.DefaultAddress.Street<br />
+                                        @Model.DefaultAddress.City, @Model.DefaultAddress.Province @Model.DefaultAddress.PostalCode
+                                    </p>
+                                    <span class="text-xs text-gray-500 dark:text-slate-400">
+                                        <i class="bi bi-telephone text-gray-400 mr-1"></i>@Model.Phone
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="p-6 text-center bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                                    <i class="bi bi-geo-alt text-2xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400 mb-3">No default address set.</p>
+
+                                    <button type="button" onclick="openAddressModal()" class="btn-outline-clothe text-xs py-1.5 px-3">
+                                        Add Address
+                                    </button>
+                                </div>
+                            }
+                        </div>
 
                     </div>
+                </div>
 
-                    <h5>
-                        Account Security
-                    </h5>
+                <!-- ── PANEL 2: EDIT PROFILE FORM ── -->
+                <div id="panel-profile" class="profile-panel @(activeTab == "profile" ? "" : "hidden")">
+                    <div class="max-w-2xl">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Personal Information</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Update your account name, contact email and phone number.</p>
+                        </div>
 
-                    <p>
-                        Keep your account information
-                        accurate and secure.
-                    </p>
+                        <form asp-action="Index" method="post" class="space-y-4">
+                            @Html.AntiForgeryToken()
 
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="FirstName" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">First Name</label>
+                                    <input asp-for="FirstName" class="input-clothe text-sm" required />
+                                    <span asp-validation-for="FirstName" class="text-xs text-rose-500"></span>
+                                </div>
+                                <div>
+                                    <label asp-for="LastName" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Last Name</label>
+                                    <input asp-for="LastName" class="input-clothe text-sm" required />
+                                    <span asp-validation-for="LastName" class="text-xs text-rose-500"></span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="Email" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                                    <input asp-for="Email" class="input-clothe text-sm bg-gray-100 dark:bg-slate-800 text-gray-500 cursor-not-allowed" readonly />
+                                    <span class="text-[11px] text-gray-400 mt-1 block">Email is locked to your account.</span>
+                                </div>
+                                <div>
+                                    <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                                    <input asp-for="Phone" class="input-clothe text-sm" placeholder="+855 ..." required />
+                                    <span asp-validation-for="Phone" class="text-xs text-rose-500"></span>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" class="btn-primary-clothe">
+                                    <i class="bi bi-check-lg"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ── PANEL 3: SECURITY & PASSWORD ── -->
+                <div id="panel-security" class="profile-panel @(activeTab == "security" ? "" : "hidden")">
+                    <div class="max-w-xl">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Security &amp; Password</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Ensure your account is protected with a strong, updated password.</p>
+                        </div>
+
+                        <form asp-action="ChangePassword" method="post" class="space-y-4">
+                            @Html.AntiForgeryToken()
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Current Password</label>
+                                <div class="relative">
+                                    <input type="password" name="CurrentPassword" id="currPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('currPassInput', 'currPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="currPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">New Password</label>
+                                <div class="relative">
+                                    <input type="password" name="NewPassword" id="newPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('newPassInput', 'newPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="newPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Confirm New Password</label>
+                                <div class="relative">
+                                    <input type="password" name="ConfirmPassword" id="confirmPassInput" class="input-clothe text-sm pr-10" required />
+                                    <button type="button" onclick="togglePass('confirmPassInput', 'confirmPassIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                        <i class="bi bi-eye" id="confirmPassIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" class="btn-primary-clothe">
+                                    <i class="bi bi-shield-check"></i> Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ── PANEL 4: ADDRESS BOOK ── -->
+                <div id="panel-addresses" class="profile-panel @(activeTab == "addresses" ? "" : "hidden")">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Shipping Addresses</h3>
+                            <p class="text-xs text-gray-500 dark:text-slate-400">Manage saved addresses for seamless express checkout.</p>
+                        </div>
+                        <button type="button" onclick="openAddressModal()" class="btn-primary-clothe text-xs py-2 px-4">
+                            <i class="bi bi-plus-lg"></i> Add Address
+                        </button>
+                    </div>
+
+                    @if (Model.Addresses != null && Model.Addresses.Any())
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var addr in Model.Addresses)
+                            {
+                                <div class="p-5 rounded-2xl border @(addr.IsDefault ? "border-blue-500 dark:border-blue-600 bg-blue-50/20 dark:bg-blue-950/10" : "border-gray-200 dark:border-slate-800") flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-bold text-gray-900 dark:text-white">@fullName</span>
+                                            @if (addr.IsDefault)
+                                            {
+                                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 text-[10px] font-bold uppercase rounded-full">Default</span>
+                                            }
+                                        </div>
+                                        <p class="text-xs text-gray-600 dark:text-slate-400 leading-relaxed mb-3">
+                                            @addr.Street<br />
+                                            @addr.City, @addr.Province @addr.PostalCode
+                                        </p>
+                                        <div class="text-xs text-gray-500 dark:text-slate-400 mb-4">
+                                            <i class="bi bi-telephone mr-1"></i>@Model.Phone
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800 text-xs">
+                                        @if (!addr.IsDefault)
+                                        {
+                                            <form asp-action="SetDefaultAddress" asp-route-id="@addr.Id" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
+                                                    Set as Default
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400 text-[11px]">Primary delivery address</span>
+                                        }
+
+                                        <form asp-action="DeleteAddress" asp-route-id="@addr.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="text-rose-500 hover:text-rose-700 font-semibold">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-12 bg-gray-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
+                            <i class="bi bi-geo-alt text-4xl text-gray-300 dark:text-slate-600 block mb-2"></i>
+                            <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">No saved addresses yet.</p>
+                            <button type="button" onclick="openAddressModal()" class="btn-primary-clothe text-xs py-2 px-4">
+                                Add Your First Address
+                            </button>
+                        </div>
+                    }
                 </div>
 
             </div>
@@ -190,11 +468,113 @@
         </div>
 
     </div>
-
 </div>
 
-@section Scripts {
+<!-- =========================================================
+     MODAL: UPLOAD AVATAR
+========================================================= -->
+<div id="avatarModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Update Profile Picture</h3>
+            <button type="button" onclick="closeAvatarModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2">Select Image (JPG, PNG, WebP)</label>
+                <input type="file" name="avatar" accept="image/*" class="input-clothe text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" required />
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                {
+                    <button type="submit" formaction="@Url.Action("RemoveAvatar", "Profile")" class="px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors">
+                        Remove
+                    </button>
+                }
+                <button type="button" onclick="closeAvatarModal()" class="btn-outline-clothe text-xs py-2 px-4">Cancel</button>
+                <button type="submit" class="btn-primary-clothe text-xs py-2 px-4">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <partial name="_ValidationScriptsPartial" />
+<!-- =========================================================
+     MODAL: ADD ADDRESS
+========================================================= -->
+<div id="addressModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full mx-4 shadow-2xl border border-gray-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Add New Address</h3>
+            <button type="button" onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form asp-action="AddAddress" method="post" class="space-y-3.5">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Street Address</label>
+                <input type="text" name="Street" class="input-clothe text-sm" placeholder="House number, Street, Sangkat" required />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">City</label>
+                    <input type="text" name="City" class="input-clothe text-sm" placeholder="Phnom Penh" required />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Province</label>
+                    <input type="text" name="Province" class="input-clothe text-sm" placeholder="Phnom Penh / Kandal" required />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Postal Code</label>
+                <input type="text" name="PostalCode" class="input-clothe text-sm" placeholder="12000" />
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer pt-1">
+                <input type="checkbox" name="IsDefault" value="true" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4" />
+                <span class="text-xs text-gray-700 dark:text-slate-300">Set as default shipping address</span>
+            </label>
+            <div class="flex items-center justify-end gap-2 pt-3">
+                <button type="button" onclick="closeAddressModal()" class="btn-outline-clothe text-xs py-2 px-4">Cancel</button>
+                <button type="submit" class="btn-primary-clothe text-xs py-2 px-4">Save Address</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-}
+
+<script>
+    function switchProfileTab(tabName) {
+        document.querySelectorAll('.profile-subtab-btn').forEach(btn => {
+            btn.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btn.classList.add('border-transparent', 'text-gray-500', 'dark:text-slate-400');
+        });
+        document.querySelectorAll('.profile-panel').forEach(p => p.classList.add('hidden'));
+
+        const targetBtn = document.getElementById('tabBtn-' + tabName);
+        const targetPanel = document.getElementById('panel-' + tabName);
+        if (targetBtn && targetPanel) {
+            targetBtn.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            targetBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-slate-400');
+            targetPanel.classList.remove('hidden');
+        }
+    }
+
+    function togglePass(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        icon.classList.toggle('bi-eye', !isPass);
+        icon.classList.toggle('bi-eye-slash', isPass);
+    }
+
+    function openAvatarModal() { document.getElementById('avatarModal').classList.remove('hidden'); }
+    function closeAvatarModal() { document.getElementById('avatarModal').classList.add('hidden'); }
+
+    function openAddressModal() { document.getElementById('addressModal').classList.remove('hidden'); }
+    function closeAddressModal() { document.getElementById('addressModal').classList.add('hidden'); }
+</script>

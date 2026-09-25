@@ -1,37 +1,37 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
+
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,SuperAdmin")]
 public class AddressesController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly ICustomerService _customerService;
 
-    public AddressesController(AppDbContext context)
+    public AddressesController(ICustomerService customerService)
     {
-        _context = context;
+        _customerService = customerService;
     }
 
-    // GET: ADDRESSS
+    // GET: ADDRESSES
     public async Task<IActionResult> Index()    
     {
-        return View(await _context.Addresses.ToListAsync());
+        return View(await _customerService.GetAllAddressesAsync());
     }
 
-    // GET: ADDRESSS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
+    // GET: ADDRESSES/Details/5
+    public async Task<IActionResult> Details(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var address = await _context.Addresses
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var address = await _customerService.GetAddressByIdAsync(id.Value);
         if (address == null)
         {
             return NotFound();
@@ -40,37 +40,34 @@ public class AddressesController : Controller
         return View(address);
     }
 
-    // GET: ADDRESSS/Create
+    // GET: ADDRESSES/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: ADDRESSS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: ADDRESSES/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,CustomerId,Province,City,Street,PostalCode,IsDefault,Customer")] Address address)
     {
         if (ModelState.IsValid)
         {
-            _context.Add(address);
-            await _context.SaveChangesAsync();
+            await _customerService.CreateAddressAsync(address);
             return RedirectToAction(nameof(Index));
         }
         return View(address);
     }
 
-    // GET: ADDRESSS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
+    // GET: ADDRESSES/Edit/5
+    public async Task<IActionResult> Edit(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var address = await _context.Addresses.FindAsync(id);
+        var address = await _customerService.GetAddressByIdAsync(id.Value);
         if (address == null)
         {
             return NotFound();
@@ -78,12 +75,10 @@ public class AddressesController : Controller
         return View(address);
     }
 
-    // POST: ADDRESSS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // POST: ADDRESSES/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,CustomerId,Province,City,Street,PostalCode,IsDefault,Customer")] Address address)
+    public async Task<IActionResult> Edit(Guid id, [Bind("Id,CustomerId,Province,City,Street,PostalCode,IsDefault,Customer")] Address address)
     {
         if (id != address.Id)
         {
@@ -92,37 +87,25 @@ public class AddressesController : Controller
 
         if (ModelState.IsValid)
         {
-            try
+            var result = await _customerService.UpdateAddressAsync(id, address);
+            if (!result.Success)
             {
-                _context.Update(address);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AddressExists(address.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
             return RedirectToAction(nameof(Index));
         }
         return View(address);
     }
 
-    // GET: ADDRESSS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
+    // GET: ADDRESSES/Delete/5
+    public async Task<IActionResult> Delete(Guid? id)
     {
         if (id == null)
         {
             return NotFound();
         }
 
-        var address = await _context.Addresses
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var address = await _customerService.GetAddressByIdAsync(id.Value);
         if (address == null)
         {
             return NotFound();
@@ -131,23 +114,12 @@ public class AddressesController : Controller
         return View(address);
     }
 
-    // POST: ADDRESSS/Delete/5
+    // POST: ADDRESSES/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
+    public async Task<IActionResult> DeleteConfirmed(Guid id)
     {
-        var address = await _context.Addresses.FindAsync(id);
-        if (address != null)
-        {
-            _context.Addresses.Remove(address);
-        }
-
-        await _context.SaveChangesAsync();
+        await _customerService.DeleteAddressAsync(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool AddressExists(System.Guid? id)
-    {
-        return _context.Addresses.Any(e => e.Id == id);
     }
 }

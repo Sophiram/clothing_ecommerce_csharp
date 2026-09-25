@@ -1,0 +1,330 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.DeliveryMethod>
+
+@{
+    ViewData["Title"] = "Delivery Methods & Logistics";
+    var activeCount = Model.Count(m => m.IsActive);
+    var totalCount = Model.Count();
+    var branchesCount = ViewBag.BranchesCount ?? 0;
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-truck"></i>
+                <span>SETTINGS &amp; LOGISTICS</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Delivery Methods &amp; Pricing
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Manage checkout delivery channels, dispatch fees, and VET Express branch pickup locations.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-action="Branches"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span>Manage VET Branches (@branchesCount)</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-xs">
+            <i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. ACTIVE CHANNELS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Channels</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-truck"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @activeCount / @totalCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>Available in checkout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. VET BRANCHES -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pickup Branches</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400 tabular-nums">
+                    @branchesCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>VET Express depots</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. COVERAGE -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Coverage</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-shield-check"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-blue-600 dark:text-blue-400">
+                    Nationwide
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Phnom Penh + 24 Provinces</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. TOTAL OPTIONS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Fulfillment Types</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Store, Express, Standard</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- DELIVERY METHOD GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var method in Model)
+        {
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <!-- CARD HEADER -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-lg @(method.Code == "StorePickup" ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400")">
+                                @if (method.Code == "StorePickup")
+                                {
+                                    <i class="bi bi-shop"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-truck"></i>
+                                }
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 dark:text-white text-base">@method.Name</h4>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                                    <span>@method.KhmerName</span>
+                                    <span>&bull;</span>
+                                    <span class="font-mono font-bold text-blue-600 dark:text-blue-400">@method.Code</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold @(method.IsActive ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-500")">
+                            @(method.IsActive ? "Active" : "Disabled")
+                        </span>
+                    </div>
+
+                    <!-- KEY SPECS -->
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 mb-4 space-y-3">
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Base Delivery Fee</span>
+                                <span class="text-base font-black text-emerald-600 dark:text-emerald-400 tabular-nums">$@method.BaseFee.ToString("0.00")</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Delivery Window</span>
+                                <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">@method.EstimatedDeliveryTime</span>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                            <span class="text-slate-500 dark:text-slate-400 text-[11px]">Branch Pickup Mode:</span>
+                            @if (method.RequiresBranchSelection)
+                            {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 text-[11px] font-semibold border border-rose-200 dark:border-rose-800">
+                                    <i class="bi bi-geo-alt-fill"></i> VET Required (@branchesCount)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 text-[11px] font-semibold border border-blue-200 dark:border-blue-800">
+                                    <i class="bi bi-house-door"></i> Direct Customer Address
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button"
+                            onclick="openEditDeliveryModal('@method.Id', '@Html.Raw(Html.Encode(method.Name))', '@Html.Raw(Html.Encode(method.KhmerName ?? ""))', '@method.Code', '@method.BaseFee.ToString("0.00")', '@Html.Raw(Html.Encode(method.EstimatedDeliveryTime ?? ""))', @method.IsActive.ToString().ToLower(), @method.RequiresBranchSelection.ToString().ToLower())"
+                            class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Edit Settings</span>
+                    </button>
+
+                    @if (method.RequiresBranchSelection)
+                    {
+                        <a asp-action="Branches" class="p-2 rounded-xl border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition" title="Manage Branches">
+                            <i class="bi bi-geo-alt text-xs"></i>
+                        </a>
+                    }
+
+                    <form asp-action="UpdateMethod" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@method.Id" />
+                        <input type="hidden" name="Name" value="@method.Name" />
+                        <input type="hidden" name="KhmerName" value="@method.KhmerName" />
+                        <input type="hidden" name="Code" value="@method.Code" />
+                        <input type="hidden" name="BaseFee" value="@method.BaseFee" />
+                        <input type="hidden" name="EstimatedDeliveryTime" value="@method.EstimatedDeliveryTime" />
+                        <input type="hidden" name="RequiresBranchSelection" value="@method.RequiresBranchSelection.ToString().ToLower()" />
+                        <input type="hidden" name="IsActive" value="@((!method.IsActive).ToString().ToLower())" />
+                        @if (method.IsActive)
+                        {
+                            <button type="submit" class="p-2 rounded-xl border border-slate-300 dark:border-slate-700 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition" title="Disable Method">
+                                <i class="bi bi-pause-circle text-xs"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="p-2 rounded-xl border border-slate-300 dark:border-slate-700 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition" title="Enable Method">
+                                <i class="bi bi-play-circle text-xs"></i>
+                            </button>
+                        }
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODERN TAILWIND EDIT DELIVERY METHOD POPUP MODAL
+========================================================= -->
+<div id="editDeliveryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Delivery Method</h3>
+                    <p class="text-[11px] text-slate-400 font-mono" id="editDelivCodeBadge"></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditDeliveryModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form asp-action="UpdateMethod" method="post" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editDelivId" />
+            <input type="hidden" name="Code" id="editDelivCode" />
+            <input type="hidden" name="RequiresBranchSelection" id="editDelivRequiresBranch" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Method Name (EN)</label>
+                    <input type="text" name="Name" id="editDelivName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Khmer Name (KH)</label>
+                    <input type="text" name="KhmerName" id="editDelivKhmerName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Base Delivery Fee ($ USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                        <input type="number" step="0.50" min="0" name="BaseFee" id="editDelivBaseFee" class="w-full text-xs font-bold pl-7 pr-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 tabular-nums" required />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Delivery Window</label>
+                    <input type="text" name="EstimatedDeliveryTime" id="editDelivTime" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. 1 - 2 Business Days" required />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 cursor-pointer">
+                        <input type="checkbox" name="IsActive" value="true" id="editDelivActive" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500" />
+                        <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Active in Customer Checkout</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditDeliveryModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openEditDeliveryModal(id, name, khmerName, code, baseFee, estimatedTime, isActive, requiresBranch) {
+        document.getElementById('editDelivId').value = id;
+        document.getElementById('editDelivName').value = name;
+        document.getElementById('editDelivKhmerName').value = khmerName;
+        document.getElementById('editDelivCode').value = code;
+        document.getElementById('editDelivCodeBadge').textContent = 'Code: ' + code;
+        document.getElementById('editDelivBaseFee').value = baseFee;
+        document.getElementById('editDelivTime').value = estimatedTime;
+        document.getElementById('editDelivActive').checked = isActive;
+        document.getElementById('editDelivRequiresBranch').value = requiresBranch;
+
+        var m = document.getElementById('editDeliveryModal');
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+    }
+
+    function closeEditDeliveryModal() {
+        var m = document.getElementById('editDeliveryModal');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+    }
+
+    window.addEventListener('click', function(e) {
+        var m = document.getElementById('editDeliveryModal');
+        if (e.target === m) closeEditDeliveryModal();
+    });
+</script>
+}

@@ -1,5 +1,96 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @using WebApplication_ClothingEcommerce.Models
+@inject WebApplication_ClothingEcommerce.Data.AppDbContext DbContext
+@{
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var roleTitle = isSuperAdmin ? "Super Administrator" : "Store Administrator";
+
+    string userEmail = User.Identity?.Name ?? "";
+    string userDisplayName = userEmail.Split('@')[0];
+    string userFirstName = "";
+    string userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "A";
+    string? userAvatarUrl = null;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        try
+        {
+            var appUser = DbContext.Users.FirstOrDefault(u => u.UserName == userEmail || u.Email == userEmail);
+            if (appUser != null)
+            {
+                userEmail = appUser.Email ?? userEmail;
+                if (!string.IsNullOrWhiteSpace(appUser.FullName))
+                {
+                    userDisplayName = appUser.FullName;
+                    userFirstName = appUser.FirstName;
+                    userFirstLetter = !string.IsNullOrWhiteSpace(appUser.FirstName) 
+                        ? appUser.FirstName.Substring(0, 1).ToUpper() 
+                        : appUser.FullName.Substring(0, 1).ToUpper();
+                }
+                else if (!string.IsNullOrWhiteSpace(appUser.FirstName))
+                {
+                    userDisplayName = appUser.FirstName;
+                    userFirstName = appUser.FirstName;
+                    userFirstLetter = appUser.FirstName.Substring(0, 1).ToUpper();
+                }
+
+                var avatarFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                if (System.IO.Directory.Exists(avatarFolder))
+                {
+                    var files = System.IO.Directory.GetFiles(avatarFolder, $"{appUser.Id}.*");
+                    if (files.Length > 0)
+                    {
+                        var fi = new System.IO.FileInfo(files[0]);
+                        userAvatarUrl = $"/uploads/avatars/{System.IO.Path.GetFileName(files[0])}?v={fi.LastWriteTimeUtc.Ticks}";
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+
+    // Dynamic Admin Notifications (Unread Messages & Recent Orders)
+    var unreadContactCount = 0;
+    var unreadContactList = new List<WebApplication_ClothingEcommerce.Models.ContactMessage>();
+    var recentOrdersCount = 0;
+    var recentOrdersList = new List<WebApplication_ClothingEcommerce.Models.Order>();
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        try
+        {
+            unreadContactCount = DbContext.ContactMessages.Count(m => !m.IsRead);
+            unreadContactList = DbContext.ContactMessages
+                .Where(m => !m.IsRead)
+                .OrderByDescending(m => m.CreatedAt)
+                .Take(4)
+                .ToList();
+
+            recentOrdersCount = DbContext.Orders
+                .Count(o => o.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending 
+                         || o.Status == WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Processing);
+
+            recentOrdersList = Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.Include(
+                DbContext.Orders, o => o.Customer)
+                .OrderByDescending(o => o.OrderDate)
+                .Take(4)
+                .ToList();
+        }
+        catch { }
+    }
+
+    var totalNotificationBadgeCount = unreadContactCount + recentOrdersCount;
+
+    string FormatNotificationTime(DateTime dt)
+    {
+        var span = DateTime.UtcNow - dt;
+        if (span.TotalMinutes < 1) return "Just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+        return dt.ToString("dd MMM");
+    }
+}
 
 <!DOCTYPE html>
 
@@ -28,34 +119,38 @@
           href="https://fonts.gstatic.com"
           crossorigin />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&family=Playfair+Display:wght@600;700&display=swap"
           rel="stylesheet" />
 
-
-    <!-- =====================================================
-         BOOTSTRAP
-    ====================================================== -->
-
-    <link rel="stylesheet"
-          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-
-    <!-- =====================================================
-         BOOTSTRAP ICONS
-    ====================================================== -->
-
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
 
+    <!-- Compiled Tailwind CSS -->
+    <link rel="stylesheet"
+          href="~/css/tailwind.css"
+          asp-append-version="true" />
 
-    <!-- =====================================================
-         ADMIN CSS
-    ====================================================== -->
-
+    <!-- Admin CSS -->
     <link rel="stylesheet"
           href="~/css/admin.css"
           asp-append-version="true" />
 
+    <!-- Global Theme & i18n Engine -->
+    <script src="~/js/site-theme-i18n.js" asp-append-version="true"></script>
+
+    <script>
+        (function () {
+            var stored = localStorage.getItem('site_theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var isDark = stored === 'dark' || (!stored && prefersDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark', 'dark-mode');
+            } else {
+                document.documentElement.classList.remove('dark', 'dark-mode');
+            }
+        })();
+    </script>
 </head>
 
 
@@ -82,8 +177,8 @@
        asp-action="Index"
        class="brand-link">
 
-        <!-- Desktop Logo -->
-        <img src="~/images/ClothingLogo.png"
+        <!-- Desktop Logo (dark-mode SVG – sidebar is always dark) -->
+        <img src="~/images/ClothingLogoDarkMode.svg"
              alt="CLOTHÉ"
              class="brand-logo brand-logo-full" />
 
@@ -123,6 +218,23 @@
 
                         <span>
                             Dashboard
+                        </span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Reports"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")">
+
+                        <i class="bi bi-graph-up-arrow"></i>
+
+                        <span>
+                            Financial Reports
                         </span>
 
                     </a>
@@ -271,11 +383,11 @@
 
 
             <!-- =================================================
-                 SALES
+                 SALES & LOGISTICS
             ================================================== -->
 
             <div class="sidebar-section-title">
-                SALES
+                SALES & LOGISTICS
             </div>
 
             <ul class="sidebar-menu">
@@ -297,6 +409,56 @@
 
                 </li>
 
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Invoices"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Invoices" ? "active" : "")">
+
+                        <i class="bi bi-receipt-cutoff"></i>
+
+                        <span data-en="Invoices & Receipts" data-kh="វិក្កយបត្រ & បង្កាន់ដៃ">
+                            Invoices &amp; Receipts
+                        </span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Shipments"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Shipments" ? "active" : "")">
+
+                        <i class="bi bi-truck"></i>
+
+                        <span>
+                            Shipments
+                        </span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Delivery"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Delivery" ? "active" : "")">
+
+                        <i class="bi bi-geo-alt"></i>
+
+                        <span>
+                            Delivery Methods
+                        </span>
+
+                    </a>
+
+                </li>
 
                 <li>
 
@@ -315,7 +477,6 @@
 
                 </li>
 
-
                 <li>
 
                     <a asp-area="Admin"
@@ -333,18 +494,51 @@
 
                 </li>
 
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="Telegram"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Telegram" ? "active" : "")">
+
+                        <i class="bi bi-telegram"></i>
+
+                        <span>
+                            Telegram Bot
+                        </span>
+
+                    </a>
+
+                </li>
 
                 <li>
 
                     <a asp-area="Admin"
-                       asp-controller="Shipments"
+                       asp-controller="ContactMessages"
                        asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Shipments" ? "active" : "")">
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "ContactMessages" ? "active" : "")">
 
-                        <i class="bi bi-truck"></i>
+                        <i class="bi bi-envelope"></i>
 
-                        <span>
-                            Shipments
+                        <span data-en="Contact Messages" data-kh="សារទំនាក់ទំនង">
+                            Contact Messages
+                        </span>
+
+                    </a>
+
+                </li>
+
+                <li>
+
+                    <a asp-area="Admin"
+                       asp-controller="EmailNotifications"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "EmailNotifications" ? "active" : "")">
+
+                        <i class="bi bi-envelope-at"></i>
+
+                        <span data-en="Mail Service" data-kh="សេវាអ៊ីមែល">
+                            Mail Service
                         </span>
 
                     </a>
@@ -421,67 +615,85 @@
 
 
             <!-- =================================================
-                 SYSTEM
+                 SETTINGS & CONFIGURATION (នៅ ក្រោមគេ)
             ================================================== -->
 
             <div class="sidebar-section-title">
-                SYSTEM
+                SETTINGS &amp; CONFIG
             </div>
 
             <ul class="sidebar-menu">
 
                 <li>
-
-                    <a asp-area="Admin"
-                       asp-controller="Users"
-                       asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
-
-                        <i class="bi bi-person-gear"></i>
-
-                        <span>
-                            Users
-                        </span>
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
-                    <a asp-area="Admin"
-                       asp-controller="Roles"
-                       asp-action="Index"
-                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")">
-
-                        <i class="bi bi-shield-lock"></i>
-
-                        <span>
-                            Roles
-                        </span>
-
-                    </a>
-
-                </li>
-
-
-                <li>
-
                     <a asp-area="Admin"
                        asp-controller="Settings"
                        asp-action="Index"
                        class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")">
-
-                        <i class="bi bi-gear"></i>
-
-                        <span>
-                            Settings
-                        </span>
-
+                        <i class="bi bi-gear-fill"></i>
+                        <span>Settings</span>
                     </a>
-
                 </li>
+
+                <li>
+                    <a asp-area="Admin"
+                       asp-controller="HomePage"
+                       asp-action="Index"
+                       class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "HomePage" ? "active" : "")">
+                        <i class="bi bi-stars"></i>
+                        <span>Homepage & Hero</span>
+                    </a>
+                </li>
+
+                @if (isSuperAdmin)
+                {
+                    <li>
+                        <a href="/Admin/Settings?tab=receipt"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" && Context.Request.Query["tab"] == "receipt" ? "active" : "")">
+                            <i class="bi bi-receipt-cutoff"></i>
+                            <span>Invoice Customizer</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Users"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                            <i class="bi bi-person-gear"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Admins"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Admins" ? "active" : "")">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            <span>Admins</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="Roles"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "active" : "")">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Roles</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-area="Admin"
+                           asp-controller="AuditLogs"
+                           asp-action="Index"
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "AuditLogs" ? "active" : "")">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Audit Logs</span>
+                        </a>
+                    </li>
+                }
 
             </ul>
 
@@ -612,6 +824,45 @@
 
             <div class="navbar-right">
 
+                <!-- GLOBAL LANG & THEME TOGGLE -->
+                <div class="d-flex align-items-center gap-1 me-2">
+                    <!-- Language Dropdown -->
+                    <div class="dropdown">
+                        <button class="admin-lang-btn" type="button" id="adminLangDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Language / ភាសា">
+                            <span id="adminLangFlag" class="d-inline-flex align-items-center">
+                                <img src="/images/flags/gb.svg" alt="English" style="width: 20px; height: 14px; object-fit: cover; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.18);" />
+                            </span>
+                            <span id="adminLangText" class="ms-1 fw-bold" style="font-size: 0.8rem; line-height: 1;">ENG</span>
+                            <i class="bi bi-chevron-down ms-1" style="font-size: 0.65rem; opacity: 0.7;"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" aria-labelledby="adminLangDropdown" style="min-width: 155px; border-radius: 14px; z-index: 1060;">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center justify-content-between py-2 px-3" onclick="setGlobalLanguage('en')">
+                                    <span class="fw-semibold d-inline-flex align-items-center gap-2">
+                                        <img src="/images/flags/gb.svg" alt="English" style="width: 20px; height: 14px; object-fit: cover; border-radius: 2px;" />
+                                        English
+                                    </span>
+                                    <i class="bi bi-check2 text-primary d-none" id="adminCheckLangEn"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center justify-content-between py-2 px-3" onclick="setGlobalLanguage('kh')">
+                                    <span class="fw-semibold d-inline-flex align-items-center gap-2">
+                                        <img src="/images/flags/kh.svg" alt="Khmer" style="width: 20px; height: 14px; object-fit: cover; border-radius: 2px;" />
+                                        ភាសាខ្មែរ
+                                    </span>
+                                    <i class="bi bi-check2 text-primary d-none" id="adminCheckLangKh"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button type="button" class="icon-button" id="adminThemeToggleBtn" onclick="toggleGlobalTheme()" title="Toggle Dark/Light Mode" style="width: 38px; height: 38px;">
+                        <i class="bi bi-moon-stars-fill" id="adminThemeIcon"></i>
+                    </button>
+                </div>
+
 
                 <!-- VIEW STORE -->
 
@@ -630,19 +881,107 @@
                 </a>
 
 
-                <!-- NOTIFICATION -->
+                <!-- NOTIFICATION DROPDOWN -->
+                <div class="dropdown">
+                    <button type="button"
+                            class="icon-button dropdown-toggle position-relative"
+                            id="adminNotificationDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            aria-label="Notifications"
+                            style="border: none; background: transparent;">
+                        <i class="bi bi-bell"></i>
+                        @if (totalNotificationBadgeCount > 0)
+                        {
+                            <span class="notification-badge" style="background-color: #ef4444; color: white;">
+                                @(totalNotificationBadgeCount > 99 ? "99+" : totalNotificationBadgeCount.ToString())
+                            </span>
+                        }
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-xl border-0 mt-2 p-0" aria-labelledby="adminNotificationDropdown" style="min-width: 350px; max-width: 400px; border-radius: 16px; overflow: hidden; z-index: 1060;">
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background: var(--admin-card-bg, #ffffff);">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-dark text-sm" data-en="Notifications" data-kh="ការជូនដំណឹង">Notifications</span>
+                                @if (totalNotificationBadgeCount > 0)
+                                {
+                                    <span class="badge bg-danger rounded-pill text-xs">@totalNotificationBadgeCount New</span>
+                                }
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill text-xs">SMTP Active</span>
+                        </div>
+                        <div class="py-1" style="max-height: 340px; overflow-y: auto;">
+                            @if (!unreadContactList.Any() && !recentOrdersList.Any())
+                            {
+                                <div class="p-4 text-center text-muted">
+                                    <i class="bi bi-bell-slash text-2xl d-block mb-1 opacity-50"></i>
+                                    <span class="text-xs" data-en="No new notifications" data-kh="មិនមានការជូនដំណឹងថ្មីទេ">No new notifications</span>
+                                </div>
+                            }
+                            else
+                            {
+                                @if (unreadContactList.Any())
+                                {
+                                    <div class="px-3 pt-2 pb-1 text-[11px] font-bold text-uppercase text-muted" style="letter-spacing: 0.5px;">
+                                        <i class="bi bi-chat-left-dots-fill text-amber-500 me-1"></i> Customer Messages (@unreadContactCount)
+                                    </div>
+                                    @foreach (var msg in unreadContactList)
+                                    {
+                                        <a asp-area="Admin" asp-controller="ContactMessages" asp-action="Details" asp-route-id="@msg.Id" class="dropdown-item py-2 px-3 d-flex align-items-start gap-2.5 border-bottom border-light">
+                                            <div class="rounded-circle bg-amber-100 text-amber-600 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                                <i class="bi bi-envelope-fill text-xs"></i>
+                                            </div>
+                                            <div class="w-100 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center gap-1">
+                                                    <strong class="text-dark text-xs text-truncate">@msg.Name</strong>
+                                                    <small class="text-muted flex-shrink-0" style="font-size: 10px;">@FormatNotificationTime(msg.CreatedAt)</small>
+                                                </div>
+                                                <p class="text-xs text-dark font-semibold mb-0 text-truncate">@msg.Subject</p>
+                                                <p class="text-muted text-[11px] mb-0 text-truncate">@msg.Message</p>
+                                            </div>
+                                        </a>
+                                    }
+                                }
 
-                <button type="button"
-                        class="icon-button"
-                        aria-label="Notifications">
-
-                    <i class="bi bi-bell"></i>
-
-                    <span class="notification-badge">
-                        0
-                    </span>
-
-                </button>
+                                @if (recentOrdersList.Any())
+                                {
+                                    <div class="px-3 pt-2 pb-1 text-[11px] font-bold text-uppercase text-muted" style="letter-spacing: 0.5px;">
+                                        <i class="bi bi-bag-check-fill text-blue-500 me-1"></i> Orders (@recentOrdersCount Pending)
+                                    </div>
+                                    @foreach (var ord in recentOrdersList)
+                                    {
+                                        var ordCode = ord.Id.ToString()[..8].ToUpper();
+                                        var custName = $"{ord.Customer?.FirstName} {ord.Customer?.LastName}".Trim();
+                                        if (string.IsNullOrWhiteSpace(custName)) custName = "Customer";
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@ord.Id" class="dropdown-item py-2 px-3 d-flex align-items-start gap-2.5 border-bottom border-light">
+                                            <div class="rounded-circle bg-blue-100 text-blue-600 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;">
+                                                <i class="bi bi-cart3 text-xs"></i>
+                                            </div>
+                                            <div class="w-100 min-w-0">
+                                                <div class="d-flex justify-content-between align-items-center gap-1">
+                                                    <strong class="text-dark text-xs">#@ordCode</strong>
+                                                    <small class="text-muted flex-shrink-0" style="font-size: 10px;">@FormatNotificationTime(ord.OrderDate)</small>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mt-0.5">
+                                                    <span class="text-muted text-[11px] text-truncate">@custName</span>
+                                                    <span class="text-emerald-600 font-bold text-xs">${@ord.TotalAmount.ToString("N2")}</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    }
+                                }
+                            }
+                        </div>
+                        <div class="p-2 border-top d-flex justify-content-around" style="background: var(--admin-card-bg, #ffffff);">
+                            <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-link text-primary text-decoration-none fw-semibold text-xs">
+                                <i class="bi bi-boxes me-1"></i>All Orders
+                            </a>
+                            <span class="text-muted opacity-50 py-1">|</span>
+                            <a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index" class="btn btn-sm btn-link text-primary text-decoration-none fw-semibold text-xs">
+                                <i class="bi bi-chat-left-text me-1"></i>Messages (@unreadContactCount)
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
 
                 <!-- PROFILE -->
@@ -654,23 +993,25 @@
                             data-bs-toggle="dropdown"
                             aria-expanded="false">
 
-                        <div class="profile-icon">
-
-                            <i class="bi bi-person"></i>
-
+                        <div class="profile-icon @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis" : "") p-0 overflow-hidden position-relative flex-shrink-0">
+                            @if (!string.IsNullOrEmpty(userAvatarUrl))
+                            {
+                                <img src="@userAvatarUrl" alt="@userDisplayName" class="w-100 h-100 rounded-circle" style="object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="fw-bold">@userFirstLetter</span>
+                            }
                         </div>
 
-
-                        <div class="profile-info">
+                        <div class="profile-info d-none d-sm-flex">
 
                             <span class="profile-name">
-
-                                @(User.Identity?.Name ?? "Administrator")
-
+                                @userDisplayName
                             </span>
 
-                            <small>
-                                Administrator
+                            <small class="@(isSuperAdmin ? "fw-bold text-warning-emphasis" : "")">
+                                <i class="bi @(isSuperAdmin ? "bi-shield-check text-warning" : "bi-shop text-success") me-1"></i>@roleTitle
                             </small>
 
                         </div>
@@ -678,76 +1019,123 @@
                     </button>
 
 
-                    <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
+                    <ul class="dropdown-menu dropdown-menu-end admin-dropdown shadow-lg border-0" style="min-width: 260px; border-radius: 14px;">
 
                         <li>
-
-                            <div class="dropdown-user">
-
-                                <div class="profile-icon large">
-
-                                    <i class="bi bi-person"></i>
-
+                            <div class="dropdown-user p-3 bg-light rounded-top-3 border-bottom mb-2">
+                                <div class="profile-icon large @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis" : "") p-0 overflow-hidden flex-shrink-0">
+                                    @if (!string.IsNullOrEmpty(userAvatarUrl))
+                                    {
+                                        <img src="@userAvatarUrl" alt="@userDisplayName" class="w-100 h-100 rounded-circle" style="object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="fs-5 fw-bold">@userFirstLetter</span>
+                                    }
                                 </div>
-
-                                <div>
-
-                                    <strong>
-                                        @(User.Identity?.Name ?? "Administrator")
+                                <div class="overflow-hidden" style="min-width: 0;">
+                                    <strong class="text-truncate d-block text-dark">
+                                        @userDisplayName
                                     </strong>
-
-                                    <small>
-                                        Administrator
-                                    </small>
-
+                                    <div class="text-muted small text-truncate" style="font-size: 0.75rem;">
+                                        @userEmail
+                                    </div>
+                                    <span class="badge @(isSuperAdmin ? "bg-warning-subtle text-warning-emphasis border border-warning-subtle" : "bg-primary-subtle text-primary border border-primary-subtle") rounded-pill px-2 py-0 mt-1" style="font-size: 0.68rem;">
+                                        @roleTitle
+                                    </span>
                                 </div>
-
                             </div>
-
                         </li>
 
-
                         <li>
-                            <hr class="dropdown-divider" />
-                        </li>
-
-
-                        <li>
-
-                            <a class="dropdown-item"
-                               asp-area="Admin"
-                               asp-controller="Settings"
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Profile"
                                asp-action="Index">
-
-                                <i class="bi bi-gear"></i>
-
-                                Settings
-
+                                <i class="bi bi-person-circle text-primary fs-6"></i>
+                                <span>My Account Profile</span>
                             </a>
-
                         </li>
 
+                        <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Profile"
+                               asp-action="Index"
+                               asp-route-tab="security">
+                                <i class="bi bi-shield-lock text-success fs-6"></i>
+                                <span>Security &amp; Password</span>
+                            </a>
+                        </li>
 
                         <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                               asp-area=""
+                               asp-controller="Home"
+                               asp-action="Index"
+                               target="_blank">
+                                <i class="bi bi-shop text-info fs-6"></i>
+                                <span>View Storefront</span>
+                                <i class="bi bi-box-arrow-up-right ms-auto text-muted small"></i>
+                            </a>
+                        </li>
 
+                        @if (isSuperAdmin)
+                        {
+                            <li>
+                                <hr class="dropdown-divider my-2" />
+                            </li>
+                            <li>
+                                <div class="px-3 py-1 text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.05em;">Administration</div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="Admins"
+                                   asp-action="Index">
+                                    <i class="bi bi-people-fill text-primary"></i>
+                                    <span>Administrator Accounts</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="Settings"
+                                   asp-action="Index">
+                                    <i class="bi bi-gear-fill text-secondary"></i>
+                                    <span>System Settings</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item py-2 d-flex align-items-center gap-2"
+                                   asp-area="Admin"
+                                   asp-controller="AuditLogs"
+                                   asp-action="Index">
+                                    <i class="bi bi-journal-text text-teal"></i>
+                                    <span>Audit Logs</span>
+                                </a>
+                            </li>
+                        }
+
+                        <li>
+                            <hr class="dropdown-divider my-2" />
+                        </li>
+
+                        <li>
                             <form asp-area=""
                                   asp-controller="Account"
                                   asp-action="Logout"
-                                  method="post">
-
+                                  method="post"
+                                  class="m-0 p-0">
                                 @Html.AntiForgeryToken()
-
                                 <button type="submit"
-                                        class="dropdown-item text-danger">
-
-                                    <i class="bi bi-box-arrow-right"></i>
-
-                                    Logout
-
+                                        class="dropdown-item py-2 text-danger d-flex align-items-center gap-2">
+                                    <i class="bi bi-box-arrow-right fs-6"></i>
+                                    <span>Sign Out</span>
                                 </button>
-
                             </form>
-
                         </li>
 
                     </ul>
@@ -802,6 +1190,353 @@
 <script src="~/js/admin.js"
         asp-append-version="true"></script>
 
+<!-- =====================================================
+     SWEETALERT2 (Toast Notifications)
+====================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    window.showToast = function(type, message) {
+        if (type === 'error') {
+            Toast.fire({
+                icon: 'error',
+                title: message,
+                timer: 5000 // longer duration for error
+            });
+        } else {
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>showToast('success', '@TempData["Success"]');</text>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <text>showToast('error', '@TempData["Error"]');</text>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <text>showToast('warning', '@TempData["Warning"]');</text>
+        }
+        @if (TempData["Info"] != null)
+        {
+            <text>showToast('info', '@TempData["Info"]');</text>
+        }
+    });
+</script>
+
+@Html.AntiForgeryToken()
+<!-- =====================================================
+     GLOBAL AJAX MODAL
+====================================================== -->
+<div class="modal fade" id="globalAjaxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="globalAjaxModalBody">
+            <!-- Content will be loaded here via AJAX -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // =========================================================
+    //  UNIVERSAL MODAL & DROPDOWN ENGINE (Tailwind & Bootstrap Compat)
+    // =========================================================
+    window.openModal = function (modalElOrId, relatedTarget) {
+        const el = typeof modalElOrId === 'string' ? document.querySelector(modalElOrId) : modalElOrId;
+        if (!el) return;
+        el.classList.add('show');
+        el.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        const ev = new CustomEvent('show.bs.modal', { bubbles: true, cancelable: true });
+        if (relatedTarget) ev.relatedTarget = relatedTarget;
+        el.dispatchEvent(ev);
+    };
+
+    window.closeModal = function (modalElOrId) {
+        const el = typeof modalElOrId === 'string' ? document.querySelector(modalElOrId) : modalElOrId;
+        if (!el) return;
+        el.classList.remove('show');
+        el.style.display = 'none';
+        if (!document.querySelector('.modal.show, .modal[style*="display: flex"], .modal[style*="display: block"]')) {
+            document.body.classList.remove('modal-open');
+        }
+        el.dispatchEvent(new CustomEvent('hidden.bs.modal', { bubbles: true }));
+    };
+
+    // Polyfill bootstrap.Modal
+    if (typeof window.bootstrap === 'undefined') {
+        window.bootstrap = {};
+    }
+    window.bootstrap.Modal = function (el) {
+        this._element = typeof el === 'string' ? document.querySelector(el) : el;
+        this.show = (relatedTarget) => window.openModal(this._element, relatedTarget);
+        this.hide = () => window.closeModal(this._element);
+    };
+    window.bootstrap.Modal.getInstance = function (el) {
+        const target = typeof el === 'string' ? document.querySelector(el) : el;
+        return new window.bootstrap.Modal(target);
+    };
+    window.bootstrap.Modal.getOrCreateInstance = function (el) {
+        const target = typeof el === 'string' ? document.querySelector(el) : el;
+        return new window.bootstrap.Modal(target);
+    };
+
+    // Close all open meatball dropdowns
+    window.closeAllMeatballMenus = function () {
+        document.querySelectorAll('.dropdown.show, .dropdown-menu.show, .dropdown-menu-meatball').forEach(el => {
+            el.classList.remove('show', 'dropup');
+            if (el.classList.contains('dropdown-menu')) {
+                el.style.cssText = '';
+            }
+        });
+        document.querySelectorAll('tr[data-elevated-zindex="true"], td[data-elevated-zindex="true"]').forEach(el => {
+            el.style.zIndex = '';
+            el.removeAttribute('data-elevated-zindex');
+        });
+        document.querySelectorAll('.action-meatball-btn[aria-expanded="true"]').forEach(b => {
+            b.setAttribute('aria-expanded', 'false');
+        });
+    };
+
+    // Universal Table Action & Dropdown Toggle
+    let lastActionBtn = null;
+    let lastActionTime = 0;
+
+    window.toggleActionMenu = function (btn, e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+        if (!btn) return;
+
+        // Prevent duplicate trigger on same button within 200ms
+        const now = Date.now();
+        if (lastActionBtn === btn && (now - lastActionTime) < 200) {
+            return;
+        }
+        lastActionBtn = btn;
+        lastActionTime = now;
+
+        const parent = btn.closest('.dropdown') || btn.parentElement;
+        const menu = parent ? parent.querySelector('.dropdown-menu') : null;
+        if (!menu) return;
+
+        const isOpen = parent.classList.contains('show') || menu.classList.contains('show') || menu.style.display === 'block';
+
+        // Close all other open dropdowns first
+        document.querySelectorAll('.dropdown.show, .dropdown-menu.show, .dropdown-menu-meatball').forEach(el => {
+            if (el !== parent && el !== menu) {
+                el.classList.remove('show', 'dropup');
+                if (el.classList.contains('dropdown-menu')) {
+                    el.style.cssText = '';
+                }
+            }
+        });
+        document.querySelectorAll('tr[data-elevated-zindex="true"], td[data-elevated-zindex="true"]').forEach(el => {
+            el.style.zIndex = '';
+            el.removeAttribute('data-elevated-zindex');
+        });
+        document.querySelectorAll('.action-meatball-btn[aria-expanded="true"]').forEach(b => {
+            if (b !== btn) b.setAttribute('aria-expanded', 'false');
+        });
+
+        const td = btn.closest('td');
+        const tr = btn.closest('tr');
+
+        if (isOpen) {
+            parent.classList.remove('show', 'dropup');
+            menu.classList.remove('show');
+            menu.style.cssText = '';
+            btn.setAttribute('aria-expanded', 'false');
+            if (td) { td.style.zIndex = ''; td.removeAttribute('data-elevated-zindex'); }
+            if (tr) { tr.style.zIndex = ''; tr.removeAttribute('data-elevated-zindex'); }
+        } else {
+            // Elevate active row and cell to z-index 999 so no other rows or buttons overlap
+            if (td) { td.style.zIndex = '999'; td.setAttribute('data-elevated-zindex', 'true'); }
+            if (tr) { tr.style.zIndex = '999'; tr.setAttribute('data-elevated-zindex', 'true'); }
+
+            // Position fixed relative to viewport for pixel-perfect anchoring
+            const rect = btn.getBoundingClientRect();
+
+            // Temporarily display block & hidden to accurately measure dimensions
+            menu.style.cssText = 'position: fixed !important; display: block !important; visibility: hidden !important; z-index: 999 !important; margin: 0 !important;';
+
+            const menuWidth = menu.offsetWidth || 185;
+            const menuHeight = menu.offsetHeight || 155;
+
+            // Align menu's RIGHT border exactly flush with button's RIGHT border
+            let left = Math.round(rect.right - menuWidth);
+            if (left < 10) left = 10;
+            if (left + menuWidth > window.innerWidth - 10) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+
+            // Determine whether to open downward or upward (dropup)
+            const spaceBelow = window.innerHeight - rect.bottom;
+            let top;
+            if (spaceBelow < (menuHeight + 16) && rect.top > (menuHeight + 16)) {
+                // Dropup: 6px above button
+                top = Math.round(rect.top - menuHeight - 6);
+                parent.classList.add('dropup');
+            } else {
+                // Dropdown: 6px below button
+                top = Math.round(rect.bottom + 6);
+                parent.classList.remove('dropup');
+            }
+
+            menu.style.setProperty('position', 'fixed', 'important');
+            menu.style.setProperty('left', left + 'px', 'important');
+            menu.style.setProperty('top', top + 'px', 'important');
+            menu.style.setProperty('right', 'auto', 'important');
+            menu.style.setProperty('bottom', 'auto', 'important');
+            menu.style.setProperty('z-index', '999', 'important');
+            menu.style.setProperty('visibility', 'visible', 'important');
+            menu.style.setProperty('opacity', '1', 'important');
+            menu.style.setProperty('pointer-events', 'auto', 'important');
+
+            parent.classList.add('show');
+            menu.classList.add('show');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // Universal Click Handler for Modals, Dropdowns, and Delete Actions
+        document.addEventListener('click', function (e) {
+
+            // 1. MODAL OPEN: [data-bs-toggle="modal"]
+            const toggleModalBtn = e.target.closest('[data-bs-toggle="modal"]');
+            if (toggleModalBtn) {
+                e.preventDefault();
+                // Close any open meatball menus when opening a modal
+                window.closeAllMeatballMenus();
+
+                const targetSel = toggleModalBtn.getAttribute('data-bs-target') || toggleModalBtn.getAttribute('href');
+                if (targetSel && targetSel.startsWith('#')) {
+                    const targetModal = document.querySelector(targetSel);
+                    if (targetModal) {
+                        window.openModal(targetModal, toggleModalBtn);
+                    }
+                }
+                return;
+            }
+
+            // 2. MODAL DISMISS: [data-bs-dismiss="modal"]
+            const dismissModalBtn = e.target.closest('[data-bs-dismiss="modal"]');
+            if (dismissModalBtn) {
+                e.preventDefault();
+                const modal = dismissModalBtn.closest('.modal');
+                if (modal) window.closeModal(modal);
+                return;
+            }
+
+            // 3. BACKDROP CLICK: Click outside modal-content closes modal
+            if (e.target.classList.contains('modal')) {
+                window.closeModal(e.target);
+                return;
+            }
+
+            // 4. BILINGUAL SWEETALERT2 DELETE CONFIRMATION: Intercept delete links
+            const a = e.target.closest('a[href]');
+            if (a && !a.hasAttribute('data-no-confirm')) {
+                let url;
+                try {
+                    url = new URL(a.href, window.location.origin);
+                } catch (err) { }
+
+                if (url && url.pathname.toLowerCase().includes('/delete') && url.pathname.toLowerCase().startsWith('/admin/')) {
+                    e.preventDefault();
+                    window.closeAllMeatballMenus();
+                    const isKh = (localStorage.getItem('site_language') || 'en') === 'kh';
+                    Swal.fire({
+                        title: isKh ? 'តើអ្នកប្រាកដទេ?' : 'Are you sure?',
+                        text: isKh ? 'សកម្មភាពលុបនេះមិនអាចត្រឡប់វិញបានទេ។' : 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ea4335',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: isKh ? 'បាទ/ចាស លុបវា!' : 'Yes, delete it!',
+                        cancelButtonText: isKh ? 'បោះបង់' : 'Cancel',
+                        reverseButtons: true
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            const form = document.createElement('form');
+                            form.method = 'post';
+                            form.action = a.href;
+                            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                            if (token) {
+                                form.appendChild(token.cloneNode(true));
+                            }
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                    return;
+                }
+            }
+
+            // 5. MEATBALL BUTTON CLICK: handled by toggleActionMenu
+            const meatballBtn = e.target.closest('.action-meatball-btn, [data-action-toggle="meatball"]');
+            if (meatballBtn) {
+                window.toggleActionMenu(meatballBtn, e);
+                return;
+            }
+
+            // 6. DROPDOWN ITEM CLICK: allow action then close menu
+            if (e.target.closest('.dropdown-item')) {
+                setTimeout(() => {
+                    window.closeAllMeatballMenus();
+                }, 100);
+                return;
+            }
+
+            // 7. OUTSIDE CLICK: close all open meatball dropdowns
+            if (!e.target.closest('.dropdown') && !e.target.closest('.dropdown-menu-meatball')) {
+                window.closeAllMeatballMenus();
+            }
+        });
+
+        // Close floating dropdown on scroll (with capture to catch table container scrolling)
+        window.addEventListener('scroll', function () {
+            window.closeAllMeatballMenus();
+        }, { capture: true, passive: true });
+
+        // Close floating dropdown on window resize
+        window.addEventListener('resize', function () {
+            window.closeAllMeatballMenus();
+        }, { passive: true });
+
+        // Close dropdown / modal on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                window.closeAllMeatballMenus();
+                const openModal = document.querySelector('.modal.show, .modal[style*="display: flex"], .modal[style*="display: block"]');
+                if (openModal) window.closeModal(openModal);
+            }
+        });
+    });
+</script>
 
 @await RenderSectionAsync("Scripts", required: false)
 

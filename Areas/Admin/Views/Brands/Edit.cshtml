@@ -109,7 +109,7 @@
                     </div>
 
 
-                    <!-- NEW LOGO -->
+                    <!-- REPLACE LOGO -->
 
                     <div class="col-md-6">
 
@@ -117,18 +117,46 @@
                             Replace Logo
                         </label>
 
-                        <input type="file"
-                               name="logo"
-                               class="form-control"
-                               accept=".jpg,.jpeg,.png,.webp" />
-
-                        <div class="form-text">
-                            Leave empty to keep the current logo.
+                        <!-- TAB TOGGLE -->
+                        <div class="img-input-tabs">
+                            <button type="button" class="img-input-tab-btn active" data-tab="upload" onclick="switchImgTab('edit','upload')">
+                                <i class="bi bi-upload"></i> Upload File
+                            </button>
+                            <button type="button" class="img-input-tab-btn" data-tab="url" onclick="switchImgTab('edit','url')">
+                                <i class="bi bi-link-45deg"></i> Paste URL
+                            </button>
                         </div>
 
-                        <span asp-validation-for="Logo"
-                              class="text-danger small">
-                        </span>
+                        <!-- UPLOAD PANEL -->
+                        <div class="img-input-panel active" id="editPanel-upload">
+                            <input type="file"
+                                   name="logo"
+                                   id="editLogoFile"
+                                   class="form-control"
+                                   accept=".jpg,.jpeg,.png,.webp,.svg"
+                                   onchange="previewImgFile(this,'editPreviewImg','editPreviewEmpty')" />
+                            <div class="form-text">JPG, JPEG, PNG, WEBP or SVG. Max 5 MB. Leave empty to keep current.</div>
+                        </div>
+
+                        <!-- URL PANEL -->
+                        <div class="img-input-panel" id="editPanel-url">
+                            <input type="text"
+                                   name="logoUrl"
+                                   id="editLogoUrl"
+                                   class="form-control"
+                                   placeholder="https://example.com/logo.png"
+                                   oninput="previewImgUrl(this.value,'editPreviewImg','editPreviewEmpty')" />
+                            <div class="form-text">Paste a new URL to replace the current logo.</div>
+                        </div>
+
+                        <!-- PREVIEW -->
+                        <div class="img-preview-box">
+                            <div class="img-preview-empty" id="editPreviewEmpty">
+                                <i class="bi bi-image"></i>
+                                New logo preview
+                            </div>
+                            <img id="editPreviewImg" src="" alt="Preview" />
+                        </div>
 
                     </div>
 
@@ -210,4 +238,54 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
+    <script>
+        function switchImgTab(prefix, tab) {
+            const btns = document.querySelectorAll(`[onclick*="switchImgTab('${prefix}'"]`);
+            btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
+            ['upload','url'].forEach(t => {
+                const p = document.getElementById(`${prefix}Panel-${t}`);
+                if (p) p.classList.toggle('active', t === tab);
+            });
+            const prevImg = document.getElementById(`${prefix}PreviewImg`);
+            const prevEmpty = document.getElementById(`${prefix}PreviewEmpty`);
+            if (prevImg) { prevImg.src = ''; prevImg.classList.remove('visible'); }
+            if (prevEmpty) prevEmpty.style.display = '';
+            if (tab === 'upload') {
+                const u = document.getElementById(`${prefix}LogoUrl`);
+                if (u) u.value = '';
+            } else {
+                const f = document.getElementById(`${prefix}LogoFile`);
+                if (f) f.value = '';
+            }
+        }
+
+        function previewImgFile(input, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.classList.add('visible');
+                    empty.style.display = 'none';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.src = ''; preview.classList.remove('visible'); empty.style.display = '';
+            }
+        }
+
+        function previewImgUrl(url, previewId, emptyId) {
+            const preview = document.getElementById(previewId);
+            const empty = document.getElementById(emptyId);
+            if (!preview || !empty) return;
+            if (!url || !url.trim()) {
+                preview.src = ''; preview.classList.remove('visible'); empty.style.display = ''; return;
+            }
+            preview.onload = () => { preview.classList.add('visible'); empty.style.display = 'none'; };
+            preview.onerror = () => { preview.classList.remove('visible'); empty.style.display = ''; };
+            preview.src = url.trim();
+        }
+    </script>
+}

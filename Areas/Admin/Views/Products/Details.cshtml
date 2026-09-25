@@ -1,591 +1,913 @@
-@model WebApplication_ClothingEcommerce.Models.Product
+@using WebApplication_ClothingEcommerce.Data.Enums
+@using WebApplication_ClothingEcommerce.Models
+@model Product
 
 @{
     ViewData["Title"] = "Product Details";
+
+    var totalStock = Model.Variants.Sum(v => v.Inventory?.AvailableQuantity ?? 0);
+    var avgRating = Model.Reviews.Any() ? Model.Reviews.Average(r => r.Rating) : 0;
+
+    var allSizes = ViewBag.AllSizes as List<Size>;
+    var allColors = ViewBag.AllColors as List<Color>;
+    var statusValues = ViewBag.StatusValues as List<VariantStatus>;
 }
 
-<div class="container-fluid py-4">
+<div class="admin-page">
 
-    <!-- HEADER -->
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <div class="page-header">
         <div>
-
-            <a asp-action="Index"
-               class="text-decoration-none text-muted">
-
-                <i class="bi bi-arrow-left me-1"></i>
-                Back to Products
-
-            </a>
-
-            <h2 class="fw-bold mt-3 mb-1">
-                @Model.Name
-            </h2>
-
-            <p class="text-muted mb-0">
-                Product details and management
-            </p>
-
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">@Model.Name</h1>
+            <p class="page-description">Full product overview, variants, and reviews.</p>
         </div>
-
 
         <div class="d-flex gap-2">
-
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-warning">
-
-                <i class="bi bi-pencil me-1"></i>
-                Edit
-
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-primary-custom">
+                <i class="bi bi-pencil"></i> Edit
             </a>
-
-            <a asp-action="Delete"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-danger">
-
-                <i class="bi bi-trash me-1"></i>
-                Delete
-
+            <a asp-action="Index" class="btn-reset">
+                <i class="bi bi-arrow-left"></i> Back
             </a>
-
         </div>
-
     </div>
-
-
-    <!-- ALERTS -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-
-            <i class="bi bi-check-circle me-2"></i>
-
-            @TempData["Success"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-
-            <i class="bi bi-exclamation-triangle me-2"></i>
-
-            @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-
-        </div>
-    }
 
 
     <div class="row g-4">
 
-        <!-- PRODUCT INFORMATION -->
+        <!-- LEFT: OVERVIEW / IMAGES / VARIANTS -->
+        <div class="col-lg-8">
 
-        <div class="col-lg-4">
-
-            <div class="card shadow-sm border-0 mb-4">
-
-                <div class="card-header bg-white py-3">
-
-                    <h5 class="fw-bold mb-0">
-                        Product Information
-                    </h5>
-
+            <!-- OVERVIEW -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Overview</h3>
                 </div>
+                <div style="padding: 0 26px 26px;">
 
-                <div class="card-body">
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Name
-                        </small>
-
-                        <div class="fw-semibold">
-                            @Model.Name
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Category</span>
+                            <div class="payment-name">@(Model.Category?.Name ?? "—")</div>
                         </div>
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Category
-                        </small>
-
-                        <div>
-                            @(Model.Category?.Name ?? "-")
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Brand</span>
+                            <div class="payment-name">@(Model.Brand?.Name ?? "—")</div>
                         </div>
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Brand
-                        </small>
-
-                        <div>
-                            @(Model.Brand?.Name ?? "-")
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Gender</span>
+                            <div class="payment-name">@Model.Gender</div>
                         </div>
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Gender
-                        </small>
-
-                        <div>
-                            @Model.Gender
-                        </div>
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Material
-                        </small>
-
-                        <div>
-                            @Model.Material
-                        </div>
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <small class="text-muted">
-                            Status
-                        </small>
-
-                        <div>
-
-                            @if (Model.Status.ToString() == "Active")
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Status</span>
+                            @if (Model.Status == ProductStatus.Active)
                             {
-                                <span class="badge bg-success">
-                                    Active
-                                </span>
+                                <span class="status-pill status-active"><span class="status-dot"></span> Active</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">
-                                    @Model.Status
-                                </span>
+                                <span class="status-pill status-disabled"><span class="status-dot"></span> @Model.Status</span>
                             }
-
                         </div>
-
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Material</span>
+                            <div class="payment-name">@(string.IsNullOrWhiteSpace(Model.Material) ? "—" : Model.Material)</div>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Total Stock</span>
+                            <div class="payment-name">@totalStock units</div>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Rating</span>
+                            <div class="payment-name">@avgRating.ToString("0.0") / 5 (@Model.Reviews.Count)</div>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="page-eyebrow">Created</span>
+                            <div class="payment-name">@Model.CreatedAt.ToString("MMM dd, yyyy")</div>
+                        </div>
                     </div>
 
+                    @if (!string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <hr class="my-3" />
+                        <span class="page-eyebrow">Description</span>
+                        <p class="text-secondary mb-0 mt-2">@Model.Description</p>
+                    }
 
-                    <div>
+                </div>
+            </div>
 
-                        <small class="text-muted">
-                            Description
-                        </small>
+            <!-- IMAGES -->
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Images (@Model.Images.Count)</h3>
+                    <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addImageModal">
+                        <i class="bi bi-plus-lg"></i> Add Image
+                    </button>
+                </div>
+                <div style="padding: 0 26px 26px;">
 
-                        <div class="mt-1">
-                            @(Model.Description ?? "No description.")
+
+                    @if (Model.Images.Any())
+                    {
+                        <div class="d-flex flex-wrap gap-3">
+                            @foreach (var img in Model.Images)
+                            {
+                                <div class="product-image-tile">
+                                    <img src="@img.ImageUrl" class="product-image-thumb" alt="" />
+
+                                    @if (img.IsPrimary)
+                                    {
+                                        <span class="status-pill status-active product-image-primary-tag">Primary</span>
+                                    }
+
+                                    <div class="product-image-actions">
+                                        <button type="button" class="action-btn action-warning" title="Edit"
+                                                data-bs-toggle="modal" data-bs-target="#editImageModal"
+                                                data-id="@img.Id"
+                                                data-url="@img.ImageUrl"
+                                                data-primary="@img.IsPrimary.ToString().ToLower()">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="action-btn action-danger" title="Delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteImageModal"
+                                                data-id="@img.Id">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
                         </div>
+                    }
+                    else
+                    {
+                        <p class="text-secondary mb-0">No images uploaded yet.</p>
+                    }
+                </div>
+            </div>
 
-                    </div>
+            <!-- VARIANTS -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Variants (@Model.Variants.Count)</h3>
+                    <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addVariantModal">
+                        <i class="bi bi-plus-lg"></i> Add Variant
+                    </button>
+                </div>
+
+                <div style="padding: 16px 26px 0;">
 
                 </div>
 
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Size</th>
+                                <th>Color</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Compare At</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Variants.Any())
+                            {
+                                @foreach (var v in Model.Variants)
+                                {
+                                    var stock = v.Inventory?.Quantity ?? 0;
+
+                                    <tr>
+                                        <td>@(v.Size?.Name ?? "—")</td>
+                                        <td>@(v.Color?.Name ?? "—")</td>
+                                        <td><code>@v.SKU</code></td>
+                                        <td><strong>$@v.Price.ToString("0.00")</strong></td>
+                                        <td>
+                                            @if (v.CompareAtPrice.HasValue && v.CompareAtPrice.Value > 0)
+                                            {
+                                                <span class="text-decoration-line-through text-muted small">$@v.CompareAtPrice.Value.ToString("0.00")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">—</span>
+                                            }
+                                        </td>
+                                        <td>@stock</td>
+                                        <td>
+                                            @if (v.Status == VariantStatus.Available)
+                                            {
+                                                <span class="status-pill status-active"><span class="status-dot"></span> Available</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-pill status-disabled"><span class="status-dot"></span> @v.Status</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button type="button" class="action-btn action-warning" title="Edit"
+                                                        data-bs-toggle="modal" data-bs-target="#editVariantModal"
+                                                        data-id="@v.Id"
+                                                        data-sizeid="@v.SizeId"
+                                                        data-colorid="@v.ColorId"
+                                                        data-sku="@v.SKU"
+                                                        data-price="@v.Price"
+                                                        data-compareatprice="@(v.CompareAtPrice?.ToString() ?? "")"
+                                                        data-status="@v.Status"
+                                                        data-quantity="@stock">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="action-btn action-danger" title="Delete"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteVariantModal"
+                                                        data-id="@v.Id"
+                                                        data-sku="@v.SKU">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="7" class="text-center text-secondary py-3">No variants added yet.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
 
-
-        <!-- IMAGES -->
-
-        <div class="col-lg-8">
-
-            <div class="card shadow-sm border-0">
-
-                <div class="card-header bg-white py-3
-                    d-flex justify-content-between
-                    align-items-center">
-
-                    <h5 class="fw-bold mb-0">
-
-                        <i class="bi bi-images me-2"></i>
-                        Product Images
-
-                    </h5>
-
-
-                    <a asp-controller="ProductImages"
-                       asp-action="Create"
-                       asp-route-productId="@Model.Id"
-                       class="btn btn-primary btn-sm">
-
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Add Image
-
-                    </a>
-
+        <!-- RIGHT: REVIEWS -->
+        <div class="col-lg-4">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Reviews (@Model.Reviews.Count)</h3>
                 </div>
-
-
-                <div class="card-body">
-
-                    @if (Model.Images != null &&
-                         Model.Images.Any())
+                <div style="padding: 0 26px 26px;">
+                    @if (Model.Reviews.Any())
                     {
-                        <div class="row g-3">
-
-                            @foreach (var image in Model.Images)
-                            {
-                                <div class="col-md-4">
-
-                                    <div class="card h-100 border">
-
-                                        <div class="position-relative">
-
-                                            <img src="@image.ImageUrl"
-                                                 alt="@Model.Name"
-                                                 class="card-img-top"
-                                                 style="
-                                            height:220px;
-                                            object-fit:cover;
-                                            " />
-
-                                            @if (image.IsPrimary)
-                                            {
-                                                <span class="position-absolute
-                                                    top-0
-                                                    start-0
-                                                    badge
-                                                    bg-success
-                                                    m-2">
-
-                                                    <i class="bi bi-star-fill me-1"></i>
-                                                    Primary
-
-                                                </span>
-                                            }
-
-                                        </div>
-
-
-                                        <div class="card-body">
-
-                                            <div class="d-grid gap-2">
-
-                                                @if (!image.IsPrimary)
-                                                {
-                                                    <form asp-controller="ProductImages"
-                                                          asp-action="SetPrimary"
-                                                          method="post">
-
-                                                        @Html.AntiForgeryToken()
-
-                                                        <input type="hidden"
-                                                               name="id"
-                                                               value="@image.Id" />
-
-                                                        <input type="hidden"
-                                                               name="productId"
-                                                               value="@Model.Id" />
-
-                                                        <button type="submit"
-                                                                class="btn btn-outline-success btn-sm w-100">
-
-                                                            <i class="bi bi-star me-1"></i>
-                                                            Set Primary
-
-                                                        </button>
-
-                                                    </form>
-                                                }
-
-
-                                                <form asp-controller="ProductImages"
-                                                      asp-action="Delete"
-                                                      method="post"
-                                                      onsubmit="return confirm('Delete this image?');">
-
-                                                    @Html.AntiForgeryToken()
-
-                                                    <input type="hidden"
-                                                           name="id"
-                                                           value="@image.Id" />
-
-                                                    <input type="hidden"
-                                                           name="productId"
-                                                           value="@Model.Id" />
-
-                                                    <button type="submit"
-                                                            class="btn btn-outline-danger btn-sm w-100">
-
-                                                        <i class="bi bi-trash me-1"></i>
-                                                        Delete
-
-                                                    </button>
-
-                                                </form>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
+                        @foreach (var r in Model.Reviews.OrderByDescending(x => x.CreatedAt).Take(10))
+                        {
+                            <div class="mb-3 pb-3" style="border-bottom: 1px solid var(--admin-border);">
+                                <div class="d-flex justify-content-between">
+                                    <strong style="font-size:12px;">@(r.Customer?.FirstName ?? "Customer")</strong>
+                                    <span style="color: var(--google-yellow-dark); font-size:11px;">
+                                        @string.Concat(Enumerable.Repeat("★", r.Rating))@string.Concat(Enumerable.Repeat("☆", 5 - r.Rating))
+                                    </span>
                                 </div>
-                            }
-
-                        </div>
+                                @if (!string.IsNullOrWhiteSpace(r.Comment))
+                                {
+                                    <p class="text-secondary mb-0 mt-1" style="font-size:12px;">@r.Comment</p>
+                                }
+                            </div>
+                        }
                     }
                     else
                     {
-                        <div class="text-center py-5">
-
-                            <i class="bi bi-images fs-1 text-muted"></i>
-
-                            <h5 class="mt-3">
-                                No images yet
-                            </h5>
-
-                            <p class="text-muted">
-                                Add an image URL for this product.
-                            </p>
-
-                            <a asp-controller="ProductImages"
-                               asp-action="Create"
-                               asp-route-productId="@Model.Id"
-                               class="btn btn-primary">
-
-                                <i class="bi bi-plus-lg me-1"></i>
-                                Add First Image
-
-                            </a>
-
-                        </div>
+                        <p class="text-secondary mb-0">No reviews yet.</p>
                     }
-
                 </div>
-
             </div>
-
-
-            <!-- VARIANTS -->
-            <div class="card shadow-sm border-0 mt-4">
-                <div class="card-header bg-white py-3
-                    d-flex justify-content-between
-                    align-items-center">
-
-                    <h5 class="fw-bold mb-0">
-                        <i class="bi bi-palette me-2"></i>
-                        Product Variants
-                    </h5>
-
-                    <a asp-controller="ProductVariants"
-                       asp-action="Create"
-                       asp-route-productId="@Model.Id"
-                       class="btn btn-primary btn-sm">
-
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Add Variant
-
-                    </a>
-
-                </div>
-
-
-                <div class="card-body">
-
-                    @if (Model.Variants != null &&
-     Model.Variants.Any())
-                    {
-                        <div class="table-responsive">
-
-                            <table class="table table-hover align-middle">
-
-                                <thead class="table-light">
-
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>Size</th>
-                                        <th>Color</th>
-                                        <th>Price</th>
-                                        <th>Stock</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Actions</th>
-                                    </tr>
-
-                                </thead>
-
-                                <tbody>
-
-                                    @foreach (var variant in Model.Variants)
-                                    {
-                                        <tr>
-
-                                            <td>
-                                                <span class="fw-semibold">
-                                                    @variant.SKU
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span class="badge bg-light text-dark border">
-                                                    @variant.Size?.Name
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                @variant.Color?.Name
-                                            </td>
-
-                                            <td>
-                                                <strong>
-                                                    $@variant.Price.ToString("N2")
-                                                </strong>
-                                            </td>
-
-                                            <td>
-
-                                                @if (variant.Inventory != null)
-                                                {
-                                                    <span class="badge
-                                                        @(variant.Inventory.Quantity > 0
-                                                            ? "bg-success"
-                                                            : "bg-danger")">
-
-                                                        @variant.Inventory.Quantity
-
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">
-                                                        0
-                                                    </span>
-                                                }
-
-                                            </td>
-
-                                            <td>
-
-                                                @if (variant.Status == VariantStatus.Available)
-                                                {
-                                                    <span class="badge bg-success">
-                                                        Available
-                                                    </span>
-                                                }
-                                                else if (variant.Status == VariantStatus.OutOfStock)
-                                                {
-                                                    <span class="badge bg-warning text-dark">
-                                                        Out of Stock
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-secondary">
-                                                        @variant.Status
-                                                    </span>
-                                                }
-
-                                            </td>
-
-                                            <td class="text-end">
-
-                                                <div class="btn-group btn-group-sm">
-
-                                                    <a asp-controller="ProductVariants"
-                                                       asp-action="Details"
-                                                       asp-route-id="@variant.Id"
-                                                       class="btn btn-outline-primary">
-
-                                                        <i class="bi bi-eye"></i>
-
-                                                    </a>
-
-                                                    <a asp-controller="ProductVariants"
-                                                       asp-action="Edit"
-                                                       asp-route-id="@variant.Id"
-                                                       class="btn btn-outline-warning">
-
-                                                        <i class="bi bi-pencil"></i>
-
-                                                    </a>
-
-                                                    <a asp-controller="ProductVariants"
-                                                       asp-action="Delete"
-                                                       asp-route-id="@variant.Id"
-                                                       class="btn btn-outline-danger">
-
-                                                        <i class="bi bi-trash"></i>
-
-                                                    </a>
-
-                                                </div>
-
-                                            </td>
-
-                                        </tr>
-                                    }
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-
-                            <i class="bi bi-palette fs-1 text-muted"></i>
-
-                            <h5 class="mt-3">
-                                No variants yet
-                            </h5>
-
-                            <p class="text-muted">
-                                Add size and color variants for this product.
-                            </p>
-
-                            <a asp-controller="ProductVariants"
-                               asp-action="Create"
-                               asp-route-productId="@Model.Id"
-                               class="btn btn-primary">
-
-                                <i class="bi bi-plus-lg me-1"></i>
-                                Add First Variant
-
-                            </a>
-
-                        </div>
-                    }
-                </div>
-
-            </div>
-
         </div>
 
     </div>
 
 </div>
+
+<!-- =====================================================
+     IMAGE MODALS
+====================================================== -->
+
+<div class="modal fade" id="addImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addImageForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProductId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="addImageErrors" class="admin-alert admin-alert-danger d-none"></div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--admin-text-light);">IMAGE SOURCE</label>
+                        <div class="d-flex p-1 bg-light rounded-3">
+                            <ul class="nav nav-pills nav-fill w-100" id="imageSourceTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active fw-medium py-2 rounded-2" id="upload-tab" data-bs-toggle="pill" data-bs-target="#upload-pane" type="button" role="tab" aria-selected="true" style="font-size: 13px;">
+                                        <i class="bi bi-cloud-arrow-up me-1"></i> Upload from Local
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link fw-medium py-2 rounded-2" id="url-tab" data-bs-toggle="pill" data-bs-target="#url-pane" type="button" role="tab" aria-selected="false" style="font-size: 13px;">
+                                        <i class="bi bi-link-45deg me-1"></i> Paste Image URL
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="tab-content mb-4" id="imageSourceTabContent">
+                        <div class="tab-pane fade show active" id="upload-pane" role="tabpanel" tabindex="0">
+                            <div>
+                                <label class="form-label fw-semibold">Local Image File</label>
+                                <input type="file" name="ImageFile" id="addImageFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" />
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="url-pane" role="tabpanel" tabindex="0">
+                            <div>
+                                <label class="form-label fw-semibold">Image URL</label>
+                                <input name="ImageUrl" id="addImageUrl" class="form-control" placeholder="https://..." />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 text-center">
+                        <img id="addImagePreview" src="" class="product-image-preview d-none" style="max-height: 180px;" alt="Image Preview" />
+                        <div id="addImagePlaceholder" class="p-4 border rounded-3 bg-light text-muted d-flex flex-column align-items-center justify-content-center" style="min-height: 180px; border-style: dashed !important; border-color: #dee2e6 !important;">
+                            <i class="bi bi-image fs-1 mb-2" style="color: #adb5bd;"></i>
+                            <span class="small" style="color: #6c757d;">Image Preview</span>
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="IsPrimary" id="addIsPrimary" value="true" />
+                        <label class="form-check-label" for="addIsPrimary">Set as primary image</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-check-lg"></i> Add Image
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editImageForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="editImageId" />
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editImageErrors" class="admin-alert admin-alert-danger d-none"></div>
+
+                    <img id="editImagePreview" src="" class="product-image-preview mb-3" alt="" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Image URL</label>
+                        <input name="imageUrl" id="editImageUrl" class="form-control" required />
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="isPrimary" id="editIsPrimary" value="true" />
+                        <label class="form-check-label" for="editIsPrimary">Set as primary image</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-check-lg"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteImageForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteImageId" />
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteImageErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete this image? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     VARIANT MODALS
+====================================================== -->
+
+<div class="modal fade" id="addVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ProductId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="addVariantErrors" class="admin-alert admin-alert-danger d-none"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Size</label>
+                            <select name="SizeId" class="form-select" required>
+                                <option value="">Select size</option>
+                                @if (allSizes != null)
+                                {
+                                    @foreach (var s in allSizes)
+                                    {
+                                        <option value="@s.Id">@s.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Color</label>
+                            <select name="ColorId" class="form-select" required>
+                                <option value="">Select color</option>
+                                @if (allColors != null)
+                                {
+                                    @foreach (var c in allColors)
+                                    {
+                                        <option value="@c.Id">@c.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">SKU</label>
+                            <input name="SKU" class="form-control" placeholder="e.g. TS-BLK-M" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Price</label>
+                            <input type="number" step="0.01" min="0" name="Price" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Compare At Price</label>
+                            <input type="number" step="0.01" min="0" name="CompareAtPrice" class="form-control" placeholder="Original price (optional)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Quantity</label>
+                            <input type="number" min="0" name="quantity" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="Status" class="form-select">
+                                @if (statusValues != null)
+                                {
+                                    @foreach (var s in statusValues)
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-check-lg"></i> Create
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editVariantId" />
+                <input type="hidden" name="ProductId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editVariantErrors" class="admin-alert admin-alert-danger d-none"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Size</label>
+                            <select name="SizeId" id="editVariantSizeId" class="form-select" required>
+                                @if (allSizes != null)
+                                {
+                                    @foreach (var s in allSizes)
+                                    {
+                                        <option value="@s.Id">@s.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Color</label>
+                            <select name="ColorId" id="editVariantColorId" class="form-select" required>
+                                @if (allColors != null)
+                                {
+                                    @foreach (var c in allColors)
+                                    {
+                                        <option value="@c.Id">@c.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">SKU</label>
+                            <input name="SKU" id="editVariantSku" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Price</label>
+                            <input type="number" step="0.01" min="0" name="Price" id="editVariantPrice" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Compare At Price</label>
+                            <input type="number" step="0.01" min="0" name="CompareAtPrice" id="editVariantCompareAtPrice" class="form-control" placeholder="Original price (optional)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Quantity</label>
+                            <input type="number" min="0" name="quantity" id="editVariantQuantity" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="Status" id="editVariantStatus" class="form-select">
+                                @if (statusValues != null)
+                                {
+                                    @foreach (var s in statusValues)
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-check-lg"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteVariantId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteVariantErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete variant <strong id="deleteVariantSku"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-image-tile {
+        position: relative;
+        width: 100px;
+        height: 100px;
+    }
+
+    .product-image-thumb {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid var(--admin-border);
+    }
+
+    .product-image-primary-tag {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 8px;
+    }
+
+    .product-image-actions {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .product-image-tile:hover .product-image-actions {
+        opacity: 1;
+    }
+
+    .product-image-preview {
+        width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border-radius: 12px;
+        border: 1px solid var(--admin-border);
+        background: #f8f9fa;
+    }
+
+    .btn-primary-custom .spinner-border,
+    .action-btn.action-danger .spinner-border {
+        margin-right: 6px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // =========================================================
+        // SHARED HELPERS
+        // =========================================================
+
+        function showFieldErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
+            box.classList.remove('d-none');
+        }
+
+        function hideFieldErrors(boxId) {
+            document.getElementById(boxId).classList.add('d-none');
+        }
+
+        function setSubmitting(form, isSubmitting) {
+            const btn = form.querySelector('button[type="submit"]');
+            const spinner = btn?.querySelector('.spinner-border');
+            if (!btn) return;
+            btn.disabled = isSubmitting;
+            spinner?.classList.toggle('d-none', !isSubmitting);
+        }
+
+        async function postJsonForm(url, form, errorBoxId) {
+            hideFieldErrors(errorBoxId);
+            setSubmitting(form, true);
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(url, { method: 'POST', body: formData });
+
+                let data = {};
+                try { data = await response.json(); } catch { }
+
+                if (!response.ok) {
+                    showFieldErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                    return null;
+                }
+                return data;
+            } finally {
+                setSubmitting(form, false);
+            }
+        }
+
+        function reloadWithToast(storageKey, message) {
+            sessionStorage.setItem(storageKey, JSON.stringify({ type: 'success', message }));
+            location.reload();
+        }
+
+        function showToastFromStorage(storageKey) {
+            const raw = sessionStorage.getItem(storageKey);
+            if (!raw) return;
+            const toast = JSON.parse(raw);
+            if (typeof window.showToast === 'function') {
+                window.showToast(toast.type, toast.message);
+            }
+            sessionStorage.removeItem(storageKey);
+        }
+
+        // Call on load
+        document.addEventListener('DOMContentLoaded', () => {
+            showToastFromStorage('imageToast');
+            showToastFromStorage('variantToast');
+        });
+
+        // =========================================================
+        // IMAGES
+        // =========================================================
+
+        const addImageFile = document.getElementById('addImageFile');
+        const addImageUrl = document.getElementById('addImageUrl');
+        const addImagePreview = document.getElementById('addImagePreview');
+        const addImagePlaceholder = document.getElementById('addImagePlaceholder');
+
+        function updateAddPreview(src) {
+            if (src) {
+                addImagePreview.src = src;
+                addImagePreview.classList.remove('d-none');
+                addImagePlaceholder.classList.add('d-none');
+            } else {
+                addImagePreview.src = '';
+                addImagePreview.classList.add('d-none');
+                addImagePlaceholder.classList.remove('d-none');
+            }
+        }
+
+        if (addImageFile) {
+            addImageFile.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) { updateAddPreview(e.target.result); };
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    updateAddPreview('');
+                }
+            });
+        }
+
+        if (addImageUrl) {
+            addImageUrl.addEventListener('input', function() {
+                updateAddPreview(this.value.trim());
+            });
+        }
+
+        if (addImagePreview) {
+            addImagePreview.addEventListener('error', function() {
+                updateAddPreview('');
+                if (addImageUrl && addImageUrl.value.trim() !== '') {
+                    window.showToast('error', 'Failed to load image from URL.');
+                }
+            });
+        }
+
+        const uploadTab = document.getElementById('upload-tab');
+        const urlTab = document.getElementById('url-tab');
+
+        if (uploadTab) {
+            uploadTab.addEventListener('shown.bs.tab', function () {
+                if (addImageUrl) addImageUrl.value = '';
+                updateAddPreview(addImageFile && addImageFile.files && addImageFile.files[0] ? URL.createObjectURL(addImageFile.files[0]) : '');
+            });
+        }
+        if (urlTab) {
+            urlTab.addEventListener('shown.bs.tab', function () {
+                if (addImageFile) addImageFile.value = '';
+                updateAddPreview(addImageUrl ? addImageUrl.value.trim() : '');
+            });
+        }
+
+        const addImageModalEl = document.getElementById('addImageModal');
+        addImageModalEl.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('addImageForm').reset();
+            hideFieldErrors('addImageErrors');
+            updateAddPreview('');
+            if (uploadTab) {
+                const tab = new bootstrap.Tab(uploadTab);
+                tab.show();
+            }
+        });
+
+        document.getElementById('addImageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postJsonForm('@Url.Action("Create", "ProductImages")', this, 'addImageErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(addImageModalEl).hide();
+                reloadWithToast('imageToast', result.message);
+            }
+        });
+
+        document.getElementById('editImageModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            const url = btn.getAttribute('data-url');
+            document.getElementById('editImageId').value = btn.getAttribute('data-id');
+            document.getElementById('editImageUrl').value = url;
+            document.getElementById('editImagePreview').src = url;
+            document.getElementById('editIsPrimary').checked = btn.getAttribute('data-primary') === 'true';
+            hideFieldErrors('editImageErrors');
+        });
+
+        document.getElementById('editImageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postJsonForm('@Url.Action("Edit", "ProductImages")', this, 'editImageErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editImageModal')).hide();
+                reloadWithToast('imageToast', result.message);
+            }
+        });
+
+        document.getElementById('deleteImageModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteImageId').value = btn.getAttribute('data-id');
+            hideFieldErrors('deleteImageErrors');
+        });
+
+        document.getElementById('deleteImageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postJsonForm('@Url.Action("Delete", "ProductImages")', this, 'deleteImageErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteImageModal')).hide();
+                reloadWithToast('imageToast', result.message);
+            }
+        });
+
+        // =========================================================
+        // VARIANTS
+        // =========================================================
+
+        const addVariantModalEl = document.getElementById('addVariantModal');
+        addVariantModalEl.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('addVariantForm').reset();
+            hideFieldErrors('addVariantErrors');
+        });
+
+        document.getElementById('addVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postJsonForm('@Url.Action("Create", "ProductVariants")', this, 'addVariantErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(addVariantModalEl).hide();
+                reloadWithToast('variantToast', result.message);
+            }
+        });
+
+        document.getElementById('editVariantModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('editVariantId').value = btn.getAttribute('data-id');
+            document.getElementById('editVariantSizeId').value = btn.getAttribute('data-sizeid');
+            document.getElementById('editVariantColorId').value = btn.getAttribute('data-colorid');
+            document.getElementById('editVariantSku').value = btn.getAttribute('data-sku');
+            document.getElementById('editVariantPrice').value = btn.getAttribute('data-price');
+            document.getElementById('editVariantCompareAtPrice').value = btn.getAttribute('data-compareatprice') || '';
+            document.getElementById('editVariantQuantity').value = btn.getAttribute('data-quantity');
+            document.getElementById('editVariantStatus').value = btn.getAttribute('data-status');
+            hideFieldErrors('editVariantErrors');
+        });
+
+        document.getElementById('editVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editVariantId').value;
+            const result = await postJsonForm('@Url.Action("Edit", "ProductVariants")?id=' + id, this, 'editVariantErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editVariantModal')).hide();
+                reloadWithToast('variantToast', result.message);
+            }
+        });
+
+        document.getElementById('deleteVariantModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteVariantId').value = btn.getAttribute('data-id');
+            document.getElementById('deleteVariantSku').textContent = btn.getAttribute('data-sku');
+            hideFieldErrors('deleteVariantErrors');
+        });
+
+        document.getElementById('deleteVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteVariantId').value;
+            const result = await postJsonForm('@Url.Action("Delete", "ProductVariants")/' + id, this, 'deleteVariantErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteVariantModal')).hide();
+                reloadWithToast('variantToast', result.message);
+            }
+        });
+
+    </script>
+}

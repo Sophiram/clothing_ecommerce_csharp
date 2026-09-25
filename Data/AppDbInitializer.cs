@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using WebApplication_ClothingEcommerce.Models;
 using WebApplication_ClothingEcommerce.Data.Enums;
 using Microsoft.AspNetCore.Builder;
@@ -15,20 +16,203 @@ namespace WebApplication_ClothingEcommerce.Data
             var context = serviceScope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             // 1. Run Migrations automatically
-            await context.Database.MigrateAsync();
+            try
+            {
+                await context.Database.MigrateAsync();
+            }
+            catch (Exception ex)
+            {
+                // Fallback / log migration warning
+                System.Diagnostics.Debug.WriteLine($"Migration warning/notice: {ex.Message}");
+                try { await context.Database.EnsureCreatedAsync(); } catch { }
+            }
+
+            // Ensure HomePageSettings table exists
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(@"
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'HomePageSettings')
+                    BEGIN
+                        CREATE TABLE [HomePageSettings] (
+                            [Id] int NOT NULL IDENTITY(1,1),
+                            [PromoTag] nvarchar(200) NULL,
+                            [PromoText] nvarchar(500) NULL,
+                            [PromoCtaText] nvarchar(200) NULL,
+                            [PromoCtaUrl] nvarchar(500) NULL,
+                            [HeroLabel] nvarchar(100) NULL,
+                            [HeroTitle] nvarchar(200) NULL,
+                            [HeroHighlightWord] nvarchar(100) NULL,
+                            [HeroDescription] nvarchar(max) NULL,
+                            [HeroPrimaryBtnText] nvarchar(100) NULL,
+                            [HeroPrimaryBtnUrl] nvarchar(500) NULL,
+                            [HeroSecondaryBtnText] nvarchar(100) NULL,
+                            [HeroSecondaryBtnUrl] nvarchar(500) NULL,
+                            [HeroImageUrl] nvarchar(500) NULL,
+                            [FloatingCard1Title] nvarchar(100) NULL,
+                            [FloatingCard1Sub] nvarchar(100) NULL,
+                            [FloatingCard2Title] nvarchar(100) NULL,
+                            [FloatingCard2Sub] nvarchar(100) NULL,
+                            [Stat1Value] nvarchar(50) NULL,
+                            [Stat1Label] nvarchar(50) NULL,
+                            [Stat2Value] nvarchar(50) NULL,
+                            [Stat2Label] nvarchar(50) NULL,
+                            [Stat3Value] nvarchar(50) NULL,
+                            [Stat3Label] nvarchar(50) NULL,
+                            CONSTRAINT [PK_HomePageSettings] PRIMARY KEY ([Id])
+                        );
+                    END
+                ");
+
+                // Ensure StoreReceiptSettings table exists
+                await context.Database.ExecuteSqlRawAsync(@"
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'StoreReceiptSettings')
+                    BEGIN
+                        CREATE TABLE [StoreReceiptSettings] (
+                            [Id] int NOT NULL IDENTITY(1,1),
+                            [StoreName] nvarchar(100) NOT NULL DEFAULT 'CLOTHÉ',
+                            [StoreNameKh] nvarchar(150) NULL,
+                            [Tagline] nvarchar(200) NULL,
+                            [TaglineKh] nvarchar(250) NULL,
+                            [Address] nvarchar(300) NULL,
+                            [AddressKh] nvarchar(350) NULL,
+                            [Phone] nvarchar(50) NULL,
+                            [Email] nvarchar(100) NULL,
+                            [Website] nvarchar(200) NULL,
+                            [Telegram] nvarchar(100) NULL,
+                            [VatNumber] nvarchar(50) NULL,
+                            [ReceiptPrefix] nvarchar(20) NULL,
+                            [DefaultReceiptTheme] nvarchar(50) NULL,
+                            [ReturnPolicyEn] nvarchar(500) NULL,
+                            [ReturnPolicyKh] nvarchar(600) NULL,
+                            [ThankYouNoteEn] nvarchar(300) NULL,
+                            [ThankYouNoteKh] nvarchar(400) NULL,
+                            [ShowDualCurrency] bit NOT NULL DEFAULT 1,
+                            [ShowKhqr] bit NOT NULL DEFAULT 1,
+                            [ExchangeRate] decimal(18,2) NOT NULL DEFAULT 4100,
+                            [UpdatedAt] datetime2 NOT NULL DEFAULT GETUTCDATE(),
+                            [UpdatedBy] nvarchar(100) NULL,
+                            CONSTRAINT [PK_StoreReceiptSettings] PRIMARY KEY ([Id])
+                        );
+                    END
+                ");
+
+                // Ensure Payments table has new reconciliation columns
+                await context.Database.ExecuteSqlRawAsync(@"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'Currency')
+                        ALTER TABLE [Payments] ADD [Currency] nvarchar(10) NOT NULL DEFAULT 'USD';
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'BakongTransactionId')
+                        ALTER TABLE [Payments] ADD [BakongTransactionId] nvarchar(100) NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'BakongReference')
+                        ALTER TABLE [Payments] ADD [BakongReference] nvarchar(100) NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'QRCode')
+                        ALTER TABLE [Payments] ADD [QRCode] nvarchar(max) NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'Md5Hash')
+                        ALTER TABLE [Payments] ADD [Md5Hash] nvarchar(64) NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'CreatedAt')
+                        ALTER TABLE [Payments] ADD [CreatedAt] datetime2 NOT NULL DEFAULT SYSUTCDATETIME();
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'ExpiresAt')
+                        ALTER TABLE [Payments] ADD [ExpiresAt] datetime2 NULL;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'FailureReason')
+                        ALTER TABLE [Payments] ADD [FailureReason] nvarchar(500) NULL;
+                ");
+            }
+            catch { }
 
             // ==========================================
             // 1. SEED ROLES & USERS (IDENTITY)
             // ==========================================
             var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var configuration = serviceScope.ServiceProvider.GetService<IConfiguration>();
 
-            if (!await roleManager.RoleExistsAsync("Admin"))
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            // Seed Roles: SuperAdmin, Admin, User
+            string[] systemRoles = ["SuperAdmin", "Admin", "User"];
+            foreach (var role in systemRoles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
 
-            if (!await roleManager.RoleExistsAsync("User"))
-                await roleManager.CreateAsync(new IdentityRole("User"));
+            // Seed SuperAdmin
+            var superAdminEmail = configuration?["SUPERADMIN_EMAIL"]
+                ?? Environment.GetEnvironmentVariable("SUPERADMIN_EMAIL")
+                ?? "superadmin@clothe.com";
+            var superAdminPassword = configuration?["SUPERADMIN_PASSWORD"]
+                ?? Environment.GetEnvironmentVariable("SUPERADMIN_PASSWORD");
 
+            if (string.IsNullOrWhiteSpace(superAdminPassword))
+            {
+                var isDev = (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
+                    .Equals("Development", StringComparison.OrdinalIgnoreCase);
+                if (isDev)
+                {
+                    superAdminPassword = "SuperAdmin@Dev2026!";
+                }
+            }
+
+            var superAdmin = await userManager.FindByEmailAsync(superAdminEmail)
+                ?? await userManager.FindByNameAsync(superAdminEmail);
+            if (superAdmin == null)
+            {
+                if (!string.IsNullOrWhiteSpace(superAdminPassword))
+                {
+                    superAdmin = new ApplicationUser
+                    {
+                        FirstName = "Super",
+                        LastName = "Administrator",
+                        UserName = superAdminEmail,
+                        Email = superAdminEmail,
+                        EmailConfirmed = true
+                    };
+                    var result = await userManager.CreateAsync(superAdmin, superAdminPassword);
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+                    }
+                }
+            }
+            else
+            {
+                if (!superAdmin.EmailConfirmed)
+                {
+                    superAdmin.EmailConfirmed = true;
+                    await userManager.UpdateAsync(superAdmin);
+                }
+
+                if (!await userManager.IsInRoleAsync(superAdmin, "SuperAdmin"))
+                {
+                    await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+                }
+            }
+
+            // Seed Admin: admin@clothe.com
+            var clotheAdminEmail = "admin@clothe.com";
+            var clotheAdmin = await userManager.FindByEmailAsync(clotheAdminEmail);
+            if (clotheAdmin == null)
+            {
+                clotheAdmin = new ApplicationUser
+                {
+                    FirstName = "Admin",
+                    LastName = "Clothe",
+                    UserName = clotheAdminEmail,
+                    Email = clotheAdminEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(clotheAdmin, "Admin@12345");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(clotheAdmin, "Admin");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(clotheAdmin, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(clotheAdmin, "Admin");
+                }
+            }
+
+            // Seed / Ensure Legacy Admin: admin@clothing.com
             var adminEmail = "admin@clothing.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
@@ -45,6 +229,13 @@ namespace WebApplication_ClothingEcommerce.Data
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(newAdmin, "Admin");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
                 }
             }
 
@@ -370,28 +561,48 @@ namespace WebApplication_ClothingEcommerce.Data
             // ==========================================
             // 11. CART & CART ITEMS
             // ==========================================
-            if (!context.Carts.Any())
+            var defaultCustomer = context.Customers.FirstOrDefault();
+            var sampleVariant = context.ProductVariants.FirstOrDefault();
+
+            if (defaultCustomer != null && sampleVariant != null)
             {
-                var customer = context.Customers.First();
-                var variant = context.ProductVariants.First();
-
-                var cart = new Cart
+                var cart = context.Carts.Include(c => c.Items).FirstOrDefault(c => c.CustomerId == defaultCustomer.Id);
+                if (cart == null)
                 {
-                    Id = Guid.NewGuid(),
-                    CustomerId = customer.Id,
-                    CreatedAt = DateTime.UtcNow
-                };
-                context.Carts.Add(cart);
+                    cart = new Cart
+                    {
+                        Id = Guid.NewGuid(),
+                        CustomerId = defaultCustomer.Id,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    context.Carts.Add(cart);
+                    await context.SaveChangesAsync();
+                }
 
-                context.CartItems.Add(new CartItem
+                if (!context.CartItems.Any())
                 {
-                    Id = Guid.NewGuid(),
-                    CartId = cart.Id,
-                    VariantId = variant.Id,
-                    Quantity = 2
-                });
+                    context.CartItems.Add(new CartItem
+                    {
+                        Id = Guid.NewGuid(),
+                        CartId = cart.Id,
+                        VariantId = sampleVariant.Id,
+                        Quantity = 2
+                    });
 
-                await context.SaveChangesAsync();
+                    var secondVariant = context.ProductVariants.Skip(1).FirstOrDefault();
+                    if (secondVariant != null)
+                    {
+                        context.CartItems.Add(new CartItem
+                        {
+                            Id = Guid.NewGuid(),
+                            CartId = cart.Id,
+                            VariantId = secondVariant.Id,
+                            Quantity = 1
+                        });
+                    }
+
+                    await context.SaveChangesAsync();
+                }
             }
 
             // ==========================================
@@ -434,7 +645,7 @@ namespace WebApplication_ClothingEcommerce.Data
                         Id = Guid.NewGuid(),
                         Name = "KHQR",
                         Description = "Pay securely using KHQR",
-                        Icon = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/KHQR_logo.svg/512px-KHQR_logo.svg.png",
+                        Icon = "/images/khqr-logo.svg",
                         IsActive = true,
                         DisplayOrder = 1,
                         CreatedAt = DateTime.UtcNow
@@ -445,7 +656,7 @@ namespace WebApplication_ClothingEcommerce.Data
                         Id = Guid.NewGuid(),
                         Name = "ABA Pay",
                         Description = "Pay using ABA Mobile",
-                        Icon = null,
+                        Icon = "/images/aba-logo.svg",
                         IsActive = true,
                         DisplayOrder = 2,
                         CreatedAt = DateTime.UtcNow
@@ -590,6 +801,222 @@ namespace WebApplication_ClothingEcommerce.Data
 
                 await context.SaveChangesAsync();
             }
+
+            // ==========================================
+            // 15. DELIVERY METHODS & VET BRANCHES
+            // ==========================================
+            if (!context.DeliveryMethods.Any())
+            {
+                context.DeliveryMethods.AddRange(
+                    new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Store Pickup",
+                        KhmerName = "មកយកនៅហាងផ្ទាល់",
+                        Code = "StorePickup",
+                        BaseFee = 0.00m,
+                        EstimatedDeliveryTime = "Ready today",
+                        RequiresBranchSelection = false,
+                        IsActive = true,
+                        DisplayOrder = 1
+                    },
+                    new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "VET Express",
+                        KhmerName = "វីរៈ ប៊ុនថាំ អេចប្រេស",
+                        Code = "VETExpress",
+                        BaseFee = 2.00m,
+                        EstimatedDeliveryTime = "1-2 Business days (24 Provinces)",
+                        RequiresBranchSelection = true,
+                        IsActive = true,
+                        DisplayOrder = 2
+                    },
+                    new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Phnom Penh City Delivery",
+                        KhmerName = "ដឹកជញ្ជូនក្នុង រាជធានីភ្នំពេញ",
+                        Code = "CityDelivery",
+                        BaseFee = 1.50m,
+                        EstimatedDeliveryTime = "Same Day (2-4 Hours)",
+                        RequiresBranchSelection = false,
+                        IsActive = true,
+                        DisplayOrder = 3
+                    },
+                    new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Other Express Carriers",
+                        KhmerName = "ក្រុមហ៊ុនដឹកជញ្ជូនផ្សេងទៀត",
+                        Code = "OtherExpress",
+                        BaseFee = 2.00m,
+                        EstimatedDeliveryTime = "1-3 Business days",
+                        RequiresBranchSelection = false,
+                        IsActive = true,
+                        DisplayOrder = 4
+                    }
+                );
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                // Self-healing: Ensure all 4 delivery options exist in the database
+                var existingCodes = context.DeliveryMethods.Select(d => d.Code).ToList();
+                var methodsToAdd = new List<DeliveryMethod>();
+
+                if (!existingCodes.Contains("VETExpress"))
+                {
+                    methodsToAdd.Add(new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "VET Express",
+                        KhmerName = "វីរៈ ប៊ុនថាំ អេចប្រេស",
+                        Code = "VETExpress",
+                        BaseFee = 2.00m,
+                        EstimatedDeliveryTime = "1-2 Business days (24 Provinces)",
+                        RequiresBranchSelection = true,
+                        IsActive = true,
+                        DisplayOrder = 2
+                    });
+                }
+
+                if (!existingCodes.Contains("CityDelivery"))
+                {
+                    methodsToAdd.Add(new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Phnom Penh City Delivery",
+                        KhmerName = "ដឹកជញ្ជូនក្នុង រាជធានីភ្នំពេញ",
+                        Code = "CityDelivery",
+                        BaseFee = 1.50m,
+                        EstimatedDeliveryTime = "Same Day (2-4 Hours)",
+                        RequiresBranchSelection = false,
+                        IsActive = true,
+                        DisplayOrder = 3
+                    });
+                }
+
+                if (!existingCodes.Contains("OtherExpress"))
+                {
+                    methodsToAdd.Add(new DeliveryMethod
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "Other Express Carriers",
+                        KhmerName = "ក្រុមហ៊ុនដឹកជញ្ជូនផ្សេងទៀត",
+                        Code = "OtherExpress",
+                        BaseFee = 2.00m,
+                        EstimatedDeliveryTime = "1-3 Business days",
+                        RequiresBranchSelection = false,
+                        IsActive = true,
+                        DisplayOrder = 4
+                    });
+                }
+
+                if (methodsToAdd.Any())
+                {
+                    context.DeliveryMethods.AddRange(methodsToAdd);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            if (!context.DeliveryBranches.Any())
+            {
+                context.DeliveryBranches.AddRange(
+                    // Phnom Penh
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "រាជធានីភ្នំពេញ", BranchName = "សាខាក្បាលថ្នល់ (ផ្លូវ ២៧១) (ផ្សារដើមថ្កូវ)", Address = "Street 271, Khan Chamkarmon, Phnom Penh", Phone = "012345678" },
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "រាជធានីភ្នំពេញ", BranchName = "សាខាមេគង្គ (ផ្សារចាស់)", Address = "Street 108, Khan Daun Penh, Phnom Penh", Phone = "012345679" },
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "រាជធានីភ្នំពេញ", BranchName = "សាខាអូរឬស្សី", Address = "Street 182, Khan 7 Makara, Phnom Penh", Phone = "012345680" },
+
+                    // Siem Reap
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តសៀមរាប", BranchName = "សាខាសៀមរាប ក្រុង (ផ្លូវ ៦០)", Address = "Road 60, Siem Reap City", Phone = "063123456" },
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តសៀមរាប", BranchName = "សាខាផ្សារលើ សៀមរាប", Address = "National Road 6, Siem Reap", Phone = "063123457" },
+
+                    // Battambang
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តបាត់ដំបង", BranchName = "សាខាបាត់ដំបង ក្រុង (ផ្លូវ ជាតិលេខ ៥)", Address = "National Road 5, Battambang City", Phone = "053123456" },
+
+                    // Preah Sihanouk
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តព្រះសីហនុ", BranchName = "សាខាកំពង់សោម ក្រុង", Address = "Ekareach Street, Sihanoukville", Phone = "034123456" },
+
+                    // Kampong Cham
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តកំពង់ចាម", BranchName = "សាខាកំពង់ចាម ក្រុង", Address = "Moniwong Boulevard, Kampong Cham", Phone = "042123456" },
+
+                    // Kampot
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តកំពត", BranchName = "សាខាកំពត ក្រុង", Address = "Riverside Road, Kampot City", Phone = "033123456" },
+
+                    // Kandal
+                    new DeliveryBranch { CarrierCode = "VETExpress", Province = "ខេត្តកណ្តាល", BranchName = "សាខាតាខ្មៅ (ក្រុងតាខ្មៅ)", Address = "Takhmao City Center, Kandal", Phone = "024123456" }
+                );
+                await context.SaveChangesAsync();
+            }
+
+            // ==========================================
+            // 16. HOMEPAGE SETTINGS
+            // ==========================================
+            try
+            {
+                if (!context.HomePageSettings.Any())
+                {
+                    context.HomePageSettings.Add(new HomePageSettings
+                    {
+                        PromoTag = "Flash Sale",
+                        PromoText = "Season Collection — Up to 40% OFF essentials & trending styles!",
+                        PromoCtaText = "Shop Now",
+                        PromoCtaUrl = "/Shop?onSale=true",
+                        HeroLabel = "NEW COLLECTION 2026",
+                        HeroTitle = "Wear your identity.",
+                        HeroHighlightWord = "identity.",
+                        HeroDescription = "Discover modern clothing designed for everyday confidence, comfort and effortless style.",
+                        HeroPrimaryBtnText = "Shop Collection",
+                        HeroPrimaryBtnUrl = "/Shop",
+                        HeroSecondaryBtnText = "Explore Products",
+                        HeroSecondaryBtnUrl = "/Shop",
+                        HeroImageUrl = "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1000&q=85",
+                        FloatingCard1Title = "New Season",
+                        FloatingCard1Sub = "Fresh styles are here",
+                        FloatingCard2Title = "Free Shipping",
+                        FloatingCard2Sub = "On orders over $50",
+                        Stat1Value = "500+",
+                        Stat1Label = "PRODUCTS",
+                        Stat2Value = "50+",
+                        Stat2Label = "BRANDS",
+                        Stat3Value = "10K+",
+                        Stat3Label = "CUSTOMERS"
+                    });
+                    await context.SaveChangesAsync();
+                }
+
+                if (!context.StoreReceiptSettings.Any())
+                {
+                    context.StoreReceiptSettings.Add(new StoreReceiptSettings
+                    {
+                        StoreName = "CLOTHÉ",
+                        StoreNameKh = "ហាងសម្លៀកបំពាក់ CLOTHÉ",
+                        Tagline = "Atelier & Luxury Fashion House",
+                        TaglineKh = "ម៉ូដទាន់សម័យ និងប្រណីតភាព",
+                        Address = "#88 Preah Norodom Blvd, BKK1, Phnom Penh, Cambodia",
+                        AddressKh = "អគារលេខ ៨៨ មហាវិថីព្រះនរោត្តម សង្កាត់បឹងកេងកង១ រាជធានីភ្នំពេញ",
+                        Phone = "+855 (0) 23 999 888",
+                        Email = "info@clothe-atelier.com",
+                        Website = "https://clothe-store.com",
+                        Telegram = "@clothe_support",
+                        VatNumber = "K005-902201889",
+                        ReceiptPrefix = "REC-",
+                        DefaultReceiptTheme = "ModernLuxury",
+                        ReturnPolicyEn = "Items may be exchanged within 7 days of purchase with original receipt and tags attached. No cash refunds.",
+                        ReturnPolicyKh = "ទំនិញដែលបានទិញរួចអាចប្តូរបានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយមានវិក្កយបត្រ និងស្លាកសញ្ញាដើម។ មិនមានការបង្វិលប្រាក់វិញទេ។",
+                        ThankYouNoteEn = "Thank you for shopping at CLOTHÉ! We appreciate your patronage.",
+                        ThankYouNoteKh = "សូមអរគុណសម្រាប់ការគាំទ្រហាងយើងខ្ញុំ! សូមអញ្ជើញមកម្តងទៀត។",
+                        ShowDualCurrency = true,
+                        ShowKhqr = true,
+                        ExchangeRate = 4100m,
+                        UpdatedAt = DateTime.UtcNow,
+                        UpdatedBy = "System Initializer"
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch { }
         }
     }
 }

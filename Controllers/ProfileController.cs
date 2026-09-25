@@ -1,61 +1,48 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
 using WebApplication_ClothingEcommerce.Models.ViewModels;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Controllers
 {
     [Authorize]
     public class ProfileController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IProfileService _profileService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         public ProfileController(
-            AppDbContext context,
-            UserManager<ApplicationUser> userManager)
+            IProfileService profileService,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IWebHostEnvironment webHostEnvironment)
         {
-            _context = context;
+            _profileService = profileService;
             _userManager = userManager;
+            _signInManager = signInManager;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // =====================================================
-        // PROFILE
+        // PROFILE DASHBOARD
         // GET: /Profile
         // =====================================================
-
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? tab = "overview")
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
 
-            if (user == null)
+            var model = await _profileService.GetProfileViewModelAsync(user.Id, tab);
+            if (model == null)
             {
-                return Challenge();
-            }
-
-            var customer = await _context.Customers
-                .Include(c => c.Addresses)
-                .FirstOrDefaultAsync(c =>
-                    c.ApplicationUserId == user.Id);
-
-            if (customer == null)
-            {
-                TempData["Error"] = "Customer profile not found.";
+                TempData["Error"] = "Customer profile could not be loaded.";
                 return RedirectToAction("Index", "Home");
             }
-
-            var model = new ProfileViewModel
-            {
-                FirstName = customer.FirstName,
-                LastName = customer.LastName,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Addresses = customer.Addresses
-            };
 
             return View("Index", model);
         }
@@ -64,135 +51,201 @@ namespace WebApplication_ClothingEcommerce.Controllers
         // UPDATE PROFILE
         // POST: /Profile/Index
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(ProfileViewModel model)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
             if (!ModelState.IsValid)
             {
+                model.Addresses = await _profileService.GetCustomerAddressesAsync(user.Id);
+                model.ActiveTab = "profile";
                 return View("Index", model);
             }
 
-            var user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            var result = await _profileService.UpdateProfileAsync(user.Id, model);
+            if (result.Success)
             {
-                return Challenge();
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = string.Join(" ", result.Errors);
             }
 
-            var customer = await _context.Customers
-                .FirstOrDefaultAsync(c =>
-                    c.ApplicationUserId == user.Id);
-
-            if (customer == null)
-            {
-                TempData["Error"] = "Customer profile not found.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            customer.FirstName = model.FirstName;
-            customer.LastName = model.LastName;
-            customer.Phone = model.Phone;
-
-            // Optional:
-            // Keep Identity user information synchronized
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.PhoneNumber = model.Phone;
-
-            await _userManager.UpdateAsync(user);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Profile updated successfully.";
-
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { tab = "profile" });
         }
 
         // =====================================================
         // ADD ADDRESS
+        // POST: /Profile/AddAddress
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAddress(Address address)
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
 
-            if (user == null)
+            var result = await _profileService.AddAddressAsync(user.Id, address);
+            if (result.Success)
             {
-                return Challenge();
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
             }
 
-            var customer = await _context.Customers
-                .FirstOrDefaultAsync(c =>
-                    c.ApplicationUserId == user.Id);
+            return RedirectToAction(nameof(Index), new { tab = "addresses" });
+        }
 
-            if (customer == null)
+        // =====================================================
+        // EDIT ADDRESS
+        // POST: /Profile/EditAddress
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAddress(Address model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var result = await _profileService.EditAddressAsync(user.Id, model);
+            if (result.Success)
             {
-                return RedirectToAction("Index", "Home");
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
             }
 
-            var hasAddress = await _context.Addresses
-                .AnyAsync(a => a.CustomerId == customer.Id);
+            return RedirectToAction(nameof(Index), new { tab = "addresses" });
+        }
 
-            address.Id = Guid.NewGuid();
-            address.CustomerId = customer.Id;
+        // =====================================================
+        // SET DEFAULT ADDRESS
+        // POST: /Profile/SetDefaultAddress
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetDefaultAddress(Guid id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
 
-            if (!hasAddress)
+            var result = await _profileService.SetDefaultAddressAsync(user.Id, id);
+            if (result.Success)
             {
-                address.IsDefault = true;
+                TempData["Success"] = result.Message;
             }
 
-            _context.Addresses.Add(address);
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Address added.";
-
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { tab = "addresses" });
         }
 
         // =====================================================
         // DELETE ADDRESS
+        // POST: /Profile/DeleteAddress
         // =====================================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAddress(Guid id)
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
 
-            if (user == null)
+            var result = await _profileService.DeleteAddressAsync(user.Id, id);
+            if (result.Success)
             {
-                return Challenge();
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
             }
 
-            var customer = await _context.Customers
-                .FirstOrDefaultAsync(c =>
-                    c.ApplicationUserId == user.Id);
+            return RedirectToAction(nameof(Index), new { tab = "addresses" });
+        }
 
-            if (customer == null)
+        // =====================================================
+        // CHANGE PASSWORD
+        // POST: /Profile/ChangePassword
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction("Index", "Home");
+                TempData["Error"] = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return RedirectToAction(nameof(Index), new { tab = "security" });
             }
 
-            var address = await _context.Addresses
-                .FirstOrDefaultAsync(a =>
-                    a.Id == id &&
-                    a.CustomerId == customer.Id);
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
 
-            if (address != null)
+            var result = await _profileService.ChangePasswordAsync(user.Id, model.CurrentPassword, model.NewPassword);
+            if (result.Success)
             {
-                _context.Addresses.Remove(address);
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Address deleted.";
+                await _signInManager.RefreshSignInAsync(user);
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = string.Join(" ", result.Errors);
             }
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { tab = "security" });
+        }
+
+        // =====================================================
+        // UPLOAD AVATAR
+        // POST: /Profile/UploadAvatar
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(IFormFile? avatar)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            if (avatar == null)
+            {
+                TempData["Error"] = "Please select an image to upload.";
+                return RedirectToAction(nameof(Index), new { tab = "overview" });
+            }
+
+            var result = await _profileService.UploadAvatarAsync(user.Id, avatar, _webHostEnvironment.WebRootPath);
+            if (result.Success)
+            {
+                TempData["Success"] = result.Message;
+            }
+            else
+            {
+                TempData["Error"] = string.Join(" ", result.Errors);
+            }
+
+            return RedirectToAction(nameof(Index), new { tab = "overview" });
+        }
+
+        // =====================================================
+        // REMOVE AVATAR
+        // POST: /Profile/RemoveAvatar
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveAvatar()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var result = await _profileService.RemoveAvatarAsync(user.Id, _webHostEnvironment.WebRootPath);
+            TempData["Success"] = result.Message;
+
+            return RedirectToAction(nameof(Index), new { tab = "overview" });
         }
     }
 }

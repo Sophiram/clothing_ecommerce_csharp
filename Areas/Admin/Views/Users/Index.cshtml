@@ -1,5 +1,407 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.ApplicationUser>
+
 @{
+    ViewData["Title"] = "User Management";
+    var userRolesMap = ViewBag.UserRoles as Dictionary<string, IList<string>> ?? new();
+    var userLockoutMap = ViewBag.UserLockout as Dictionary<string, bool> ?? new();
+    var userAvatarsMap = ViewBag.UserAvatars as Dictionary<string, string?> ?? new();
+    var allRoles = ViewBag.AllRoles as List<string> ?? new();
+    var currentUserId = ViewBag.CurrentUserId as string ?? "";
+    var search = ViewBag.Search as string ?? "";
+    var roleFilter = ViewBag.RoleFilter as string ?? "";
+
+    var totalUsers = Model.Count();
+    var totalAdmins = Model.Count(u => userRolesMap.ContainsKey(u.Id) && (userRolesMap[u.Id].Contains("Admin") || userRolesMap[u.Id].Contains("SuperAdmin")));
+    var totalCustomers = totalUsers - totalAdmins;
+    var activeCount = Model.Count(u => !(userLockoutMap.ContainsKey(u.Id) && userLockoutMap[u.Id]));
+    var deactivatedCount = totalUsers - activeCount;
+}
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <!-- Breadcrumb -->
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <li class="inline-flex items-center">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400">Admin</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span data-en="System" data-kh="ប្រព័ន្ធ">System</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span class="text-slate-900 dark:text-white font-semibold" data-en="Users" data-kh="អ្នកប្រើប្រាស់">Users</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="flex items-center gap-2 mb-1">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50 uppercase tracking-wider">
+                    <i class="bi bi-shield-lock-fill"></i> SuperAdmin Control
+                </span>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5" data-en="Platform User Management" data-kh="ការគ្រប់គ្រងអ្នកប្រើប្រាស់ប្រព័ន្ធ">
+                <span class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-person-gear"></i>
+                </span>
+                Platform Users
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-en="Oversee customer accounts, administrative staff, authorization roles, and account security states." data-kh="គ្រប់គ្រងគណនីអតិថិជន បុគ្គលិក តួនាទី និងស្ថានភាពសុវត្ថិភាព។">
+                Oversee customer accounts, administrative staff, authorization roles, and account security states.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a asp-action="Create" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm hover:shadow transition">
+                <i class="bi bi-person-plus-fill"></i>
+                <span data-en="Create User" data-kh="បង្កើតអ្នកប្រើប្រាស់">Create User</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Accounts -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow transition flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Total Accounts" data-kh="គណនីសរុប">Total Accounts</div>
+                <div class="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">@totalUsers</div>
+            </div>
+        </div>
+
+        <!-- Customers -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow transition flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Customers" data-kh="អតិថិជន">Customers</div>
+                <div class="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">@totalCustomers</div>
+            </div>
+        </div>
+
+        <!-- Administrators -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow transition flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="bi bi-shield-shaded"></i>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Administrators" data-kh="អ្នកគ្រប់គ្រង">Administrators</div>
+                <div class="text-2xl font-bold text-slate-900 dark:text-white mt-0.5">@totalAdmins</div>
+            </div>
+        </div>
+
+        <!-- Active Accounts -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow transition flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Active Accounts" data-kh="គណនីសកម្ម">Active Accounts</div>
+                <div class="text-2xl font-bold text-slate-900 dark:text-white mt-0.5 flex items-baseline gap-1.5">
+                    @activeCount
+                    <span class="text-xs font-normal text-slate-400 dark:text-slate-500">(@deactivatedCount locked)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER & SEARCH CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <form method="get" asp-action="Index" class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            <div class="flex flex-1 max-w-xl items-center gap-2">
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" value="@search" class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="Search by name, email, phone..." />
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition shadow-sm" data-en="Search" data-kh="ស្វែងរក">Search</button>
+                @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(roleFilter))
+                {
+                    <a asp-action="Index" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                }
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1" data-en="Role:" data-kh="តួនាទី:">Role:</span>
+                <a asp-action="Index" class="px-3 py-1.5 rounded-full text-xs font-semibold transition @(string.IsNullOrEmpty(roleFilter) ? "bg-primary-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700")">All</a>
+                @foreach (var r in allRoles)
+                {
+                    <a asp-action="Index" asp-route-roleFilter="@r" class="px-3 py-1.5 rounded-full text-xs font-semibold transition @(roleFilter == r ? "bg-primary-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700")">@r</a>
+                }
+            </div>
+        </form>
+    </div>
+
+    <!-- USERS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <th class="py-3.5 pl-6 pr-4" style="width: 28%;" data-en="User Account" data-kh="គណនី">User Account</th>
+                        <th class="py-3.5 px-4" style="width: 25%;" data-en="Contact Details" data-kh="ព័ត៌មានទំនាក់ទំនង">Contact Details</th>
+                        <th class="py-3.5 px-4" style="width: 18%;" data-en="Security Role" data-kh="តួនាទី">Security Role</th>
+                        <th class="py-3.5 px-4" style="width: 15%;" data-en="Status" data-kh="ស្ថានភាព">Status</th>
+                        <th class="py-3.5 pl-4 pr-6 text-right" style="width: 14%;" data-en="Actions" data-kh="សកម្មភាព">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-500 dark:text-slate-400">
+                                <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl text-slate-400 mb-3">
+                                    <i class="bi bi-person-x"></i>
+                                </div>
+                                <h5 class="text-base font-semibold text-slate-900 dark:text-white" data-en="No users found" data-kh="រកមិនឃើញអ្នកប្រើប្រាស់">No users found</h5>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto" data-en="Try clearing search filters or create a new user account." data-kh="សូមសម្អាតការស្វែងរក ឬបង្កើតគណនីថ្មី។">
+                                    Try clearing search filters or create a new user account.
+                                </p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model)
+                        {
+                            var isSelf = (user.Id == currentUserId);
+                            var roles = userRolesMap.ContainsKey(user.Id) ? userRolesMap[user.Id] : new List<string>();
+                            var isLocked = userLockoutMap.ContainsKey(user.Id) && userLockoutMap[user.Id];
+                            var isSuperAdminUser = roles.Contains("SuperAdmin");
+                            var initial = !string.IsNullOrEmpty(user.FirstName) ? user.FirstName.Substring(0, 1).ToUpper() : "U";
+                            var avatarUrl = userAvatarsMap.ContainsKey(user.Id) ? userAvatarsMap[user.Id] : null;
+
+                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                <!-- User Account -->
+                                <td class="py-4 pl-6 pr-4">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(avatarUrl))
+                                        {
+                                            <img src="@avatarUrl" alt="@user.FullName" class="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 flex-shrink-0" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                                                @initial
+                                            </div>
+                                        }
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <a asp-action="Details" asp-route-id="@user.Id" class="text-slate-900 dark:text-white font-semibold hover:text-primary-600 dark:hover:text-primary-400 transition truncate">
+                                                    @user.FullName
+                                                </a>
+                                                @if (isSelf)
+                                                {
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 border border-primary-200/50 dark:border-primary-800/50 uppercase tracking-wider">
+                                                        You
+                                                    </span>
+                                                }
+                                            </div>
+                                            <span class="text-xs text-slate-400 dark:text-slate-500 font-mono block">ID: @user.Id[..Math.Min(user.Id.Length, 8)]...</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Contact Details -->
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-medium text-xs">
+                                        <span>@user.Email</span>
+                                        @if (user.EmailConfirmed)
+                                        {
+                                            <i class="bi bi-patch-check-fill text-emerald-500" title="Email Confirmed"></i>
+                                        }
+                                    </div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                                        <i class="bi bi-telephone text-[10px]"></i>
+                                        <span>@(string.IsNullOrEmpty(user.PhoneNumber) ? "No phone" : user.PhoneNumber)</span>
+                                    </div>
+                                </td>
+
+                                <!-- Security Role -->
+                                <td class="py-4 px-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach (var role in roles)
+                                        {
+                                            if (role == "SuperAdmin")
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50">
+                                                    <i class="bi bi-shield-fill-check"></i>SuperAdmin
+                                                </span>
+                                            }
+                                            else if (role == "Admin")
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-400 border border-primary-200/60 dark:border-primary-900/50">
+                                                    <i class="bi bi-shield-check"></i>Admin
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                                    @role
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="py-4 px-4">
+                                    @if (!isLocked)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/50">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Deactivated
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-4 pl-4 pr-6 text-right">
+                                    <div class="dropdown relative inline-block text-left">
+                                        <button class="action-meatball-btn w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition" type="button" aria-expanded="false" title="Actions" onclick="toggleActionMenu(this, event)">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-meatball dropdown-menu-end hidden absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 z-[9999] focus:outline-none">
+                                            <li>
+                                                <a class="dropdown-item flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition" asp-action="Details" asp-route-id="@user.Id">
+                                                    <i class="bi bi-eye text-primary-500"></i> <span>View Details</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition" asp-action="Edit" asp-route-id="@user.Id">
+                                                    <i class="bi bi-pencil text-amber-500"></i> <span>Edit User</span>
+                                                </a>
+                                            </li>
+
+                                            @if (!isSelf)
+                                            {
+                                                <li>
+                                                    <form method="post" asp-action="ToggleStatus" asp-route-id="@user.Id" class="m-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="dropdown-item w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition" onclick="return confirm('Change account status for @user.FullName?');">
+                                                            <i class="bi @(isLocked ? "bi-check-circle text-emerald-500" : "bi-slash-circle text-rose-500")"></i> 
+                                                            <span>@(isLocked ? "Activate Account" : "Deactivate Account")</span>
+                                                        </button>
+                                                    </form>
+                                                </li>
+
+                                                <li>
+                                                    <button type="button" class="dropdown-item w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition" data-bs-toggle="modal" data-bs-target="#userResetModal" data-id="@user.Id" data-name="@user.FullName">
+                                                        <i class="bi bi-key text-sky-500"></i> <span>Reset Password</span>
+                                                    </button>
+                                                </li>
+                                            }
+
+                                            <li><div class="my-1 border-t border-slate-100 dark:border-slate-800"></div></li>
+
+                                            @if (isSelf)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-600 opacity-60 cursor-not-allowed" disabled>
+                                                        <i class="bi bi-trash"></i> <span>Delete (Self)</span>
+                                                    </button>
+                                                </li>
+                                            }
+                                            else if (isSuperAdminUser)
+                                            {
+                                                <li>
+                                                    <button type="button" class="dropdown-item w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-400 dark:text-slate-600 opacity-60 cursor-not-allowed" disabled>
+                                                        <i class="bi bi-shield-lock-fill"></i> <span>Delete Protected</span>
+                                                    </button>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li>
+                                                    <a class="dropdown-item flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition" asp-action="Delete" asp-route-id="@user.Id">
+                                                        <i class="bi bi-trash"></i> <span>Delete User</span>
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- RESET PASSWORD MODAL -->
+<div class="modal fade" id="userResetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-bold text-slate-900 dark:text-white">Reset Password</h5>
+                        <p class="text-xs text-slate-500 dark:text-slate-400" id="resetModalUserName">Set a new password for this user</p>
+                    </div>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form method="post" asp-action="ResetPassword">
+                @Html.AntiForgeryToken()
+                <div class="p-6 space-y-4">
+                    <input type="hidden" name="id" id="resetUserId" />
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Password</label>
+                        <input type="password" name="newPassword" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition" placeholder="Enter new password (min 6 chars)" required minlength="6" />
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2.5">
+                        <i class="bi bi-info-circle text-primary-500 text-sm mt-0.5 flex-shrink-0"></i>
+                        <span>The user will be required to use this new password upon next sign-in.</span>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-2.5">
+                    <button type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition">Save Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const resetModal = document.getElementById('userResetModal');
+        if (resetModal) {
+            resetModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (btn) {
+                    const id = btn.getAttribute('data-id') || '';
+                    const name = btn.getAttribute('data-name') || 'User';
+                    document.getElementById('resetUserId').value = id;
+                    document.getElementById('resetModalUserName').textContent = 'Set a new password for ' + name;
+                }
+            });
+        }
+    </script>
 }

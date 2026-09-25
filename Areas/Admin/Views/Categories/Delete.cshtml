@@ -4,47 +4,48 @@
     ViewData["Title"] = "Delete Category";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <div class="text-danger mb-3">
-                            <i class="bi bi-exclamation-triangle-fill fs-1"></i>
-                        </div>
-                        <h3 class="fw-bold">Delete Category?</h3>
-                        <p class="text-muted">This action cannot be undone.</p>
-                    </div>
+<div class="admin-page">
 
-                    <div class="border rounded p-3 mb-4 bg-light">
-                        <h5 class="fw-bold mb-1 text-center">@Model.Name</h5>
-                        @if (!string.IsNullOrWhiteSpace(Model.Description))
-                        {
-                            <div class="text-muted text-center small mt-2">@Model.Description</div>
-                        }
-                    </div>
-
-                    @if (Model.Products != null && Model.Products.Any())
-                    {
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-circle me-2"></i>
-                            <strong>Warning:</strong> There are <strong>@Model.Products.Count</strong> product(s) linked to this category. Deleting this category might fail or cascade delete related products depending on your database setup.
-                        </div>
-                    }
-
-                    <form asp-action="Delete" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@Model.Id" />
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-danger flex-fill">
-                                <i class="bi bi-trash me-1"></i> Yes, Delete
-                            </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary flex-fill">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Delete Category</h1>
         </div>
     </div>
+
+    <div class="admin-card" style="max-width: 560px;">
+        <div style="padding: 30px;">
+
+            <div class="admin-alert admin-alert-danger mb-4">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                This action cannot be undone.
+                @if (Model.Products.Any())
+                {
+                    <span> This category has <strong>@Model.Products.Count</strong> product(s) assigned — deletion will fail unless they're reassigned first.</span>
+                }
+            </div>
+
+            <div class="mb-4">
+                <div class="payment-name" style="font-size:15px;">@Model.Name</div>
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="text-secondary" style="font-size:12px;">@Model.Description</div>
+                }
+            </div>
+
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" name="id" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-custom" style="background: var(--google-red); box-shadow: 0 8px 20px rgba(234,67,53,.28);">
+                        <i class="bi bi-trash"></i> Confirm Delete
+                    </button>
+                    <a asp-action="Index" class="btn-reset">Cancel</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
 </div>

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Models;
 
@@ -35,7 +35,20 @@ namespace WebApplication_ClothingEcommerce.Data
 
 
         public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<DeliveryMethod> DeliveryMethods => Set<DeliveryMethod>();
+        public DbSet<DeliveryBranch> DeliveryBranches => Set<DeliveryBranch>();
+        public DbSet<TelegramSettings> TelegramSettings => Set<TelegramSettings>();
+        public DbSet<HomePageSettings> HomePageSettings => Set<HomePageSettings>();
+        public DbSet<StoreReceiptSettings> StoreReceiptSettings => Set<StoreReceiptSettings>();
+        public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
         #endregion
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -325,6 +338,34 @@ namespace WebApplication_ClothingEcommerce.Data
             modelBuilder.Entity<ProductVariant>()
                 .Property(v => v.Price)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<HomePageSettings>().HasData(new HomePageSettings
+            {
+                Id = 1,
+                PromoTag = "Flash Sale",
+                PromoText = "Season Collection — Up to 40% OFF essentials & trending styles!",
+                PromoCtaText = "Shop Now",
+                PromoCtaUrl = "/Shop?onSale=true",
+                HeroLabel = "NEW COLLECTION 2026",
+                HeroTitle = "Wear your identity.",
+                HeroHighlightWord = "identity.",
+                HeroDescription = "Discover modern clothing designed for everyday confidence, comfort and effortless style.",
+                HeroPrimaryBtnText = "Shop Collection",
+                HeroPrimaryBtnUrl = "/Shop",
+                HeroSecondaryBtnText = "Explore Products",
+                HeroSecondaryBtnUrl = "/Shop",
+                HeroImageUrl = "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1000&q=85",
+                FloatingCard1Title = "New Season",
+                FloatingCard1Sub = "Fresh styles are here",
+                FloatingCard2Title = "Free Shipping",
+                FloatingCard2Sub = "On orders over $50",
+                Stat1Value = "500+",
+                Stat1Label = "PRODUCTS",
+                Stat2Value = "50+",
+                Stat2Label = "BRANDS",
+                Stat3Value = "10K+",
+                Stat3Label = "CUSTOMERS"
+            });
 
         } // End OnModelCreating
 

@@ -1,0 +1,246 @@
+@inject WebApplication_ClothingEcommerce.Data.AppDbContext DbContext
+@inject Microsoft.AspNetCore.Identity.UserManager<WebApplication_ClothingEcommerce.Models.ApplicationUser> UserManager
+@using Microsoft.EntityFrameworkCore
+
+@{
+    var userEmail = User.Identity?.Name;
+    var customer = !string.IsNullOrEmpty(userEmail)
+        ? DbContext.Customers.FirstOrDefault(c => c.Email == userEmail)
+        : null;
+
+    var cart = customer != null
+        ? DbContext.Carts
+            .Include(c => c.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Product).ThenInclude(p => p.Images)
+            .Include(c => c.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Product).ThenInclude(p => p.Brand)
+            .Include(c => c.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Size)
+            .Include(c => c.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Color)
+            .Include(c => c.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Inventory)
+            .FirstOrDefault(c => c.CustomerId == customer.Id)
+        : null;
+
+    var cartItems = cart?.Items?.ToList() ?? new List<WebApplication_ClothingEcommerce.Models.CartItem>();
+    var totalQuantity = cartItems.Sum(i => i.Quantity);
+    var subtotal = cartItems.Where(i => i.Variant != null).Sum(i => i.Quantity * i.Variant!.Price);
+    var freeShippingThreshold = 50.00m;
+    var amountNeeded = Math.Max(0, freeShippingThreshold - subtotal);
+    var progressPercent = Math.Min(100, (int)((subtotal / freeShippingThreshold) * 100));
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="flex flex-col h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" id="cartSidebarWrapper">
+
+    @Html.AntiForgeryToken()
+
+    <!-- FREE SHIPPING METER -->
+    <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between text-xs mb-1.5 font-semibold">
+            @if (amountNeeded > 0)
+            {
+                <span class="text-slate-600 dark:text-slate-300">
+                    Add <strong class="text-blue-600 dark:text-blue-400">$@amountNeeded.ToString("N2")</strong> for <strong>Free Delivery</strong>
+                </span>
+                <span class="text-slate-400 font-bold">@progressPercent%</span>
+            }
+            else
+            {
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                    <i class="bi bi-patch-check-fill"></i> Free Standard Delivery Unlocked!
+                </span>
+            }
+        </div>
+        <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-300"
+                 style="width: @progressPercent%"></div>
+        </div>
+    </div>
+
+    <!-- ITEMS LIST -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4 divide-y divide-slate-100 dark:divide-slate-800" id="cartItemsList">
+        @if (cartItems.Any())
+        {
+            @foreach (var item in cartItems)
+            {
+                var product = item.Variant?.Product;
+                var primaryImg = product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                              ?? product?.Images?.FirstOrDefault()?.ImageUrl;
+                var variantPrice = item.Variant?.Price ?? 0;
+                var itemTotal = variantPrice * item.Quantity;
+                var availableStock = item.Variant?.Inventory?.AvailableQuantity ?? 99;
+
+                <div class="pt-4 first:pt-0 flex flex-col gap-2 transition-all duration-200" id="cartItemRow_@item.Id">
+                    <div class="flex gap-3.5">
+                        <!-- Thumbnail -->
+                        <a asp-controller="Shop" asp-action="Details" asp-route-id="@product?.Id"
+                           class="w-20 h-24 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 relative border border-slate-200/60 dark:border-slate-800 group cursor-pointer">
+                            @if (!string.IsNullOrEmpty(primaryImg))
+                            {
+                                <img src="@primaryImg" alt="@(product?.Name ?? "Item")" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            }
+                            else
+                            {
+                                <div class="w-full h-full flex items-center justify-center text-slate-400">
+                                    <i class="bi bi-image text-xl"></i>
+                                </div>
+                            }
+                        </a>
+
+                        <!-- Details -->
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">
+                                        <a asp-controller="Shop" asp-action="Details" asp-route-id="@product?.Id" class="hover:text-blue-600 transition-colors">
+                                            @(product?.Name ?? "Product")
+                                        </a>
+                                    </h4>
+                                    <!-- Remove Button -->
+                                    <button type="button"
+                                            onclick="removeSidebarItem('@item.Id')"
+                                            class="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                                            title="Remove item">
+                                        <i class="bi bi-trash text-xs"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Variant details & Edit Trigger -->
+                                <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+                                    @if (item.Variant?.Size != null)
+                                    {
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-slate-200/60 dark:border-slate-700">
+                                            @item.Variant.Size.Name
+                                        </span>
+                                    }
+                                    @if (item.Variant?.Color != null)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-slate-200/60 dark:border-slate-700">
+                                            @if (!string.IsNullOrEmpty(item.Variant.Color.HexCode))
+                                            {
+                                                <span class="w-2 h-2 rounded-full border border-black/20 inline-block" style="background-color: @item.Variant.Color.HexCode"></span>
+                                            }
+                                            @item.Variant.Color.Name
+                                        </span>
+                                    }
+
+                                    <!-- Edit Variant Button -->
+                                    <button type="button"
+                                            onclick="toggleVariantEditor('@item.Id', '@product?.Id', '@item.VariantId')"
+                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-700 font-bold hover:underline inline-flex items-center gap-0.5 text-[11px] cursor-pointer">
+                                        <i class="bi bi-pencil-square text-[10px]"></i> Edit
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Stepper & Price -->
+                            <div class="flex items-center justify-between mt-2 pt-2">
+                                <!-- Qty Stepper (Pure AJAX) -->
+                                <div class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800 shadow-xs">
+                                    <button type="button"
+                                            onclick="updateSidebarQty('@item.Id', @(item.Quantity - 1))"
+                                            class="w-7 h-7 flex items-center justify-center text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer @(item.Quantity <= 1 ? "opacity-40 pointer-events-none" : "")"
+                                            title="Decrease">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <span class="w-8 text-center text-xs font-bold text-slate-800 dark:text-slate-200" id="itemQty_@item.Id">
+                                        @item.Quantity
+                                    </span>
+                                    <button type="button"
+                                            onclick="updateSidebarQty('@item.Id', @(item.Quantity + 1))"
+                                            class="w-7 h-7 flex items-center justify-center text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer @(item.Quantity >= availableStock ? "opacity-40 pointer-events-none" : "")"
+                                            title="Increase">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+
+                                <div class="text-right">
+                                    <span class="text-xs font-black text-slate-900 dark:text-white">
+                                        $@itemTotal.ToString("0.00")
+                                    </span>
+                                    @if (item.Quantity > 1)
+                                    {
+                                        <div class="text-[10px] text-slate-400">
+                                            $@variantPrice.ToString("0.00") each
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INLINE VARIANT SELECTOR / EDITOR -->
+                    <div id="variantEditor_@item.Id" class="hidden mt-2 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-blue-200 dark:border-blue-900/60 shadow-inner">
+                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <i class="bi bi-sliders text-blue-600"></i> Change Options
+                            </span>
+                            <button type="button" onclick="closeVariantEditor('@item.Id')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div id="variantLoader_@item.Id" class="text-center py-2 text-xs text-slate-500">
+                            <span class="inline-block animate-spin mr-1"><i class="bi bi-arrow-repeat"></i></span> Loading options...
+                        </div>
+
+                        <div id="variantFields_@item.Id" class="hidden space-y-2.5">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Select Variant</label>
+                                <select id="selVariant_@item.Id" class="w-full text-xs font-medium py-1.5 px-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </select>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-1">
+                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400" id="variantPriceLbl_@item.Id"></span>
+                                <div class="flex gap-2">
+                                    <button type="button" onclick="closeVariantEditor('@item.Id')"
+                                            class="px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                        Cancel
+                                    </button>
+                                    <button type="button" onclick="saveVariantChange('@item.Id')"
+                                            class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow transition flex items-center gap-1">
+                                        <i class="bi bi-check-lg"></i> Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-16">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-bag-x text-2xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Your bag is empty</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">Discover our latest collection and add your favorite pieces.</p>
+                <a asp-controller="Shop" asp-action="Index" onclick="if(typeof closeCartDrawer === 'function') closeCartDrawer()"
+                   class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition">
+                    Explore Shop
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- STICKY FOOTER -->
+    @if (cartItems.Any())
+    {
+        <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl space-y-3">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-500 dark:text-slate-400">Subtotal (@totalQuantity item@(totalQuantity == 1 ? "" : "s"))</span>
+                <span class="text-base font-black text-slate-900 dark:text-white">$@subtotal.ToString("0.00")</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+                <a asp-controller="Cart" asp-action="Index" onclick="if(typeof closeCartDrawer === 'function') closeCartDrawer()"
+                   class="w-full py-2.5 px-3 rounded-xl border border-slate-300 dark:border-slate-700 text-center text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center">
+                    View Bag
+                </a>
+                <a asp-controller="Checkout" asp-action="Index"
+                   class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-center text-xs font-bold text-white shadow-md transition-colors flex items-center justify-center gap-1.5">
+                    <span>Checkout</span> <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    }
+
+</div>

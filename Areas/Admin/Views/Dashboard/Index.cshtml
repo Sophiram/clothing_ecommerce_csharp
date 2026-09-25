@@ -1,167 +1,2068 @@
-﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.DashboardViewModel
+@model WebApplication_ClothingEcommerce.Models.ViewModels.AdminDashboardViewModel
+@using WebApplication_ClothingEcommerce.Data.Enums
+@using System.Text.Json
+@using System.Linq
+@inject WebApplication_ClothingEcommerce.Data.AppDbContext DbContext
 
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = Model.IsSuperAdmin ? "Super Admin Dashboard" : "Store Admin Dashboard";
+    var isSuperView = Model.IsSuperAdmin && Model.ActiveView == "superadmin";
+    var sa = Model.SuperAdmin;
+    var store = Model.StoreAdmin;
+
+    string userEmail = User.Identity?.Name ?? "";
+    string userDisplayName = userEmail.Split('@')[0];
+    string userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "A";
+    string? userAvatarUrl = null;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        try
+        {
+            var appUser = DbContext.Users.FirstOrDefault(u => u.UserName == userEmail || u.Email == userEmail);
+            if (appUser != null)
+            {
+                if (!string.IsNullOrWhiteSpace(appUser.FullName))
+                {
+                    userDisplayName = appUser.FullName;
+                    userFirstLetter = !string.IsNullOrWhiteSpace(appUser.FirstName) 
+                        ? appUser.FirstName.Substring(0, 1).ToUpper() 
+                        : appUser.FullName.Substring(0, 1).ToUpper();
+                }
+                else if (!string.IsNullOrWhiteSpace(appUser.FirstName))
+                {
+                    userDisplayName = appUser.FirstName;
+                    userFirstLetter = appUser.FirstName.Substring(0, 1).ToUpper();
+                }
+
+                var avatarFolder = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                if (System.IO.Directory.Exists(avatarFolder))
+                {
+                    var files = System.IO.Directory.GetFiles(avatarFolder, $"{appUser.Id}.*");
+                    if (files.Length > 0)
+                    {
+                        var fi = new System.IO.FileInfo(files[0]);
+                        userAvatarUrl = $"/uploads/avatars/{System.IO.Path.GetFileName(files[0])}?v={fi.LastWriteTimeUtc.Ticks}";
+                    }
+                }
+            }
+        }
+        catch { }
+    }
 }
 
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
 
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <h2 class="fw-bold mb-1">
-                Dashboard
-            </h2>
-
-            <p class="text-muted mb-0">
-                Overview of your store performance and sales metrics.
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">
+                <i class="bi bi-speedometer2"></i>
+                <span class="tracking-wider uppercase">Analytics &amp; Platform Metrics</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                @(isSuperView ? "Super Admin Dashboard" : "Store Admin Dashboard")
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                @(isSuperView
+                    ? "Real-time enterprise metrics, financial performance, role access controls, and security audit trail."
+                    : "Daily retail performance, fulfillment workflow, inventory stock distribution, and product analytics.")
             </p>
         </div>
 
-        <div class="d-flex gap-2">
+        <!-- ACTIONS & VIEW SWITCHER -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            @if (Model.IsSuperAdmin)
+            {
+                <div class="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <a asp-action="Index" asp-route-view="superadmin"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 @(isSuperView ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white")">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Super Admin</span>
+                    </a>
+                    <a asp-action="Index" asp-route-view="store"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 @(!isSuperView ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white")">
+                        <i class="bi bi-shop"></i>
+                        <span>Store Admin</span>
+                    </a>
+                </div>
+            }
 
-            <a asp-area=""
-               asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-outline-primary">
-
-                <i class="bi bi-shop me-1"></i>
-                View Store
-
-            </a>
-
-            <button type="button"
-                    class="btn btn-primary"
-                    onclick="window.location.reload();">
-
-                <i class="bi bi-arrow-clockwise me-1"></i>
-                Refresh
-
+            <button type="button" onclick="window.location.reload();"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
             </button>
-
-        </div>
-
-    </div>
-
-    <!-- Stat Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-uppercase text-muted fw-bold small">Total Revenue</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-2">$@Model.TotalRevenue.ToString("N2")</h3>
-                        </div>
-                        <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-circle">
-                            <i class="bi bi-currency-dollar fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 border-start border-4 border-success">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-uppercase text-muted fw-bold small">Total Orders</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-2">@Model.TotalOrders</h3>
-                        </div>
-                        <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle">
-                            <i class="bi bi-bag-check fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-uppercase text-muted fw-bold small">Total Products</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-2">@Model.TotalProducts</h3>
-                        </div>
-                        <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-circle">
-                            <i class="bi bi-box-seam fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 border-start border-4 border-info">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-uppercase text-muted fw-bold small">Total Customers</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-2">@Model.TotalCustomers</h3>
-                        </div>
-                        <div class="p-3 bg-info bg-opacity-10 text-info rounded-circle">
-                            <i class="bi bi-people fs-3"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Recent Orders Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">Recent Orders</h5>
-            <a href="#" class="btn btn-sm btn-link text-decoration-none">View All</a>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">Order ID</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Total Amount</th>
-                        <th>Status</th>
-                        <th class="text-end pe-4">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.RecentOrders != null && Model.RecentOrders.Any())
+    <!-- WELCOME & RUNTIME TOOLBAR BANNER -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <!-- Top Row: Avatar & Greeting -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="relative flex-shrink-0 w-14 h-14">
+                    @if (!string.IsNullOrEmpty(userAvatarUrl))
                     {
-                        @foreach (var order in Model.RecentOrders)
-                        {
-                            <tr>
-                                <td class="ps-4 font-monospace fw-bold">#@order.Id.ToString().Substring(0, 8).ToUpper()</td>
-                                <td>
-                                    <div class="fw-semibold">@(order.Customer != null ? $"{order.Customer.FirstName} {order.Customer.LastName}" : "Guest")</div>
-                                    <small class="text-muted">@(order.Customer?.Email ?? "N/A")</small>
-                                </td>
-                                <td>@order.OrderDate.ToString("MMM dd, yyyy HH:mm")</td>
-                                <td class="fw-bold">$@order.TotalAmount.ToString("N2")</td>
-                                <td>
-                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
-                                        Completed
-                                    </span>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <a href="#" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-eye"></i> Details
-                                    </a>
-                                </td>
-                            </tr>
-                        }
+                        <img src="@userAvatarUrl" alt="@userDisplayName" class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-200 dark:border-slate-700 shadow-xs" style="width: 56px; height: 56px; object-fit: cover;" />
                     }
                     else
                     {
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">No recent orders found.</td>
-                        </tr>
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-lg flex items-center justify-center shadow-xs border-2 border-white dark:border-slate-800">
+                            @userFirstLetter
+                        </div>
                     }
-                </tbody>
-            </table>
+                    <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" title="Online"></span>
+                </div>
+
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            <i class="bi bi-circle-fill text-[6px]"></i> Platform Online
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            <i class="bi @(Model.IsSuperAdmin ? "bi-shield-check" : "bi-shop")"></i>
+                            @(Model.IsSuperAdmin ? "Enterprise Administrator" : "Store Administrator")
+                        </span>
+                        <span class="text-[11px] font-medium text-slate-400 hidden sm:inline-flex items-center gap-1">
+                            <i class="bi bi-clock"></i> @(DateTime.UtcNow.ToString("dd MMM yyyy, HH:mm")) UTC
+                        </span>
+                    </div>
+
+                    <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>Welcome back, @userDisplayName</span>
+                        <span>👋</span>
+                    </h2>
+                </div>
+            </div>
+
+            <!-- Quick Navigation Shortcuts -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <a asp-area="Admin" asp-controller="HomePage" asp-action="Index" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-bold hover:border-amber-400 hover:text-amber-600 transition">
+                    <i class="bi bi-stars text-amber-500"></i>
+                    <span>Homepage &amp; Hero</span>
+                </a>
+                <a asp-area="Admin" asp-controller="Delivery" asp-action="Index" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-bold hover:border-indigo-400 hover:text-indigo-600 transition">
+                    <i class="bi bi-geo-alt-fill text-indigo-500"></i>
+                    <span>Logistics &amp; Delivery</span>
+                </a>
+                <a asp-area="Admin" asp-controller="Shipments" asp-action="Index" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-xs font-bold hover:border-emerald-400 hover:text-emerald-600 transition">
+                    <i class="bi bi-truck text-emerald-500"></i>
+                    <span>Shipments</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
+            <div class="flex items-center gap-3 flex-wrap text-xs">
+                @if (!isSuperView)
+                {
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Today's Sales:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">$@store.TodaySales.ToString("N2")</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-bag-check"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Orders Today:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">@store.OrdersToday</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-clock-history"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">In Prep:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">@store.ProcessingOrdersCount</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-cash-stack"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Today Revenue:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">$@sa.TodayRevenue.ToString("N2")</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-people"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Total Users:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">@sa.TotalUsers</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                        <span class="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs">
+                            <i class="bi bi-receipt"></i>
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Total Orders:</span>
+                        <span class="font-bold text-slate-900 dark:text-white tabular-nums">@sa.TotalOrders</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (isSuperView)
+    {
+        <!-- =====================================================
+             SUPER ADMIN DASHBOARD: ENTERPRISE FINANCIALS & PLATFORM
+        ====================================================== -->
+
+        <!-- 4 KEY METRIC CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1. Platform Revenue -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Platform Revenue</span>
+                    <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                        <i class="bi bi-cash-stack"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        $@sa.TotalRevenue.ToString("N2")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 @(sa.RevenueGrowthPercentage >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")">
+                            <i class="bi @(sa.RevenueGrowthPercentage >= 0 ? "bi-arrow-up-right" : "bi-arrow-down-right")"></i>
+                            @(sa.RevenueGrowthPercentage >= 0 ? "+" : "")@sa.RevenueGrowthPercentage.ToString("0.0")%
+                        </span>
+                        <span class="text-slate-400 tabular-nums font-normal">$@sa.MonthRevenue.ToString("N2") this month</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Today's Revenue -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Today's Revenue</span>
+                    <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        $@sa.TodayRevenue.ToString("N2")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                            <i class="bi bi-cart-check"></i> Live Today
+                        </span>
+                        <span class="text-slate-400 tabular-nums font-normal">Avg: $@sa.AverageOrderValue.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Platform Users -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Platform Users</span>
+                    <span class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base">
+                        <i class="bi bi-people-fill"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        @sa.TotalUsers.ToString("N0")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-600 dark:text-slate-300 font-medium">
+                            <strong class="text-slate-900 dark:text-white tabular-nums">@sa.TotalCustomers</strong> customers
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                            <i class="bi bi-shield-check"></i> @sa.TotalAdmins admins
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Security & Audits -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Security &amp; Audits</span>
+                    <span class="w-9 h-9 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-base">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        @sa.TotalAuditLogs.ToString("N0")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">
+                            <i class="bi bi-activity"></i> @sa.TodayAuditLogs today
+                        </span>
+                        <a asp-area="Admin" asp-controller="AuditLogs" asp-action="Index" class="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
+                            <span>Logs</span> <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARTS GRID: 7-DAY REVENUE & ORDER STATUS DONUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 7-Day Revenue Velocity Trend -->
+            <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-graph-up text-blue-600 dark:text-blue-400"></i>
+                            <span>7-Day Revenue &amp; Sales Velocity</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Daily transaction totals and order completion volume</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <i class="bi bi-calendar3 mr-1"></i> Last 7 Days
+                    </span>
+                </div>
+                <div id="chart-super-revenue-trend" class="min-h-[290px]"></div>
+            </div>
+
+            <!-- Order Pipeline Donut Circle -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-pie-chart-fill text-indigo-600 dark:text-indigo-400"></i>
+                            <span>Order Pipeline</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fulfillment pipeline breakdown</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        View <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div id="chart-super-orders-donut" class="min-h-[220px]"></div>
+
+                <!-- Custom Breakdown Legend -->
+                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Pending
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@sa.PendingOrders</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Processing
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@sa.ProcessingOrders</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Shipped
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@sa.ShippedOrders</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Delivered
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@sa.DeliveredOrders</strong>
+                    </div>
+                    <div class="col-span-2 flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Cancelled
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@sa.CancelledOrders</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PLATFORM ECOSYSTEM DONUT CIRCLES & SYSTEM CONTROLS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+            <!-- User & Role Demographics -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-person-badge-fill text-purple-600 dark:text-purple-400"></i>
+                            <span>User Roles &amp; Access</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">RBAC platform account segregation</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="chart-super-users-donut" class="min-h-[220px]"></div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Total Accounts: <strong class="text-slate-900 dark:text-white tabular-nums">@sa.TotalUsers</strong> &middot; Roles: <strong class="text-slate-900 dark:text-white">@sa.TotalRoles</strong>
+                </div>
+            </div>
+
+            <!-- Category Catalog Share -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-tag-fill text-blue-600 dark:text-blue-400"></i>
+                            <span>Catalog by Category</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Product distribution across categories</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="chart-super-category-donut" class="min-h-[220px]"></div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Total Products: <strong class="text-slate-900 dark:text-white tabular-nums">@sa.TotalProducts</strong> &middot; Brands: <strong class="text-slate-900 dark:text-white">@sa.TotalBrands</strong>
+                </div>
+            </div>
+
+            <!-- System Governance & Runtime -->
+            <div class="md:col-span-2 lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-gear-wide-connected text-slate-700 dark:text-slate-300"></i>
+                        <span>System &amp; Governance</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Security administration shortcuts</p>
+                </div>
+
+                <div class="space-y-2.5">
+                    <a asp-area="Admin" asp-controller="Admins" asp-action="Index" 
+                       class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/60 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition group">
+                        <span class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition">Administrator Accounts</div>
+                            <div class="text-[11px] text-slate-400 truncate">Manage credentials &amp; permissions</div>
+                        </div>
+                        <i class="bi bi-chevron-right text-slate-400 text-xs"></i>
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Roles" asp-action="Index" 
+                       class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500/60 hover:bg-purple-50/40 dark:hover:bg-purple-950/20 transition group">
+                        <span class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-key-fill"></i>
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600 transition">Security Roles &amp; RBAC</div>
+                            <div class="text-[11px] text-slate-400 truncate">Configure access policies</div>
+                        </div>
+                        <i class="bi bi-chevron-right text-slate-400 text-xs"></i>
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Settings" asp-action="Index" 
+                       class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition group">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-sliders"></i>
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition">Platform Settings</div>
+                            <div class="text-[11px] text-slate-400 truncate">Store policies, tax, configuration</div>
+                        </div>
+                        <i class="bi bi-chevron-right text-slate-400 text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Runtime specs -->
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 text-xs space-y-1.5">
+                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1.5"><i class="bi bi-cpu"></i> Framework:</span>
+                        <strong class="text-slate-900 dark:text-white">.NET @sa.FrameworkVersion</strong>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                        <span class="flex items-center gap-1.5"><i class="bi bi-hdd-network"></i> Environment:</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                            @sa.EnvironmentName
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT SECURITY AUDIT TRAIL -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-journal-text text-cyan-600 dark:text-cyan-400"></i>
+                        <span>Recent Security Audit Trail</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real-time administrator modifications &amp; system actions</p>
+                </div>
+                <a asp-area="Admin" asp-controller="AuditLogs" asp-action="Index" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                    <span>View All Logs</span> <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            @if (sa.RecentAuditLogs.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
+                                <th class="py-3 px-4">User</th>
+                                <th class="py-3 px-3">Action</th>
+                                <th class="py-3 px-3">Entity</th>
+                                <th class="py-3 px-3">Description</th>
+                                <th class="py-3 px-4 text-right">Time (UTC)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            @foreach (var log in sa.RecentAuditLogs)
+                            {
+                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                    <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                                        <div class="flex items-center gap-2">
+                                            <i class="bi bi-person-circle text-slate-400"></i>
+                                            <span>@(log.UserEmail ?? "System")</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                            @log.Action
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                            @log.EntityName
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 text-slate-500 dark:text-slate-400 max-w-[280px] truncate">
+                                        @(log.Description ?? "—")
+                                    </td>
+                                    <td class="py-3 px-4 text-right text-slate-400 tabular-nums font-medium">
+                                        @log.CreatedAt.ToString("MMM dd, HH:mm")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-10 text-slate-400">
+                    <i class="bi bi-journal-check text-4xl block mb-2 opacity-50"></i>
+                    <p class="text-xs">All clear. Platform actions and audit events will stream here.</p>
+                </div>
+            }
+        </div>
+
+        <!-- RECENT PLATFORM ORDERS TABLE -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-receipt-cutoff text-blue-600 dark:text-blue-400"></i>
+                        <span>Recent Orders</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Latest customer purchases across the platform</p>
+                </div>
+                <a asp-area="Admin" asp-controller="Orders" asp-action="Index" 
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition">
+                    <span>View All Orders</span> <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            @if (sa.RecentOrders.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
+                                <th class="py-3 px-4">Order ID</th>
+                                <th class="py-3 px-3">Customer</th>
+                                <th class="py-3 px-3">Date</th>
+                                <th class="py-3 px-3 text-center">Items</th>
+                                <th class="py-3 px-3">Total</th>
+                                <th class="py-3 px-3">Payment</th>
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            @foreach (var order in sa.RecentOrders)
+                            {
+                                var custRaw = $"{order.Customer?.FirstName} {order.Customer?.LastName}".Trim();
+                                var custName = !string.IsNullOrWhiteSpace(custRaw)
+                                    ? custRaw
+                                    : (!string.IsNullOrWhiteSpace(order.Customer?.Email) ? order.Customer.Email.Split('@')[0] : "Customer");
+                                var custInit = !string.IsNullOrWhiteSpace(custName) ? custName.Substring(0, 1).ToUpper() : "C";
+                                var orderDateLocal = DateTime.SpecifyKind(order.OrderDate, DateTimeKind.Utc).ToLocalTime();
+
+                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                    <td class="py-3 px-4">
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                           class="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                                            #@order.Id.ToString()[..8].ToUpper()
+                                        </a>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-[11px] flex items-center justify-center flex-shrink-0 shadow-xs">
+                                                @custInit
+                                            </div>
+                                            <div class="truncate max-w-[150px]">
+                                                <div class="font-bold text-slate-900 dark:text-white truncate">@custName</div>
+                                                <div class="text-[11px] text-slate-400 truncate">@(order.Customer?.Email ?? "N/A")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 text-slate-500 dark:text-slate-400 tabular-nums">
+                                        <div class="font-medium text-slate-800 dark:text-slate-200">@orderDateLocal.ToString("MMM dd, yyyy")</div>
+                                        <div class="text-[10px]">@orderDateLocal.ToString("HH:mm")</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            @(order.Items?.Sum(i => i.Quantity) ?? 0)
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white tabular-nums">
+                                        $@order.TotalAmount.ToString("N2")
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        @if (order.Payment != null)
+                                        {
+                                            if (order.Payment.PaymentStatus == PaymentStatus.Paid || order.Payment.PaymentStatus == PaymentStatus.Completed)
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <i class="bi bi-check-circle-fill"></i> Paid
+                                                </span>
+                                            }
+                                            else if (order.Payment.PaymentStatus == PaymentStatus.Pending)
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                    <i class="bi bi-hourglass-split"></i> Unpaid
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                                    <i class="bi bi-x-circle-fill"></i> @order.Payment.PaymentStatus
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                                Pending
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        @switch (order.Status)
+                                        {
+                                            case OrderStatus.Delivered:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <i class="bi bi-check2-circle"></i> Delivered
+                                                </span>
+                                                break;
+                                            case OrderStatus.Shipped:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                                    <i class="bi bi-truck"></i> Shipped
+                                                </span>
+                                                break;
+                                            case OrderStatus.Processing:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                    <i class="bi bi-arrow-repeat"></i> Processing
+                                                </span>
+                                                break;
+                                            case OrderStatus.Cancelled:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                                    <i class="bi bi-x-circle"></i> Cancelled
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                    <i class="bi bi-clock-history"></i> @order.Status
+                                                </span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="py-3 px-4 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                               class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center justify-center text-xs transition"
+                                               title="View Order Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-10 text-slate-400">
+                    <i class="bi bi-bag text-4xl block mb-2 opacity-50"></i>
+                    <p class="text-xs">No orders placed yet.</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        var readyCount = store.RecentOrders.Count(o => o.Status == OrderStatus.Pending ||
+                                                      o.Status == OrderStatus.Confirmed ||
+                                                      o.Status == OrderStatus.Processing);
+        var deliveredCount = store.RecentOrders.Count(o => o.Status == OrderStatus.Delivered);
+        var defaultFilter = readyCount > 0 ? "ready" : "all";
+
+        <!-- =====================================================
+             STORE ADMIN DASHBOARD: RETAIL OPERATIONS & INVENTORY
+        ====================================================== -->
+
+        <!-- 4 KEY STORE PERFORMANCE KPI CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1. Store Revenue -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Store Revenue</span>
+                    <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                        <i class="bi bi-wallet2"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        $@store.StoreRevenue.ToString("N2")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                            <i class="bi bi-calendar-check"></i> Monthly:
+                        </span>
+                        <span class="text-slate-700 dark:text-slate-300 tabular-nums font-bold">$@store.MonthSales.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Today's Sales Volume -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Today's Sales</span>
+                    <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        $@store.TodaySales.ToString("N2")
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                            <i class="bi bi-receipt"></i> @store.OrdersToday orders today
+                        </span>
+                        <span class="text-slate-400 tabular-nums font-normal">Total: @store.TotalOrders</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Orders To Fulfill -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Orders To Fulfill</span>
+                    <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                        @(store.PendingOrdersCount + store.ProcessingOrdersCount)
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 @(store.PendingOrdersCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-500")">
+                            @store.PendingOrdersCount pending
+                        </span>
+                        <span class="text-slate-400 tabular-nums font-normal">@store.ProcessingOrdersCount in prep</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Inventory Alerts -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Inventory Alerts</span>
+                    <span class="w-9 h-9 rounded-xl @(store.OutOfStockCount > 0 ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400" : "bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400") flex items-center justify-center text-base">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <div class="text-2xl font-black tabular-nums @(store.OutOfStockCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white")">
+                        @store.LowStockCount
+                    </div>
+                    <div class="flex items-center justify-between gap-1.5 text-xs font-bold mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="inline-flex items-center gap-1 @(store.OutOfStockCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")">
+                            @store.OutOfStockCount out of stock
+                        </span>
+                        <a asp-area="Admin" asp-controller="Inventories" asp-action="Index" class="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
+                            <span>Restock</span> <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- URGENT LOW STOCK ALERT STRIP (IF ANY) -->
+        @if (store.LowStockAlerts.Any())
+        {
+            <div class="bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-2xl p-5 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold text-sm">
+                        <i class="bi bi-exclamation-octagon-fill text-base"></i>
+                        <span>Attention Required: Low Stock &amp; Depleted Variants</span>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Inventories" asp-action="Index" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                        <span>Inventory Manager</span> <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    @foreach (var alert in store.LowStockAlerts.Take(3))
+                    {
+                        <div class="p-3 bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900/30 rounded-xl flex items-center gap-3 shadow-xs">
+                            @if (!string.IsNullOrEmpty(alert.ImageUrl))
+                            {
+                                <img src="@alert.ImageUrl" alt="" class="w-11 h-11 rounded-lg object-cover border border-slate-200 dark:border-slate-800 flex-shrink-0" style="width:44px;height:44px;min-width:44px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                            }
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-xs text-slate-900 dark:text-white truncate">@alert.ProductName</div>
+                                <div class="text-[11px] font-mono text-slate-400 truncate">@alert.SKU (@alert.SizeName / @alert.ColorName)</div>
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold mt-0.5 @(alert.AvailableQuantity <= 0 ? "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400" : "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400")">
+                                    @(alert.AvailableQuantity <= 0 ? "0 units left" : $"{alert.AvailableQuantity} units left")
+                                </span>
+                            </div>
+                            <a asp-area="Admin" asp-controller="Inventories" asp-action="Index" 
+                               class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs transition" title="Restock">
+                                <i class="bi bi-plus-lg"></i>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- CHARTS GRID: 7-DAY STORE SALES VELOCITY & ORDER STATUS DONUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 7-Day Store Sales Velocity Chart -->
+            <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-graph-up-arrow text-blue-600 dark:text-blue-400"></i>
+                            <span>7-Day Store Sales Velocity</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Revenue trend ($) and daily order transactions</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <i class="bi bi-calendar-week mr-1"></i> Live Stream
+                    </span>
+                </div>
+                <div id="chart-store-sales-trend" class="min-h-[290px]"></div>
+            </div>
+
+            <!-- Order Pipeline Donut Circle -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-pie-chart-fill text-indigo-600 dark:text-indigo-400"></i>
+                            <span>Order Fulfillment</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Status of customer purchases</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Orders" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        Orders <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div id="chart-store-orders-donut" class="min-h-[220px]"></div>
+
+                <!-- Legend & Status Pills -->
+                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Pending
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@store.PendingOrdersCount</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Processing
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@store.ProcessingOrdersCount</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Shipped
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@store.ShippedOrdersCount</strong>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                        <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Delivered
+                        </span>
+                        <strong class="text-slate-900 dark:text-white tabular-nums">@store.DeliveredOrdersCount</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPERATIONS EFFICIENCY, INVENTORY HEALTH & CATEGORY DISTRIBUTION -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+            <!-- Inventory Stock Health -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-boxes text-emerald-600 dark:text-emerald-400"></i>
+                            <span>Inventory Health</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Variant capacity &amp; safety stock</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Inventories" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="chart-store-inventory-donut" class="min-h-[220px]"></div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Total Variants: <strong class="text-slate-900 dark:text-white tabular-nums">@store.InventoryHealth.TotalVariants</strong> &middot; Health Score: <strong class="text-emerald-600 dark:text-emerald-400">@store.InventoryHealth.HealthScorePercentage%</strong>
+                </div>
+            </div>
+
+            <!-- Category Distribution -->
+            <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-pie-chart text-blue-600 dark:text-blue-400"></i>
+                            <span>Category Distribution</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sales &amp; product share across categories</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div id="chart-store-category-donut" class="min-h-[220px]"></div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Active Catalog: <strong class="text-slate-900 dark:text-white tabular-nums">@store.ActiveProductsCount</strong> of <strong class="text-slate-900 dark:text-white">@store.TotalProducts</strong> products
+                </div>
+            </div>
+
+            <!-- Operations Efficiency Radial Gauges -->
+            <div class="md:col-span-2 lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-speedometer2 text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Operations Efficiency</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Delivery fulfillment rate &amp; sales target</p>
+                </div>
+
+                <div id="chart-store-radial-gauges" class="min-h-[220px]"></div>
+
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-center text-xs">
+                    <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                        <div class="text-slate-400 text-[11px]">Fulfillment Rate</div>
+                        <div class="font-black text-slate-900 dark:text-white text-base tabular-nums">@store.FulfillmentRate%</div>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                        <div class="text-slate-400 text-[11px]">Target Progress</div>
+                        <div class="font-black text-blue-600 dark:text-blue-400 text-base tabular-nums">@store.MonthlyTargetProgress%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BEST PERFORMING PRODUCTS & QUICK OPERATIONS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Best Selling Products Leaderboard -->
+            <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-trophy-fill text-amber-500"></i>
+                            <span>Best Performing Products</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Top revenue and volume sales leaders</p>
+                    </div>
+                    <a asp-area="Admin" asp-controller="Products" asp-action="Index" 
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                        <span>Catalog</span> <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                @if (store.TopSellingProducts.Any())
+                {
+                    var maxQty = store.TopSellingProducts.Max(p => p.TotalQuantitySold);
+                    if (maxQty <= 0) maxQty = 1;
+                    var rank = 1;
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
+                                    <th class="py-3 px-3 w-10">#</th>
+                                    <th class="py-3 px-3">Product</th>
+                                    <th class="py-3 px-3 text-center">Volume</th>
+                                    <th class="py-3 px-3">Revenue</th>
+                                    <th class="py-3 px-3 text-right">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                @foreach (var prod in store.TopSellingProducts)
+                                {
+                                    var pct = Math.Min(100, (double)prod.TotalQuantitySold / maxQty * 100);
+
+                                    <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                        <td class="py-3 px-3">
+                                            @if (rank == 1)
+                                            {
+                                                <span class="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-black text-xs flex items-center justify-center border border-amber-300 dark:border-amber-800">1</span>
+                                            }
+                                            else if (rank == 2)
+                                            {
+                                                <span class="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs flex items-center justify-center border border-slate-300 dark:border-slate-600">2</span>
+                                            }
+                                            else if (rank == 3)
+                                            {
+                                                <span class="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 font-black text-xs flex items-center justify-center border border-orange-300 dark:border-orange-800">3</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center">@rank</span>
+                                            }
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="flex items-center gap-2.5">
+                                                @if (!string.IsNullOrEmpty(prod.ImageUrl))
+                                                {
+                                                    <img src="@prod.ImageUrl" alt="" class="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-slate-800 flex-shrink-0" style="width:36px;height:36px;min-width:36px;object-fit:cover;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                                        <i class="bi bi-image"></i>
+                                                    </div>
+                                                }
+                                                <div class="truncate max-w-[170px]">
+                                                    <div class="font-bold text-slate-900 dark:text-white truncate">@prod.Name</div>
+                                                    <div class="text-[11px] text-slate-400 truncate">
+                                                        @prod.BrandName &middot; <span class="text-slate-500">@prod.CategoryName</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="font-bold text-slate-900 dark:text-white tabular-nums">@prod.TotalQuantitySold</div>
+                                            <div class="w-16 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mx-auto mt-1 overflow-hidden">
+                                                <div class="bg-blue-600 h-1.5 rounded-full" style="width: @pct.ToString("0")%;"></div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3 font-bold text-slate-900 dark:text-white tabular-nums">
+                                            $@prod.TotalRevenue.ToString("N2")
+                                        </td>
+                                        <td class="py-3 px-3 text-right">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold @(prod.CurrentStock > 10 ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : prod.CurrentStock > 0 ? "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800" : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800")">
+                                                @prod.CurrentStock in stock
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    rank++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-10 text-slate-400">
+                        <i class="bi bi-graph-up text-4xl block mb-2 opacity-50"></i>
+                        <p class="text-xs">No sales transactions recorded yet.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Quick Store Operations -->
+            <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-lightning-charge text-amber-500"></i>
+                        <span>Quick Operations</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Everyday store fulfillment and catalog actions</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a asp-area="Admin" asp-controller="Products" asp-action="Create" 
+                       class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/60 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition group">
+                        <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-plus-circle-fill"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition">Add Product</div>
+                            <div class="text-[11px] text-slate-400 truncate">New catalog item</div>
+                        </div>
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Inventories" asp-action="Create" 
+                       class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition group">
+                        <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-boxes"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition">Add Inventory</div>
+                            <div class="text-[11px] text-slate-400 truncate">Restock units</div>
+                        </div>
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Orders" asp-action="Index" 
+                       class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-purple-500/60 hover:bg-purple-50/40 dark:hover:bg-purple-950/20 transition group">
+                        <span class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-cart-check-fill"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-purple-600 transition">Fulfill Orders</div>
+                            <div class="text-[11px] text-slate-400 truncate">Process pipeline</div>
+                        </div>
+                    </a>
+
+                    <a asp-area="Admin" asp-controller="Shipments" asp-action="Index" 
+                       class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-50/40 dark:hover:bg-cyan-950/20 transition group">
+                        <span class="w-9 h-9 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-105 transition">
+                            <i class="bi bi-truck"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 transition">Shipments</div>
+                            <div class="text-[11px] text-slate-400 truncate">Courier tracking</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT STORE ORDERS TABLE (READY FOR SHIPMENT PROCESSING) -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-check-circle-fill text-base"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-200" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between gap-3 text-xs font-bold text-rose-700 dark:text-rose-300 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-base"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-200" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-receipt-cutoff text-blue-600 dark:text-blue-400"></i>
+                            <span>Recent Store Orders</span>
+                        </h2>
+                        @if (readyCount > 0)
+                        {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                @readyCount Awaiting Dispatch
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                All Dispatched
+                            </span>
+                        }
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Latest customer purchases ready for shipment processing</p>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Filter tabs -->
+                    <div class="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl order-filter-tabs text-xs">
+                        <button type="button" 
+                                class="px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 @(defaultFilter == "ready" ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white")" 
+                                onclick="filterRecentOrders('ready', this)">
+                            <i class="bi bi-box-seam"></i> Ready (@readyCount)
+                        </button>
+                        <button type="button" 
+                                class="px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 @(defaultFilter == "all" ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white")" 
+                                onclick="filterRecentOrders('all', this)">
+                            All (@store.RecentOrders.Count)
+                        </button>
+                        <button type="button" 
+                                class="px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" 
+                                onclick="filterRecentOrders('delivered', this)">
+                            <i class="bi bi-check-circle"></i> Delivered (@deliveredCount)
+                        </button>
+                    </div>
+
+                    <a asp-area="Admin" asp-controller="Orders" asp-action="Index" 
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition">
+                        <span>View All Orders</span> <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            @if (store.RecentOrders.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="recentStoreOrdersTable">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/50">
+                                <th class="py-3 px-4">Order ID</th>
+                                <th class="py-3 px-3">Customer</th>
+                                <th class="py-3 px-3">Date</th>
+                                <th class="py-3 px-3 text-center">Items</th>
+                                <th class="py-3 px-3">Total</th>
+                                <th class="py-3 px-3">Payment</th>
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            @foreach (var order in store.RecentOrders)
+                            {
+                                var custRaw = $"{order.Customer?.FirstName} {order.Customer?.LastName}".Trim();
+                                var custName = !string.IsNullOrWhiteSpace(custRaw)
+                                    ? custRaw
+                                    : (!string.IsNullOrWhiteSpace(order.Customer?.Email) ? order.Customer.Email.Split('@')[0] : "Customer");
+                                var custInit = !string.IsNullOrWhiteSpace(custName) ? custName.Substring(0, 1).ToUpper() : "C";
+
+                                var isReadyToShip = order.Status == OrderStatus.Pending ||
+                                                    order.Status == OrderStatus.Confirmed ||
+                                                    order.Status == OrderStatus.Processing;
+
+                                var filterCategory = order.Status == OrderStatus.Delivered ? "delivered" : (isReadyToShip ? "ready" : "other");
+                                var orderDateLocal = DateTime.SpecifyKind(order.OrderDate, DateTimeKind.Utc).ToLocalTime();
+
+                                <tr class="order-row hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition" data-order-type="@filterCategory">
+                                    <td class="py-3 px-4">
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                           class="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                                            #@order.Id.ToString()[..8].ToUpper()
+                                        </a>
+                                        @if (isReadyToShip && order.Payment?.PaymentStatus == PaymentStatus.Paid)
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 mt-1 block w-fit">
+                                                <i class="bi bi-clock-history"></i> Action Req.
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-[11px] flex items-center justify-center flex-shrink-0 shadow-xs">
+                                                @custInit
+                                            </div>
+                                            <div class="truncate max-w-[150px]">
+                                                <div class="font-bold text-slate-900 dark:text-white truncate">@custName</div>
+                                                <div class="text-[11px] text-slate-400 truncate">@(order.Customer?.Email ?? "N/A")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 text-slate-500 dark:text-slate-400 tabular-nums">
+                                        <div class="font-medium text-slate-800 dark:text-slate-200">@orderDateLocal.ToString("MMM dd, yyyy")</div>
+                                        <div class="text-[10px]">@orderDateLocal.ToString("HH:mm")</div>
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            @(order.Items?.Sum(i => i.Quantity) ?? 0)
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 font-bold text-slate-900 dark:text-white tabular-nums">
+                                        $@order.TotalAmount.ToString("N2")
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        @if (order.Payment != null)
+                                        {
+                                            if (order.Payment.PaymentStatus == PaymentStatus.Paid || order.Payment.PaymentStatus == PaymentStatus.Completed)
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <i class="bi bi-check-circle-fill"></i> Paid
+                                                </span>
+                                            }
+                                            else if (order.Payment.PaymentStatus == PaymentStatus.Pending)
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                    <i class="bi bi-hourglass-split"></i> Unpaid
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                                    <i class="bi bi-x-circle-fill"></i> @order.Payment.PaymentStatus
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                                Pending
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        @switch (order.Status)
+                                        {
+                                            case OrderStatus.Delivered:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    <i class="bi bi-check2-circle"></i> Delivered
+                                                </span>
+                                                break;
+                                            case OrderStatus.Shipped:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                                    <i class="bi bi-truck"></i> Shipped
+                                                </span>
+                                                break;
+                                            case OrderStatus.Processing:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                    <i class="bi bi-arrow-repeat"></i> Processing
+                                                </span>
+                                                break;
+                                            case OrderStatus.Cancelled:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                                    <i class="bi bi-x-circle"></i> Cancelled
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                    <i class="bi bi-clock-history"></i> @order.Status
+                                                </span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="py-3 px-4 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            @if (isReadyToShip)
+                                            {
+                                                <button type="button" 
+                                                        data-bs-toggle="modal" data-bs-target="#dispatchModal"
+                                                        data-order-id="@order.Id"
+                                                        data-order-num="@order.Id.ToString()[..8].ToUpper()"
+                                                        data-customer="@custName"
+                                                        data-carrier="@(order.Shipment?.ShippingCompany ?? "J&T Express")"
+                                                        data-tracking="@(order.Shipment?.TrackingNumber ?? "")"
+                                                        class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs transition flex items-center gap-1 cursor-pointer"
+                                                        title="Dispatch Order">
+                                                    <i class="bi bi-box-seam"></i> <span>Dispatch</span>
+                                                </button>
+                                            }
+                                            @if (order.Shipment != null)
+                                            {
+                                                <a asp-area="Admin" asp-controller="Shipments" asp-action="Details" asp-route-id="@order.Shipment.Id"
+                                                   class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-600 text-slate-600 dark:text-slate-300 hover:text-indigo-600 flex items-center justify-center text-xs transition"
+                                                   title="Shipment Details">
+                                                    <i class="bi bi-truck"></i>
+                                                </a>
+                                            }
+                                            <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                               class="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center justify-center text-xs transition"
+                                               title="View Order Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            <tr id="noMatchingOrdersRow" class="hidden">
+                                <td colspan="8" class="text-center py-10 text-slate-400">
+                                    <i class="bi bi-check-circle text-3xl block mb-2 opacity-50"></i>
+                                    <div class="font-bold text-slate-700 dark:text-slate-300">No orders in this view</div>
+                                    <small class="text-slate-400">All customer purchases in this category have been processed.</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-10 text-slate-400">
+                    <i class="bi bi-bag text-4xl block mb-2 opacity-50"></i>
+                    <p class="text-xs">No orders placed yet.</p>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+<!-- Quick Dispatch Modal for Store Admin Orders -->
+<div class="modal fade" id="dispatchModal" tabindex="-1" aria-labelledby="dispatchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <form asp-area="Admin" asp-controller="Shipments" asp-action="Fulfill" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="orderId" id="dispatchOrderId" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2" id="dispatchModalLabel">
+                            <i class="bi bi-box-seam text-blue-600 dark:text-blue-400"></i>
+                            <span>Dispatch Order <span id="dispatchOrderNum" class="font-mono text-blue-600 dark:text-blue-400"></span></span>
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Customer: <strong id="dispatchCustomerName" class="text-slate-800 dark:text-slate-200"></strong>
+                        </p>
+                    </div>
+                    <button type="button" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg text-sm"></i>
+                    </button>
+                </div>
+                
+                <div class="p-5 space-y-4">
+                    <div class="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
+                        <i class="bi bi-info-circle-fill text-sm flex-shrink-0 mt-0.5"></i>
+                        <div>Confirming dispatch will transition the order status to <strong>Shipped</strong> and record courier tracking info.</div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Shipping Courier / Carrier</label>
+                        <select name="carrier" id="dispatchCarrierSelect" class="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                            <option value="J&T Express">J&T Express</option>
+                            <option value="DHL Express">DHL Express</option>
+                            <option value="FedEx">FedEx</option>
+                            <option value="Grab Express">Grab Express</option>
+                            <option value="Standard Courier">Standard Courier</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Tracking Code / Parcel ID</label>
+                        <input type="text" name="trackingNumber" id="dispatchTrackingInput" class="w-full text-xs font-mono font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. JT987654321KH" />
+                        <div class="text-[11px] text-slate-400 mt-1">Leave blank to automatically generate an internal tracking code.</div>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                    <button type="button" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition flex items-center gap-1.5">
+                        <i class="bi bi-truck"></i>
+                        <span>Confirm &amp; Dispatch</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <!-- ApexCharts CDN for Professional Visual Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Theme Colors matching pure Tailwind palette
+            const colors = {
+                primary: '#3b82f6',
+                success: '#10b981',
+                warning: '#f59e0b',
+                danger: '#ef4444',
+                purple: '#8b5cf6',
+                teal: '#06b6d4',
+                orange: '#f97316',
+                slate: '#64748b'
+            };
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const headingColor = isDark ? '#f8fafc' : '#0f172a';
+            const gridColor = isDark ? '#1e293b' : '#f1f5f9';
+
+            const isSuperView = @(isSuperView ? "true" : "false");
+
+            if (isSuperView) {
+                // =========================================================
+                // 1. SUPER ADMIN: REVENUE & SALES VELOCITY TREND
+                // =========================================================
+                const saSalesTrend = @Html.Raw(JsonSerializer.Serialize(sa.SalesTrend));
+                const saLabels = saSalesTrend.map(x => x.DateLabel || x.dateLabel);
+                const saRevenues = saSalesTrend.map(x => Number(x.Revenue || x.revenue || 0));
+                const saOrders = saSalesTrend.map(x => Number(x.OrdersCount || x.ordersCount || 0));
+
+                const revenueTrendEl = document.querySelector("#chart-super-revenue-trend");
+                if (revenueTrendEl) {
+                    const options = {
+                        series: [
+                            { name: 'Revenue ($)', type: 'area', data: saRevenues },
+                            { name: 'Orders Count', type: 'column', data: saOrders }
+                        ],
+                        chart: {
+                            height: 290,
+                            type: 'line',
+                            toolbar: { show: false },
+                            fontFamily: 'Inter, system-ui, sans-serif'
+                        },
+                        stroke: {
+                            width: [3, 0],
+                            curve: 'smooth'
+                        },
+                        colors: [colors.primary, colors.teal],
+                        fill: {
+                            type: ['gradient', 'solid'],
+                            gradient: {
+                                shadeIntensity: 1,
+                                opacityFrom: 0.35,
+                                opacityTo: 0.05,
+                                stops: [0, 90, 100]
+                            }
+                        },
+                        labels: saLabels.length > 0 ? saLabels : ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                        yaxis: [
+                            {
+                                title: { text: 'Revenue ($)', style: { color: colors.primary, fontWeight: 700 } },
+                                labels: { 
+                                    style: { colors: textColor },
+                                    formatter: (val) => '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) 
+                                }
+                            },
+                            {
+                                opposite: true,
+                                title: { text: 'Orders Placed', style: { color: colors.teal, fontWeight: 700 } },
+                                labels: { 
+                                    style: { colors: textColor },
+                                    formatter: (val) => Number(val).toFixed(0) 
+                                }
+                            }
+                        ],
+                        xaxis: {
+                            labels: { style: { colors: textColor } }
+                        },
+                        grid: {
+                            borderColor: gridColor,
+                            strokeDashArray: 4
+                        },
+                        legend: { 
+                            position: 'top', 
+                            horizontalAlign: 'right',
+                            labels: { colors: textColor }
+                        },
+                        tooltip: {
+                            shared: true,
+                            intersect: false,
+                            y: {
+                                formatter: function (y, { seriesIndex }) {
+                                    if (seriesIndex === 0) return '$' + Number(y).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                                    return y + ' orders';
+                                }
+                            }
+                        }
+                    };
+                    new ApexCharts(revenueTrendEl, options).render();
+                }
+
+                // =========================================================
+                // 2. SUPER ADMIN: ORDER PIPELINE DONUT CIRCLE
+                // =========================================================
+                const saOrdersDonutEl = document.querySelector("#chart-super-orders-donut");
+                if (saOrdersDonutEl) {
+                    const pending = @sa.PendingOrders;
+                    const processing = @sa.ProcessingOrders;
+                    const shipped = @sa.ShippedOrders;
+                    const delivered = @sa.DeliveredOrders;
+                    const cancelled = @sa.CancelledOrders;
+                    const total = pending + processing + shipped + delivered + cancelled;
+
+                    const donutSeries = total > 0 ? [pending, processing, shipped, delivered, cancelled] : [1, 0, 0, 0, 0];
+                    const donutLabels = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+                    const donutColors = [colors.warning, colors.primary, colors.purple, colors.success, colors.danger];
+
+                    const options = {
+                        series: donutSeries,
+                        labels: donutLabels,
+                        colors: donutColors,
+                        chart: {
+                            type: 'donut',
+                            height: 240,
+                            fontFamily: 'Inter, system-ui, sans-serif'
+                        },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '72%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Total Orders',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => total.toLocaleString()
+                                        },
+                                        value: {
+                                            fontSize: '22px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { show: false },
+                        tooltip: {
+                            y: {
+                                formatter: function (val) {
+                                    if (total <= 0) return '0 orders';
+                                    const pct = ((val / total) * 100).toFixed(1);
+                                    return val + ' orders (' + pct + '%)';
+                                }
+                            }
+                        }
+                    };
+                    new ApexCharts(saOrdersDonutEl, options).render();
+                }
+
+                // =========================================================
+                // 3. SUPER ADMIN: USERS & ROLES DONUT CIRCLE
+                // =========================================================
+                const saUsersDonutEl = document.querySelector("#chart-super-users-donut");
+                if (saUsersDonutEl) {
+                    const custCount = @sa.TotalCustomers;
+                    const adminCount = @sa.TotalAdmins;
+                    const superCount = @sa.SuperAdminCount;
+                    const usersTotal = custCount + adminCount;
+
+                    const series = usersTotal > 0 ? [custCount, Math.max(0, adminCount - superCount), superCount] : [1, 0, 0];
+                    const labels = ['Customers', 'Store Admins', 'Super Admins'];
+                    const uColors = [colors.primary, colors.purple, colors.teal];
+
+                    const options = {
+                        series: series,
+                        labels: labels,
+                        colors: uColors,
+                        chart: { type: 'donut', height: 220, fontFamily: 'Inter, system-ui, sans-serif' },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Active Users',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => usersTotal.toLocaleString()
+                                        },
+                                        value: {
+                                            fontSize: '20px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px', labels: { colors: textColor } }
+                    };
+                    new ApexCharts(saUsersDonutEl, options).render();
+                }
+
+                // =========================================================
+                // 4. SUPER ADMIN: CATEGORY CATALOG DONUT CIRCLE
+                // =========================================================
+                const saCatDonutEl = document.querySelector("#chart-super-category-donut");
+                if (saCatDonutEl) {
+                    const catData = @Html.Raw(JsonSerializer.Serialize(sa.CategoryDistributions));
+                    let series = catData.map(c => Number(c.ProductCount || c.productCount || 0));
+                    let labels = catData.map(c => c.CategoryName || c.categoryName || 'General');
+
+                    if (series.length === 0 || series.reduce((a, b) => a + b, 0) === 0) {
+                        series = [1];
+                        labels = ['Catalog Ready'];
+                    }
+
+                    const options = {
+                        series: series,
+                        labels: labels,
+                        colors: [colors.primary, colors.success, colors.warning, colors.danger, colors.purple, colors.teal],
+                        chart: { type: 'donut', height: 220, fontFamily: 'Inter, system-ui, sans-serif' },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Catalog Items',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => series.reduce((a, b) => a + b, 0).toLocaleString()
+                                        },
+                                        value: {
+                                            fontSize: '20px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px', labels: { colors: textColor } }
+                    };
+                    new ApexCharts(saCatDonutEl, options).render();
+                }
+
+            } else {
+                // =========================================================
+                // 1. STORE ADMIN: 7-DAY STORE SALES VELOCITY TREND
+                // =========================================================
+                const storeSalesTrend = @Html.Raw(JsonSerializer.Serialize(store.SalesTrend));
+                const storeLabels = storeSalesTrend.map(x => x.DateLabel || x.dateLabel);
+                const storeRevenues = storeSalesTrend.map(x => Number(x.Revenue || x.revenue || 0));
+                const storeOrders = storeSalesTrend.map(x => Number(x.OrdersCount || x.ordersCount || 0));
+
+                const storeSalesTrendEl = document.querySelector("#chart-store-sales-trend");
+                if (storeSalesTrendEl) {
+                    const options = {
+                        series: [
+                            { name: 'Store Revenue ($)', type: 'area', data: storeRevenues },
+                            { name: 'Orders Placed', type: 'column', data: storeOrders }
+                        ],
+                        chart: {
+                            height: 290,
+                            type: 'line',
+                            toolbar: { show: false },
+                            fontFamily: 'Inter, system-ui, sans-serif'
+                        },
+                        stroke: { width: [3, 0], curve: 'smooth' },
+                        colors: [colors.primary, colors.teal],
+                        fill: {
+                            type: ['gradient', 'solid'],
+                            gradient: {
+                                shadeIntensity: 1,
+                                opacityFrom: 0.35,
+                                opacityTo: 0.05,
+                                stops: [0, 90, 100]
+                            }
+                        },
+                        labels: storeLabels.length > 0 ? storeLabels : ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                        yaxis: [
+                            {
+                                title: { text: 'Revenue ($)', style: { color: colors.primary, fontWeight: 700 } },
+                                labels: { 
+                                    style: { colors: textColor },
+                                    formatter: (val) => '$' + Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) 
+                                }
+                            },
+                            {
+                                opposite: true,
+                                title: { text: 'Order Count', style: { color: colors.teal, fontWeight: 700 } },
+                                labels: { 
+                                    style: { colors: textColor },
+                                    formatter: (val) => Number(val).toFixed(0) 
+                                }
+                            }
+                        ],
+                        xaxis: {
+                            labels: { style: { colors: textColor } }
+                        },
+                        grid: { borderColor: gridColor, strokeDashArray: 4 },
+                        legend: { position: 'top', horizontalAlign: 'right', labels: { colors: textColor } },
+                        tooltip: {
+                            shared: true,
+                            intersect: false,
+                            y: {
+                                formatter: function (y, { seriesIndex }) {
+                                    if (seriesIndex === 0) return '$' + Number(y).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                                    return y + ' orders';
+                                }
+                            }
+                        }
+                    };
+                    new ApexCharts(storeSalesTrendEl, options).render();
+                }
+
+                // =========================================================
+                // 2. STORE ADMIN: ORDER STATUS DONUT CIRCLE
+                // =========================================================
+                const storeOrdersDonutEl = document.querySelector("#chart-store-orders-donut");
+                if (storeOrdersDonutEl) {
+                    const pending = @store.PendingOrdersCount;
+                    const processing = @store.ProcessingOrdersCount;
+                    const shipped = @store.ShippedOrdersCount;
+                    const delivered = @store.DeliveredOrdersCount;
+                    const total = pending + processing + shipped + delivered;
+
+                    const donutSeries = total > 0 ? [pending, processing, shipped, delivered] : [1, 0, 0, 0];
+                    const donutLabels = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+                    const donutColors = [colors.warning, colors.primary, colors.purple, colors.success];
+
+                    const options = {
+                        series: donutSeries,
+                        labels: donutLabels,
+                        colors: donutColors,
+                        chart: { type: 'donut', height: 240, fontFamily: 'Inter, system-ui, sans-serif' },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '72%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Orders',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => total.toLocaleString()
+                                        },
+                                        value: {
+                                            fontSize: '22px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { show: false },
+                        tooltip: {
+                            y: {
+                                formatter: function (val) {
+                                    if (total <= 0) return '0 orders';
+                                    const pct = ((val / total) * 100).toFixed(1);
+                                    return val + ' orders (' + pct + '%)';
+                                }
+                            }
+                        }
+                    };
+                    new ApexCharts(storeOrdersDonutEl, options).render();
+                }
+
+                // =========================================================
+                // 3. STORE ADMIN: INVENTORY STOCK HEALTH DONUT CIRCLE
+                // =========================================================
+                const storeInvDonutEl = document.querySelector("#chart-store-inventory-donut");
+                if (storeInvDonutEl) {
+                    const inStock = @store.InventoryHealth.InStockCount;
+                    const lowStock = @store.InventoryHealth.LowStockCount;
+                    const outStock = @store.InventoryHealth.OutOfStockCount;
+                    const invTotal = inStock + lowStock + outStock;
+
+                    const series = invTotal > 0 ? [inStock, lowStock, outStock] : [1, 0, 0];
+                    const labels = ['Optimal Stock (>5)', 'Low Stock (1-5)', 'Out of Stock (0)'];
+                    const invColors = [colors.success, colors.warning, colors.danger];
+
+                    const options = {
+                        series: series,
+                        labels: labels,
+                        colors: invColors,
+                        chart: { type: 'donut', height: 220, fontFamily: 'Inter, system-ui, sans-serif' },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Health Score',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => '@store.InventoryHealth.HealthScorePercentage%'
+                                        },
+                                        value: {
+                                            fontSize: '20px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px', labels: { colors: textColor } }
+                    };
+                    new ApexCharts(storeInvDonutEl, options).render();
+                }
+
+                // =========================================================
+                // 4. STORE ADMIN: CATEGORY DISTRIBUTION DONUT CIRCLE
+                // =========================================================
+                const storeCatDonutEl = document.querySelector("#chart-store-category-donut");
+                if (storeCatDonutEl) {
+                    const catData = @Html.Raw(JsonSerializer.Serialize(store.CategoryDistributions));
+                    let series = catData.map(c => Number(c.ItemsSold || c.itemsSold || c.ProductCount || c.productCount || 0));
+                    let labels = catData.map(c => c.CategoryName || c.categoryName || 'General');
+
+                    if (series.length === 0 || series.reduce((a, b) => a + b, 0) === 0) {
+                        series = [1];
+                        labels = ['Catalog Items'];
+                    }
+
+                    const options = {
+                        series: series,
+                        labels: labels,
+                        colors: [colors.primary, colors.success, colors.warning, colors.danger, colors.purple, colors.teal],
+                        chart: { type: 'donut', height: 220, fontFamily: 'Inter, system-ui, sans-serif' },
+                        stroke: { width: 2, colors: [isDark ? '#0f172a' : '#ffffff'] },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'Top Categories',
+                                            fontSize: '12px',
+                                            color: textColor,
+                                            formatter: () => series.reduce((a, b) => a + b, 0).toLocaleString()
+                                        },
+                                        value: {
+                                            fontSize: '20px',
+                                            fontWeight: 800,
+                                            color: headingColor
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: { enabled: false },
+                        legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '11px', labels: { colors: textColor } }
+                    };
+                    new ApexCharts(storeCatDonutEl, options).render();
+                }
+
+                // =========================================================
+                // 5. STORE ADMIN: RADIAL GAUGES (FULFILLMENT & TARGET)
+                // =========================================================
+                const radialGaugesEl = document.querySelector("#chart-store-radial-gauges");
+                if (radialGaugesEl) {
+                    const fulfillmentRate = @store.FulfillmentRate;
+                    const targetProgress = @store.MonthlyTargetProgress;
+
+                    const options = {
+                        series: [fulfillmentRate, targetProgress],
+                        chart: {
+                            height: 220,
+                            type: 'radialBar',
+                            fontFamily: 'Inter, system-ui, sans-serif'
+                        },
+                        plotOptions: {
+                            radialBar: {
+                                track: {
+                                    background: gridColor
+                                },
+                                dataLabels: {
+                                    name: { fontSize: '12px', color: textColor },
+                                    value: { fontSize: '18px', fontWeight: 800, color: headingColor, formatter: (val) => val + '%' },
+                                    total: {
+                                        show: true,
+                                        label: 'Efficiency',
+                                        color: textColor,
+                                        formatter: () => Math.round((fulfillmentRate + targetProgress) / 2) + '%'
+                                    }
+                                }
+                            }
+                        },
+                        labels: ['Fulfillment', 'Target'],
+                        colors: [colors.success, colors.primary]
+                    };
+                    new ApexCharts(radialGaugesEl, options).render();
+                }
+            }
+        });
+
+        // Quick filter for Recent Store Orders table
+        function filterRecentOrders(type, btn) {
+            document.querySelectorAll('.order-filter-tabs button').forEach(function(b) {
+                b.classList.remove('bg-white', 'dark:bg-slate-900', 'text-blue-600', 'dark:text-blue-400', 'shadow-xs');
+                b.classList.add('text-slate-600', 'dark:text-slate-400');
+            });
+            if (btn) {
+                btn.classList.add('bg-white', 'dark:bg-slate-900', 'text-blue-600', 'dark:text-blue-400', 'shadow-xs');
+                btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+            }
+
+            const rows = document.querySelectorAll('#recentStoreOrdersTable tbody tr.order-row');
+            let visibleCount = 0;
+            rows.forEach(function(r) {
+                if (type === 'all') {
+                    r.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    const orderType = r.getAttribute('data-order-type');
+                    const isMatch = (orderType === type);
+                    if (isMatch) {
+                        r.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        r.classList.add('hidden');
+                    }
+                }
+            });
+
+            const emptyRow = document.getElementById('noMatchingOrdersRow');
+            if (emptyRow) {
+                if (visibleCount === 0 && rows.length > 0) {
+                    emptyRow.classList.remove('hidden');
+                } else {
+                    emptyRow.classList.add('hidden');
+                }
+            }
+        }
+
+        // Initialize table filter and dispatch modal listener
+        document.addEventListener("DOMContentLoaded", function () {
+            const dispatchModalEl = document.getElementById('dispatchModal');
+            if (dispatchModalEl) {
+                dispatchModalEl.addEventListener('show.bs.modal', function (event) {
+                    const btn = event.relatedTarget;
+                    if (!btn) return;
+                    document.getElementById('dispatchOrderId').value = btn.getAttribute('data-order-id') || '';
+                    document.getElementById('dispatchOrderNum').textContent = '#' + (btn.getAttribute('data-order-num') || '');
+                    document.getElementById('dispatchCustomerName').textContent = btn.getAttribute('data-customer') || 'Customer';
+                    const carrier = btn.getAttribute('data-carrier') || 'J&T Express';
+                    document.getElementById('dispatchCarrierSelect').value = carrier;
+                    document.getElementById('dispatchTrackingInput').value = btn.getAttribute('data-tracking') || '';
+                });
+            }
+        });
+    </script>
+}

@@ -1,715 +1,405 @@
-﻿@{
-    ViewData["Title"] = "About Us";
+@{
+    ViewData["Title"] = "About Us & Contact - The CLOTHÉ Story";
 }
 
-<section class="clothe-about">
+<div class="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-100 transition-colors duration-200">
 
-    <!-- =========================================
-         HERO
-    ========================================== -->
-    <div class="about-hero">
+    <!-- =====================================================
+         1. EDITORIAL HERO & STORY
+    ====================================================== -->
+    <section id="story" class="relative overflow-hidden py-16 lg:py-24 border-b border-gray-100 dark:border-slate-800">
+        <!-- Subtle Glow Blobs -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/50 dark:bg-blue-900/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-100/40 dark:bg-indigo-900/15 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="container">
+        <div class="max-w-screen-xl mx-auto px-4 lg:px-6 relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-            <div class="row align-items-center g-5">
+                <div class="lg:col-span-7">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
+                        <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                        EST. 2023 · MODERN ATELIER
+                    </div>
 
-                <div class="col-lg-6">
-
-                    <span class="about-label">
-                        ABOUT CLOTHÉ
-                    </span>
-
-                    <h1>
-                        Style that feels
-                        <span class="about-gradient-text">
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08] mb-6">
+                        Style that feels<br />
+                        <span class="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400">
                             like you.
                         </span>
                     </h1>
 
-                    <p class="about-hero-text">
-                        CLOTHÉ is a modern clothing store built around
-                        simple design, quality materials, and effortless
-                        everyday fashion.
+                    <p class="text-base sm:text-lg text-gray-600 dark:text-slate-300 leading-relaxed mb-8 max-w-xl">
+                        CLOTHÉ is a contemporary fashion atelier built around conscious design, exceptional natural fabrics, and effortless everyday elegance. We believe style should be an authentic expression of who you are—refined, comfortable, and timeless.
                     </p>
 
-                    <div class="about-buttons">
-
-                        <!-- REDIRECT TO SHOP -->
-                        <a asp-controller="Shop"
-                           asp-action="Index"
-                           class="about-primary-btn">
-
-                            Explore Collection
-
-                            <i class="bi bi-arrow-right"></i>
-
+                    <div class="flex flex-wrap items-center gap-4 mb-10">
+                        <a asp-controller="Shop" asp-action="Index"
+                           class="btn-primary-clothe py-3 px-8 text-sm font-bold shadow-lg shadow-blue-500/20">
+                            Explore Collection <i class="bi bi-arrow-right"></i>
                         </a>
-
-                        <!-- CONTACT -->
                         <a href="#contact"
-                           class="about-secondary-btn">
-
-                            Contact Us
-
-                            <i class="bi bi-arrow-down ms-1"></i>
-
+                           class="btn-outline-clothe py-3 px-6 text-sm font-semibold flex items-center gap-2">
+                            <i class="bi bi-chat-dots text-[#229ED9]"></i> Contact &amp; Telegram
                         </a>
-
                     </div>
 
+                    <!-- Trust indicators -->
+                    <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-slate-300 font-semibold">
+                            <i class="bi bi-shield-check text-emerald-500 text-lg"></i>
+                            <span>Premium Quality</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-slate-300 font-semibold">
+                            <i class="bi bi-truck text-blue-500 text-lg"></i>
+                            <span>Fast Dispatch</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-700 dark:text-slate-300 font-semibold">
+                            <i class="bi bi-arrow-repeat text-amber-500 text-lg"></i>
+                            <span>30-Day Returns</span>
+                        </div>
+                    </div>
                 </div>
 
-
-                <div class="col-lg-6">
-
-                    <div class="about-image-wrapper">
-
-                        <div class="about-color-dot dot-blue"></div>
-                        <div class="about-color-dot dot-red"></div>
-                        <div class="about-color-dot dot-yellow"></div>
-                        <div class="about-color-dot dot-green"></div>
-
+                <div class="lg:col-span-5 relative">
+                    <div class="relative rounded-3xl overflow-hidden aspect-[4/5] shadow-2xl border border-gray-100 dark:border-slate-800">
                         <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop"
-                             alt="CLOTHÉ Fashion Store"
-                             class="about-main-image" />
-
+                             alt="CLOTHÉ Fashion Atelier"
+                             class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-6 left-6 right-6 p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-white/40 dark:border-slate-800 text-xs">
+                            <strong class="block text-gray-900 dark:text-white font-bold mb-0.5">Phnom Penh Design Studio</strong>
+                            <span class="text-gray-500 dark:text-slate-400">Crafting everyday luxury for conscious modern wardrobes.</span>
+                        </div>
                     </div>
-
                 </div>
 
             </div>
-
         </div>
+    </section>
 
-    </div>
+    <!-- =====================================================
+         PAGE NAVIGATION TABS
+    ====================================================== -->
+    <nav aria-label="About and Contact navigation" class="sticky top-16 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 py-3 px-4 shadow-xs">
+        <div class="max-w-screen-xl mx-auto flex items-center justify-center sm:justify-start gap-2 overflow-x-auto text-xs font-semibold">
+            <a href="#story" class="px-4 py-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors whitespace-nowrap">
+                <i class="bi bi-info-circle mr-1"></i> Our Story
+            </a>
+            <a href="#philosophy" class="px-4 py-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors whitespace-nowrap">
+                <i class="bi bi-stars mr-1"></i> Philosophy
+            </a>
+            <a href="#sustainability" class="px-4 py-2 rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors whitespace-nowrap">
+                <i class="bi bi-flower1 mr-1"></i> Sustainability
+            </a>
+            <a href="#contact" class="px-4 py-2 rounded-full bg-sky-50 dark:bg-sky-950/50 text-[#1b8bc2] dark:text-sky-300 font-bold border border-sky-200 dark:border-sky-800/60 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors whitespace-nowrap flex items-center gap-1.5">
+                <i class="bi bi-telegram text-[#229ED9]"></i> Contact &amp; Telegram
+            </a>
+        </div>
+    </nav>
 
+    <!-- =====================================================
+         2. CORE DESIGN PHILOSOPHY
+    ====================================================== -->
+    <section id="philosophy" class="py-16 lg:py-24 bg-gray-50/50 dark:bg-slate-900/50">
+        <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
 
-    <!-- =========================================
-         INTRODUCTION
-    ========================================== -->
-    <div class="about-introduction">
-
-        <div class="container">
-
-            <div class="about-section-heading">
-
-                <span>OUR STORY</span>
-
-                <h2>
-                    Fashion doesn't have to be complicated.
-                </h2>
-
-                <p>
-                    We created CLOTHÉ with one simple idea:
-                    everyday clothing should be comfortable,
-                    stylish, and easy to choose.
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-2">Our Philosophy</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">Fashion doesn't have to be complicated.</h2>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                    We created CLOTHÉ with one simple idea: everyday clothing should feel liberating. No stiff cuts, no synthetic compromises, and no confusing trends that fade by next season.
                 </p>
-
             </div>
 
-
-            <div class="row g-4 mt-4">
-
-                <!-- SIMPLE -->
-                <div class="col-md-4">
-
-                    <div class="about-story-card">
-
-                        <div class="about-icon blue-icon">
-                            <i class="bi bi-stars"></i>
-                        </div>
-
-                        <h3>
-                            Simple
-                        </h3>
-
-                        <p>
-                            Clean designs that fit naturally
-                            into your everyday wardrobe.
-                        </p>
-
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 1. Pure & Simple -->
+                <div class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl mb-6 shadow-sm">
+                        <i class="bi bi-stars"></i>
                     </div>
-
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Pure &amp; Simple</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                        Clean lines, neutral foundations, and versatile palettes that naturally integrate into your existing wardrobe for effortless morning styling.
+                    </p>
                 </div>
 
-
-                <!-- COMFORTABLE -->
-                <div class="col-md-4">
-
-                    <div class="about-story-card">
-
-                        <div class="about-icon red-icon">
-                            <i class="bi bi-heart"></i>
-                        </div>
-
-                        <h3>
-                            Comfortable
-                        </h3>
-
-                        <p>
-                            We believe looking good should
-                            never mean sacrificing comfort.
-                        </p>
-
+                <!-- 2. All-Day Comfort -->
+                <div class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center text-2xl mb-6 shadow-sm">
+                        <i class="bi bi-heart"></i>
                     </div>
-
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">All-Day Comfort</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                        We obsess over breathable fits, ergonomic draping, and soft tactile textures so you feel as confident in your outfit at 9 PM as you did at 9 AM.
+                    </p>
                 </div>
 
-
-                <!-- QUALITY -->
-                <div class="col-md-4">
-
-                    <div class="about-story-card">
-
-                        <div class="about-icon green-icon">
-                            <i class="bi bi-gem"></i>
-                        </div>
-
-                        <h3>
-                            Quality
-                        </h3>
-
-                        <p>
-                            Carefully selected materials made
-                            to become part of your wardrobe.
-                        </p>
-
+                <!-- 3. Enduring Quality -->
+                <div class="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-6 shadow-sm">
+                        <i class="bi bi-gem"></i>
                     </div>
-
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Enduring Quality</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+                        Reinforced seams, color-fast dyeing techniques, and resilient natural fibers crafted to endure hundreds of washes without losing their signature silhouette.
+                    </p>
                 </div>
-
             </div>
 
         </div>
+    </section>
 
-    </div>
+    <!-- =====================================================
+         3. SUSTAINABILITY COMMITMENT
+    ====================================================== -->
+    <section id="sustainability" class="py-16 lg:py-24 border-b border-gray-100 dark:border-slate-800">
+        <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
+                <div class="lg:col-span-6 relative">
+                    <div class="rounded-3xl overflow-hidden aspect-[4/3] shadow-xl border border-gray-100 dark:border-slate-800">
+                        <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1000&auto=format&fit=crop"
+                             alt="Sustainable Fabric Atelier"
+                             class="w-full h-full object-cover" />
+                    </div>
+                </div>
 
-    <!-- =========================================
-         VALUES
-    ========================================== -->
-    <div class="about-values">
-
-        <div class="container">
-
-            <div class="row align-items-center g-5">
-
-                <div class="col-lg-5">
-
-                    <span class="about-label">
-                        WHAT WE BELIEVE
-                    </span>
-
-                    <h2>
-                        Designed for
-                        <span class="about-green-text">
-                            real life.
-                        </span>
+                <div class="lg:col-span-6">
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block mb-2">Our Commitment</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                        Thoughtfully crafted.<br />
+                        <span class="text-emerald-600 dark:text-emerald-400">Consciously made.</span>
                     </h2>
-
-                    <p>
-                        From casual essentials to statement pieces,
-                        every CLOTHÉ collection is designed to make
-                        getting dressed easier.
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed mb-6">
+                        We partner exclusively with certified, ethical manufacturers who share our dedication to fair wages, safe atelier conditions, and environmental stewardship. Every garment is produced in small batches to prevent textile waste.
                     </p>
 
-                </div>
-
-
-                <div class="col-lg-7">
-
-                    <div class="value-list">
-
-                        <!-- VALUE 01 -->
-                        <div class="value-item">
-
-                            <span class="value-number blue-number">
-                                01
-                            </span>
-
-                            <div>
-
-                                <h4>
-                                    Quality First
-                                </h4>
-
-                                <p>
-                                    We focus on products that provide
-                                    lasting comfort and value.
-                                </p>
-
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2 font-bold text-xs text-gray-900 dark:text-white mb-1">
+                                <i class="bi bi-flower1 text-emerald-500 text-base"></i> Eco-Conscious Fabrics
                             </div>
-
+                            <p class="text-[11px] text-gray-500 dark:text-slate-400">100% natural organic cotton, linen, and OEKO-TEX certified dyes.</p>
                         </div>
-
-
-                        <!-- VALUE 02 -->
-                        <div class="value-item">
-
-                            <span class="value-number red-number">
-                                02
-                            </span>
-
-                            <div>
-
-                                <h4>
-                                    Modern Style
-                                </h4>
-
-                                <p>
-                                    Timeless designs inspired by
-                                    contemporary fashion.
-                                </p>
-
+                        <div class="p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2 font-bold text-xs text-gray-900 dark:text-white mb-1">
+                                <i class="bi bi-box-seam text-blue-500 text-base"></i> Plastic-Free Packing
                             </div>
-
+                            <p class="text-[11px] text-gray-500 dark:text-slate-400">All orders ship in 100% biodegradable and recycled paper mailers.</p>
                         </div>
-
-
-                        <!-- VALUE 03 -->
-                        <div class="value-item">
-
-                            <span class="value-number yellow-number">
-                                03
-                            </span>
-
-                            <div>
-
-                                <h4>
-                                    Customer First
-                                </h4>
-
-                                <p>
-                                    Your shopping experience matters
-                                    from discovery to delivery.
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- VALUE 04 -->
-                        <div class="value-item">
-
-                            <span class="value-number green-number">
-                                04
-                            </span>
-
-                            <div>
-
-                                <h4>
-                                    Everyday Confidence
-                                </h4>
-
-                                <p>
-                                    Clothing that helps you feel
-                                    confident wherever you go.
-                                </p>
-
-                            </div>
-
-                        </div>
-
                     </div>
-
                 </div>
 
             </div>
-
         </div>
+    </section>
 
-    </div>
+    <!-- =====================================================
+         4. CONTACT & ATELIER SECTION
+    ====================================================== -->
+    <section id="contact" class="py-16 lg:py-24 bg-gray-50/60 dark:bg-slate-900/60 scroll-mt-20">
+        <div class="max-w-screen-xl mx-auto px-4 lg:px-6">
 
-
-    <!-- =========================================
-         STATS
-    ========================================== -->
-    <div class="about-stats">
-
-        <div class="container">
-
-            <div class="stats-card">
-
-                <div class="row g-4 text-center">
-
-                    <!-- CUSTOMERS -->
-                    <div class="col-6 col-lg-3">
-
-                        <div class="stat-number blue-text">
-                            10K+
-                        </div>
-
-                        <div class="stat-label">
-                            Happy Customers
-                        </div>
-
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="mb-10 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-start gap-3.5 shadow-sm">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="bi bi-check-lg text-lg"></i>
                     </div>
-
-
-                    <!-- PRODUCTS -->
-                    <div class="col-6 col-lg-3">
-
-                        <div class="stat-number red-text">
-                            500+
-                        </div>
-
-                        <div class="stat-label">
-                            Products
-                        </div>
-
+                    <div>
+                        <h3 class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Message Delivered!</h3>
+                        <p class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">@TempData["SuccessMessage"]</p>
                     </div>
-
-
-                    <!-- FEEDBACK -->
-                    <div class="col-6 col-lg-3">
-
-                        <div class="stat-number yellow-text">
-                            99%
-                        </div>
-
-                        <div class="stat-label">
-                            Positive Feedback
-                        </div>
-
-                    </div>
-
-
-                    <!-- SUPPORT -->
-                    <div class="col-6 col-lg-3">
-
-                        <div class="stat-number green-text">
-                            24/7
-                        </div>
-
-                        <div class="stat-label">
-                            Customer Support
-                        </div>
-
-                    </div>
-
                 </div>
+            }
 
-            </div>
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mb-10 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 flex items-start gap-3.5 shadow-sm">
+                    <div class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="bi bi-exclamation-triangle-fill text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-800 dark:text-rose-300">Notice</h3>
+                        <p class="text-xs text-rose-700 dark:text-rose-400 mt-0.5">@TempData["ErrorMessage"]</p>
+                    </div>
+                </div>
+            }
 
-        </div>
-
-    </div>
-
-
-    <!-- =========================================
-     CONTACT US
-========================================= -->
-    <section id="contact" class="about-contact">
-
-        <div class="container">
-
-            <!-- SECTION HEADER -->
-            <div class="contact-section-header text-center">
-
-                <span class="about-label">
-                    CONTACT CLOTHÉ
-                </span>
-
-                <h2>
-                    We'd love to
-                    <span class="about-gradient-text">
-                        hear from you.
-                    </span>
-                </h2>
-
-                <p>
-                    Have a question about our products, your order,
-                    delivery, or anything else? Get in touch with us.
+            <div class="text-center max-w-2xl mx-auto mb-14">
+                <span class="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 block mb-2">Get in Touch</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">Contact CLOTHÉ &amp; Telegram Support</h2>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed"
+                   data-en="Have questions about sizes, orders, or styling advice? Reach our specialists on Telegram or send an inquiry below."
+                   data-kh="មានចម្ងល់អំពីទំហំ ការបញ្ជាទិញ ឬការប្រឹក្សា? ទំនាក់ទំនងមកកាន់ពួកយើងតាម Telegram ឬផ្ញើសារខាងក្រោម។">
+                    Have questions about sizes, orders, or styling advice? Reach our specialists on Telegram or send an inquiry below.
                 </p>
-
             </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
-            <div class="contact-wrapper">
+                <!-- LEFT: CONTACT CARDS (5 cols) -->
+                <div class="lg:col-span-5 space-y-6">
 
-                <!-- =========================================
-                 LEFT - CONTACT INFORMATION
-            ========================================== -->
-                <div class="contact-information">
+                    <!-- FEATURED: TELEGRAM DIRECT CHAT -->
+                    <div class="relative overflow-hidden rounded-3xl p-6 sm:p-7 telegram-gradient-card shadow-xl shadow-cyan-500/20"
+                         style="background: linear-gradient(135deg, #229ED9 0%, #1b8bc2 50%, #0d6fa0 100%) !important; color: #ffffff !important;">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-2xl shadow-inner">
+                                <i class="bi bi-telegram"></i>
+                            </div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold tracking-wide text-white">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                FASTEST REPLY
+                            </span>
+                        </div>
 
-                    <div class="contact-info-content">
-
-                        <span class="contact-small-label">
-                            GET IN TOUCH
-                        </span>
-
-                        <h3>
-                            Let's talk about
-                            <span>style.</span>
-                        </h3>
-
-                        <p>
-                            Our team is always ready to help you find
-                            the perfect style and answer your questions.
+                        <h3 class="text-xl font-bold mb-1 text-white">Telegram Support Bot</h3>
+                        <p class="text-sky-100 text-xs sm:text-sm mb-4 leading-relaxed">
+                            Chat directly with our support bot for immediate order assistance, sizing help, and KHQR payment verification.
                         </p>
 
-
-                        <!-- EMAIL -->
-                        <a href="mailto:hello@clothe.com"
-                           class="contact-item">
-
-                            <div class="contact-item-icon contact-blue">
-                                <i class="bi bi-envelope"></i>
+                        <div class="bg-black/20 rounded-2xl p-3 mb-5 border border-white/15 flex items-center justify-between text-white">
+                            <div class="flex items-center gap-2">
+                                <i class="bi bi-robot text-sky-200 text-lg"></i>
+                                <div>
+                                    <div class="text-[10px] uppercase text-sky-200 font-bold tracking-wider">Official Bot</div>
+                                    <div class="text-xs sm:text-sm font-mono font-semibold text-white">@@khmerclothingstore_bot</div>
+                                </div>
                             </div>
-
-                            <div class="contact-item-content">
-
-                                <small>
-                                    EMAIL
-                                </small>
-
-                                <strong>
-                                    hello@clothe.com
-                                </strong>
-
-                            </div>
-
-                            <i class="bi bi-arrow-up-right contact-arrow"></i>
-
-                        </a>
-
-
-                        <!-- PHONE -->
-                        <a href="tel:+85512345678"
-                           class="contact-item">
-
-                            <div class="contact-item-icon contact-red">
-                                <i class="bi bi-telephone"></i>
-                            </div>
-
-                            <div class="contact-item-content">
-
-                                <small>
-                                    PHONE
-                                </small>
-
-                                <strong>
-                                    +855 12 345 678
-                                </strong>
-
-                            </div>
-
-                            <i class="bi bi-arrow-up-right contact-arrow"></i>
-
-                        </a>
-
-
-                        <!-- LOCATION -->
-                        <div class="contact-item">
-
-                            <div class="contact-item-icon contact-yellow">
-                                <i class="bi bi-geo-alt"></i>
-                            </div>
-
-                            <div class="contact-item-content">
-
-                                <small>
-                                    LOCATION
-                                </small>
-
-                                <strong>
-                                    Phnom Penh, Cambodia
-                                </strong>
-
-                            </div>
-
+                            <span class="text-[11px] bg-white/20 text-white px-2.5 py-1 rounded-lg font-semibold">Online</span>
                         </div>
 
+                        <a href="https://t.me/khmerclothingstore_bot" target="_blank" rel="noopener noreferrer"
+                           class="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl telegram-action-btn font-bold text-sm shadow-md transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer"
+                           style="background-color: #ffffff !important; color: #0284c7 !important;">
+                            <i class="bi bi-send-fill" style="color: #0284c7;"></i>
+                            <span style="color: #0284c7; font-weight: 700;">Chat on Telegram Now</span>
+                            <i class="bi bi-arrow-up-right text-xs" style="color: #0284c7;"></i>
+                        </a>
+                    </div>
 
-                        <!-- SOCIAL -->
-                        <div class="contact-social">
-
-                            <span>
-                                FOLLOW CLOTHÉ
-                            </span>
-
-                            <div class="contact-social-links">
-
-                                <a href="#" aria-label="Facebook">
-                                    <i class="bi bi-facebook"></i>
-                                </a>
-
-                                <a href="#" aria-label="Instagram">
-                                    <i class="bi bi-instagram"></i>
-                                </a>
-
-                                <a href="#" aria-label="Telegram">
-                                    <i class="bi bi-telegram"></i>
-                                </a>
-
-                                <a href="#" aria-label="TikTok">
-                                    <i class="bi bi-tiktok"></i>
-                                </a>
-
+                    <!-- HOTLINE & PHONE -->
+                    <div class="rounded-3xl p-6 bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 shadow-sm transition-all hover:border-blue-300 dark:hover:border-blue-700/50">
+                        <div class="flex items-start gap-4">
+                            <div class="w-11 h-11 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-brand-blue dark:text-blue-400 flex items-center justify-center text-xl flex-shrink-0">
+                                <i class="bi bi-telephone-fill"></i>
                             </div>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-slate-100">Customer Hotline</h4>
+                                <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 mb-2">Speak directly with our store team.</p>
+                                <a href="tel:0969144183" class="inline-flex items-center gap-1.5 text-base font-bold text-brand-blue dark:text-blue-400 hover:underline">
+                                    096 914 4183
+                                    <span class="text-xs font-normal text-gray-400">(+855 96 914 4183)</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- ATELIER ADDRESS & HOURS -->
+                    <div class="rounded-3xl p-6 bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 shadow-sm space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="w-11 h-11 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl flex-shrink-0">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-slate-100">Flagship Studio</h4>
+                                <p class="text-xs text-gray-600 dark:text-slate-400 mt-1 leading-relaxed">
+                                    Preah Norodom Blvd, Sangkat Tonle Bassac, Khan Chamkarmon, Phnom Penh, Cambodia.
+                                </p>
+                            </div>
                         </div>
 
+                        <div class="border-t border-gray-100 dark:border-slate-800 pt-3 flex items-start gap-4">
+                            <div class="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                                <i class="bi bi-clock-fill"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-slate-100">Opening Hours</h4>
+                                <p class="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                                    Monday – Sunday: <strong>8:00 AM – 10:00 PM</strong><br />
+                                    Online Shopping &amp; Bot: <strong>24/7</strong>
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
 
+                <!-- RIGHT: INQUIRY FORM (7 cols) -->
+                <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-sm">
+                    <div class="mb-6">
+                        <span class="text-xs font-bold uppercase tracking-wider text-brand-blue dark:text-blue-400">Direct Inquiry</span>
+                        <h3 class="text-2xl font-extrabold text-gray-900 dark:text-slate-100 mt-1">Send a Message to Support</h3>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
+                            Messages submitted here are immediately forwarded to our Telegram desk for swift assistance.
+                        </p>
+                    </div>
 
-                <!-- =========================================
-                 RIGHT - CONTACT FORM
-            ========================================== -->
-                <div class="contact-form-wrapper">
+                    <form asp-controller="Home" asp-action="Contact" method="post" class="space-y-4"
+                          onsubmit="const b = this.querySelector('button[type=submit]'); if (b) { b.disabled = true; b.innerHTML = '<i class=\'bi bi-arrow-repeat animate-spin\'></i> Sending message...'; }">
+                        @Html.AntiForgeryToken()
 
-                    <div class="contact-form-header">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                    Your Name <span class="text-red-500">*</span>
+                                </label>
+                                <input name="Name" class="input-clothe w-full text-sm" placeholder="e.g. Sokha Chan" required autocomplete="name" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                    Email Address <span class="text-red-500">*</span>
+                                </label>
+                                <input name="Email" type="email" class="input-clothe w-full text-sm" placeholder="name@example.com" required autocomplete="email" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                    Phone Number (optional)
+                                </label>
+                                <input name="Phone" class="input-clothe w-full text-sm" placeholder="e.g. 096 914 4183" autocomplete="tel" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                    Subject <span class="text-red-500">*</span>
+                                </label>
+                                <select name="Subject" class="input-clothe w-full text-sm" required>
+                                    <option value="">Select a topic...</option>
+                                    <option value="Order Status & Delivery">Order Status &amp; Delivery</option>
+                                    <option value="Bakong KHQR Payment Query">Bakong KHQR Payment Query</option>
+                                    <option value="Product Sizing & Fit Advice">Product Sizing &amp; Fit Advice</option>
+                                    <option value="Returns & Exchanges">Returns &amp; Exchanges</option>
+                                    <option value="General Inquiry">General Inquiry</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <div>
-
-                            <span>
-                                SEND A MESSAGE
-                            </span>
-
-                            <h3>
-                                How can we help?
-                            </h3>
-
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                                Your Message <span class="text-red-500">*</span>
+                            </label>
+                            <textarea name="Message" rows="4" class="input-clothe w-full text-sm resize-y" placeholder="Describe your question, order number, or feedback..." required minlength="2"></textarea>
                         </div>
 
-                        <div class="contact-form-icon">
-                            <i class="bi bi-chat-heart"></i>
+                        <div class="pt-2">
+                            <button type="submit"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-brand-blue hover:bg-brand-blue-dark text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all duration-200 cursor-pointer">
+                                <i class="bi bi-send-fill"></i>
+                                Send Message to Support
+                            </button>
                         </div>
-
-                    </div>
-
-
-                    <form>
-
-                        <div class="row g-4">
-
-                            <!-- NAME -->
-                            <div class="col-md-6">
-
-                                <label class="contact-form-label">
-                                    Your Name
-                                </label>
-
-                                <input type="text"
-                                       class="form-control contact-input"
-                                       placeholder="Enter your name" />
-
-                            </div>
-
-
-                            <!-- EMAIL -->
-                            <div class="col-md-6">
-
-                                <label class="contact-form-label">
-                                    Email Address
-                                </label>
-
-                                <input type="email"
-                                       class="form-control contact-input"
-                                       placeholder="Enter your email" />
-
-                            </div>
-
-
-                            <!-- SUBJECT -->
-                            <div class="col-12">
-
-                                <label class="contact-form-label">
-                                    Subject
-                                </label>
-
-                                <input type="text"
-                                       class="form-control contact-input"
-                                       placeholder="What can we help you with?" />
-
-                            </div>
-
-
-                            <!-- MESSAGE -->
-                            <div class="col-12">
-
-                                <label class="contact-form-label">
-                                    Message
-                                </label>
-
-                                <textarea class="form-control contact-input contact-textarea"
-                                          rows="5"
-                                          placeholder="Tell us how we can help..."></textarea>
-
-                            </div>
-
-
-                            <!-- BUTTON -->
-                            <div class="col-12">
-
-                                <button type="button"
-                                        class="contact-submit-btn">
-
-                                    <span>
-                                        Send Message
-                                    </span>
-
-                                    <i class="bi bi-arrow-up-right"></i>
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
                     </form>
-
                 </div>
 
             </div>
 
         </div>
-
     </section>
 
-    <!-- =========================================
-         CTA
-    ========================================== -->
-    <section class="about-cta">
-
-        <div class="container">
-
-            <div class="cta-card">
-
-                <span class="about-label">
-                    FIND YOUR STYLE
-                </span>
-
-                <h2>
-                    Your wardrobe.
-                    <span>
-                        Your way.
-                    </span>
-                </h2>
-
-                <p>
-                    Discover clothing made for your everyday moments.
-                </p>
-
-
-                <!-- REDIRECT TO SHOP -->
-                <a asp-controller="Shop"
-                   asp-action="Index"
-                   class="about-primary-btn">
-
-                    Shop CLOTHÉ
-
-                    <i class="bi bi-arrow-right"></i>
-
-                </a>
-
-            </div>
-
-        </div>
-
-    </section>
-
-</section>
+</div>

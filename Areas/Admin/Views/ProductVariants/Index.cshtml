@@ -1,342 +1,724 @@
-@model IEnumerable<WebApplication_ClothingEcommerce.Models.ProductVariant>
+@using WebApplication_ClothingEcommerce.Data.Enums
+@using WebApplication_ClothingEcommerce.Models
+@model IEnumerable<ProductVariant>
 
 @{
     ViewData["Title"] = "Product Variants";
-    var selectedProductId = ViewBag.ProductId as Guid?;
+    var allProducts = ViewBag.AllProducts as List<Product>;
+    var allSizes = ViewBag.AllSizes as List<Size>;
+    var allColors = ViewBag.AllColors as List<Color>;
+    var statusValues = ViewBag.StatusValues as List<VariantStatus>;
+
+    var totalVariants = Model?.Count() ?? 0;
+    var inStockCount = Model?.Count(v => (v.Inventory?.Quantity ?? 0) > 0) ?? 0;
+    var totalInventoryUnits = Model?.Sum(v => v.Inventory?.Quantity ?? 0) ?? 0;
+    var outOfStockCount = Model?.Count(v => (v.Inventory?.Quantity ?? 0) <= 0) ?? 0;
 }
 
-<div class="container-fluid py-4">
+<div class="space-y-6">
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <h2 class="fw-bold mb-1">
-                <i class="bi bi-palette me-2"></i>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+                <span>CATALOG &amp; INVENTORY</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Product Variants
-            </h2>
-
-            <p class="text-muted mb-0">
-                Manage product size, color, price and inventory.
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Configure size, color, SKU barcodes, pricing, and stock levels per product item.
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-
-            <i class="bi bi-plus-lg me-1"></i>
-            Add Variant
-
-        </a>
-
-    </div>
-
-
-    <!-- ALERTS -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
-            @TempData["Success"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="openCreateVariantModal()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Variant</span>
             </button>
         </div>
-    }
-
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-        </div>
-    }
-
-
-    <!-- FILTER -->
-
-    <div class="card border-0 shadow-sm mb-4">
-
-        <div class="card-body">
-
-            <form asp-action="Index"
-                  method="get"
-                  class="row g-3 align-items-end">
-
-                <div class="col-md-6">
-
-                    <label class="form-label fw-semibold">
-                        Product
-                    </label>
-
-                    <select name="productId"
-                            asp-items="ViewBag.Products"
-                            class="form-select">
-
-                        <option value="">
-                            All Products
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <button type="submit"
-                            class="btn btn-dark w-100">
-
-                        <i class="bi bi-filter me-1"></i>
-                        Filter
-
-                    </button>
-
-                </div>
-
-                <div class="col-md-3">
-
-                    <a asp-action="Index"
-                       class="btn btn-outline-secondary w-100">
-
-                        <i class="bi bi-x-lg me-1"></i>
-                        Clear
-
-                    </a>
-
-                </div>
-
-            </form>
-
-        </div>
-
     </div>
 
+    <!-- ALERT CONTAINER -->
+    <div id="alertPlaceholder"></div>
 
-    <!-- TABLE -->
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-    <div class="card border-0 shadow-sm">
-
-        <div class="card-header bg-white py-3">
-
-            <div class="d-flex justify-content-between">
-
-                <h5 class="fw-bold mb-0">
-                    Variant List
-                </h5>
-
-                <span class="badge bg-dark">
-                    @Model.Count() Variants
+        <!-- 1. TOTAL VARIANTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Configured SKUs</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-boxes"></i>
                 </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalVariants
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Distinct combinations</span>
+                </div>
+            </div>
+        </div>
 
+        <!-- 2. IN STOCK SKUS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Available SKUs</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-check2-circle"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @inStockCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>Ready for purchase</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TOTAL UNITS IN STOCK -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stocked Units</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-layers-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                    @totalInventoryUnits
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Physical pieces on hand</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. OUT OF STOCK -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Out of Stock</span>
+                <span class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-rose-600 dark:text-rose-400 tabular-nums">
+                    @outOfStockCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Requires replenishment</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <form asp-action="Index" method="get" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <select name="productId" class="w-full text-xs font-semibold py-2.5 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Products">
+                    <option value="">All Products</option>
+                </select>
             </div>
 
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="submit"
+                        class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> <span>Filter</span>
+                </button>
+                <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Reset Filters">
+                    <i class="bi bi-arrow-repeat text-xs"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- VARIANTS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Variant List</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">All configured size, color, SKU and inventory variations</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                @totalVariants records
+            </span>
         </div>
 
+        @if (Model != null && Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-4" style="width: 60px;">Image</th>
+                            <th class="py-3 px-5">Product</th>
+                            <th class="py-3 px-4">SKU Code</th>
+                            <th class="py-3 px-4">Size</th>
+                            <th class="py-3 px-4">Color</th>
+                            <th class="py-3 px-4">Price</th>
+                            <th class="py-3 px-4">Stock</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        @foreach (var variant in Model)
+                        {
+                            var stock = variant.Inventory?.Quantity ?? 0;
+                            var variantImg = variant.Product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                             ?? variant.Product?.Images?.FirstOrDefault()?.ImageUrl;
 
-        <div class="card-body p-0">
-
-            @if (Model.Any())
-            {
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle mb-0">
-
-                        <thead class="table-light">
-
-                            <tr>
-
-                                <th>Product</th>
-
-                                <th>SKU</th>
-
-                                <th>Size</th>
-
-                                <th>Color</th>
-
-                                <th>Price</th>
-
-                                <th>Stock</th>
-
-                                <th>Status</th>
-
-                                <th class="text-end">
-                                    Actions
-                                </th>
-
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3.5 px-4">
+                                    @if (!string.IsNullOrWhiteSpace(variantImg))
+                                    {
+                                        <img src="@variantImg"
+                                             alt="@variant.Product?.Name"
+                                             class="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-5">
+                                    <div class="font-bold text-slate-900 dark:text-white">@variant.Product?.Name</div>
+                                    <div class="text-[11px] text-slate-400">@variant.Product?.Category?.Name</div>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <span class="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                                        @variant.SKU
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold">
+                                        @variant.Size?.Name
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600 shadow-2xs" style="background-color: @variant.Color?.HexCode;"></div>
+                                        <span class="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">@variant.Color?.Name</span>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="font-black text-slate-900 dark:text-white text-sm tabular-nums">$@variant.Price.ToString("N2")</div>
+                                    @if (variant.CompareAtPrice.HasValue && variant.CompareAtPrice.Value > 0)
+                                    {
+                                        <div class="text-[11px] line-through text-slate-400 tabular-nums">$@variant.CompareAtPrice.Value.ToString("N2")</div>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    @if (stock > 0)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 tabular-nums">
+                                            <i class="bi bi-box-seam"></i> @stock in stock
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                            <i class="bi bi-x-circle"></i> Out of stock
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    @if (variant.Status == VariantStatus.Available)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                            Available
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                            @variant.Status
+                                        </span>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-5 text-right">
+                                    <div class="inline-flex items-center gap-1">
+                                        <a asp-action="Details" asp-route-id="@variant.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 transition flex items-center justify-center"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button"
+                                                onclick="openEditVariantModal('@variant.Id', '@variant.ProductId', '@variant.SizeId', '@variant.ColorId', '@variant.SKU', '@variant.Price', '@(variant.CompareAtPrice?.ToString() ?? "")', '@stock', '@variant.Status', '@(variantImg ?? "")', '@(variant.Product?.Name ?? "")')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Edit Variant">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button"
+                                                onclick="openDeleteVariantModal('@variant.Id', '@variant.SKU')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:border-rose-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Delete Variant">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            @foreach (var variant in Model)
-                            {
-                                <tr>
-
-                                    <td>
-
-                                        <div class="fw-semibold">
-                                            @variant.Product?.Name
-                                        </div>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <code>
-                                            @variant.SKU
-                                        </code>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <span class="badge bg-light text-dark border">
-                                            @variant.Size?.Name
-                                        </span>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <span class="badge bg-light text-dark border">
-                                            @variant.Color?.Name
-                                        </span>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <strong>
-                                            $@variant.Price.ToString("N2")
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        @{
-                                            var stock =
-                                                variant.Inventory?.Quantity ?? 0;
-                                        }
-
-                                        @if (stock > 0)
-                                        {
-                                            <span class="badge bg-success">
-                                                @stock
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">
-                                                Out of Stock
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-
-                                        @if (variant.Status ==
-                                            WebApplication_ClothingEcommerce.Data.Enums.VariantStatus.Available)
-                                        {
-                                            <span class="badge bg-success">
-                                                Available
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">
-                                                @variant.Status
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <td class="text-end">
-
-                                        <div class="btn-group">
-
-                                            <a asp-action="Details"
-                                               asp-route-id="@variant.Id"
-                                               class="btn btn-sm btn-outline-primary">
-
-                                                <i class="bi bi-eye"></i>
-
-                                            </a>
-
-                                            <a asp-action="Edit"
-                                               asp-route-id="@variant.Id"
-                                               class="btn btn-sm btn-outline-warning">
-
-                                                <i class="bi bi-pencil"></i>
-
-                                            </a>
-
-                                            <a asp-action="Delete"
-                                               asp-route-id="@variant.Id"
-                                               class="btn btn-sm btn-outline-danger">
-
-                                                <i class="bi bi-trash"></i>
-
-                                            </a>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-boxes text-2xl"></i>
                 </div>
-            }
-            else
-            {
-                <div class="text-center py-5">
-
-                    <i class="bi bi-palette fs-1 text-muted"></i>
-
-                    <h5 class="mt-3">
-                        No variants found
-                    </h5>
-
-                    <p class="text-muted">
-                        Create your first product variant.
-                    </p>
-
-                    <a asp-action="Create"
-                       class="btn btn-primary">
-
-                        <i class="bi bi-plus-lg me-1"></i>
-                        Add Variant
-
-                    </a>
-
-                </div>
-            }
-
-        </div>
-
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">No variants found</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">Create your first product variant combination.</p>
+                <button type="button" onclick="openCreateVariantModal()"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-plus-lg"></i> Add Variant
+                </button>
+            </div>
+        }
     </div>
 
 </div>
+
+<!-- =========================================================
+     MODERN TAILWIND CREATE VARIANT MODAL
+========================================================= -->
+<div id="createVariantModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Variant</h3>
+                    <p class="text-[11px] text-slate-400">Configure size, color, SKU and initial inventory</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCreateVariantModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form id="createVariantForm" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <div id="createErrors" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs"></div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Product</label>
+                    <select name="ProductId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Select product</option>
+                        @if (allProducts != null)
+                        {
+                            @foreach (var p in allProducts)
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Size</label>
+                    <select name="SizeId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Select size</option>
+                        @if (allSizes != null)
+                        {
+                            @foreach (var s in allSizes)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Color</label>
+                    <select name="ColorId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Select color</option>
+                        @if (allColors != null)
+                        {
+                            @foreach (var c in allColors)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">SKU</label>
+                    <input name="SKU" class="w-full text-xs font-mono font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. TS-BLK-M" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Price ($)</label>
+                    <input type="number" step="0.01" min="0" name="Price" class="w-full text-xs font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="0.00" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Compare At Price ($)</label>
+                    <input type="number" step="0.01" min="0" name="CompareAtPrice" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Initial Stock</label>
+                    <input type="number" min="0" name="quantity" class="w-full text-xs font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" value="0" />
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status</label>
+                    <select name="Status" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        @if (statusValues != null)
+                        {
+                            @foreach (var s in statusValues)
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeCreateVariantModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Create Variant</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODERN TAILWIND EDIT VARIANT MODAL
+========================================================= -->
+<div id="editVariantModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Variant</h3>
+                    <p class="text-[11px] text-slate-400">Modify SKU properties, pricing, and stock</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditVariantModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form id="editVariantForm" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editId" />
+            <div id="editErrors" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs"></div>
+
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700 text-xs flex items-center gap-3">
+                <img id="editVariantImg" src="" alt="Variant" class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs hidden" />
+                <div id="editVariantImgPlaceholder" class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs flex-shrink-0">
+                    <i class="bi bi-image"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="font-bold text-slate-900 dark:text-white truncate" id="editVariantName">Editing Variant</div>
+                    <div class="text-[11px] text-slate-400 font-mono mt-0.5" id="editVariantSkuHeader"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Product</label>
+                    <select name="ProductId" id="editProductId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        @if (allProducts != null)
+                        {
+                            @foreach (var p in allProducts)
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Size</label>
+                    <select name="SizeId" id="editSizeId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        @if (allSizes != null)
+                        {
+                            @foreach (var s in allSizes)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Color</label>
+                    <select name="ColorId" id="editColorId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        @if (allColors != null)
+                        {
+                            @foreach (var c in allColors)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">SKU</label>
+                    <input name="SKU" id="editSku" class="w-full text-xs font-mono font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Price ($)</label>
+                    <input type="number" step="0.01" min="0" name="Price" id="editPrice" class="w-full text-xs font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Compare At Price ($)</label>
+                    <input type="number" step="0.01" min="0" name="CompareAtPrice" id="editCompareAtPrice" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Current Stock</label>
+                    <input type="number" min="0" name="quantity" id="editQuantity" class="w-full text-xs font-bold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status</label>
+                    <select name="Status" id="editStatus" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        @if (statusValues != null)
+                        {
+                            @foreach (var s in statusValues)
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditVariantModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODERN TAILWIND DELETE VARIANT MODAL
+========================================================= -->
+<div id="deleteVariantModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="bi bi-trash"></i>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Delete Variant?</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                Are you sure you want to delete SKU <strong id="deleteSku" class="font-mono text-slate-800 dark:text-slate-200"></strong>? This cannot be undone.
+            </p>
+        </div>
+
+        <form id="deleteVariantForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" id="deleteId" />
+            <div id="deleteErrors" class="hidden p-3 mb-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs text-left"></div>
+
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" onclick="closeDeleteVariantModal()"
+                        class="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-trash"></i> <span>Delete</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAlert(type, message) {
+            const placeholder = document.getElementById('alertPlaceholder');
+            const bgCls = type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300';
+            const icon = type === 'success' ? 'bi-check-circle-fill text-emerald-600' : 'bi-exclamation-triangle-fill text-rose-600';
+            placeholder.innerHTML = `<div class="flex items-center gap-2.5 p-3.5 mb-4 rounded-2xl border ${bgCls} text-xs font-semibold shadow-xs"><i class="bi ${icon} text-sm"></i><span>${message}</span></div>`;
+        }
+
+        function showErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill mr-1"></i> ' + errors.join('<br />');
+            box.classList.remove('hidden');
+        }
+
+        function hideErrors(boxId) {
+            document.getElementById(boxId).classList.add('hidden');
+        }
+
+        async function postForm(url, form, errorBoxId) {
+            hideErrors(errorBoxId);
+            const formData = new FormData(form);
+
+            const response = await fetch(url, { method: 'POST', body: formData });
+
+            let data = {};
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok) {
+                showErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                return null;
+            }
+            return data;
+        }
+
+        function openCreateVariantModal() {
+            var m = document.getElementById('createVariantModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeCreateVariantModal() {
+            var m = document.getElementById('createVariantModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function openEditVariantModal(id, productId, sizeId, colorId, sku, price, compareAt, quantity, status, imageUrl, productName) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editProductId').value = productId;
+            document.getElementById('editSizeId').value = sizeId;
+            document.getElementById('editColorId').value = colorId;
+            document.getElementById('editSku').value = sku;
+            document.getElementById('editPrice').value = price;
+            document.getElementById('editCompareAtPrice').value = compareAt || '';
+            document.getElementById('editQuantity').value = quantity || '0';
+            document.getElementById('editStatus').value = status;
+            hideErrors('editErrors');
+
+            const nameEl = document.getElementById('editVariantName');
+            const skuEl = document.getElementById('editVariantSkuHeader');
+            if (nameEl) nameEl.textContent = productName || 'Product Variant';
+            if (skuEl) skuEl.textContent = 'SKU: ' + sku;
+
+            const imgEl = document.getElementById('editVariantImg');
+            const phEl = document.getElementById('editVariantImgPlaceholder');
+            if (imageUrl && imageUrl.trim() !== '') {
+                imgEl.src = imageUrl;
+                imgEl.classList.remove('hidden');
+                phEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                phEl.classList.remove('hidden');
+            }
+
+            var m = document.getElementById('editVariantModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeEditVariantModal() {
+            var m = document.getElementById('editVariantModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function openDeleteVariantModal(id, sku) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteSku').textContent = sku;
+            hideErrors('deleteErrors');
+
+            var m = document.getElementById('deleteVariantModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeDeleteVariantModal() {
+            var m = document.getElementById('deleteVariantModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Form submits
+        document.getElementById('createVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const result = await postForm('@Url.Action("Create")', this, 'createErrors');
+            if (result && result.success) {
+                closeCreateVariantModal();
+                sessionStorage.setItem('variantToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        document.getElementById('editVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const result = await postForm('@Url.Action("Edit")?id=' + id, this, 'editErrors');
+            if (result && result.success) {
+                closeEditVariantModal();
+                sessionStorage.setItem('variantToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        document.getElementById('deleteVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const result = await postForm('@Url.Action("Delete")/' + id, this, 'deleteErrors');
+            if (result && result.success) {
+                closeDeleteVariantModal();
+                sessionStorage.setItem('variantToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        window.addEventListener('click', function(e) {
+            var cM = document.getElementById('createVariantModal');
+            var eM = document.getElementById('editVariantModal');
+            var dM = document.getElementById('deleteVariantModal');
+            if (e.target === cM) closeCreateVariantModal();
+            if (e.target === eM) closeEditVariantModal();
+            if (e.target === dM) closeDeleteVariantModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = sessionStorage.getItem('variantToast');
+            if (raw) {
+                const toast = JSON.parse(raw);
+                showAlert(toast.type, toast.message);
+                sessionStorage.removeItem('variantToast');
+            }
+        });
+    </script>
+}

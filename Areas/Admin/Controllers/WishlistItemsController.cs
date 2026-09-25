@@ -1,153 +1,137 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
-[Area("Admin")]
-[Authorize(Roles = "Admin")]
-public class WishlistItemsController : Controller
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public WishlistItemsController(AppDbContext context)
+    [Area("Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public class WishlistItemsController : Controller
     {
-        _context = context;
-    }
+        private readonly IWishlistService _wishlistService;
 
-    // GET: WISHLISTITEMS
-    public async Task<IActionResult> Index()    
-    {
-        return View(await _context.WishlistItems.ToListAsync());
-    }
-
-    // GET: WISHLISTITEMS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
-    {
-        if (id == null)
+        public WishlistItemsController(IWishlistService wishlistService)
         {
-            return NotFound();
+            _wishlistService = wishlistService;
         }
 
-        var wishlistitem = await _context.WishlistItems
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (wishlistitem == null)
+        // GET: Admin/WishlistItems
+        public async Task<IActionResult> Index()    
         {
-            return NotFound();
+            var items = await _wishlistService.GetAllWishlistItemsAsync();
+            return View(items);
         }
 
-        return View(wishlistitem);
-    }
-
-    // GET: WISHLISTITEMS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    // POST: WISHLISTITEMS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,WishlistId,VariantId,Wishlist,Variant")] WishlistItem wishlistitem)
-    {
-        if (ModelState.IsValid)
+        // GET: Admin/WishlistItems/Details/5
+        public async Task<IActionResult> Details(Guid? id)
         {
-            _context.Add(wishlistitem);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-        return View(wishlistitem);
-    }
-
-    // GET: WISHLISTITEMS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var wishlistitem = await _context.WishlistItems.FindAsync(id);
-        if (wishlistitem == null)
-        {
-            return NotFound();
-        }
-        return View(wishlistitem);
-    }
-
-    // POST: WISHLISTITEMS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,WishlistId,VariantId,Wishlist,Variant")] WishlistItem wishlistitem)
-    {
-        if (id != wishlistitem.Id)
-        {
-            return NotFound();
-        }
-
-        if (ModelState.IsValid)
-        {
-            try
+            if (id == null)
             {
-                _context.Update(wishlistitem);
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
+
+            var wishlistitem = await _wishlistService.GetWishlistItemByIdAsync(id.Value);
+            if (wishlistitem == null)
             {
-                if (!WishlistItemExists(wishlistitem.Id))
+                return NotFound();
+            }
+
+            return View(wishlistitem);
+        }
+
+        // GET: Admin/WishlistItems/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Admin/WishlistItems/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,WishlistId,VariantId,Wishlist,Variant")] WishlistItem wishlistitem)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _wishlistService.CreateWishlistItemAsync(wishlistitem);
+                if (result.Success)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                ModelState.AddModelError(string.Empty, result.Message);
+            }
+            return View(wishlistitem);
+        }
+
+        // GET: Admin/WishlistItems/Edit/5
+        public async Task<IActionResult> Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var wishlistitem = await _wishlistService.GetWishlistItemByIdAsync(id.Value);
+            if (wishlistitem == null)
+            {
+                return NotFound();
+            }
+            return View(wishlistitem);
+        }
+
+        // POST: Admin/WishlistItems/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid? id, [Bind("Id,WishlistId,VariantId,Wishlist,Variant")] WishlistItem wishlistitem)
+        {
+            if (id == null || id != wishlistitem.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                var result = await _wishlistService.UpdateWishlistItemAsync(id.Value, wishlistitem);
+                if (result.Success)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+                if (!await _wishlistService.WishlistItemExistsAsync(wishlistitem.Id))
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                ModelState.AddModelError(string.Empty, result.Message);
+            }
+            return View(wishlistitem);
+        }
+
+        // GET: Admin/WishlistItems/Delete/5
+        public async Task<IActionResult> Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var wishlistitem = await _wishlistService.GetWishlistItemByIdAsync(id.Value);
+            if (wishlistitem == null)
+            {
+                return NotFound();
+            }
+
+            return View(wishlistitem);
+        }
+
+        // POST: Admin/WishlistItems/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(Guid? id)
+        {
+            if (id.HasValue)
+            {
+                await _wishlistService.DeleteWishlistItemAsync(id.Value);
             }
             return RedirectToAction(nameof(Index));
         }
-        return View(wishlistitem);
-    }
-
-    // GET: WISHLISTITEMS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var wishlistitem = await _context.WishlistItems
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (wishlistitem == null)
-        {
-            return NotFound();
-        }
-
-        return View(wishlistitem);
-    }
-
-    // POST: WISHLISTITEMS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
-    {
-        var wishlistitem = await _context.WishlistItems.FindAsync(id);
-        if (wishlistitem != null)
-        {
-            _context.WishlistItems.Remove(wishlistitem);
-        }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-
-    private bool WishlistItemExists(System.Guid? id)
-    {
-        return _context.WishlistItems.Any(e => e.Id == id);
     }
 }

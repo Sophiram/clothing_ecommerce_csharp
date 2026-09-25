@@ -1,4 +1,4 @@
-﻿namespace WebApplication_ClothingEcommerce.Data.Enums
+namespace WebApplication_ClothingEcommerce.Data.Enums
 {
     public enum PaymentStatus
     {
@@ -7,6 +7,7 @@
         Failed,
         Refunded,
         Completed,
-        Cancelled
+        Cancelled,
+        Expired
     }
 }

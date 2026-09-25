@@ -1,142 +1,75 @@
-﻿@model WebApplication_ClothingEcommerce.Models.Wishlist?
-
-@{
-    ViewData["Title"] = "Wishlist";
+﻿@{
+    ViewData["Title"] = "Privacy Policy";
 }
 
-<div class="container py-5">
+<section class="clothe-about privacy-page">
 
-    <div class="mb-5">
+    <div class="about-hero" style="padding: 70px 0;">
+        <div class="container">
+            <span class="about-label">LEGAL</span>
+            <h1 style="font-size: clamp(2.4rem, 5vw, 3.6rem);">
+                Privacy <span class="about-gradient-text">Policy.</span>
+            </h1>
+            <p class="about-hero-text">
+                Last updated: @DateTime.Now.ToString("MMMM d, yyyy")
+            </p>
+        </div>
+    </div>
 
-        <div class="eyebrow">
-            SAVED ITEMS
+    <div class="container privacy-content py-5">
+
+        <div class="privacy-section">
+            <h3>1. Information We Collect</h3>
+            <p>
+                When you create an account, place an order, or contact us, we collect
+                information such as your name, email address, shipping address, and
+                order history so we can process your purchases and provide support.
+            </p>
         </div>
 
-        <h1 class="fw-bold">
-            My Wishlist
-        </h1>
+        <div class="privacy-section">
+            <h3>2. How We Use Your Information</h3>
+            <p>
+                We use your information to fulfill orders, communicate order updates,
+                respond to inquiries, improve our products, and — where you've opted in —
+                send you promotions and newsletters.
+            </p>
+        </div>
+
+        <div class="privacy-section">
+            <h3>3. Cookies</h3>
+            <p>
+                CLOTHÉ uses cookies to keep you signed in, remember items in your cart,
+                and understand how visitors use our site so we can improve it.
+            </p>
+        </div>
+
+        <div class="privacy-section">
+            <h3>4. Sharing Your Information</h3>
+            <p>
+                We do not sell your personal information. We share data only with
+                service providers who help us operate the store — such as payment
+                processors and shipping carriers — solely to fulfill your orders.
+            </p>
+        </div>
+
+        <div class="privacy-section">
+            <h3>5. Your Rights</h3>
+            <p>
+                You can access, update, or request deletion of your personal data at
+                any time from your <a asp-controller="Profile" asp-action="Index">Profile</a>
+                page, or by contacting us directly.
+            </p>
+        </div>
+
+        <div class="privacy-section">
+            <h3>6. Contact Us</h3>
+            <p>
+                Questions about this policy? Reach us at
+                <a href="mailto:hello@clothe.com">hello@clothe.com</a>.
+            </p>
+        </div>
 
     </div>
 
-
-    @if (Model == null || !Model.Items.Any())
-    {
-        <div class="empty-state">
-
-            <i class="bi bi-heart"></i>
-
-            <h3 class="fw-bold mt-3">
-                Your wishlist is empty
-            </h3>
-
-            <p class="text-secondary">
-                Save products you love for later.
-            </p>
-
-            <a asp-controller="Shop"
-               asp-action="Index"
-               class="btn btn-dark">
-
-                Browse Products
-
-            </a>
-
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-
-            @foreach (var item in Model.Items)
-            {
-                var product = item.Variant.Product;
-
-                var image = product?.Images
-                    .FirstOrDefault(i => i.IsPrimary)
-                    ?? product?.Images.FirstOrDefault();
-
-                <div class="col-6 col-md-4 col-lg-3">
-
-                    <div class="product-card">
-
-                        <a asp-controller="Shop"
-                           asp-action="Details"
-                           asp-route-id="@product?.Id">
-
-                            <div class="product-image-wrap">
-
-                                <img src="@(image?.ImageUrl ?? "https://via.placeholder.com/600x700?text=No+Image")"
-                                     class="product-image"
-                                     alt="@product?.Name" />
-
-                            </div>
-
-                        </a>
-
-                        <div class="pt-3">
-
-                            <h6 class="fw-bold">
-                                @product?.Name
-                            </h6>
-
-                            <strong>
-                                $@item.Variant.Price.ToString("0.00")
-                            </strong>
-
-
-                            <div class="d-flex gap-2 mt-3">
-
-                                <form asp-action="Remove"
-                                      method="post">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <input type="hidden"
-                                           name="id"
-                                           value="@item.Id" />
-
-                                    <button class="btn btn-outline-danger btn-sm">
-
-                                        <i class="bi bi-trash"></i>
-
-                                    </button>
-
-                                </form>
-
-
-                                <form asp-controller="Cart"
-                                      asp-action="Add"
-                                      method="post"
-                                      class="flex-grow-1">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <input type="hidden"
-                                           name="variantId"
-                                           value="@item.VariantId" />
-
-                                    <input type="hidden"
-                                           name="quantity"
-                                           value="1" />
-
-                                    <button class="btn btn-dark btn-sm w-100">
-
-                                        Add to Cart
-
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-            }
-
-        </div>
-    }
-
-</div>
+</section>

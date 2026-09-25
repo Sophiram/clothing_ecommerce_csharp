@@ -1,55 +1,264 @@
 @model WebApplication_ClothingEcommerce.Models.Color
+
 @{
     ViewData["Title"] = "Color Details";
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="admin-page">
+
+    <div class="page-header">
         <div>
-            <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Colors</a>
-            <h2 class="fw-bold mt-3 mb-1">@Model.Name</h2>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">@Model.Name</h1>
+            <p class="page-description">View color information and linked variants.</p>
         </div>
+
         <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"><i class="bi bi-pencil me-1"></i> Edit</a>
-            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i> Delete</a>
+            <a asp-action="Index" class="btn-reset"><i class="bi bi-arrow-left"></i> Back</a>
+            <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#editColorModal"
+                    data-id="@Model.Id"
+                    data-name="@Model.Name"
+                    data-hex="@Model.HexCode">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button type="button" class="action-btn action-danger" style="width:auto;padding:8px 18px;"
+                    data-bs-toggle="modal" data-bs-target="#deleteColorModal"
+                    data-id="@Model.Id"
+                    data-name="@Model.Name">
+                <i class="bi bi-trash"></i> Delete
+            </button>
         </div>
     </div>
 
+    <div id="alertPlaceholder"></div>
+
     <div class="row g-4">
+
+        <!-- COLOR PREVIEW -->
         <div class="col-lg-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Color Preview</h5></div>
-                <div class="card-body text-center py-4">
-                    <div class="rounded-circle mx-auto mb-3 shadow-sm border" style="width: 80px; height: 80px; background-color: @Model.HexCode;"></div>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title">Color Preview</h3>
+                    </div>
+                </div>
+                <div style="padding: 0 26px 26px; text-align: center;">
+                    <div class="color-swatch-lg mx-auto mb-3" style="background-color: @Model.HexCode;"></div>
                     <h6 class="fw-bold mb-1">@Model.Name</h6>
                     <span class="font-monospace text-muted">@Model.HexCode</span>
                 </div>
             </div>
         </div>
+
+        <!-- VARIANTS -->
         <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">Product Variants with this Color</h5>
-                    <span class="badge bg-info text-dark rounded-pill">@(Model.Variants?.Count ?? 0)</span>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title">Product Variants with this Color</h3>
+                    </div>
+                    <div class="admin-card-count">
+                        <span>@(Model.Variants?.Count ?? 0)</span>
+                        <small>total</small>
+                    </div>
                 </div>
-                <div class="card-body p-0">
+
+                @if (Model.Variants != null && Model.Variants.Any())
+                {
                     <ul class="list-group list-group-flush">
-                        @if (Model.Variants != null && Model.Variants.Any())
+                        @foreach (var item in Model.Variants)
                         {
-                            foreach (var item in Model.Variants)
-                            {
-                                <li class="list-group-item p-3">
-                                    <span class="fw-semibold">Variant ID: @item.Id</span>
-                                </li>
-                            }
-                        }
-                        else
-                        {
-                            <li class="list-group-item p-4 text-center text-muted">No variants assigned to this color.</li>
+                            <li class="list-group-item p-3">
+                                <span class="fw-semibold">Variant ID: @item.Id</span>
+                            </li>
                         }
                     </ul>
-                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+                        <h5>No variants found</h5>
+                        <p>No product variants are assigned to this color yet.</p>
+                    </div>
+                }
             </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editColorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editColorForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Color</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Color Name</label>
+                        <input name="Name" id="editName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Hex Code</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="color" id="editColorPicker" class="form-control form-control-color" />
+                            <input type="text" name="HexCode" id="editHexInput" class="form-control font-monospace" pattern="^#[0-9A-Fa-f]{6}$" required />
+                        </div>
+                        <small class="text-muted">Format: #RRGGBB</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteColorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteColorForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Color</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete <strong id="deleteName"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .color-swatch-lg {
+        width: 80px;
+        height: 80px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.15);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .form-control-color {
+        width: 52px;
+        height: 38px;
+        padding: 4px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function showAlert(type, message) {
+            const placeholder = document.getElementById('alertPlaceholder');
+            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+        }
+
+        function showErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
+            box.classList.remove('d-none');
+        }
+
+        function hideErrors(boxId) {
+            document.getElementById(boxId).classList.add('d-none');
+        }
+
+        async function postForm(url, form, errorBoxId) {
+            hideErrors(errorBoxId);
+            const formData = new FormData(form);
+
+            const response = await fetch(url, { method: 'POST', body: formData });
+
+            let data = {};
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok) {
+                showErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                return null;
+            }
+            return data;
+        }
+
+        // Sync color picker <-> hex text input
+        const editPicker = document.getElementById('editColorPicker');
+        const editHex = document.getElementById('editHexInput');
+        editPicker.addEventListener('input', () => editHex.value = editPicker.value.toUpperCase());
+        editHex.addEventListener('input', () => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(editHex.value)) {
+                editPicker.value = editHex.value;
+            }
+        });
+
+        // Edit
+        document.getElementById('editColorModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            const hex = btn.getAttribute('data-hex') || '#000000';
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editName').value = btn.getAttribute('data-name');
+            editHex.value = hex;
+            editPicker.value = hex;
+            hideErrors('editErrors');
+        });
+
+        document.getElementById('editColorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const result = await postForm('@Url.Action("Edit", "Colors")?id=' + id, this, 'editErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editColorModal')).hide();
+                sessionStorage.setItem('colorToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Delete
+        document.getElementById('deleteColorModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteId').value = btn.getAttribute('data-id');
+            document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
+            hideErrors('deleteErrors');
+        });
+
+        document.getElementById('deleteColorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const result = await postForm('@Url.Action("Delete", "Colors")/' + id, this, 'deleteErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteColorModal')).hide();
+                window.location.href = '@Url.Action("Index", "Colors")';
+            }
+        });
+
+        // Toast after reload (from Edit)
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = sessionStorage.getItem('colorToast');
+            if (raw) {
+                const toast = JSON.parse(raw);
+                showAlert(toast.type, toast.message);
+                sessionStorage.removeItem('colorToast');
+            }
+        });
+    </script>
+}

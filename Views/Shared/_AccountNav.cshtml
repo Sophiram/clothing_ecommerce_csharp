@@ -1,0 +1,55 @@
+@{
+    var active = (ViewData["AccountActiveSection"] as string) ?? "";
+}
+
+<!-- =========================================================
+     CUSTOMER ACCOUNT 4 TABS NAVIGATION
+========================================================= -->
+<div class="mb-8 relative">
+    <div class="flex justify-center overflow-x-auto no-scrollbar py-1">
+        <nav class="inline-flex items-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-full shadow-sm max-w-full"
+             aria-label="Customer Account Hub Navigation">
+
+            <!-- 1. Profile Overview -->
+            <a asp-controller="Profile" asp-action="Index"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap
+                      @(active == "Profile" 
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" 
+                          : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800")">
+                <i class="bi bi-person-circle text-base @(active == "Profile" ? "text-blue-400 dark:text-blue-600" : "")"></i>
+                <span data-en="Profile Overview" data-kh="ទិដ្ឋភាពទូទៅនៃគណនី">Profile Overview</span>
+            </a>
+
+            <!-- 2. My Orders -->
+            <a asp-controller="Orders" asp-action="Index"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap
+                      @(active == "Orders" 
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" 
+                          : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800")">
+                <i class="bi bi-box-seam text-base @(active == "Orders" ? "text-blue-400 dark:text-blue-600" : "")"></i>
+                <span data-en="My Orders" data-kh="ការបញ្ជាទិញរបស់ខ្ញុំ">My Orders</span>
+            </a>
+
+            <!-- 3. Wishlist -->
+            <a asp-controller="Wishlist" asp-action="Index"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap
+                      @(active == "Wishlist" 
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" 
+                          : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800")">
+                <i class="bi bi-heart text-base @(active == "Wishlist" ? "text-rose-400 dark:text-rose-600" : "")"></i>
+                <span data-en="Wishlist" data-kh="បញ្ជីប្រាថ្នា">Wishlist</span>
+            </a>
+
+            <!-- 4. Shopping Bag -->
+            <a asp-controller="Cart" asp-action="Index"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap
+                      @(active == "Bag" 
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md" 
+                          : "text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-slate-800")">
+                <i class="bi bi-bag text-base @(active == "Bag" ? "text-blue-400 dark:text-blue-600" : "")"></i>
+                <span data-en="Shopping Bag" data-kh="កន្ត្រកទំនិញ">Shopping Bag</span>
+            </a>
+
+        </nav>
+    </div>
+</div>

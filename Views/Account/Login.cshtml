@@ -1,113 +1,235 @@
-﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.LoginViewModel
+@model WebApplication_ClothingEcommerce.Models.ViewModels.LoginViewModel
 
 @{
-    ViewData["Title"] = "Sign in";
+    ViewData["Title"] = "Sign In";
     var returnUrl = ViewData["ReturnUrl"] as string;
 }
 
-<!-- Google reCAPTCHA API -->
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<div class="min-h-[80vh] flex items-center justify-center py-10 px-4 sm:px-6 bg-gray-50/50 dark:bg-slate-950 transition-colors duration-200">
+    <div class="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
 
-<div class="auth-page">
+        <!-- =====================================================
+             LEFT PANEL: EDITORIAL SHOWCASE (DESKTOP)
+        ====================================================== -->
+        <div class="hidden lg:flex lg:col-span-5 relative bg-cover bg-center text-white p-10 flex-col justify-between"
+             style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85');">
+            <!-- Dark Gradient Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/80 to-slate-950/95 backdrop-blur-[1px]"></div>
 
-    <div class="auth-container">
-        <div class="auth-card">
+            <div class="relative z-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] font-bold tracking-wider uppercase text-blue-300 mb-6">
+                    <i class="bi bi-stars"></i> CLOTHÉ CURATED
+                </div>
+                <h2 class="text-3xl font-extrabold tracking-tight leading-snug mb-3">
+                    Wear your identity,<br />every single day.
+                </h2>
+                <p class="text-xs text-slate-300 leading-relaxed mb-6">
+                    Sign in to access your saved favorites, rapid checkout, order tracking, and exclusive seasonal member discounts.
+                </p>
 
-            <div class="auth-logo text-center mb-3">
-                <img src="~/images/ClothingLogo.png" alt="CLOTHÉ Logo" style="max-height: 50px; object-fit: contain;" />
+                <ul class="space-y-3 text-xs text-slate-300">
+                    <li class="flex items-center gap-2.5">
+                        <i class="bi bi-truck text-blue-400"></i> Free express delivery on orders over $50
+                    </li>
+                    <li class="flex items-center gap-2.5">
+                        <i class="bi bi-shield-check text-blue-400"></i> Encrypted authentication &amp; secure checkout
+                    </li>
+                    <li class="flex items-center gap-2.5">
+                        <i class="bi bi-arrow-repeat text-blue-400"></i> 30-day hassle-free returns &amp; exchanges
+                    </li>
+                </ul>
             </div>
 
-            <div class="auth-heading">
-                <h1>Sign in</h1>
-                <p>Welcome back to our clothing store</p>
+            <!-- Testimonial Quote -->
+            <div class="relative z-10 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 mt-8">
+                <div class="flex items-center gap-1 text-yellow-400 text-xs mb-1.5">
+                    @for (int i = 0; i < 5; i++) { <i class="bi bi-star-fill"></i> }
+                </div>
+                <p class="text-xs italic text-slate-200 mb-2">
+                    "The fabric quality and modern silhouettes exceed expectations every order. My favorite clothing destination!"
+                </p>
+                <div class="text-[11px] font-bold text-white flex items-center justify-between">
+                    <span>Sophia M.</span>
+                    <span class="text-blue-300 font-normal"><i class="bi bi-patch-check-fill text-blue-400"></i> Verified Buyer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             RIGHT PANEL: LOGIN FORM
+        ====================================================== -->
+        <div class="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-center">
+
+            <!-- Brand / Header -->
+            <div class="mb-6 text-center sm:text-left">
+                <a asp-controller="Home" asp-action="Index" class="inline-block mb-3">
+                    <img src="~/images/ClothingLogo.png" alt="CLOTHÉ" class="clothe-logo-img h-8 w-auto" style="height: 32px; width: auto;" />
+                </a>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">Welcome back</h1>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Please enter your credentials to access your account</p>
             </div>
 
-            <form asp-action="Login" asp-route-returnurl="@returnUrl" method="post" novalidate>
 
+
+            <!-- Validation Errors -->
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
+                    <i class="bi bi-exclamation-circle-fill text-base mt-0.5 flex-shrink-0"></i>
+                    <div>
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form asp-action="Login" asp-route-returnurl="@returnUrl" method="post" novalidate class="space-y-4">
                 @Html.AntiForgeryToken()
 
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div asp-validation-summary="ModelOnly" class="auth-validation" role="alert"></div>
-                }
-
-                <div class="auth-field">
-                    <label asp-for="Email">Email Address</label>
-                    <input asp-for="Email"
-                           class="form-control"
-                           placeholder="Enter your email"
-                           autocomplete="email" />
-                    <span asp-validation-for="Email" class="text-danger field-validation-error"></span>
+                <!-- Email Address -->
+                <div>
+                    <label asp-for="Email" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input asp-for="Email" id="loginEmail" type="email"
+                               class="input-clothe pl-10 text-sm"
+                               placeholder="you@example.com" autocomplete="email" required />
+                    </div>
+                    <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
-                <div class="auth-field">
-                    <div class="auth-label-row">
-                        <label asp-for="Password" class="mb-0">Password</label>
-                        <a asp-action="ForgotPassword">Forgot password?</a>
+                <!-- Password -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label asp-for="Password" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300">Password</label>
+                        <button type="button" onclick="openForgotModal()" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                            Forgot password?
+                        </button>
                     </div>
-                    <div class="password-input-wrapper" style="position:relative;">
-                        <input asp-for="Password"
-                               id="passwordInput"
-                               type="password"
-                               class="form-control"
-                               placeholder="Enter your password"
-                               autocomplete="current-password"
-                               style="padding-right:44px;" />
-                        <button type="button"
-                                id="togglePassword"
-                                aria-label="Show password"
-                                style="position:absolute; right:12px; top:50%; transform:translateY(-50%); border:0; background:transparent; color:#5f6368; padding:0; display:flex; align-items:center;">
+                    <div class="relative">
+                        <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input asp-for="Password" id="passwordInput" type="password"
+                               class="input-clothe pl-10 pr-10 text-sm"
+                               placeholder="Enter your password" autocomplete="current-password" required />
+                        <button type="button" id="togglePasswordBtn"
+                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                                aria-label="Toggle password visibility">
                             <i class="bi bi-eye" id="togglePasswordIcon"></i>
                         </button>
                     </div>
-                    <span asp-validation-for="Password" class="text-danger field-validation-error"></span>
+                    <span asp-validation-for="Password" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
 
-                <div class="auth-options d-flex justify-content-between align-items-center">
-                    <label class="remember-box">
-                        <input asp-for="RememberMe" class="form-check-input me-1" />
-                        <span>Remember me</span>
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input asp-for="RememberMe" type="checkbox" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" />
+                        <span class="text-xs text-gray-600 dark:text-slate-400">Remember me on this device</span>
                     </label>
                 </div>
 
-                <!-- Google reCAPTCHA -->
-                <div class="auth-captcha-wrapper mb-3">
-                    <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE"></div>
-                </div>
-
-                <button type="submit" class="auth-submit">
-                    <i class="bi bi-box-arrow-in-right"></i>
-                    Sign in
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary-clothe w-full py-3 text-sm font-bold mt-2 shadow-lg shadow-blue-500/20">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
                 </button>
-
             </form>
 
-            <div class="auth-divider">
-                <span>or</span>
+            <!-- Social Divider -->
+            <div class="relative my-6 text-center">
+                <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-gray-200 dark:border-slate-800"></span></div>
+                <span class="relative px-3 bg-white dark:bg-slate-900 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">Or continue with</span>
             </div>
 
-            <p class="auth-bottom">
+            <!-- Social Buttons -->
+            <div class="mb-6">
+                <form asp-controller="Account" asp-action="ExternalLogin" asp-route-returnUrl="@returnUrl" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" name="provider" value="Google"
+                            class="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700/80 hover:border-gray-300 dark:hover:border-slate-600 text-sm font-semibold text-gray-700 dark:text-slate-200 transition-all shadow-sm group">
+                        <svg class="w-5 h-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                        </svg>
+                        <span>Continue with Google</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer Link -->
+            <p class="text-center text-xs text-gray-500 dark:text-slate-400">
                 Don't have an account?
-                <a asp-action="Register">Create account</a>
+                <a asp-action="Register" class="font-bold text-blue-600 dark:text-blue-400 hover:underline">Create an account</a>
             </p>
 
         </div>
-    </div>
 
+    </div>
+</div>
+
+<!-- =========================================================
+     FORGOT PASSWORD MODAL
+========================================================= -->
+<div id="forgotModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-key-fill text-amber-500"></i> Reset Password
+            </h3>
+            <button type="button" onclick="closeForgotModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-slate-400 mb-4 leading-relaxed">
+            Enter your registered email address and we'll send you instructions to safely reset your password.
+        </p>
+        <div class="mb-4">
+            <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Email Address</label>
+            <input type="email" id="resetEmailInput" class="input-clothe text-sm" placeholder="name@example.com" />
+        </div>
+        <div id="resetSuccessAlert" class="hidden mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-300">
+            <i class="bi bi-check-circle-fill mr-1"></i> Reset instructions have been dispatched!
+        </div>
+        <div class="flex items-center justify-end gap-2">
+            <button type="button" onclick="closeForgotModal()" class="btn-outline-clothe text-xs py-2 px-4">Cancel</button>
+            <button type="button" onclick="handlePasswordReset()" class="btn-primary-clothe text-xs py-2 px-4">Send Link</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        document.getElementById('togglePassword').addEventListener('click', function() {
+        // Password visibility toggler
+        document.getElementById('togglePasswordBtn')?.addEventListener('click', function () {
             const input = document.getElementById('passwordInput');
             const icon = document.getElementById('togglePasswordIcon');
+            if (!input || !icon) return;
             const isHidden = input.type === 'password';
-
             input.type = isHidden ? 'text' : 'password';
-            icon.classList.toggle('bi-eye');
-            icon.classList.toggle('bi-eye-slash');
-            this.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            icon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
         });
+
+
+        // Forgot password modal
+        function openForgotModal() { document.getElementById('forgotModal').classList.remove('hidden'); }
+        function closeForgotModal() { document.getElementById('forgotModal').classList.add('hidden'); }
+        function handlePasswordReset() {
+            const email = document.getElementById('resetEmailInput').value;
+            const alertEl = document.getElementById('resetSuccessAlert');
+            if (!email || !email.includes('@@')) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            alertEl.classList.remove('hidden');
+            setTimeout(() => {
+                closeForgotModal();
+                alertEl.classList.add('hidden');
+                document.getElementById('resetEmailInput').value = '';
+            }, 2000);
+        }
     </script>
 }

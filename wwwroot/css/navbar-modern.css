@@ -1,0 +1,967 @@
+/* ====================================================================
+   CLOTHÉ — REFINED NAVBAR STYLESHEET
+   Design: Clean · Minimal · Professional · Spacious · Elegant
+   No excessive pills | No heavy borders | Strong visual hierarchy
+   ==================================================================== */
+
+/* ------------------------------------------------------------------
+   CSS VARIABLES
+------------------------------------------------------------------ */
+:root {
+    --nav-height: 64px;
+    --nav-bg: rgba(255, 255, 255, 0.96);
+    --nav-bg-scrolled: rgba(255, 255, 255, 0.99);
+    --nav-border: rgba(15, 23, 42, 0.07);
+    --nav-text: #374151;
+    --nav-text-muted: #6b7280;
+    --nav-dark: #0f172a;
+    --nav-accent: #2563eb;
+    --nav-accent-bg: rgba(37, 99, 235, 0.07);
+    --nav-sale: #ef4444;
+    --nav-hover-bg: rgba(15, 23, 42, 0.045);
+    --nav-shadow: 0 1px 0 0 rgba(15, 23, 42, 0.07);
+    --nav-shadow-scrolled: 0 4px 20px -4px rgba(15, 23, 42, 0.10);
+    --nav-radius: 8px;
+    --nav-transition: 150ms ease;
+}
+
+/* ------------------------------------------------------------------
+   1. PROMO COUNTDOWN BAR
+------------------------------------------------------------------ */
+.clothe-promo-bar {
+    background: linear-gradient(90deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+    color: #f8fafc;
+    font-size: 0.8125rem;
+    padding: 7px 0;
+    position: relative;
+    z-index: 1050;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.clothe-promo-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    padding-right: 32px;
+}
+
+.clothe-promo-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.clothe-promo-tag {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.clothe-promo-countdown {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.clothe-countdown-unit {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: "Inter", monospace, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.clothe-countdown-unit small {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.clothe-promo-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #fcd34d;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-decoration: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.18s ease;
+}
+
+.clothe-promo-cta:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.clothe-promo-close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.clothe-promo-close:hover {
+    color: #fff;
+}
+
+/* ------------------------------------------------------------------
+   2. MAIN NAVBAR CONTAINER
+------------------------------------------------------------------ */
+.clothe-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: var(--nav-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--nav-border);
+    box-shadow: var(--nav-shadow);
+    transition: box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.clothe-navbar.scrolled {
+    background: var(--nav-bg-scrolled);
+    box-shadow: var(--nav-shadow-scrolled);
+}
+
+.clothe-nav-container {
+    display: flex;
+    align-items: center;
+    min-height: var(--nav-height);
+    gap: 0;
+}
+
+/* ------------------------------------------------------------------
+   3. BRAND LOGO
+------------------------------------------------------------------ */
+.clothe-brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-right: 32px;
+}
+
+.clothe-brand-logo {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+    transition: opacity 0.2s ease;
+}
+
+.clothe-brand:hover .clothe-brand-logo {
+    opacity: 0.8;
+}
+
+/* ------------------------------------------------------------------
+   4. NAVIGATION LINKS (DESKTOP)
+------------------------------------------------------------------ */
+.clothe-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    height: var(--nav-height);
+}
+
+.clothe-nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--nav-text);
+    font-family: "Inter", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: var(--nav-radius);
+    transition: color var(--nav-transition), background var(--nav-transition);
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+}
+
+.clothe-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 16px;
+    height: 2px;
+    background: var(--nav-accent);
+    border-radius: 1px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+}
+
+.clothe-nav-link:hover {
+    color: var(--nav-dark);
+    background: var(--nav-hover-bg);
+}
+
+/* Active State: accent underline + stronger text */
+.clothe-nav-link.active {
+    color: var(--nav-dark);
+    font-weight: 600;
+    background: transparent;
+}
+
+.clothe-nav-link.active::after {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 1;
+}
+
+/* Sale link */
+.clothe-nav-link-sale {
+    color: var(--nav-sale);
+    font-weight: 600;
+}
+
+.clothe-nav-link-sale:hover {
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.clothe-sale-pill {
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 4px;
+    animation: pulse-soft 2.4s infinite ease-in-out;
+    vertical-align: middle;
+}
+
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.7; }
+}
+
+/* Admin nav link */
+.clothe-admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #b91c1c;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--nav-radius);
+    text-decoration: none;
+    transition: color var(--nav-transition), background var(--nav-transition);
+}
+
+.clothe-admin-badge:hover {
+    color: #991b1b;
+    background: rgba(185, 28, 28, 0.06);
+}
+
+/* ------------------------------------------------------------------
+   5. NAVBAR SEARCH BAR
+------------------------------------------------------------------ */
+.clothe-nav-search {
+    position: relative;
+    flex: 1;
+    max-width: 240px;
+    transition: max-width 0.28s ease;
+    margin: 0 12px;
+}
+
+.clothe-nav-search:focus-within {
+    max-width: 320px;
+}
+
+.clothe-search-form {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.clothe-search-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 36px 0 36px;
+    font-size: 0.875rem;
+    font-family: "Inter", sans-serif;
+    color: var(--nav-dark);
+    background: #f3f4f6;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+}
+
+.clothe-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.clothe-search-input:focus {
+    background: #fff;
+    border-color: rgba(15, 23, 42, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.clothe-search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: #9ca3af;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.clothe-search-input:focus ~ .clothe-search-icon,
+.clothe-search-form:focus-within .clothe-search-icon {
+    color: #6b7280;
+}
+
+.clothe-search-submit {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 1rem;
+}
+
+.clothe-search-submit:hover {
+    background: var(--nav-hover-bg);
+    color: var(--nav-dark);
+}
+
+.clothe-search-clear {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 0.9rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.clothe-search-clear:hover {
+    color: var(--nav-dark);
+}
+
+/* ------------------------------------------------------------------
+   6. ACTION BUTTONS (WISHLIST, CART)
+------------------------------------------------------------------ */
+.clothe-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.clothe-action-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--nav-radius);
+    background: transparent;
+    border: none;
+    color: #4b5563;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: color var(--nav-transition), background var(--nav-transition);
+    cursor: pointer;
+}
+
+.clothe-action-btn:hover {
+    background: var(--nav-hover-bg);
+    color: var(--nav-dark);
+}
+
+/* Live badge counters */
+.clothe-badge-count {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--nav-dark);
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 99px;
+    border: 1.5px solid #fff;
+    pointer-events: none;
+    animation: pop-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clothe-badge-count.badge-sale {
+    background: var(--nav-sale);
+}
+
+@keyframes pop-in {
+    0%   { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+/* ------------------------------------------------------------------
+   7. USER PROFILE TRIGGER & DROPDOWN
+------------------------------------------------------------------ */
+.clothe-user-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: none;
+    padding: 4px 6px 4px 4px;
+    border-radius: var(--nav-radius);
+    color: var(--nav-dark);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--nav-transition);
+    margin-left: 2px;
+}
+
+.clothe-user-trigger:hover,
+.clothe-user-trigger[aria-expanded="true"] {
+    background: var(--nav-hover-bg);
+}
+
+.clothe-user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b 0%, #374151 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.clothe-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.clothe-user-name {
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--nav-dark);
+}
+
+.clothe-user-chevron {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    transition: transform 0.2s ease;
+}
+
+.clothe-user-trigger[aria-expanded="true"] .clothe-user-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.clothe-dropdown-menu {
+    min-width: 260px;
+    margin-top: 8px !important;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 8px 30px -6px rgba(15, 23, 42, 0.14), 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    animation: menu-slide-down 0.18s ease-out;
+}
+
+@keyframes menu-slide-down {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* User header inside dropdown */
+.clothe-user-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.clothe-user-header-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b 0%, #374151 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.clothe-user-meta strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--nav-dark);
+    line-height: 1.25;
+}
+
+.clothe-user-meta small {
+    display: block;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 1px;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.clothe-user-role-badge {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 1px 6px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 4px;
+}
+
+.clothe-user-role-badge.role-admin {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.clothe-user-role-badge.role-member {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* Dropdown items */
+.clothe-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    border-radius: 8px;
+    transition: background var(--nav-transition), color var(--nav-transition);
+}
+
+.clothe-dropdown-menu .dropdown-item i {
+    font-size: 0.95rem;
+    color: #6b7280;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color var(--nav-transition);
+}
+
+.clothe-dropdown-menu .dropdown-item:hover {
+    background: #f3f4f6;
+    color: var(--nav-dark);
+}
+
+.clothe-dropdown-menu .dropdown-item:hover i {
+    color: var(--nav-dark);
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item i {
+    color: #dc2626;
+}
+
+.clothe-dropdown-menu .dropdown-item.admin-item:hover {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.clothe-dropdown-section-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding: 6px 10px 3px;
+}
+
+.clothe-dropdown-divider {
+    margin: 4px 0;
+    border-color: #f3f4f6;
+}
+
+.clothe-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ef4444;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--nav-transition), color var(--nav-transition);
+    text-align: left;
+}
+
+.clothe-logout-btn i {
+    font-size: 0.95rem;
+    color: #ef4444;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.clothe-logout-btn:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ------------------------------------------------------------------
+   8. GUEST BUTTONS (SIGN IN / GET STARTED)
+------------------------------------------------------------------ */
+.clothe-btn-signin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--nav-text);
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--nav-radius);
+    text-decoration: none;
+    transition: color var(--nav-transition), background var(--nav-transition), border-color var(--nav-transition);
+}
+
+.clothe-btn-signin:hover {
+    color: var(--nav-dark);
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.clothe-btn-register {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: #0f172a;
+    border: 1px solid transparent;
+    border-radius: var(--nav-radius);
+    text-decoration: none;
+    transition: background var(--nav-transition), box-shadow var(--nav-transition);
+}
+
+.clothe-btn-register:hover {
+    color: #fff;
+    background: #1e293b;
+}
+
+/* ------------------------------------------------------------------
+   9. MOBILE HAMBURGER
+------------------------------------------------------------------ */
+.clothe-mobile-toggler {
+    display: none;
+    background: transparent;
+    border: none;
+    padding: 6px;
+    color: var(--nav-dark);
+    font-size: 1.375rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: background var(--nav-transition);
+}
+
+.clothe-mobile-toggler:hover {
+    background: var(--nav-hover-bg);
+}
+
+.clothe-mobile-toggler:focus {
+    outline: none;
+}
+
+/* ------------------------------------------------------------------
+   10. MOBILE MENU (OFFCANVAS)
+------------------------------------------------------------------ */
+@media (max-width: 991.98px) {
+    .clothe-mobile-toggler {
+        display: inline-flex;
+    }
+
+    .clothe-nav-links {
+        display: none;
+    }
+
+    .clothe-nav-search {
+        display: none;
+    }
+
+    .clothe-user-name,
+    .clothe-user-chevron {
+        display: none;
+    }
+
+    .clothe-user-trigger {
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    /* Mobile offcanvas search */
+    .clothe-mobile-search-wrap {
+        margin-bottom: 16px;
+    }
+
+    /* Mobile nav list */
+    .clothe-mobile-nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .clothe-mobile-nav-item a,
+    .clothe-mobile-nav-item button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        color: #1e293b;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        text-decoration: none;
+        border-radius: 9px;
+        transition: background var(--nav-transition), color var(--nav-transition);
+        width: 100%;
+        background: transparent;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .clothe-mobile-nav-item a:hover,
+    .clothe-mobile-nav-item a.active,
+    .clothe-mobile-nav-item button:hover {
+        background: #f3f4f6;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .clothe-mobile-nav-item a.sale-item {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    .clothe-mobile-auth-block {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .clothe-mobile-auth-block .clothe-btn-signin,
+    .clothe-mobile-auth-block .clothe-btn-register {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .clothe-promo-inner {
+        padding-right: 28px;
+        gap: 8px;
+    }
+
+    .clothe-promo-text {
+        font-size: 0.75rem;
+    }
+
+    .clothe-promo-cta {
+        display: none;
+    }
+
+    .clothe-brand-logo {
+        height: 32px;
+    }
+
+    .clothe-action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+}
+
+/* ------------------------------------------------------------------
+   11. MOBILE OFFCANVAS USER CARD & NAVIGATION
+------------------------------------------------------------------ */
+.clothe-mobile-user-card {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+/* Grid of quick-access tiles (Profile / Orders / Wishlist / Bag) */
+.clothe-mobile-user-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+}
+
+.clothe-mobile-user-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background var(--nav-transition), color var(--nav-transition), border-color var(--nav-transition);
+}
+
+.clothe-mobile-user-tile i {
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+    color: #6b7280;
+}
+
+.clothe-mobile-user-tile:hover {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+}
+
+.clothe-mobile-user-tile:hover i {
+    color: #fff;
+}
+
+/* Sublink items inside category accordion */
+.clothe-mobile-sublink {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: #4b5563;
+    text-decoration: none;
+    border-radius: 7px;
+    transition: background var(--nav-transition), color var(--nav-transition);
+}
+
+.clothe-mobile-sublink:hover {
+    background: #f3f4f6;
+    color: #0f172a;
+}
+
+.transition-chevron {
+    transition: transform 0.2s ease;
+}
+
+[aria-expanded="true"] .transition-chevron {
+    transform: rotate(180deg);
+}
+
+/* ------------------------------------------------------------------
+   12. FOCUS ACCESSIBILITY
+------------------------------------------------------------------ */
+.clothe-nav-link:focus-visible,
+.clothe-action-btn:focus-visible,
+.clothe-user-trigger:focus-visible,
+.clothe-mobile-toggler:focus-visible,
+.clothe-btn-signin:focus-visible,
+.clothe-btn-register:focus-visible {
+    outline: 2px solid var(--nav-accent);
+    outline-offset: 2px;
+}

@@ -18,3 +18,17 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+
+
+document.addEventListener('click', async function (e) {
+    const mobileBtn = e.target.closest('.add-cart-mobile-btn');
+    if (mobileBtn) {
+        const form = mobileBtn.closest('.product-card-modern')?.querySelector('.quick-add-form');
+        if (form) form.requestSubmit();
+    }
+
+    const wishBtn = e.target.closest('.wishlist-btn:not(.js-wishlist-btn)');
+    if (wishBtn) {
+        wishBtn.classList.toggle('active');
+    }
+});

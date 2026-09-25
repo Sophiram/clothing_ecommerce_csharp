@@ -1,0 +1,98 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.AdminCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Administrator";
+}
+
+<div class="container-fluid px-4 py-3" style="max-width: 800px;">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-2">
+            <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+            <span class="text-muted">/</span>
+            <span class="fw-semibold text-dark">Add New Administrator</span>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>@TempData["Error"]</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="mb-4">
+            <h4 class="fw-bold mb-1 text-dark">Create Administrative Account</h4>
+            <p class="text-muted small mb-0">Provision an administrator or super administrator with access to the management console.</p>
+        </div>
+
+        <form method="post" asp-action="Create">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="FirstName" class="form-label fw-semibold small"></label>
+                    <input asp-for="FirstName" class="form-control rounded-3" placeholder="First Name" />
+                    <span asp-validation-for="FirstName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="LastName" class="form-label fw-semibold small"></label>
+                    <input asp-for="LastName" class="form-control rounded-3" placeholder="Last Name" />
+                    <span asp-validation-for="LastName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Email" class="form-label fw-semibold small"></label>
+                    <input asp-for="Email" class="form-control rounded-3" placeholder="admin@domain.com" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="PhoneNumber" class="form-label fw-semibold small"></label>
+                    <input asp-for="PhoneNumber" class="form-control rounded-3" placeholder="+855 ..." />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="Role" class="form-label fw-semibold small"></label>
+                    <select asp-for="Role" class="form-select rounded-3">
+                        <option value="Admin">Admin (Store &amp; Catalog Management)</option>
+                        <option value="SuperAdmin">SuperAdmin (Full Platform &amp; System Access)</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="Password" class="form-label fw-semibold small"></label>
+                    <input asp-for="Password" type="password" class="form-control rounded-3" placeholder="Minimum 6 characters" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="col-sm-6">
+                    <label asp-for="ConfirmPassword" class="form-label fw-semibold small"></label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control rounded-3" placeholder="Confirm password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-light rounded-pill px-4">Cancel</a>
+                <button type="submit" class="btn btn-dark rounded-pill px-4">
+                    <i class="bi bi-person-plus-fill me-1"></i> Create Administrator
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

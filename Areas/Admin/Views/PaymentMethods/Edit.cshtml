@@ -1,135 +1,243 @@
-﻿@model WebApplication_ClothingEcommerce.Models.PaymentMethod
+@model WebApplication_ClothingEcommerce.Models.PaymentMethod
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Edit Payment Method";
+    var bakongId = Configuration["KHQR_ACCOUNT"] ?? Configuration["KHQR:BakongAccountId"] ?? "sorn_sophiram@bkrt";
+    var merchantName = Configuration["KHQR_MERCHANT_NAME"] ?? Configuration["KHQR:MerchantName"] ?? "SOPHIRAM SORN";
+    var isKhqrOrAba = Model.Name.Contains("KHQR", StringComparison.OrdinalIgnoreCase) || Model.Name.Contains("ABA", StringComparison.OrdinalIgnoreCase) || Model.Name.Contains("Bakong", StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="container-fluid py-4">
+<div class="space-y-6">
 
-    <div class="mb-4">
-
-        <h2 class="fw-bold">
-            Edit Payment Method
-        </h2>
-
-        <p class="text-muted">
-            Update payment method settings.
-        </p>
-
-    </div>
-
-
-    <div class="card border-0 shadow-sm">
-
-        <div class="card-body p-4">
-
-            <form asp-action="Edit"
-                  method="post">
-
-                @Html.AntiForgeryToken()
-
-                <input type="hidden"
-                       asp-for="Id" />
-
-                <input type="hidden"
-                       asp-for="CreatedAt" />
-
-                <div asp-validation-summary="ModelOnly"
-                     class="alert alert-danger">
-                </div>
-
-
-                <div class="mb-3">
-
-                    <label asp-for="Name"
-                           class="form-label">
-                        Name
-                    </label>
-
-                    <input asp-for="Name"
-                           class="form-control" />
-
-                    <span asp-validation-for="Name"
-                          class="text-danger">
-                    </span>
-
-                </div>
-
-
-                <div class="mb-3">
-
-                    <label asp-for="Description"
-                           class="form-label">
-                        Description
-                    </label>
-
-                    <textarea asp-for="Description"
-                              class="form-control"
-                              rows="3"></textarea>
-
-                </div>
-
-
-                <div class="mb-3">
-
-                    <label asp-for="Icon"
-                           class="form-label">
-                        Icon URL
-                    </label>
-
-                    <input asp-for="Icon"
-                           class="form-control" />
-
-                </div>
-
-
-                <div class="mb-3">
-
-                    <label asp-for="DisplayOrder"
-                           class="form-label">
-                        Display Order
-                    </label>
-
-                    <input asp-for="DisplayOrder"
-                           type="number"
-                           min="0"
-                           class="form-control" />
-
-                </div>
-
-
-                <div class="form-check mb-4">
-
-                    <input asp-for="IsActive"
-                           class="form-check-input" />
-
-                    <label asp-for="IsActive"
-                           class="form-check-label">
-                        Active
-                    </label>
-
-                </div>
-
-
-                <div class="d-flex gap-2">
-
-                    <button type="submit"
-                            class="btn btn-dark">
-                        Save Changes
-                    </button>
-
-                    <a asp-action="Index"
-                       class="btn btn-outline-secondary">
-                        Cancel
-                    </a>
-
-                </div>
-
-            </form>
-
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-primary-600 dark:text-primary-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-credit-card-2-front"></i>
+                <span data-en="FINANCE / PAYMENT METHODS" data-kh="ហិរញ្ញវត្ថុ / វិធីសាស្ត្រទូទាត់">FINANCE / PAYMENT METHODS</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white" data-en="Edit Payment Method" data-kh="កែប្រែវិធីសាស្ត្រទូទាត់">
+                Edit Payment Method
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-en="Configure method credentials, brand assets, checkout visibility, and local test credentials." data-kh="កែប្រែព័ត៌មានលម្អិត រូបតំណាង ភាពអាចប្រើប្រាស់បាន និងការកំណត់តេស្តក្នុងស្រុក។">
+                Configure method credentials, brand assets, checkout visibility, and local test credentials.
+            </p>
         </div>
 
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-action="Details" asp-route-id="@Model.Id"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-xs transition">
+                <i class="bi bi-eye"></i>
+                <span data-en="View Details" data-kh="មើលព័ត៌មាន">View Details</span>
+            </a>
+            <a asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-xs transition">
+                <i class="bi bi-arrow-left"></i>
+                <span data-en="Back to List" data-kh="ត្រឡប់ក្រោយ">Back to List</span>
+            </a>
+        </div>
     </div>
+
+    <form asp-action="Edit" method="post" id="editPaymentMethodForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CreatedAt" />
+
+        <div asp-validation-summary="ModelOnly" class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold mb-6"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- LEFT 2 COLS: MAIN FORM CARD -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
+
+                    <!-- Section Title -->
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-pencil-square"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-en="General Information" data-kh="ព័ត៌មានទូទៅ">General Information</h3>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400" data-en="Customer facing display names and sorting priority" data-kh="ឈ្មោះបង្ហាញអតិថិជន និងលំដាប់លំដោយ">Customer facing display names and sorting priority</p>
+                            </div>
+                        </div>
+
+                        <!-- LIVE PREVIEW AVATAR -->
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2 overflow-hidden shadow-inner flex-shrink-0" id="liveIconPreviewWrap">
+                            @if (!string.IsNullOrWhiteSpace(Model.Icon))
+                            {
+                                <img src="@Model.Icon" alt="" id="imgLivePreview" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='/images/khqr-logo.svg';" />
+                            }
+                            else
+                            {
+                                <i class="bi bi-credit-card-2-front text-xl text-primary-600 dark:text-primary-400" id="iconFallback"></i>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Method Name -->
+                        <div class="sm:col-span-2">
+                            <label asp-for="Name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Method Name *" data-kh="ឈ្មោះវិធីទូទាត់ *">Method Name <span class="text-rose-500">*</span></label>
+                            <input asp-for="Name" id="txtMethodName" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="e.g. Bakong KHQR, ABA Pay, Wing, Cash on Delivery" required />
+                            <span asp-validation-for="Name" class="text-rose-500 text-xs mt-1 block"></span>
+                        </div>
+
+                        <!-- Display Order -->
+                        <div>
+                            <label asp-for="DisplayOrder" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Sort Order" data-kh="លំដាប់បង្ហាញ">Display Order</label>
+                            <input asp-for="DisplayOrder" type="number" min="0" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" />
+                            <span asp-validation-for="DisplayOrder" class="text-rose-500 text-xs mt-1 block"></span>
+                        </div>
+                    </div>
+
+                    <!-- Description / Notice -->
+                    <div>
+                        <label asp-for="Description" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Customer Notice / Instructions" data-kh="ការពិពណ៌នា / សេចក្តីជូនដំណឹង">Customer Notice / Instructions</label>
+                        <textarea asp-for="Description" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="Scan KHQR code using ABA Mobile, Bakong, or any Cambodian banking app to complete your payment instantly."></textarea>
+                        <span asp-validation-for="Description" class="text-rose-500 text-xs mt-1 block"></span>
+                    </div>
+
+                    <!-- Icon Asset URL -->
+                    <div>
+                        <label asp-for="Icon" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Icon Asset URL" data-kh="តំណរូបភាព Icon">Icon Asset URL</label>
+                        <div class="relative">
+                            <input asp-for="Icon" id="txtIconUrl" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="/images/khqr-logo.svg or https://..." oninput="updateLiveIcon(this.value)" />
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                <i class="bi bi-link-45deg text-base"></i>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Icon" class="text-rose-500 text-xs mt-1 block"></span>
+
+                        <!-- Quick Presets -->
+                        <div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Presets:</span>
+                            <button type="button" onclick="setIconPreset('/images/khqr-logo.svg', 'Bakong KHQR')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                                KHQR
+                            </button>
+                            <button type="button" onclick="setIconPreset('/images/aba-logo.svg', 'ABA Pay')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                                ABA Pay
+                            </button>
+                            <button type="button" onclick="setIconPreset('/images/acleda-logo.svg', 'ACLEDA Bank')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                                ACLEDA
+                            </button>
+                            <button type="button" onclick="setIconPreset('/images/wing-logo.svg', 'Wing Bank')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                                Wing
+                            </button>
+                            <button type="button" onclick="setIconPreset('', 'Cash on Delivery')" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                                Cash on Delivery
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Toggle Switch -->
+                    <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between">
+                        <div>
+                            <label for="chkIsActive" class="text-xs font-bold text-slate-900 dark:text-white cursor-pointer block" data-en="Enable for Customer Checkout" data-kh="បើកដំណើរការលើការទូទាត់ចេញទំនិញ">
+                                Enable for Customer Checkout
+                            </label>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5" data-en="When disabled, customers will not see this payment option during checkout." data-kh="ពេលបិទ អតិថិជននឹងមិនឃើញជម្រើសនេះពេលទូទាត់ប្រាក់ឡើយ។">
+                                When disabled, customers will not see this payment option during checkout.
+                            </p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                            <input asp-for="IsActive" type="checkbox" id="chkIsActive" class="sr-only peer" />
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <a asp-action="Index" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold shadow-xs transition">
+                            <span data-en="Cancel" data-kh="បោះបង់">Cancel</span>
+                        </a>
+                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 cursor-pointer">
+                            <i class="bi bi-check-lg text-sm"></i>
+                            <span data-en="Save Changes" data-kh="រក្សាទុកការផ្លាស់ប្តូរ">Save Changes</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIGHT 1 COL: BAKONG KHQR TESTING GUIDE & METADATA -->
+            <div class="space-y-6">
+
+                <!-- BAKONG KHQR CONFIGURATION CARD -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm font-black">
+                                <i class="bi bi-qr-code"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs text-slate-900 dark:text-white">Bakong KHQR Test Config</h4>
+                                <span class="text-[10px] text-slate-400">EMVCo Real-Scan Ready</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/80 text-[10px] font-bold">
+                            Live Scan Active
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Bakong Account ID:</span>
+                                <span class="font-mono font-bold text-slate-900 dark:text-white">@bakongId</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Merchant Name:</span>
+                                <span class="font-semibold text-slate-900 dark:text-white">@merchantName</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Target Currency:</span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400">USD &amp; KHR (4,100)</span>
+                            </div>
+                        </div>
+
+                        <!-- LOCAL TESTING INSTRUCTIONS -->
+                        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+                            <div class="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <span>How Local Test Scanning Works:</span>
+                            </div>
+                            <ol class="list-decimal list-inside text-[11px] text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
+                                <li>Checkout KHQR generates standard EMVCo payload for <code class="font-mono px-1 py-0.5 bg-amber-200/60 dark:bg-amber-900/60 rounded text-slate-900 dark:text-white">@bakongId</code>.</li>
+                                <li>You can scan the QR with real <strong>ABA Mobile</strong> or <strong>Bakong App</strong> to transfer real test funds.</li>
+                                <li>Since local dev (<code class="font-mono">localhost</code>) cannot receive external webhooks from NBC, click the <strong>Confirm Payment</strong> button in the modal to advance your order!</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- METHOD METADATA CARD -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-3">
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">System Metadata</h4>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400">Method ID:</span>
+                            <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300">@Model.Id.ToString()[..8]...</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400">Created At:</span>
+                            <span class="font-mono text-[11px] text-slate-700 dark:text-slate-300">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                        <div class="flex items-center justify-between py-1.5">
+                            <span class="text-slate-400">Current Status:</span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold @(Model.IsActive ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-slate-100 dark:bg-slate-800 text-slate-400")">
+                                @(Model.IsActive ? "Active in Checkout" : "Disabled")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </form>
 
 </div>
 
@@ -137,4 +245,26 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-}
+
+    <script>
+        function updateLiveIcon(url) {
+            const wrap = document.getElementById('liveIconPreviewWrap');
+            if (!wrap) return;
+
+            url = (url || '').trim();
+            if (url) {
+                wrap.innerHTML = `<img src="${url}" alt="" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='/images/khqr-logo.svg';" />`;
+            } else {
+                wrap.innerHTML = `<i class="bi bi-credit-card-2-front text-xl text-primary-600 dark:text-primary-400"></i>`;
+            }
+        }
+
+        function setIconPreset(url, name) {
+            const input = document.getElementById('txtIconUrl');
+            if (input) {
+                input.value = url;
+                updateLiveIcon(url);
+            }
+        }
+    </script>
+}

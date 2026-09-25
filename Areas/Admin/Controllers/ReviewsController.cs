@@ -1,152 +1,81 @@
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Data;
-using WebApplication_ClothingEcommerce.Models;
-[Area("Admin")]
-[Authorize(Roles = "Admin")]
-public class ReviewsController : Controller
+using WebApplication_ClothingEcommerce.Services;
+
+namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public ReviewsController(AppDbContext context)
+    [Area("Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public class ReviewsController : Controller
     {
-        _context = context;
-    }
+        private readonly IReviewService _reviewService;
+        private readonly IAuditService _auditService;
 
-    // GET: REVIEWS
-    public async Task<IActionResult> Index()    
-    {
-        return View(await _context.Reviews.ToListAsync());
-    }
-
-    // GET: REVIEWS/Details/5
-    public async Task<IActionResult> Details(System.Guid? id)
-    {
-        if (id == null)
+        public ReviewsController(IReviewService reviewService, IAuditService auditService)
         {
-            return NotFound();
+            _reviewService = reviewService;
+            _auditService = auditService;
         }
 
-        var review = await _context.Reviews
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (review == null)
+        // =========================================================
+        // GET: /Admin/Reviews
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Index(string? search = null, int? rating = null)
         {
-            return NotFound();
+            var reviews = await _reviewService.GetAllReviewsAsync(search, rating);
+
+            ViewBag.Search = search;
+            ViewBag.Rating = rating;
+            ViewBag.TotalCount = reviews.Count;
+            ViewBag.AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+            ViewBag.FiveStarCount = reviews.Count(r => r.Rating == 5);
+            ViewBag.CriticalCount = reviews.Count(r => r.Rating <= 2);
+
+            return View(reviews);
         }
 
-        return View(review);
-    }
-
-    // GET: REVIEWS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    // POST: REVIEWS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,CustomerId,ProductId,Rating,Comment,CreatedAt,Customer,Product")] Review review)
-    {
-        if (ModelState.IsValid)
+        // =========================================================
+        // GET: /Admin/Reviews/Details/{id}
+        // =========================================================
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid? id)
         {
-            _context.Add(review);
-            await _context.SaveChangesAsync();
+            if (id == null) return NotFound();
+
+            var review = await _reviewService.GetReviewByIdAsync(id.Value);
+            if (review == null) return NotFound();
+
+            return View(review);
+        }
+
+        // =========================================================
+        // POST: /Admin/Reviews/Delete/{id}
+        // =========================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var review = await _reviewService.GetReviewByIdAsync(id);
+            if (review == null) return NotFound();
+
+            var success = await _reviewService.DeleteReviewAsync(id, null, isStaff: true);
+            if (success)
+            {
+                await _auditService.LogAsync(
+                    User.Identity?.Name,
+                    User.Identity?.Name,
+                    "DeleteReview",
+                    "Review",
+                    id.ToString(),
+                    $"Deleted review by {review.Customer?.Email} on product {review.Product?.Name}",
+                    HttpContext.Connection.RemoteIpAddress?.ToString()
+                );
+
+                TempData["Success"] = "Review removed successfully.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
-        return View(review);
-    }
-
-    // GET: REVIEWS/Edit/5
-    public async Task<IActionResult> Edit(System.Guid? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var review = await _context.Reviews.FindAsync(id);
-        if (review == null)
-        {
-            return NotFound();
-        }
-        return View(review);
-    }
-
-    // POST: REVIEWS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(System.Guid? id, [Bind("Id,CustomerId,ProductId,Rating,Comment,CreatedAt,Customer,Product")] Review review)
-    {
-        if (id != review.Id)
-        {
-            return NotFound();
-        }
-
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _context.Update(review);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ReviewExists(review.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return RedirectToAction(nameof(Index));
-        }
-        return View(review);
-    }
-
-    // GET: REVIEWS/Delete/5
-    public async Task<IActionResult> Delete(System.Guid? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var review = await _context.Reviews
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (review == null)
-        {
-            return NotFound();
-        }
-
-        return View(review);
-    }
-
-    // POST: REVIEWS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(System.Guid? id)
-    {
-        var review = await _context.Reviews.FindAsync(id);
-        if (review != null)
-        {
-            _context.Reviews.Remove(review);
-        }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-
-    private bool ReviewExists(System.Guid? id)
-    {
-        return _context.Reviews.Any(e => e.Id == id);
     }
 }

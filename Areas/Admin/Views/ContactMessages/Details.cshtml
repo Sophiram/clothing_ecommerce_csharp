@@ -1,0 +1,239 @@
+@model WebApplication_ClothingEcommerce.Models.ContactMessage
+
+@{
+    ViewData["Title"] = $"Message: {Model.Subject}";
+    var initial = !string.IsNullOrWhiteSpace(Model.Name) ? Model.Name[0].ToString().ToUpper() : "U";
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <a asp-action="Index" class="hover:underline flex items-center gap-1">
+                    <i class="bi bi-arrow-left"></i>
+                    <span data-en="Back to Contact Messages" data-kh="ត្រឡប់ទៅសារទំនាក់ទំនង">Back to Contact Messages</span>
+                </a>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span>@Model.Subject</span>
+                @if (Model.IsRead)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                        <i class="bi bi-check2"></i> Read
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                        <i class="bi bi-envelope-fill"></i> Unread
+                    </span>
+                }
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Inquiry received on <span class="font-semibold text-slate-700 dark:text-slate-300">@Model.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy 'at' hh:mm tt")</span>
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="mailto:@Model.Email?subject=@Uri.EscapeDataString($"Re: {Model.Subject}")"
+               class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                <i class="bi bi-reply-fill"></i>
+                <span data-en="Reply via Email" data-kh="ឆ្លើយតបតាមអ៊ីមែល">Reply via Email</span>
+            </a>
+
+            <a asp-action="Index"
+               class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5 shadow-xs">
+            <i class="bi bi-check-circle-fill text-base shrink-0"></i>
+            <span class="font-semibold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 shadow-xs">
+            <i class="bi bi-exclamation-triangle-fill text-base shrink-0"></i>
+            <span class="font-semibold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- MESSAGE BODY CARD (2 COLS) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center shadow-xs shrink-0 text-sm">
+                            @initial
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-900 dark:text-white text-sm">@Model.Name</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">@Model.Email</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 font-mono">@Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                    </div>
+                </div>
+
+                <!-- Subject banner -->
+                <div class="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Subject</div>
+                    <div class="text-sm font-bold text-slate-900 dark:text-white mt-0.5">@Model.Subject</div>
+                </div>
+
+                <!-- Message Content -->
+                <div class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-2">Message Content</div>
+                <div class="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+@Model.Message
+                </div>
+            </div>
+
+            <!-- IN-APP DIRECT EMAIL REPLY BOX -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    <i class="bi bi-reply-all-fill"></i>
+                    <span>Send Official Email Response</span>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Directly email <strong>@Model.Name</strong> at <span class="font-mono text-slate-700 dark:text-slate-300">@Model.Email</span> from CLOTHÉ support desk.
+                </p>
+
+                <form asp-action="Reply" asp-route-id="@Model.Id" method="post" class="space-y-3"
+                      onsubmit="const b = this.querySelector('button[type=submit]'); if (b) { b.disabled = true; b.innerHTML = '<i class=\'bi bi-arrow-repeat animate-spin\'></i> Sending email...'; }">
+                    @Html.AntiForgeryToken()
+
+                    <textarea name="replyBody" rows="4" required
+                              placeholder="Write your response to @Model.Name here..."
+                              class="w-full text-xs font-medium p-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[11px] text-slate-400">
+                            Sent via <strong class="text-slate-600 dark:text-slate-300">@Model.Email</strong> using configured SMTP
+                        </span>
+                        <button type="submit"
+                                class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                            <i class="bi bi-send-fill"></i>
+                            <span>Send Email Reply</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SENDER INFO & ACTIONS SIDEBAR (1 COL) -->
+        <div class="space-y-6">
+
+            <!-- Sender Info Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <i class="bi bi-person-badge-fill text-blue-500"></i>
+                    <span>Sender Profile</span>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <span class="text-slate-400 font-semibold block mb-0.5">Full Name</span>
+                        <span class="font-bold text-slate-900 dark:text-white text-sm">@Model.Name</span>
+                    </div>
+
+                    <div>
+                        <span class="text-slate-400 font-semibold block mb-0.5">Email Address</span>
+                        <a href="mailto:@Model.Email" class="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 break-all">
+                            <i class="bi bi-envelope"></i>
+                            <span>@Model.Email</span>
+                        </a>
+                    </div>
+
+                    <div>
+                        <span class="text-slate-400 font-semibold block mb-0.5">Phone Number</span>
+                        @if (!string.IsNullOrWhiteSpace(Model.Phone))
+                        {
+                            <a href="tel:@Model.Phone" class="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1.5">
+                                <i class="bi bi-telephone"></i>
+                                <span>@Model.Phone</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-slate-400 italic">Not provided</span>
+                        }
+                    </div>
+
+                    <div>
+                        <span class="text-slate-400 font-semibold block mb-0.5">Message ID</span>
+                        <span class="font-mono text-slate-600 dark:text-slate-300 text-[11px]">@Model.Id</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Management Actions Card -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+                <div class="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <i class="bi bi-sliders text-indigo-500"></i>
+                    <span>Manage Inquiry</span>
+                </div>
+
+                <div class="space-y-2">
+                    <!-- Toggle Read Status -->
+                    @if (!Model.IsRead)
+                    {
+                        <form asp-action="MarkRead" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="w-full px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold transition flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>Mark as Read</span>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="MarkUnread" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold transition flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700">
+                                <i class="bi bi-envelope"></i>
+                                <span>Mark as Unread</span>
+                            </button>
+                        </form>
+                    }
+
+                    <!-- Reply via Email Button -->
+                    <a href="mailto:@Model.Email?subject=@Uri.EscapeDataString($"Re: {Model.Subject}")"
+                       class="w-full px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-bold transition flex items-center justify-center gap-2 border border-blue-200 dark:border-blue-800">
+                        <i class="bi bi-reply"></i>
+                        <span>Reply to Customer</span>
+                    </a>
+
+                    <!-- Delete Button -->
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Are you sure you want to delete this message permanently?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="w-full px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-xs font-bold transition flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-800">
+                            <i class="bi bi-trash3"></i>
+                            <span>Delete Inquiry</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

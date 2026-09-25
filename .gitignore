@@ -1,0 +1,77 @@
+## =========================================================================
+## SECURITY & ENVIRONMENT SECRETS (DO NOT COMMIT REAL SECRETS!)
+## =========================================================================
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.Secrets.json
+appsettings.Local.json
+appsettings.Production.json
+*.pem
+*.pfx
+*.p12
+*.key
+*.crt
+*.cer
+
+## =========================================================================
+## BUILD & COMPILATION OUTPUT
+## =========================================================================
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## =========================================================================
+## USER UPLOADED FILES & MEDIA (Keep directory structure via .gitkeep)
+## =========================================================================
+wwwroot/uploads/*
+!wwwroot/uploads/**/.gitkeep
+wwwroot/temp/*
+!wwwroot/temp/**/.gitkeep
+
+## =========================================================================
+## LOCAL DATABASE & TEMPORARY FILES
+## =========================================================================
+*.mdf
+*.ldf
+*.db
+*.sqlite
+*.sqlite3
+
+## =========================================================================
+## IDE & WORKSPACE CONFIGURATIONS
+## =========================================================================
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+
+## =========================================================================
+## OS GENERATED FILES
+## =========================================================================
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+ehthumbs.db
+
+## =========================================================================
+## DOCKER & LOCAL RUNTIME LOGS
+## =========================================================================
+*.log
+stdout
+.env

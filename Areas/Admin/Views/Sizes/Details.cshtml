@@ -1,60 +1,253 @@
 @model WebApplication_ClothingEcommerce.Models.Size
+
 @{
     ViewData["Title"] = "Size Details";
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="admin-page">
+
+    <div class="page-header">
         <div>
-            <a asp-action="Index" class="text-decoration-none text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Sizes</a>
-            <h2 class="fw-bold mt-3 mb-1">Size: @Model.Name</h2>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Size: @Model.Name</h1>
+            <p class="page-description">View size information and linked variants.</p>
         </div>
+
         <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning"><i class="bi bi-pencil me-1"></i> Edit</a>
-            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i> Delete</a>
+            <a asp-action="Index" class="btn-reset"><i class="bi bi-arrow-left"></i> Back</a>
+            <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#editSizeModal"
+                    data-id="@Model.Id"
+                    data-name="@Model.Name">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button type="button" class="action-btn action-danger" style="width:auto;padding:8px 18px;"
+                    data-bs-toggle="modal" data-bs-target="#deleteSizeModal"
+                    data-id="@Model.Id"
+                    data-name="@Model.Name">
+                <i class="bi bi-trash"></i> Delete
+            </button>
         </div>
     </div>
 
+    <div id="alertPlaceholder"></div>
+
     <div class="row g-4">
+
+        <!-- SIZE INFO -->
         <div class="col-lg-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3"><h5 class="fw-bold mb-0">Size Information</h5></div>
-                <div class="card-body">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title">Size Information</h3>
+                    </div>
+                </div>
+                <div style="padding: 0 26px 26px;">
                     <div class="mb-3">
-                        <small class="text-muted">ID</small>
+                        <div class="detail-label">ID</div>
                         <div class="font-monospace small">@Model.Id</div>
                     </div>
                     <div class="mb-3">
-                        <small class="text-muted">Size Name</small>
-                        <div><span class="badge bg-secondary fs-6">@Model.Name</span></div>
+                        <div class="detail-label">Size Name</div>
+                        <span class="tag-badge">@Model.Name</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- VARIANTS -->
         <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">Product Variants using this Size</h5>
-                    <span class="badge bg-info text-dark rounded-pill">@(Model.Variants?.Count ?? 0)</span>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title">Product Variants using this Size</h3>
+                    </div>
+                    <div class="admin-card-count">
+                        <span>@(Model.Variants?.Count ?? 0)</span>
+                        <small>total</small>
+                    </div>
                 </div>
-                <div class="card-body p-0">
+
+                @if (Model.Variants != null && Model.Variants.Any())
+                {
                     <ul class="list-group list-group-flush">
-                        @if (Model.Variants != null && Model.Variants.Any())
+                        @foreach (var item in Model.Variants)
                         {
-                            foreach (var item in Model.Variants)
-                            {
-                                <li class="list-group-item p-3">
-                                    <span class="fw-semibold">Variant ID: @item.Id</span>
-                                </li>
-                            }
-                        }
-                        else
-                        {
-                            <li class="list-group-item p-4 text-center text-muted">No variants assigned to this size.</li>
+                            <li class="list-group-item p-3">
+                                <span class="fw-semibold">Variant ID: @item.Id</span>
+                            </li>
                         }
                     </ul>
-                </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+                        <h5>No variants found</h5>
+                        <p>No product variants are assigned to this size yet.</p>
+                    </div>
+                }
             </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editSizeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editSizeForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Size</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Size Name</label>
+                        <input name="Name" id="editName" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteSizeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteSizeForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Size</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete <strong id="deleteName"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-label {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #9ca3af;
+        margin-bottom: 4px;
+        letter-spacing: 0.03em;
+    }
+
+    .tag-badge {
+        display: inline-block;
+        padding: 5px 14px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function showAlert(type, message) {
+            const placeholder = document.getElementById('alertPlaceholder');
+            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+        }
+
+        function showErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
+            box.classList.remove('d-none');
+        }
+
+        function hideErrors(boxId) {
+            document.getElementById(boxId).classList.add('d-none');
+        }
+
+        async function postForm(url, form, errorBoxId) {
+            hideErrors(errorBoxId);
+            const formData = new FormData(form);
+
+            const response = await fetch(url, { method: 'POST', body: formData });
+
+            let data = {};
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok) {
+                showErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                return null;
+            }
+            return data;
+        }
+
+        // Edit
+        document.getElementById('editSizeModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editName').value = btn.getAttribute('data-name');
+            hideErrors('editErrors');
+        });
+
+        document.getElementById('editSizeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const result = await postForm('@Url.Action("Edit", "Sizes")?id=' + id, this, 'editErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editSizeModal')).hide();
+                sessionStorage.setItem('sizeToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Delete
+        document.getElementById('deleteSizeModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteId').value = btn.getAttribute('data-id');
+            document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
+            hideErrors('deleteErrors');
+        });
+
+        document.getElementById('deleteSizeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const result = await postForm('@Url.Action("Delete", "Sizes")/' + id, this, 'deleteErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteSizeModal')).hide();
+                // Delete redirects back to Index since the item is gone
+                window.location.href = '@Url.Action("Index", "Sizes")';
+            }
+        });
+
+        // Show toast after reload (from Edit)
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = sessionStorage.getItem('sizeToast');
+            if (raw) {
+                const toast = JSON.parse(raw);
+                showAlert(toast.type, toast.message);
+                sessionStorage.removeItem('sizeToast');
+            }
+        });
+    </script>
+}

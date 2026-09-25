@@ -1,0 +1,34 @@
+@model WebApplication_ClothingEcommerce.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container py-5 my-5 text-center" style="max-width: 580px;">
+    <div class="mb-4">
+        <span class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle shadow-sm" style="width: 76px; height: 76px;">
+            <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+        </span>
+    </div>
+
+    <h1 class="h3 fw-bold text-dark mb-2">Something went wrong</h1>
+    <p class="text-muted small mb-4">
+        An unexpected error occurred while processing your request. Our technical team has been notified. Please return to the homepage or try again shortly.
+    </p>
+
+    @if (Model.ShowRequestId)
+    {
+        <div class="p-3 bg-light border rounded-3 mb-4 text-start">
+            <div class="text-muted small fw-semibold">Reference Tracking Code:</div>
+            <code class="text-dark small font-monospace">@Model.RequestId</code>
+        </div>
+    }
+
+    <div class="d-flex gap-2 justify-content-center">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-dark rounded-pill px-4">
+            <i class="bi bi-house-door me-1"></i> Return Home
+        </a>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-1"></i> Go Back
+        </a>
+    </div>
+</div>

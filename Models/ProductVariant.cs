@@ -30,5 +30,7 @@ namespace WebApplication_ClothingEcommerce.Models
         public Color? Color { get; set; }
 
         public Inventory? Inventory { get; set; }
+
+        public decimal? CompareAtPrice { get; set; }
     }
 }

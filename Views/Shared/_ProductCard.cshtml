@@ -1,212 +1,324 @@
-@model WebApplication_ClothingEcommerce.Models.ViewModels.ShopViewModel
+@model WebApplication_ClothingEcommerce.Models.Product
+
+@inject Microsoft.AspNetCore.Identity.SignInManager<WebApplication_ClothingEcommerce.Models.ApplicationUser> SignInManager
+
+@using WebApplication_ClothingEcommerce.Data.Enums
 
 @{
-    ViewData["Title"] = "Shop";
+    var primaryImage =
+        Model.Images?.FirstOrDefault(x => x.IsPrimary)
+        ?? Model.Images?.FirstOrDefault();
+
+    var availableVariants = Model.Variants?
+        .Where(v => v.Status == VariantStatus.Available)
+        .ToList()
+        ?? new List<WebApplication_ClothingEcommerce.Models.ProductVariant>();
+
+    var defaultVariant =
+        availableVariants.FirstOrDefault(v => (v.Inventory?.AvailableQuantity ?? 0) > 0)
+        ?? availableVariants.FirstOrDefault();
+
+    var inStock = (defaultVariant?.Inventory?.AvailableQuantity ?? 0) > 0;
+
+    var minPrice = availableVariants
+        .Select(v => v.Price)
+        .DefaultIfEmpty(0)
+        .Min();
+
+    var compareAt = availableVariants
+        .Where(v => v.CompareAtPrice.HasValue && v.CompareAtPrice > v.Price)
+        .Select(v => v.CompareAtPrice)
+        .FirstOrDefault();
+
+    var discountPct = (compareAt.HasValue && compareAt.Value > minPrice && minPrice > 0)
+        ? (int)Math.Round(((compareAt.Value - minPrice) / compareAt.Value) * 100)
+        : 0;
+
+    var reviews = Model.Reviews ?? new List<WebApplication_ClothingEcommerce.Models.Review>();
+
+    var averageRating = reviews.Any()
+        ? reviews.Average(x => x.Rating)
+        : 0;
+
+    var fullStars = (int)Math.Floor(averageRating);
+    var hasHalfStar = averageRating - fullStars >= 0.5;
+
+    var isSignedIn = SignInManager.IsSignedIn(User);
+
+    var isWishlisted = ViewData["WishlistedVariantIds"] is HashSet<Guid> wishlistedIds
+        && defaultVariant != null
+        && wishlistedIds.Contains(defaultVariant.Id);
+
+    var cardId = Model.Id.ToString("N");
+
+    var assetsRendered = Context.Items.ContainsKey("ProductCardAssetsRendered");
+    if (!assetsRendered)
+    {
+        Context.Items["ProductCardAssetsRendered"] = true;
+    }
 }
 
-<div class="container py-5">
+<!-- =========================================================
+     PRODUCT CARD (TAILWIND MODERN)
+========================================================= -->
+<div class="group relative flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-200/70 dark:border-slate-800 shadow-sm hover:shadow-xl hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300"
+     id="product-card-@cardId">
 
-    <div class="mb-5">
+    <!-- MEDIA WRAPPER -->
+    <div class="relative aspect-[4/5] bg-gray-100 dark:bg-slate-800 overflow-hidden">
+        <a asp-controller="Shop" asp-action="Details" asp-route-id="@Model.Id" class="block w-full h-full">
+            @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
+            {
+                <img src="@primaryImage.ImageUrl" alt="@Model.Name" loading="lazy"
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            }
+            else
+            {
+                <div class="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-slate-600">
+                    <i class="bi bi-image text-4xl mb-1"></i>
+                    <span class="text-xs">No image</span>
+                </div>
+            }
+        </a>
 
-        <div class="eyebrow">
-            COLLECTION
+        <!-- BADGES (TOP-LEFT) -->
+        <div class="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
+            @if (discountPct > 0)
+            {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500 text-white shadow-sm">
+                    -@discountPct% OFF
+                </span>
+            }
+            else if (compareAt.HasValue)
+            {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500 text-white shadow-sm">
+                    SALE
+                </span>
+            }
         </div>
 
-        <h1 class="fw-bold">
-            Shop All Products
-        </h1>
+        <!-- OUT OF STOCK OVERLAY -->
+        @if (!inStock && defaultVariant != null)
+        {
+            <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-10 flex items-center justify-center p-4 pointer-events-none">
+                <span class="px-3 py-1.5 rounded-xl bg-white/95 dark:bg-slate-900/95 text-gray-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-md">
+                    Out of Stock
+                </span>
+            </div>
+        }
 
-        <p class="text-secondary">
-            Discover clothing for every style and occasion.
-        </p>
-
+        <!-- FLOATING WISHLIST BUTTON (TOP-RIGHT) -->
+        <div class="absolute top-3 right-3 z-20">
+            @if (isSignedIn)
+            {
+                <button type="button"
+                        class="w-9 h-9 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-md flex items-center justify-center text-gray-600 dark:text-slate-300 hover:text-rose-500 hover:scale-110 active:scale-95 transition-all js-wishlist-btn @(isWishlisted ? "text-rose-500 is-active" : "")"
+                        data-variant-id="@defaultVariant?.Id"
+                        data-active="@(isWishlisted ? "true" : "false")"
+                        aria-pressed="@(isWishlisted ? "true" : "false")"
+                        aria-label="@(isWishlisted ? $"Remove {Model.Name} from wishlist" : $"Add {Model.Name} to wishlist")">
+                    <i class="bi @(isWishlisted ? "bi-heart-fill text-rose-500" : "bi-heart") text-sm"></i>
+                </button>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login"
+                   asp-route-returnUrl="@Context.Request.Path"
+                   class="w-9 h-9 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-md flex items-center justify-center text-gray-600 dark:text-slate-300 hover:text-rose-500 hover:scale-110 transition-all"
+                   aria-label="Sign in to add @Model.Name to wishlist">
+                    <i class="bi bi-heart text-sm"></i>
+                </a>
+            }
+        </div>
     </div>
 
-    <div class="row g-4">
-
-        <!-- FILTER -->
-        <div class="col-lg-3">
-
-            <div class="filter-box sticky-lg-top" style="top:90px">
-
-                <form asp-action="Index"
-                      method="get">
-
-                    <div class="mb-4">
-
-                        <label class="form-label fw-bold">
-                            Search
-                        </label>
-
-                        <input type="text"
-                               name="search"
-                               value="@Model.Search"
-                               class="form-control"
-                               placeholder="Search products..." />
-
-                    </div>
-
-                    <div class="mb-4">
-
-                        <label class="form-label fw-bold">
-                            Category
-                        </label>
-
-                        <a asp-action="Index"
-                           class="filter-link @(Model.CategoryId == null ? "active" : "")">
-
-                            All Categories
-
-                        </a>
-
-                        @foreach (var category in Model.Categories)
-                        {
-                            <a asp-action="Index"
-                               asp-route-categoryId="@category.Id"
-                               asp-route-brandId="@Model.BrandId"
-                               asp-route-search="@Model.Search"
-                               class="filter-link @(Model.CategoryId == category.Id ? "active" : "")">
-
-                                @category.Name
-
-                            </a>
-                        }
-
-                    </div>
-
-                    <div class="mb-4">
-
-                        <label class="form-label fw-bold">
-                            Brand
-                        </label>
-
-                        <a asp-action="Index"
-                           asp-route-categoryId="@Model.CategoryId"
-                           asp-route-search="@Model.Search"
-                           class="filter-link @(Model.BrandId == null ? "active" : "")">
-
-                            All Brands
-
-                        </a>
-
-                        @foreach (var brand in Model.Brands)
-                        {
-                            <a asp-action="Index"
-                               asp-route-categoryId="@Model.CategoryId"
-                               asp-route-brandId="@brand.Id"
-                               asp-route-search="@Model.Search"
-                               class="filter-link @(Model.BrandId == brand.Id ? "active" : "")">
-
-                                @brand.Name
-
-                            </a>
-                        }
-
-                    </div>
-
-                    <div class="mb-4">
-
-                        <label class="form-label fw-bold">
-                            Sort
-                        </label>
-
-                        <select name="sort"
-                                class="form-select"
-                                onchange="this.form.submit()">
-
-                            <option value="">
-                                Latest
-                            </option>
-
-                            <option value="name"
-                                    selected="@(Model.Sort == "name")">
-                                Name
-                            </option>
-
-                            <option value="price-low"
-                                    selected="@(Model.Sort == "price-low")">
-                                Price: Low to High
-                            </option>
-
-                            <option value="price-high"
-                                    selected="@(Model.Sort == "price-high")">
-                                Price: High to Low
-                            </option>
-
-                            <option value="oldest"
-                                    selected="@(Model.Sort == "oldest")">
-                                Oldest
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <button class="btn btn-dark w-100">
-                        Apply Filters
-                    </button>
-
-                </form>
-
+    <!-- BODY -->
+    <div class="p-4 flex-1 flex flex-col justify-between">
+        <div>
+            <!-- Brand -->
+            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-1">
+                @(Model.Brand?.Name ?? "CLOTHÉ")
             </div>
 
-        </div>
+            <!-- Name -->
+            <a asp-controller="Shop" asp-action="Details" asp-route-id="@Model.Id"
+               class="text-sm font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 leading-snug transition-colors mb-2">
+                @Model.Name
+            </a>
 
-
-        <!-- PRODUCTS -->
-
-        <div class="col-lg-9">
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-
-                <span class="text-secondary">
-                    @Model.Products.Count() products
-                </span>
-
-            </div>
-
-            @if (!Model.Products.Any())
+            <!-- Rating Stars -->
+            @if (reviews.Any())
             {
-                <div class="empty-state">
-
-                    <i class="bi bi-search"></i>
-
-                    <h4 class="fw-bold mt-3">
-                        No products found
-                    </h4>
-
-                    <p class="text-secondary">
-                        Try another search or filter.
-                    </p>
-
-                    <a asp-action="Index"
-                       class="btn btn-dark">
-
-                        View All Products
-
-                    </a>
-
+                <div class="flex items-center gap-1.5 text-xs text-amber-400 mb-2.5">
+                    <div class="flex items-center gap-0.5">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= fullStars) { <i class="bi bi-star-fill"></i> }
+                            else if (i == fullStars + 1 && hasHalfStar) { <i class="bi bi-star-half"></i> }
+                            else { <i class="bi bi-star text-gray-300 dark:text-slate-600"></i> }
+                        }
+                    </div>
+                    <span class="text-[11px] font-semibold text-gray-400 dark:text-slate-500">(@reviews.Count)</span>
                 </div>
             }
             else
             {
-                <div class="row g-4">
-
-                    @foreach (var product in Model.Products)
-                    {
-                        <div class="col-6 col-md-4">
-
-                            <partial name="_ProductCard"
-                                     model="product" />
-
-                        </div>
-                    }
-
-                </div>
+                <div class="text-[11px] text-gray-400 dark:text-slate-500 mb-2.5">New Arrival</div>
             }
 
+            <!-- Price -->
+            <div class="flex items-center gap-2 mb-3">
+                @if (minPrice > 0)
+                {
+                    <span class="text-base font-extrabold text-gray-900 dark:text-white">
+                        $@minPrice.ToString("0.00")
+                    </span>
+                    @if (compareAt.HasValue)
+                    {
+                        <span class="text-xs text-gray-400 dark:text-slate-500 line-through">
+                            $@compareAt.Value.ToString("0.00")
+                        </span>
+                    }
+                }
+                else
+                {
+                    <span class="text-xs font-semibold text-gray-500">Contact us</span>
+                }
+            </div>
+        </div>
+
+        <!-- ADD TO CART ACTION -->
+        <div>
+            @if (defaultVariant != null)
+            {
+                <form asp-controller="Cart" asp-action="Add" method="post"
+                      class="js-add-to-cart-form"
+                      data-signed-in="@(isSignedIn ? "true" : "false")"
+                      id="cardAddToCartForm-@cardId">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="variantId" value="@defaultVariant.Id" />
+                    <input type="hidden" name="quantity" value="1" />
+
+                    <button type="submit"
+                            id="cardAddCartButton-@cardId"
+                            class="w-full py-2.5 px-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 hover:bg-slate-900 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white dark:hover:border-blue-600 text-xs font-bold text-gray-900 dark:text-slate-100 flex items-center justify-center gap-2 transition-all duration-200 js-add-to-cart-btn disabled:opacity-40 disabled:cursor-not-allowed"
+                            @(!inStock ? "disabled" : "")>
+
+                        @if (!inStock)
+                        {
+                            <i class="bi bi-x-circle"></i>
+                            <span data-en="Out of Stock" data-kh="អស់ស្តុក">Out of Stock</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-bag-plus"></i>
+                            <span data-en="Add to Cart" data-kh="បន្ថែមទៅកន្ត្រក">Add to Cart</span>
+                        }
+                    </button>
+                </form>
+            }
+            else
+            {
+                <button type="button" class="w-full py-2.5 px-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-xs font-semibold text-gray-400 cursor-not-allowed" disabled>
+                    Unavailable
+                </button>
+            }
         </div>
 
     </div>
 
 </div>
+
+<!-- SCRIPT REGISTERED ONCE PER PAGE -->
+@if (!assetsRendered)
+{
+    <script>
+        document.addEventListener('submit', async function (event) {
+            var form = event.target.closest('.js-add-to-cart-form');
+            if (!form) return;
+
+            event.preventDefault();
+
+            var isSignedIn = form.getAttribute('data-signed-in') === 'true';
+            if (!isSignedIn) {
+                window.location.href = "/Account/Login?ReturnUrl=" + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
+            var button = form.querySelector('.js-add-to-cart-btn');
+            var originalHtml = button.innerHTML;
+
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i><span>Adding…</span>';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, { method: 'POST', body: formData });
+
+                if (!response.ok) throw new Error('Request failed');
+
+                button.classList.remove('bg-gray-50', 'dark:bg-slate-800');
+                button.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                button.innerHTML = '<i class="bi bi-check-lg"></i><span>Added!</span>';
+
+                setTimeout(function () {
+                    button.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                    button.innerHTML = originalHtml;
+                    button.disabled = false;
+                }, 1500);
+
+                document.dispatchEvent(new CustomEvent('cart:updated', {
+                    detail: {
+                        toast: true,
+                        title: "Added to bag!",
+                        message: "Item was successfully added to your shopping cart."
+                    }
+                }));
+            } catch (err) {
+                button.innerHTML = '<i class="bi bi-exclamation-circle text-rose-500"></i><span>Try Again</span>';
+                setTimeout(function () {
+                    button.innerHTML = originalHtml;
+                    button.disabled = false;
+                }, 1800);
+            }
+        });
+
+        document.addEventListener('click', async function (event) {
+            var btn = event.target.closest('.js-wishlist-btn');
+            if (!btn) return;
+
+            var variantId = btn.getAttribute('data-variant-id');
+            if (!variantId) return;
+
+            var isActive = btn.getAttribute('data-active') === 'true';
+            var icon = btn.querySelector('i');
+
+            btn.disabled = true;
+
+            try {
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                const formData = new FormData();
+                formData.append('variantId', variantId);
+                if (tokenInput) formData.append('__RequestVerificationToken', tokenInput.value);
+
+                const url = isActive ? '/Wishlist/Remove' : '/Wishlist/Add';
+                const response = await fetch(url, { method: 'POST', body: formData });
+
+                if (!response.ok) throw new Error('Request failed');
+
+                var nowActive = !isActive;
+                btn.setAttribute('data-active', nowActive ? 'true' : 'false');
+                btn.setAttribute('aria-pressed', nowActive ? 'true' : 'false');
+                btn.classList.toggle('text-rose-500', nowActive);
+                btn.classList.toggle('is-active', nowActive);
+                icon.className = nowActive ? 'bi bi-heart-fill text-rose-500 text-sm' : 'bi bi-heart text-sm';
+            } catch (err) {
+                // Silently ignore error
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+}

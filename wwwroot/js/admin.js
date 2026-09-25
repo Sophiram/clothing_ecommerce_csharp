@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================================================
        ELEMENTS
@@ -523,61 +523,35 @@
                      * the root "/" as active.
                      */
 
-                    if (
-                        linkPath === ""
-                    ) {
+                    if (linkPath === "" || linkPath === "/") {
                         return;
                     }
 
+                    // Special handling for Dashboard root (/admin or /admin/dashboard)
+                    if (linkPath === "/admin" || linkPath === "/admin/dashboard") {
+                        if (currentPath === "/admin" || currentPath === "/admin/dashboard" || currentPath === "/admin/dashboard/index") {
+                            link.classList.add("active");
+                        } else {
+                            link.classList.remove("active");
+                        }
+                        return;
+                    }
 
                     /*
                      * Compare exact path first.
                      */
-
-                    if (
-                        currentPath ===
-                        linkPath
-                    ) {
-
-                        link.classList.add(
-                            "active"
-                        );
-
+                    if (currentPath === linkPath) {
+                        link.classList.add("active");
                         return;
                     }
-
 
                     /*
                      * Compare child routes.
                      */
-
-                    if (
-                        currentPath.startsWith(
-                            linkPath + "/"
-                        )
-                    ) {
-
-                        link.classList.add(
-                            "active"
-                        );
-
+                    if (currentPath.startsWith(linkPath + "/")) {
+                        link.classList.add("active");
                     } else {
-
-                        /*
-                         * Keep Razor's server-side
-                         * active class when appropriate.
-                         */
-
-                        if (
-                            !link.classList.contains(
-                                "active"
-                            )
-                        ) {
-
-                            link.classList.remove(
-                                "active"
-                            );
-                        }
+                        link.classList.remove("active");
                     }
 
                 } catch (error) {

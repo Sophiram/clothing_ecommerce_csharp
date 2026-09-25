@@ -3,469 +3,584 @@
 
 @{
     ViewData["Title"] = "Products";
+    var totalProducts = Model?.Count() ?? 0;
+    var activeProducts = Model?.Count(p => p.Status == ProductStatus.Active) ?? 0;
+    var totalVariants = Model?.Sum(p => p.Variants?.Count ?? 0) ?? 0;
+    var inactiveProducts = Model?.Count(p => p.Status != ProductStatus.Active) ?? 0;
 }
 
-<div class="container-fluid py-4">
+<div class="space-y-6">
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <h2 class="fw-bold mb-1">
-                <i class="bi bi-box-seam me-2"></i>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-box-seam-fill"></i>
+                <span>CATALOG &amp; MERCHANDISING</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Products
-            </h2>
-
-            <p class="text-muted mb-0">
-                Manage your clothing products
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Manage your apparel catalog, variations, categories, and inventory statuses.
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>
-            Add Product
-        </a>
-
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="openCreateProductModal()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Product</span>
+            </button>
+        </div>
     </div>
-
 
     <!-- ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
-            @TempData["Success"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
+        <div class="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-xs">
+            <i class="bi bi-check-circle-fill text-emerald-600 text-sm"></i>
+            <span>@TempData["Success"]</span>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
+        <div class="flex items-center gap-2.5 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-xs">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i>
+            <span>@TempData["Error"]</span>
         </div>
     }
 
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS LAYOUT) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-    <!-- FILTER -->
-
-    <div class="card shadow-sm border-0 mb-4">
-
-        <div class="card-body">
-
-            <form asp-action="Index"
-                  method="get">
-
-                <div class="row g-3">
-
-                    <!-- SEARCH -->
-
-                    <div class="col-md-4">
-
-                        <label class="form-label fw-semibold">
-                            Search
-                        </label>
-
-                        <div class="input-group">
-
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-
-                            <input type="text"
-                                   name="search"
-                                   value="@ViewBag.Search"
-                                   class="form-control"
-                                   placeholder="Search product..." />
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- CATEGORY -->
-
-                    <div class="col-md-2">
-
-                        <label class="form-label fw-semibold">
-                            Category
-                        </label>
-
-                        <select name="categoryId"
-                                class="form-select"
-                                asp-items="ViewBag.Categories">
-
-                            <option value="">
-                                All Categories
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- BRAND -->
-
-                    <div class="col-md-2">
-
-                        <label class="form-label fw-semibold">
-                            Brand
-                        </label>
-
-                        <select name="brandId"
-                                class="form-select"
-                                asp-items="ViewBag.Brands">
-
-                            <option value="">
-                                All Brands
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- STATUS -->
-
-                    <div class="col-md-2">
-
-                        <label class="form-label fw-semibold">
-                            Status
-                        </label>
-
-                        <select name="status"
-                                class="form-select">
-
-                            <option value="">
-                                All Status
-                            </option>
-
-                            @foreach (ProductStatus status in Enum.GetValues<ProductStatus>())
-                            {
-                                if (ViewBag.Status != null &&
-                                    (ProductStatus)ViewBag.Status == status)
-                                {
-                                    <option value="@status" selected>
-                                        @status
-                                    </option>
-                                }
-                                else
-                                {
-                                    <option value="@status">
-                                        @status
-                                    </option>
-                                }
-                            }
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- BUTTON -->
-
-                    <div class="col-md-2 d-flex align-items-end">
-
-                        <button type="submit"
-                                class="btn btn-dark w-100">
-
-                            <i class="bi bi-funnel me-1"></i>
-                            Filter
-
-                        </button>
-
-                    </div>
-
+        <!-- 1. TOTAL PRODUCTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Catalog</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-collection-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalProducts
                 </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Apparel products listed</span>
+                </div>
+            </div>
+        </div>
 
-            </form>
+        <!-- 2. ACTIVE PRODUCTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Active Products</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-check-circle-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @activeProducts
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>Published to storefront</span>
+                </div>
+            </div>
+        </div>
 
+        <!-- 3. TOTAL VARIANTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Variants</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-boxes"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                    @totalVariants
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Size &amp; color SKUs</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. INACTIVE PRODUCTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Draft / Inactive</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pause-circle-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    @inactiveProducts
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>Hidden or draft status</span>
+                </div>
+            </div>
         </div>
 
     </div>
 
-
-    <!-- PRODUCTS TABLE -->
-
-    <div class="card shadow-sm border-0">
-
-        <div class="card-body p-0">
-
-            <div class="table-responsive">
-
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
-
-                        <tr>
-
-                            <th style="width: 90px;">
-                                Image
-                            </th>
-
-                            <th>
-                                Product
-                            </th>
-
-                            <th>
-                                Category
-                            </th>
-
-                            <th>
-                                Brand
-                            </th>
-
-                            <th>
-                                Gender
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Variants
-                            </th>
-
-                            <th class="text-end">
-                                Actions
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        @if (Model.Any())
-                        {
-                            foreach (var product in Model)
-                            {
-                                var primaryImage =
-                                    product.Images
-                                        .FirstOrDefault(i => i.IsPrimary)
-                                    ?? product.Images.FirstOrDefault();
-
-                                <tr>
-
-                                    <!-- IMAGE -->
-
-                                    <td>
-
-                                        @if (primaryImage != null &&
-                                             !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
-                                        {
-                                            <img src="@primaryImage.ImageUrl"
-                                                 alt="@product.Name"
-                                                 class="rounded"
-                                                 style="
-                                            width:65px;
-                                            height:65px;
-                                            object-fit:cover;
-                                            " />
-                                        }
-                                        else
-                                        {
-                                            <div class="bg-light rounded d-flex
-                                                align-items-center
-                                                justify-content-center"
-                                                 style="
-                                                width:65px;
-                                                height:65px;
-                                                ">
-
-                                                <i class="bi bi-image text-muted fs-4"></i>
-
-                                            </div>
-                                        }
-
-                                    </td>
-
-
-                                    <!-- PRODUCT -->
-
-                                    <td>
-
-                                        <div class="fw-semibold">
-                                            @product.Name
-                                        </div>
-
-                                        @if (!string.IsNullOrWhiteSpace(product.Description))
-                                        {
-                                            <small class="text-muted">
-                                                @(product.Description.Length > 70
-                                                    ? product.Description.Substring(0, 70) + "..."
-                                                    : product.Description)
-                                            </small>
-                                        }
-
-                                    </td>
-
-
-                                    <!-- CATEGORY -->
-
-                                    <td>
-
-                                        @if (product.Category != null)
-                                        {
-                                            <span class="badge bg-light text-dark">
-                                                @product.Category.Name
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">
-                                                -
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <!-- BRAND -->
-
-                                    <td>
-
-                                        @if (product.Brand != null)
-                                        {
-                                            @product.Brand.Name
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">
-                                                -
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <!-- GENDER -->
-
-                                    <td>
-                                        @product.Gender
-                                    </td>
-
-
-                                    <!-- STATUS -->
-
-                                    <td>
-
-                                        @if (product.Status == ProductStatus.Active)
-                                        {
-                                            <span class="badge bg-success">
-                                                Active
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">
-                                                @product.Status
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <!-- VARIANTS -->
-
-                                    <td>
-                                        <span class="badge bg-info text-dark">
-                                            @product.Variants.Count
-                                        </span>
-                                    </td>
-
-
-                                    <!-- ACTIONS -->
-
-                                    <td class="text-end">
-
-                                        <div class="btn-group">
-
-                                            <a asp-action="Details"
-                                               asp-route-id="@product.Id"
-                                               class="btn btn-sm btn-outline-primary"
-                                               title="Details">
-
-                                                <i class="bi bi-eye"></i>
-
-                                            </a>
-
-                                            <a asp-action="Edit"
-                                               asp-route-id="@product.Id"
-                                               class="btn btn-sm btn-outline-warning"
-                                               title="Edit">
-
-                                                <i class="bi bi-pencil"></i>
-
-                                            </a>
-
-                                            <a asp-action="Delete"
-                                               asp-route-id="@product.Id"
-                                               class="btn btn-sm btn-outline-danger"
-                                               title="Delete">
-
-                                                <i class="bi bi-trash"></i>
-
-                                            </a>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-
-                                <td colspan="8"
-                                    class="text-center py-5">
-
-                                    <i class="bi bi-box-seam fs-1 text-muted"></i>
-
-                                    <h5 class="mt-3">
-                                        No products found
-                                    </h5>
-
-                                    <p class="text-muted">
-                                        Start by creating your first product.
-                                    </p>
-
-                                    <a asp-action="Create"
-                                       class="btn btn-primary">
-
-                                        <i class="bi bi-plus-lg me-1"></i>
-                                        Add Product
-
-                                    </a>
-
-                                </td>
-
-                            </tr>
-                        }
-
-                    </tbody>
-
-                </table>
-
+    <!-- FILTER & SEARCH TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <form asp-action="Index" method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search product name or description..."
+                       class="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
 
+            <select name="categoryId" class="w-full md:w-44 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Categories">
+                <option value="">All Categories</option>
+            </select>
+
+            <select name="brandId" class="w-full md:w-44 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Brands">
+                <option value="">All Brands</option>
+            </select>
+
+            <select name="status" class="w-full md:w-36 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">All Statuses</option>
+                @foreach (ProductStatus status in Enum.GetValues<ProductStatus>())
+                {
+                    <option value="@status" selected="@(ViewBag.Status != null && (ProductStatus)ViewBag.Status == status)">
+                        @status
+                    </option>
+                }
+            </select>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit"
+                        class="flex-1 md:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> <span>Filter</span>
+                </button>
+                <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Reset Filters">
+                    <i class="bi bi-arrow-repeat text-xs"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- PRODUCTS DATA TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">All Products</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Filter and manage your apparel catalog and variants</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                @totalProducts products
+            </span>
         </div>
 
+        @if (Model != null && Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-5" style="width: 72px;">Image</th>
+                            <th class="py-3 px-4">Product</th>
+                            <th class="py-3 px-4">Category</th>
+                            <th class="py-3 px-4">Brand</th>
+                            <th class="py-3 px-4">Gender</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Variants</th>
+                            <th class="py-3 px-5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        @foreach (var product in Model)
+                        {
+                            var primaryImage = product.Images.FirstOrDefault(i => i.IsPrimary) ?? product.Images.FirstOrDefault();
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <!-- IMAGE -->
+                                <td class="py-3 px-5">
+                                    @if (primaryImage != null && !string.IsNullOrWhiteSpace(primaryImage.ImageUrl))
+                                    {
+                                        <img src="@primaryImage.ImageUrl"
+                                             alt="@product.Name"
+                                             class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 text-sm">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    }
+                                </td>
+
+                                <!-- PRODUCT -->
+                                <td class="py-3 px-4">
+                                    <div class="font-bold text-slate-900 dark:text-white">@product.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(product.Description))
+                                    {
+                                        <div class="text-[11px] text-slate-400 line-clamp-1 max-w-xs">
+                                            @product.Description
+                                        </div>
+                                    }
+                                </td>
+
+                                <!-- CATEGORY -->
+                                <td class="py-3 px-4">
+                                    @if (product.Category != null)
+                                    {
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold">
+                                            @product.Category.Name
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400">—</span>
+                                    }
+                                </td>
+
+                                <!-- BRAND -->
+                                <td class="py-3 px-4">
+                                    @if (product.Brand != null)
+                                    {
+                                        <span class="font-semibold text-slate-800 dark:text-slate-200">@product.Brand.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400">—</span>
+                                    }
+                                </td>
+
+                                <!-- GENDER -->
+                                <td class="py-3 px-4">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 text-[11px] font-semibold border border-blue-200 dark:border-blue-800">
+                                        @product.Gender
+                                    </span>
+                                </td>
+
+                                <!-- STATUS -->
+                                <td class="py-3 px-4">
+                                    @if (product.Status == ProductStatus.Active)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                            <i class="bi bi-check2-circle"></i> Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                            <i class="bi bi-pause-circle"></i> @product.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- VARIANTS -->
+                                <td class="py-3 px-4">
+                                    <span class="font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px]">
+                                        @product.Variants.Count
+                                    </span>
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td class="py-3 px-5 text-right">
+                                    <div class="inline-flex items-center gap-1">
+                                        <!-- Details -->
+                                        <a asp-action="Details" asp-route-id="@product.Id"
+                                           class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 transition flex items-center justify-center"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <!-- Edit Modal Button -->
+                                        <button type="button"
+                                                onclick="openEditProductModal('@product.Id', '@Html.Raw(Html.Encode(product.Name))', '@product.CategoryId', '@product.BrandId', '@product.Gender', '@Html.Raw(Html.Encode(product.Material ?? ""))', '@product.Status', '@Html.Raw(Html.Encode(product.Description ?? ""))')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Edit Product">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+                                        <!-- Delete Button -->
+                                        <button type="button"
+                                                onclick="confirmDelete('@product.Id', '@Html.Raw(Html.Encode(product.Name))')"
+                                                class="w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:border-rose-400 transition flex items-center justify-center cursor-pointer"
+                                                title="Delete Product">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <form id="deleteForm-@product.Id" asp-action="Delete" asp-route-id="@product.Id" method="post" class="hidden">
+                                            @Html.AntiForgeryToken()
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY STATE -->
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-box-seam text-2xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">No products found</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto">Start by creating your first product, or adjust your filters.</p>
+                <button type="button" onclick="openCreateProductModal()"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-plus-lg"></i> Add Product
+                </button>
+            </div>
+        }
     </div>
 
 </div>
+
+<!-- =====================================================
+     CREATE PRODUCT MODAL (TAILWIND)
+====================================================== -->
+<div id="createProductModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Add Product</h3>
+                    <p class="text-[11px] text-slate-400">Create a new item in your apparel catalog</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCreateProductModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form asp-action="Create" method="post" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Product Name</label>
+                    <input name="Name" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. Classic Cotton T-Shirt" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Category</label>
+                    <select name="CategoryId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Categories" required>
+                        <option value="">Select category</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Brand</label>
+                    <select name="BrandId" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Brands" required>
+                        <option value="">Select brand</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gender</label>
+                    <select name="Gender" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Select gender</option>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Unisex">Unisex</option>
+                        <option value="Kids">Kids</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status</label>
+                    <select name="Status" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        @foreach (ProductStatus status in Enum.GetValues<ProductStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Material</label>
+                    <input name="Material" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="e.g. 100% Ring-Spun Combed Cotton" />
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Description</label>
+                    <textarea name="Description" rows="3" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="Describe fabric properties, fit, details..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeCreateProductModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Create Product</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- =====================================================
+     EDIT PRODUCT MODAL (TAILWIND)
+====================================================== -->
+<div id="editProductModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Product</h3>
+                    <p class="text-[11px] text-slate-400">Modify product information, classification and state</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditProductModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form id="editProductForm" asp-action="Edit" method="post" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" id="editProductId" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Product Name</label>
+                    <input name="Name" id="editProductName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Category</label>
+                    <select name="CategoryId" id="editProductCategory" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Categories" required></select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Brand</label>
+                    <select name="BrandId" id="editProductBrand" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" asp-items="ViewBag.Brands" required></select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gender</label>
+                    <select name="Gender" id="editProductGender" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required>
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Unisex">Unisex</option>
+                        <option value="Kids">Kids</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Status</label>
+                    <select name="Status" id="editProductStatus" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        @foreach (ProductStatus status in Enum.GetValues<ProductStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Material</label>
+                    <input name="Material" id="editProductMaterial" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Description</label>
+                    <textarea name="Description" id="editProductDescription" rows="3" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditProductModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCreateProductModal() {
+            var m = document.getElementById('createProductModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeCreateProductModal() {
+            var m = document.getElementById('createProductModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function openEditProductModal(id, name, catId, brandId, gender, material, status, desc) {
+            document.getElementById('editProductId').value = id;
+            document.getElementById('editProductName').value = name;
+            document.getElementById('editProductCategory').value = catId;
+            document.getElementById('editProductBrand').value = brandId;
+            document.getElementById('editProductGender').value = gender;
+            document.getElementById('editProductMaterial').value = material || '';
+            document.getElementById('editProductStatus').value = status;
+            document.getElementById('editProductDescription').value = desc || '';
+
+            var form = document.getElementById('editProductForm');
+            form.action = '@Url.Action("Edit", "Products")/' + id;
+
+            var m = document.getElementById('editProductModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeEditProductModal() {
+            var m = document.getElementById('editProductModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function confirmDelete(id, name) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Delete Product?',
+                    text: `Are you sure you want to delete "${name}"? This cannot be undone.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ea4335',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteForm-' + id).submit();
+                    }
+                });
+            } else {
+                if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                    document.getElementById('deleteForm-' + id).submit();
+                }
+            }
+        }
+
+        // Close on backdrop click
+        window.addEventListener('click', function (e) {
+            var createM = document.getElementById('createProductModal');
+            var editM = document.getElementById('editProductModal');
+            if (e.target === createM) closeCreateProductModal();
+            if (e.target === editM) closeEditProductModal();
+        });
+    </script>
+}

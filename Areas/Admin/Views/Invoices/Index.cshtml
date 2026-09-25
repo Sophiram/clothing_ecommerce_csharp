@@ -1,0 +1,454 @@
+@model List<WebApplication_ClothingEcommerce.Models.Order>
+@using WebApplication_ClothingEcommerce.Data.Enums
+@{
+    ViewData["Title"] = "Invoices & Receipts Management";
+
+    var totalInvoiced = (decimal)(ViewBag.TotalInvoiced ?? 0m);
+    var totalCollected = (decimal)(ViewBag.TotalCollected ?? 0m);
+    var totalPending = (decimal)(ViewBag.TotalPending ?? 0m);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    var paidCount = (int)(ViewBag.PaidCount ?? 0);
+    var pendingCount = (int)(ViewBag.PendingCount ?? 0);
+
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalFiltered = (int)(ViewBag.TotalFiltered ?? 0);
+    var currentPaymentStatus = (PaymentStatus?)ViewBag.PaymentStatus;
+    var currentOrderStatus = (OrderStatus?)ViewBag.OrderStatus;
+}
+
+<div class="space-y-6">
+
+    <!-- BREADCRUMB & HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-blue-600 transition">
+                    <span data-en="Dashboard" data-kh="ផ្ទាំងគ្រប់គ្រង">Dashboard</span>
+                </a>
+                <i class="bi bi-chevron-right text-[10px]"></i>
+                <span class="text-slate-900 dark:text-white font-bold" data-en="Invoices & Receipts" data-kh="វិក្កយបត្រ & បង្កាន់ដៃ">Invoices &amp; Receipts</span>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shadow-xs">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </span>
+                <span data-en="Invoices & Receipts Management" data-kh="ការគ្រប់គ្រងវិក្កយបត្រ & បង្កាន់ដៃ">Invoices &amp; Receipts Management</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1"
+               data-en="Track, audit, print, and manage official tax invoices and customer receipts."
+               data-kh="តាមដាន ធ្វើសវនកម្ម បោះពុម្ព និងគ្រប់គ្រងវិក្កយបត្រពន្ធផ្លូវការ និងបង្កាន់ដៃអតិថិជន។">
+                Track, audit, print, and manage official tax invoices and customer receipts.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                <a href="/Admin/Settings?tab=receipt"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold transition shadow-xs">
+                    <i class="bi bi-sliders"></i>
+                    <span data-en="Customize Invoices" data-kh="កែច្នៃវិក្កយបត្រ">Customize Invoices</span>
+                </a>
+            }
+            <a asp-area="Admin" asp-controller="Orders" asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 text-xs font-bold transition shadow-xs">
+                <i class="bi bi-box-seam"></i>
+                <span data-en="View Orders" data-kh="មើលការបញ្ជាទិញ">View Orders</span>
+            </a>
+            <a asp-area="Admin" asp-controller="Payments" asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-md shadow-blue-500/20">
+                <i class="bi bi-credit-card"></i>
+                <span data-en="Payment Logs" data-kh="កំណត់ត្រាទូទាត់">Payment Logs</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="bi bi-check-circle-fill text-emerald-500 text-base"></i>
+                <span>@TempData["Success"]</span>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 p-1 cursor-pointer">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    }
+
+    <!-- KPI CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Total Invoiced -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400" data-en="Total Invoiced" data-kh="សរុបវិក្កយបត្រចេញ">Total Invoiced</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-receipt"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                    $@totalInvoiced.ToString("N2")
+                </div>
+                <div class="text-[11px] text-slate-500 mt-0.5">
+                    @totalCount <span data-en="receipts issued" data-kh="បង្កាន់ដៃសរុប">receipts issued</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Collected / Paid -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400" data-en="Total Collected" data-kh="ប្រាក់ប្រមូលបានសរុប">Total Collected</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-cash-stack"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    $@totalCollected.ToString("N2")
+                </div>
+                <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
+                    @paidCount <span data-en="invoices paid & verified" data-kh="បានទូទាត់រួច">invoices paid &amp; verified</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending / Unpaid -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400" data-en="Pending Collection" data-kh="កំពុងរង់ចាំប្រមូល">Pending Collection</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-clock-history"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
+                    $@totalPending.ToString("N2")
+                </div>
+                <div class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                    @pendingCount <span data-en="invoices pending / COD" data-kh="រង់ចាំទូទាត់">invoices pending / COD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion in KHR -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400" data-en="KHR Equivalent" data-kh="សមមូលជាប្រាក់រៀល">KHR Equivalent</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-currency-exchange"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                    ៛@((Math.Round(totalInvoiced * 4100)).ToString("N0"))
+                </div>
+                <div class="text-[11px] text-slate-500 mt-0.5">
+                    Rate: 4,100 KHR / USD
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FILTER TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+        <form asp-action="Index" method="get" class="flex flex-col md:flex-row items-center gap-3">
+            
+            <!-- Search -->
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       class="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                       placeholder="Search by Receipt #, Order ID, Customer Name, Email, Phone..." />
+            </div>
+
+            <!-- Payment Status Filter -->
+            <select name="paymentStatus" class="w-full md:w-44 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">All Payment Statuses</option>
+                @foreach (PaymentStatus ps in Enum.GetValues<PaymentStatus>())
+                {
+                    <option value="@ps" selected="@(currentPaymentStatus.HasValue && currentPaymentStatus.Value == ps)">
+                        @ps
+                    </option>
+                }
+            </select>
+
+            <!-- Order Status Filter -->
+            <select name="orderStatus" class="w-full md:w-40 text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">All Order Statuses</option>
+                @foreach (OrderStatus os in Enum.GetValues<OrderStatus>())
+                {
+                    <option value="@os" selected="@(currentOrderStatus.HasValue && currentOrderStatus.Value == os)">
+                        @os
+                    </option>
+                }
+            </select>
+
+            <!-- Submit Buttons -->
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit" class="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i class="bi bi-funnel-fill"></i> <span data-en="Filter" data-kh="ច្រោះ">Filter</span>
+                </button>
+                <a asp-action="Index" class="flex-1 md:flex-none px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-arrow-repeat"></i> <span data-en="Reset" data-kh="កំណត់ឡើងវិញ">Reset</span>
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- INVOICES TABLE -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div>
+                <h3 class="font-extrabold text-base text-slate-900 dark:text-white" data-en="Tax Invoices & Receipts Ledger" data-kh="បញ្ជីវិក្កយបត្រពន្ធ & បង្កាន់ដៃ">Tax Invoices &amp; Receipts Ledger</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Showing @Model.Count of @totalFiltered receipts
+                </p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-400 bg-slate-50/70 dark:bg-slate-800/40">
+                        <th class="py-3 px-4">Receipt / Invoice #</th>
+                        <th class="py-3 px-4">Customer</th>
+                        <th class="py-3 px-4">Date &amp; Time</th>
+                        <th class="py-3 px-4">Payment Method</th>
+                        <th class="py-3 px-4 text-right">Amount (USD / KHR)</th>
+                        <th class="py-3 px-4 text-center">Payment Status</th>
+                        <th class="py-3 px-4 text-center">Order Status</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/70">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var order in Model)
+                        {
+                            var receiptNo = "REC-" + order.Id.ToString()[..8].ToUpper();
+                            var custName = $"{order.Customer?.FirstName} {order.Customer?.LastName}".Trim();
+                            if (string.IsNullOrWhiteSpace(custName)) custName = order.Customer?.Email ?? "Guest";
+                            var khrTotal = Math.Round(order.TotalAmount * 4100, 0);
+
+                            var isPaid = order.Payment != null && 
+                                (order.Payment.PaymentStatus == PaymentStatus.Paid || order.Payment.PaymentStatus == PaymentStatus.Completed);
+
+                            var methodText = order.Payment?.PaymentMethod?.Name ?? "Cash On Delivery (COD)";
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                <!-- Receipt # -->
+                                <td class="py-3.5 px-4 font-mono">
+                                    <div class="font-extrabold text-blue-600 dark:text-blue-400">@receiptNo</div>
+                                    <div class="text-[10px] text-slate-400 mt-0.5">Ref: #@order.Id.ToString()[..8].ToUpper()</div>
+                                </td>
+
+                                <!-- Customer -->
+                                <td class="py-3.5 px-4">
+                                    <div class="font-bold text-slate-900 dark:text-white">@custName</div>
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                                        @(order.Customer?.Email ?? "-")
+                                        @if (!string.IsNullOrWhiteSpace(order.Customer?.Phone))
+                                        {
+                                            <span class="text-slate-400">&bull; @order.Customer.Phone</span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <!-- Date -->
+                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">
+                                    <div class="font-medium">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                    <div class="text-[10px] text-slate-400">@order.OrderDate.ToString("hh:mm tt")</div>
+                                </td>
+
+                                <!-- Payment Method -->
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[11px]">
+                                        <i class="bi bi-wallet2 text-slate-400"></i>
+                                        <span>@methodText</span>
+                                    </span>
+                                </td>
+
+                                <!-- Amount -->
+                                <td class="py-3.5 px-4 text-right font-mono">
+                                    <div class="font-black text-slate-900 dark:text-white text-sm">
+                                        $@order.TotalAmount.ToString("N2")
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-bold">
+                                        ៛@khrTotal.ToString("N0")
+                                    </div>
+                                </td>
+
+                                <!-- Payment Status -->
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (isPaid)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                            <i class="bi bi-check-circle-fill"></i> Paid
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                            <i class="bi bi-clock"></i> @(order.Payment?.PaymentStatus.ToString() ?? "Pending")
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Order Status -->
+                                <td class="py-3.5 px-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                        @order.Status
+                                    </span>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- Print / View Receipt Button -->
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Receipt" asp-route-id="@order.Id" target="_blank"
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition"
+                                           title="Print / View Receipt">
+                                            <i class="bi bi-printer-fill"></i>
+                                            <span>Receipt</span>
+                                        </a>
+
+                                        <!-- Quick Status Toggle Modal Button -->
+                                        <button type="button" onclick="openInvoiceModal('@order.Id')"
+                                                class="w-7 h-7 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-500 text-slate-600 dark:text-slate-300 hover:text-amber-600 flex items-center justify-center transition cursor-pointer"
+                                                title="Manage Payment Status">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+
+                                        <!-- View Order Details -->
+                                        <a asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id"
+                                           class="w-7 h-7 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center justify-center transition"
+                                           title="Order Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+
+                                    <!-- Quick Update Status Modal -->
+                                    <div id="invoiceModal_@order.Id" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs text-left">
+                                        <div class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-5 space-y-4">
+                                            <form asp-action="UpdateStatus" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@order.Id" />
+
+                                                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                                                    <div>
+                                                        <h4 class="text-xs font-black text-slate-900 dark:text-white">Manage Invoice @receiptNo</h4>
+                                                        <p class="text-[10px] text-slate-400">Total: $@order.TotalAmount.ToString("N2") &bull; @custName</p>
+                                                    </div>
+                                                    <button type="button" onclick="closeInvoiceModal('@order.Id')" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                                        <i class="bi bi-x-lg text-xs"></i>
+                                                    </button>
+                                                </div>
+
+                                                <div class="space-y-3 py-2">
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Payment Status</label>
+                                                        <select name="status" class="w-full text-xs font-bold py-2.5 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                                                            @foreach (PaymentStatus ps in Enum.GetValues<PaymentStatus>())
+                                                            {
+                                                                <option value="@ps" selected="@(order.Payment?.PaymentStatus == ps)">
+                                                                    @ps
+                                                                </option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                    <button type="submit" class="flex-1 py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow">
+                                                        Update Invoice
+                                                    </button>
+                                                    <button type="button" onclick="closeInvoiceModal('@order.Id')" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="py-12 text-center text-slate-400 text-xs font-medium">
+                                <i class="bi bi-inbox text-3xl block mb-2 opacity-50"></i>
+                                No invoices found matching your criteria.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        @if (totalPages > 1)
+        {
+            <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <span class="text-slate-500 dark:text-slate-400">
+                    Page @currentPage of @totalPages
+                </span>
+                <div class="flex items-center gap-1.5">
+                    @if (currentPage > 1)
+                    {
+                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@ViewBag.Search" asp-route-paymentStatus="@currentPaymentStatus" asp-route-orderStatus="@currentOrderStatus"
+                           class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition">
+                            Previous
+                        </a>
+                    }
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        if (p == currentPage)
+                        {
+                            <span class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold">@p</span>
+                        }
+                        else if (p <= 3 || p >= totalPages - 2 || Math.Abs(p - currentPage) <= 1)
+                        {
+                            <a asp-action="Index" asp-route-page="@p" asp-route-search="@ViewBag.Search" asp-route-paymentStatus="@currentPaymentStatus" asp-route-orderStatus="@currentOrderStatus"
+                               class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition">
+                                @p
+                            </a>
+                        }
+                    }
+                    @if (currentPage < totalPages)
+                    {
+                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@ViewBag.Search" asp-route-paymentStatus="@currentPaymentStatus" asp-route-orderStatus="@currentOrderStatus"
+                           class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition">
+                            Next
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<script>
+    function openInvoiceModal(id) {
+        const m = document.getElementById('invoiceModal_' + id);
+        if (m) {
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+    }
+    function closeInvoiceModal(id) {
+        const m = document.getElementById('invoiceModal_' + id);
+        if (m) {
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+    }
+</script>

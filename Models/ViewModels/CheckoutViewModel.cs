@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApplication_ClothingEcommerce.Models.ViewModels
@@ -27,16 +27,23 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
 
 
         // =========================================================
-        // SHIPPING ADDRESS
+        // SHIPPING & DELIVERY METHOD (RS PRINTER STORE FLOW)
         // =========================================================
 
-        [Required]
+        public string DeliveryType { get; set; } = "ExpressDelivery"; // "StorePickup" or "ExpressDelivery"
+
+        public string CarrierCode { get; set; } = "VETExpress"; // "VETExpress", "CityDelivery", "OtherExpress"
+
+        public string SelectedProvince { get; set; } = "រាជធានីភ្នំពេញ";
+
+        public string SelectedBranchName { get; set; } = string.Empty;
+
+        public string DeliveryNote { get; set; } = string.Empty;
+
         public string Province { get; set; } = string.Empty;
 
-        [Required]
         public string City { get; set; } = string.Empty;
 
-        [Required]
         public string Street { get; set; } = string.Empty;
 
         public string PostalCode { get; set; } = string.Empty;
@@ -49,6 +56,10 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
         [Required(ErrorMessage = "Please select a payment method.")]
         [Display(Name = "Payment Method")]
         public Guid? PaymentMethodId { get; set; }
+
+        public string? PaymentTransactionRef { get; set; }
+
+        public bool IsPaymentConfirmed { get; set; }
 
 
         // =========================================================

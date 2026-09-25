@@ -1,0 +1,465 @@
+@model WebApplication_ClothingEcommerce.Models.TelegramSettings
+
+@{
+    ViewData["Title"] = "Telegram Bot Integration";
+    var isConfigured = !string.IsNullOrWhiteSpace(Model.BotToken) && !string.IsNullOrWhiteSpace(Model.ChatId);
+    var isLive = isConfigured && Model.IsEnabled;
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-sky-500 dark:text-sky-400 mb-1">
+                <i class="bi bi-telegram"></i>
+                <span class="tracking-wider uppercase" data-en="Integrations &amp; Real-Time Alerts" data-kh="ការរួមបញ្ចូល &amp; ការជូនដំណឹង">Integrations &amp; Real-Time Alerts</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span>Telegram Bot Notification</span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl" data-en="Connect your Telegram Bot to receive instant order dispatches, payment verification alerts, and publish store broadcasts directly to your staff or customer channel." data-kh="ភ្ជាប់ Telegram Bot របស់អ្នកដើម្បីទទួលបានការជូនដំណឹងការបញ្ជាទិញ ការទូទាត់ប្រាក់ និងការផ្សាយដំណឹងភ្លាមៗ។">
+                Connect your Telegram Bot to receive instant order dispatches, payment verification alerts, and publish store broadcasts directly to your staff or customer channel.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            @if (isLive)
+            {
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span data-en="Bot Operational • Live" data-kh="Bot កំពុងដំណើរការ">Bot Operational • Live</span>
+                </span>
+            }
+            else if (isConfigured)
+            {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                    <i class="bi bi-pause-circle-fill"></i>
+                    <span data-en="Bot Paused (Disabled)" data-kh="បានផ្អាក Bot">Bot Paused (Disabled)</span>
+                </span>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                    <span data-en="Setup Required" data-kh="ត្រូវការកំណត់រចនាសម្ព័ន្ធ">Setup Required</span>
+                </span>
+            }
+
+            <a href="https://t.me/BotFather" target="_blank"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                <i class="bi bi-telegram text-sky-500"></i>
+                <span>Open @@BotFather</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300 text-xs font-semibold shadow-2xs">
+            <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-base shrink-0"></i>
+            <div class="flex-1">@TempData["Success"]</div>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-300 text-xs font-semibold shadow-2xs">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-base shrink-0"></i>
+            <div class="flex-1">@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- =====================================================
+         TOP STATUS & METRIC CARDS
+    ====================================================== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <!-- 1. Bot Connection Health -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Connection Health</span>
+                <span class="w-10 h-10 rounded-xl @(isLive ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400" : isConfigured ? "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400" : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400") flex items-center justify-center text-lg">
+                    <i class="bi @(isLive ? "bi-robot" : isConfigured ? "bi-pause-circle" : "bi-plug")"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-xl font-black @(isLive ? "text-emerald-600 dark:text-emerald-400" : isConfigured ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")">
+                    @(isLive ? "Online & Ready" : isConfigured ? "Disabled Globally" : "Credentials Missing")
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Target Channel:</span>
+                    <span class="font-mono font-bold text-slate-900 dark:text-white">
+                        @(string.IsNullOrWhiteSpace(Model.ChatId) ? "Not Set" : Model.ChatId)
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Order Notification Stream -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Order Alerts</span>
+                <span class="w-10 h-10 rounded-xl @(Model.NotifyOnNewOrder && isLive ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400") flex items-center justify-center text-lg">
+                    <i class="bi bi-cart-check-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-xl font-black @(Model.NotifyOnNewOrder && isLive ? "text-blue-600 dark:text-blue-400" : "text-slate-400")">
+                    @(Model.NotifyOnNewOrder ? (isLive ? "Active & Streaming" : "Standby (Bot Paused)") : "Muted by Admin")
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Trigger Event:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">New Checkout Order</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Payment Notification Stream -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Payment Alerts</span>
+                <span class="w-10 h-10 rounded-xl @(Model.NotifyOnPaymentReceived && isLive ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400") flex items-center justify-center text-lg">
+                    <i class="bi bi-cash-coin"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-xl font-black @(Model.NotifyOnPaymentReceived && isLive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400")">
+                    @(Model.NotifyOnPaymentReceived ? (isLive ? "Active & Streaming" : "Standby (Bot Paused)") : "Muted by Admin")
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span>Trigger Event:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">KHQR / Payment Verified</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN TWO-COLUMN WORKFLOW -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: BOT CREDENTIALS & NOTIFICATION TRIGGERS (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-sliders text-sky-500"></i>
+                            <span>Bot Configuration &amp; Credentials</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Securely link your Telegram Bot API Token and target recipient Chat ID</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        API v2.0
+                    </span>
+                </div>
+
+                <form asp-action="Index" method="post" class="space-y-5">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+
+                    <!-- Bot Token Field -->
+                    <div>
+                        <label asp-for="BotToken" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Telegram Bot Token <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="BotToken" id="botTokenInput" type="password"
+                                   placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..."
+                                   class="w-full text-xs font-mono font-medium pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                                   required autocomplete="off" />
+                            <button type="button" onclick="toggleTokenVisibility()"
+                                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition cursor-pointer"
+                                    title="Toggle Token Visibility">
+                                <i class="bi bi-eye" id="tokenEyeIcon"></i>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Created via <a href="https://t.me/BotFather" target="_blank" class="text-sky-500 hover:underline font-semibold">@@BotFather</a> on Telegram.</span>
+                        </p>
+                    </div>
+
+                    <!-- Chat ID Field -->
+                    <div>
+                        <label asp-for="ChatId" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                            Telegram Chat / Channel ID <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input asp-for="ChatId" type="text"
+                                   placeholder="e.g. -100123456789 (channel) or @@your_channel"
+                                   class="w-full text-xs font-mono font-medium pl-3.5 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                                   required />
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Find channel ID with <a href="https://t.me/userinfobot" target="_blank" class="text-sky-500 hover:underline font-semibold">@@userinfobot</a> or forward a message to it.</span>
+                        </p>
+                    </div>
+
+                    <div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                            Trigger Rules &amp; Master Switch
+                        </h3>
+
+                        <!-- Master Switch: Global Enable -->
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm shrink-0">
+                                    <i class="bi bi-power"></i>
+                                </span>
+                                <div>
+                                    <label for="chkEnabled" class="text-xs font-bold text-slate-900 dark:text-white cursor-pointer block">
+                                        Enable Telegram Notifications Globally
+                                    </label>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Master switch allowing all bot messages and notifications</span>
+                                </div>
+                            </div>
+                            <input class="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600 focus:ring-blue-500 cursor-pointer"
+                                   type="checkbox" asp-for="IsEnabled" id="chkEnabled">
+                        </div>
+
+                        <!-- Trigger: New Orders -->
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm shrink-0">
+                                    <i class="bi bi-bag-check-fill"></i>
+                                </span>
+                                <div>
+                                    <label for="chkNewOrder" class="text-xs font-bold text-slate-900 dark:text-white cursor-pointer block">
+                                        Notify on New Checkout Order
+                                    </label>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Send order summary, buyer address, items list, and grand total</span>
+                                </div>
+                            </div>
+                            <input class="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600 focus:ring-blue-500 cursor-pointer"
+                                   type="checkbox" asp-for="NotifyOnNewOrder" id="chkNewOrder">
+                        </div>
+
+                        <!-- Trigger: Payment Received -->
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 transition">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shrink-0">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                </span>
+                                <div>
+                                    <label for="chkPaymentReceived" class="text-xs font-bold text-slate-900 dark:text-white cursor-pointer block">
+                                        Notify on Payment Received &amp; Verified
+                                    </label>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Send KHQR / Bakong / Card transaction verification details</span>
+                                </div>
+                            </div>
+                            <input class="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-600 focus:ring-blue-500 cursor-pointer"
+                                   type="checkbox" asp-for="NotifyOnPaymentReceived" id="chkPaymentReceived">
+                        </div>
+                    </div>
+
+                    <!-- Action Toolbar -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-[11px] text-slate-400">
+                            Last Updated: @(Model.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm"))
+                        </span>
+
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                            <i class="bi bi-check2-circle"></i>
+                            <span data-en="Save Configuration" data-kh="រក្សាទុកការកំណត់">Save Configuration</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- LIVE MESSAGE MOCKUP PREVIEW -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <i class="bi bi-chat-square-text text-sky-500"></i>
+                        <span>Live Notification Template Preview</span>
+                    </h3>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">
+                        HTML Parser
+                    </span>
+                </div>
+
+                <!-- Telegram Chat Bubble Mockup -->
+                <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80">
+                    <div class="flex items-center gap-2.5 pb-2 mb-3 border-b border-slate-200/80 dark:border-slate-800">
+                        <div class="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center text-xs">
+                            <i class="bi bi-telegram"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-900 dark:text-white leading-none">CLOTHÉ Bot</div>
+                            <span class="text-[10px] text-slate-400">bot</span>
+                        </div>
+                        <span class="ml-auto text-[10px] text-slate-400 font-mono">Just now</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs font-sans text-slate-800 dark:text-slate-200 leading-relaxed bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-2xs">
+                        <div class="font-bold text-slate-900 dark:text-white">🛒 NEW ORDER RECEIVED!</div>
+                        <div><b>Order ID:</b> <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-mono">#9E4B20A1</code></div>
+                        <div class="text-slate-500 dark:text-slate-400 text-[11px]"><b>Date:</b> @DateTime.Now.ToString("dd MMM yyyy, HH:mm")</div>
+
+                        <div class="pt-1 text-slate-700 dark:text-slate-300">
+                            <b>👤 CUSTOMER DETAILS</b><br />
+                            • <b>Name:</b> Sokha Chamroeun<br />
+                            • <b>Phone:</b> +855 12 345 678
+                        </div>
+
+                        <div class="pt-1 text-slate-700 dark:text-slate-300">
+                            <b>🚚 DELIVERY &amp; LOGISTICS</b><br />
+                            • <b>Carrier:</b> VET Express Cambodia<br />
+                            • <b>Branch:</b> Phnom Penh Main Depot
+                        </div>
+
+                        <div class="pt-1 text-slate-700 dark:text-slate-300">
+                            <b>🛍️ ORDER ITEMS</b><br />
+                            • Oversized Silk Shirt (x2) — <b>$58.00</b><br />
+                            • Tailored Linen Pants (x1) — <b>$42.00</b>
+                        </div>
+
+                        <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 font-bold flex justify-between items-center">
+                            <span>TOTAL AMOUNT:</span>
+                            <span class="text-emerald-600 dark:text-emerald-400 text-sm font-black">$100.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: TEST CONNECTION, BROADCAST & SETUP GUIDE (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+            <!-- TEST CONNECTION CARD -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-send-check-fill text-emerald-500"></i>
+                        <span>Live Connection Test</span>
+                    </h3>
+                    @if (isConfigured)
+                    {
+                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                            <i class="bi bi-check-circle-fill"></i> Ready
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                            Missing Credentials
+                        </span>
+                    }
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Dispatch an instant test notification to verify that your Bot Token and Target Chat ID have appropriate permissions.
+                </p>
+
+                <form asp-action="TestConnection" method="post" id="testForm" onsubmit="syncTestInputs()">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="botToken" id="testBotToken" value="@Model.BotToken" />
+                    <input type="hidden" name="chatId" id="testChatId" value="@Model.ChatId" />
+
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-sky-300 dark:border-sky-700/80 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-xs font-bold transition shadow-2xs cursor-pointer">
+                        <i class="bi bi-telegram text-sky-500"></i>
+                        <span>Send Test Message to Telegram</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- BROADCAST ANNOUNCEMENT TOOL -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-megaphone-fill text-amber-500"></i>
+                        <span>Broadcast Announcement</span>
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-400">Direct Post</span>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Publish an immediate store announcement, promo discount, or operational note to your connected channel.
+                </p>
+
+                <form asp-action="SendBroadcast" method="post" class="space-y-3">
+                    @Html.AntiForgeryToken()
+                    <textarea name="message" rows="3" required
+                              placeholder="e.g. Flash Sale Alert! All streetwear collections are now 20% off for the next 24 hours..."
+                              class="w-full text-xs font-medium p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition resize-none @(!isConfigured ? "opacity-50 pointer-events-none" : "")"></textarea>
+
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold shadow transition cursor-pointer @(!isConfigured ? "opacity-50 pointer-events-none" : "")">
+                        <i class="bi bi-send-fill text-amber-400"></i>
+                        <span>Broadcast Announcement</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- 5-STEP QUICK SETUP GUIDE -->
+            <div class="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="bi bi-compass text-blue-500"></i>
+                    <span>Quick 5-Step Setup Guide</span>
+                </h3>
+
+                <ol class="space-y-3 text-xs text-slate-600 dark:text-slate-400">
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <div>Open Telegram and search for <a href="https://t.me/BotFather" target="_blank" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">@@BotFather</a>.</div>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <div>Type <code class="px-1 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px]">/newbot</code> and give your bot a name and username.</div>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <div>Copy the generated <b>HTTP API Token</b> and paste it into the <b>Telegram Bot Token</b> input on the left.</div>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">4</span>
+                        <div>Create a channel/group, add your bot as an <b>Administrator</b> with message posting rights.</div>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">5</span>
+                        <div>Input the channel ID (e.g. <code class="px-1 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px]">-100...</code>), click <b>Save Configuration</b>, and run the <b>Live Connection Test</b>.</div>
+                    </li>
+                </ol>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function toggleTokenVisibility() {
+        const tokenInput = document.getElementById('botTokenInput');
+        const eyeIcon = document.getElementById('tokenEyeIcon');
+        if (!tokenInput || !eyeIcon) return;
+
+        if (tokenInput.type === 'password') {
+            tokenInput.type = 'text';
+            eyeIcon.classList.remove('bi-eye');
+            eyeIcon.classList.add('bi-eye-slash');
+        } else {
+            tokenInput.type = 'password';
+            eyeIcon.classList.remove('bi-eye-slash');
+            eyeIcon.classList.add('bi-eye');
+        }
+    }
+
+    function syncTestInputs() {
+        const tokenVal = document.getElementById('botTokenInput')?.value;
+        const chatVal = document.querySelector('input[name="ChatId"]')?.value;
+        if (tokenVal) document.getElementById('testBotToken').value = tokenVal.trim();
+        if (chatVal) document.getElementById('testChatId').value = chatVal.trim();
+    }
+</script>

@@ -1,4 +1,6 @@
-@model WebApplication_ClothingEcommerce.Models.ProductVariant
+@using WebApplication_ClothingEcommerce.Data.Enums
+@using WebApplication_ClothingEcommerce.Models
+@model ProductVariant
 
 @{
     ViewData["Title"] = "Variant Details";
@@ -10,300 +12,176 @@
     var quantity = Model.Inventory?.Quantity ?? 0;
     var reserved = Model.Inventory?.ReservedQuantity ?? 0;
     var available = quantity - reserved;
+
+    var allProducts = ViewBag.AllProducts as List<Product>;
+    var allSizes = ViewBag.AllSizes as List<Size>;
+    var allColors = ViewBag.AllColors as List<Color>;
+    var statusValues = ViewBag.StatusValues as List<VariantStatus>;
 }
 
-<div class="container py-4">
+<div class="admin-page">
 
-    <!-- HEADER -->
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <div class="page-header">
         <div>
-
-            <a asp-action="Index"
-               class="text-decoration-none text-muted">
-
-                <i class="bi bi-arrow-left me-1"></i>
-                Back to Variants
-
-            </a>
-
-            <h2 class="fw-bold mt-3 mb-1">
-                Variant Details
-            </h2>
-
-            <p class="text-muted mb-0">
-                @Model.SKU
-            </p>
-
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Variant Details</h1>
+            <p class="page-description">@Model.SKU</p>
         </div>
-
 
         <div class="d-flex gap-2">
-
-            <a asp-action="Edit"
-               asp-route-id="@Model.Id"
-               class="btn btn-warning">
-
-                <i class="bi bi-pencil me-1"></i>
-                Edit
-
-            </a>
-
-            <a asp-action="Delete"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-danger">
-
-                <i class="bi bi-trash me-1"></i>
-                Delete
-
-            </a>
-
+            <a asp-action="Index" class="btn-reset"><i class="bi bi-arrow-left"></i> Back</a>
+            <button type="button" class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#editVariantModal"
+                    data-id="@Model.Id"
+                    data-productid="@Model.ProductId"
+                    data-sizeid="@Model.SizeId"
+                    data-colorid="@Model.ColorId"
+                    data-sku="@Model.SKU"
+                    data-price="@Model.Price"
+                    data-compareatprice="@(Model.CompareAtPrice?.ToString() ?? "")"
+                    data-status="@Model.Status"
+                    data-quantity="@quantity">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button type="button" class="action-btn action-danger" style="width:auto;padding:8px 18px;"
+                    data-bs-toggle="modal" data-bs-target="#deleteVariantModal"
+                    data-id="@Model.Id"
+                    data-sku="@Model.SKU">
+                <i class="bi bi-trash"></i> Delete
+            </button>
         </div>
-
     </div>
 
+    <div id="alertPlaceholder"></div>
 
     <div class="row g-4">
 
         <!-- PRODUCT -->
-
         <div class="col-lg-4">
-
-            <div class="card border-0 shadow-sm">
-
+            <div class="admin-card">
                 @if (image != null)
                 {
-                    <img src="@image.ImageUrl"
-                         class="card-img-top"
-                         style="height:320px; object-fit:cover;"
-                         alt="@Model.Product?.Name" />
+                    <img src="@image.ImageUrl" class="variant-product-image" alt="@Model.Product?.Name" />
                 }
                 else
                 {
-                    <div class="d-flex align-items-center justify-content-center bg-light"
-                         style="height:320px;">
-
-                        <i class="bi bi-image fs-1 text-muted"></i>
-
+                    <div class="variant-product-image-placeholder">
+                        <i class="bi bi-image"></i>
                     </div>
                 }
 
+                <div style="padding: 20px 26px;">
+                    <div class="detail-label">Product</div>
+                    <h5 class="fw-bold mt-1 mb-3">@Model.Product?.Name</h5>
 
-                <div class="card-body">
-
-                    <small class="text-muted">
-                        Product
-                    </small>
-
-                    <h5 class="fw-bold mt-1">
-                        @Model.Product?.Name
-                    </h5>
-
-                    <a asp-controller="Products"
-                       asp-action="Details"
-                       asp-route-id="@Model.ProductId"
-                       class="btn btn-outline-primary btn-sm">
-
+                    <a asp-controller="Products" asp-action="Details" asp-route-id="@Model.ProductId" class="btn-reset">
                         View Product
-
                     </a>
-
                 </div>
-
             </div>
-
         </div>
 
-
         <!-- VARIANT INFO -->
-
         <div class="col-lg-8">
-
-            <div class="card border-0 shadow-sm">
-
-                <div class="card-header bg-white py-3">
-
-                    <h5 class="fw-bold mb-0">
-                        Variant Information
-                    </h5>
-
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title">Variant Information</h3>
+                    </div>
                 </div>
 
-
-                <div class="card-body">
-
+                <div style="padding: 0 26px 26px;">
                     <div class="row g-4">
 
-
                         <div class="col-md-6">
-
-                            <small class="text-muted">
-                                SKU
-                            </small>
-
-                            <div class="fw-bold mt-1">
-                                <code>@Model.SKU</code>
-                            </div>
-
+                            <div class="detail-label">SKU</div>
+                            <div class="fw-bold mt-1"><code>@Model.SKU</code></div>
                         </div>
 
-
                         <div class="col-md-6">
-
-                            <small class="text-muted">
-                                Price
-                            </small>
-
-                            <div class="fw-bold fs-4 mt-1">
-                                $@Model.Price.ToString("N2")
-                            </div>
-
+                            <div class="detail-label">Price</div>
+                            <div class="fw-bold fs-4 mt-1">$@Model.Price.ToString("N2")</div>
                         </div>
 
-
                         <div class="col-md-6">
-
-                            <small class="text-muted">
-                                Size
-                            </small>
-
+                            <div class="detail-label">Compare At Price</div>
                             <div class="mt-1">
-
-                                <span class="badge bg-light text-dark border fs-6">
-                                    @Model.Size?.Name
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-6">
-
-                            <small class="text-muted">
-                                Color
-                            </small>
-
-                            <div class="mt-1">
-
-                                <span class="badge bg-light text-dark border fs-6">
-                                    @Model.Color?.Name
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-6">
-
-                            <small class="text-muted">
-                                Status
-                            </small>
-
-                            <div class="mt-1">
-
-                                @if (Model.Status ==
-                                    WebApplication_ClothingEcommerce.Data.Enums.VariantStatus.Available)
+                                @if (Model.CompareAtPrice.HasValue && Model.CompareAtPrice.Value > 0)
                                 {
-                                    <span class="badge bg-success">
-                                        Available
-                                    </span>
+                                    <span class="text-decoration-line-through text-muted fs-5">$@Model.CompareAtPrice.Value.ToString("N2")</span>
+                                    @if (Model.CompareAtPrice.Value > Model.Price)
+                                    {
+                                        <span class="status-badge status-danger ms-2">On Sale</span>
+                                    }
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">
-                                        @Model.Status
-                                    </span>
+                                    <span class="text-muted">—</span>
                                 }
-
                             </div>
-
                         </div>
 
+                        <div class="col-md-6">
+                            <div class="detail-label">Size</div>
+                            <div class="mt-1"><span class="tag-badge">@Model.Size?.Name</span></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-label">Color</div>
+                            <div class="mt-1"><span class="tag-badge">@Model.Color?.Name</span></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-label">Status</div>
+                            <div class="mt-1">
+                                @if (Model.Status == VariantStatus.Available)
+                                {
+                                    <span class="status-badge status-active">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-inactive">@Model.Status</span>
+                                }
+                            </div>
+                        </div>
 
                     </div>
-
                 </div>
-
             </div>
 
-
             <!-- INVENTORY -->
-
-            <div class="card border-0 shadow-sm mt-4">
-
-                <div class="card-header bg-white py-3">
-
-                    <h5 class="fw-bold mb-0">
-
-                        <i class="bi bi-box-seam me-2"></i>
-                        Inventory
-
-                    </h5>
-
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <div>
+                        <h3 class="admin-card-title"><i class="bi bi-box-seam"></i> Inventory</h3>
+                    </div>
                 </div>
 
-
-                <div class="card-body">
-
+                <div style="padding: 0 26px 26px;">
                     <div class="row g-3">
 
                         <div class="col-md-4">
-
-                            <div class="border rounded p-3">
-
-                                <small class="text-muted">
-                                    Quantity
-                                </small>
-
-                                <div class="fs-3 fw-bold">
-                                    @quantity
-                                </div>
-
+                            <div class="inventory-box">
+                                <div class="detail-label">Quantity</div>
+                                <div class="fs-3 fw-bold">@quantity</div>
                             </div>
-
                         </div>
 
-
                         <div class="col-md-4">
-
-                            <div class="border rounded p-3">
-
-                                <small class="text-muted">
-                                    Reserved
-                                </small>
-
-                                <div class="fs-3 fw-bold text-warning">
-                                    @reserved
-                                </div>
-
+                            <div class="inventory-box">
+                                <div class="detail-label">Reserved</div>
+                                <div class="fs-3 fw-bold" style="color:#b45309;">@reserved</div>
                             </div>
-
                         </div>
 
-
                         <div class="col-md-4">
-
-                            <div class="border rounded p-3">
-
-                                <small class="text-muted">
-                                    Available
-                                </small>
-
-                                <div class="fs-3 fw-bold text-success">
-                                    @available
-                                </div>
-
+                            <div class="inventory-box">
+                                <div class="detail-label">Available</div>
+                                <div class="fs-3 fw-bold" style="color:#15803d;">@available</div>
                             </div>
-
                         </div>
 
                     </div>
-
                 </div>
-
             </div>
 
         </div>
@@ -311,3 +189,275 @@
     </div>
 
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editErrors" class="admin-alert admin-alert-danger d-none"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Product</label>
+                            <select name="ProductId" id="editProductId" class="form-select" required>
+                                @if (allProducts != null)
+                                {
+                                    @foreach (var p in allProducts)
+                                    {
+                                        <option value="@p.Id">@p.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Size</label>
+                            <select name="SizeId" id="editSizeId" class="form-select" required>
+                                @if (allSizes != null)
+                                {
+                                    @foreach (var s in allSizes)
+                                    {
+                                        <option value="@s.Id">@s.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Color</label>
+                            <select name="ColorId" id="editColorId" class="form-select" required>
+                                @if (allColors != null)
+                                {
+                                    @foreach (var c in allColors)
+                                    {
+                                        <option value="@c.Id">@c.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">SKU</label>
+                            <input name="SKU" id="editSku" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Price</label>
+                            <input type="number" step="0.01" min="0" name="Price" id="editPrice" class="form-control" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Compare At Price</label>
+                            <input type="number" step="0.01" min="0" name="CompareAtPrice" id="editCompareAtPrice" class="form-control" placeholder="Original price (optional)" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Quantity</label>
+                            <input type="number" min="0" name="quantity" id="editQuantity" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="Status" id="editStatus" class="form-select">
+                                @if (statusValues != null)
+                                {
+                                    @foreach (var s in statusValues)
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteVariantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="deleteVariantForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Variant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteErrors" class="admin-alert admin-alert-danger d-none"></div>
+                    <p>Are you sure you want to delete variant <strong id="deleteSku"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="action-btn action-danger" style="width:auto;padding:8px 18px;">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-label {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #9ca3af;
+        margin-bottom: 4px;
+        letter-spacing: 0.03em;
+    }
+
+    .tag-badge {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        font-size: 0.85rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .variant-product-image {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .variant-product-image-placeholder {
+        width: 100%;
+        height: 280px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-size: 2.5rem;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .inventory-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 16px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function showAlert(type, message) {
+            const placeholder = document.getElementById('alertPlaceholder');
+            const cls = type === 'success' ? 'admin-alert-success' : 'admin-alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            placeholder.innerHTML = `<div class="admin-alert ${cls}"><i class="bi ${icon}"></i> ${message}</div>`;
+        }
+
+        function showErrors(boxId, errors) {
+            const box = document.getElementById(boxId);
+            box.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + errors.join('<br />');
+            box.classList.remove('d-none');
+        }
+
+        function hideErrors(boxId) {
+            document.getElementById(boxId).classList.add('d-none');
+        }
+
+        async function postForm(url, form, errorBoxId) {
+            hideErrors(errorBoxId);
+            const formData = new FormData(form);
+
+            const response = await fetch(url, { method: 'POST', body: formData });
+
+            let data = {};
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok) {
+                showErrors(errorBoxId, data.errors || ['Something went wrong.']);
+                return null;
+            }
+            return data;
+        }
+
+        // Edit — populate on open
+        document.getElementById('editVariantModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editProductId').value = btn.getAttribute('data-productid');
+            document.getElementById('editSizeId').value = btn.getAttribute('data-sizeid');
+            document.getElementById('editColorId').value = btn.getAttribute('data-colorid');
+            document.getElementById('editSku').value = btn.getAttribute('data-sku');
+            document.getElementById('editPrice').value = btn.getAttribute('data-price');
+            document.getElementById('editCompareAtPrice').value = btn.getAttribute('data-compareatprice') || '';
+            document.getElementById('editQuantity').value = btn.getAttribute('data-quantity');
+            document.getElementById('editStatus').value = btn.getAttribute('data-status');
+            hideErrors('editErrors');
+        });
+
+        document.getElementById('editVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const result = await postForm('@Url.Action("Edit", "ProductVariants")?id=' + id, this, 'editErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editVariantModal')).hide();
+                sessionStorage.setItem('variantToast', JSON.stringify({ type: 'success', message: result.message }));
+                location.reload();
+            }
+        });
+
+        // Delete
+        document.getElementById('deleteVariantModal').addEventListener('show.bs.modal', function(e) {
+            const btn = e.relatedTarget;
+            document.getElementById('deleteId').value = btn.getAttribute('data-id');
+            document.getElementById('deleteSku').textContent = btn.getAttribute('data-sku');
+            hideErrors('deleteErrors');
+        });
+
+        document.getElementById('deleteVariantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('deleteId').value;
+            const result = await postForm('@Url.Action("Delete", "ProductVariants")/' + id, this, 'deleteErrors');
+            if (result && result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deleteVariantModal')).hide();
+                window.location.href = '@Url.Action("Index", "ProductVariants")';
+            }
+        });
+
+        // Toast after reload (from Edit)
+        document.addEventListener('DOMContentLoaded', function() {
+            const raw = sessionStorage.getItem('variantToast');
+            if (raw) {
+                const toast = JSON.parse(raw);
+                showAlert(toast.type, toast.message);
+                sessionStorage.removeItem('variantToast');
+            }
+        });
+    </script>
+}

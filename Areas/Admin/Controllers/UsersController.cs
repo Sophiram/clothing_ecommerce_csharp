@@ -1,165 +1,273 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using WebApplication_ClothingEcommerce.Models;
+using WebApplication_ClothingEcommerce.Services;
 
 namespace WebApplication_ClothingEcommerce.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "Admin")]
-public class UsersController(
-    UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager) : Controller
+[Authorize(Roles = "SuperAdmin")]
+public class UsersController : Controller
 {
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
-    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly IAdminUserService _adminUserService;
+    private readonly WebApplication_ClothingEcommerce.Services.Interfaces.IAvatarService _avatarService;
 
-    // GET: Admin/Users
-    public async Task<IActionResult> Index()
+    public UsersController(
+        IAdminUserService adminUserService,
+        WebApplication_ClothingEcommerce.Services.Interfaces.IAvatarService avatarService)
     {
-        var users = await _userManager.Users.AsNoTracking().ToListAsync();
-        var userRolesMap = new Dictionary<string, IList<string>>();
-
-        foreach (var user in users)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
-            userRolesMap[user.Id] = roles;
-        }
-
-        ViewBag.UserRoles = userRolesMap;
-        return View(users);
+        _adminUserService = adminUserService;
+        _avatarService = avatarService;
     }
 
+    // =====================================================
+    // GET: Admin/Users
+    // =====================================================
+    public async Task<IActionResult> Index(string? search = null, string? roleFilter = null)
+    {
+        var (filteredUsers, userRolesMap, userLockoutMap, userAvatarsMap, allRoles) = await _adminUserService.GetUsersAsync(search, roleFilter);
+
+        ViewBag.Search = search;
+        ViewBag.RoleFilter = roleFilter;
+        ViewBag.UserRoles = userRolesMap;
+        ViewBag.UserLockout = userLockoutMap;
+        ViewBag.UserAvatars = userAvatarsMap;
+        ViewBag.AllRoles = allRoles;
+        ViewBag.CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return View(filteredUsers);
+    }
+
+    // =====================================================
     // GET: Admin/Users/Details/5
+    // =====================================================
     public async Task<IActionResult> Details(string? id)
     {
-        if (string.IsNullOrEmpty(id)) return NotFound();
+        if (string.IsNullOrEmpty(id))
+        {
+            id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(id)) return NotFound();
+        }
 
-        var user = await _userManager.FindByIdAsync(id);
+        var (user, roles) = await _adminUserService.GetUserDetailsAsync(id);
         if (user == null) return NotFound();
 
-        ViewBag.Roles = await _userManager.GetRolesAsync(user);
+        var isLocked = await _adminUserService.GetUserLockoutStatusAsync(id);
+
+        ViewBag.Roles = roles;
+        ViewBag.IsCurrent = (user.Id == User.FindFirstValue(ClaimTypes.NameIdentifier));
+        ViewBag.IsLocked = isLocked;
+        ViewBag.LockoutEnd = user.LockoutEnd;
+        ViewBag.AccessFailedCount = user.AccessFailedCount;
+        ViewBag.AvatarUrl = _avatarService.GetAvatarUrl(user.Id);
         return View(user);
     }
 
+    // =====================================================
     // GET: Admin/Users/Create
+    // =====================================================
     public async Task<IActionResult> Create()
     {
-        ViewBag.Roles = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name");
+        var roles = await _adminUserService.GetAllRoleNamesAsync();
+        ViewBag.Roles = new SelectList(roles, "User");
         return View();
     }
 
+    // =====================================================
     // POST: Admin/Users/Create
+    // =====================================================
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(string firstName, string lastName, string email, string password, string role)
     {
         if (ModelState.IsValid)
         {
-            var user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                FirstName = firstName,
-                LastName = lastName,
-                EmailConfirmed = true
-            };
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-            var result = await _userManager.CreateAsync(user, password);
-            if (result.Succeeded)
+            var result = await _adminUserService.CreateUserAsync(firstName, lastName, email, password, role, currentUserId, currentEmail, ip);
+
+            if (result.Success)
             {
-                if (!string.IsNullOrEmpty(role) && await _roleManager.RoleExistsAsync(role))
-                {
-                    await _userManager.AddToRoleAsync(user, role);
-                }
+                TempData["Success"] = result.SuccessMessage;
                 return RedirectToAction(nameof(Index));
             }
 
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, error);
             }
         }
 
-        ViewBag.Roles = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", role);
+        var roles = await _adminUserService.GetAllRoleNamesAsync();
+        ViewBag.Roles = new SelectList(roles, role);
         return View();
     }
 
+    // =====================================================
     // GET: Admin/Users/Edit/5
+    // =====================================================
     public async Task<IActionResult> Edit(string? id)
     {
         if (string.IsNullOrEmpty(id)) return NotFound();
 
-        var user = await _userManager.FindByIdAsync(id);
+        var (user, currentRoles) = await _adminUserService.GetUserForEditAsync(id);
         if (user == null) return NotFound();
 
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        ViewBag.Roles = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", currentRoles.FirstOrDefault());
+        var roles = await _adminUserService.GetAllRoleNamesAsync();
+        ViewBag.Roles = new SelectList(roles, currentRoles.FirstOrDefault() ?? "User");
+        ViewBag.AvatarUrl = _avatarService.GetAvatarUrl(user.Id);
 
         return View(user);
     }
 
+    // =====================================================
     // POST: Admin/Users/Edit/5
+    // =====================================================
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id, string firstName, string lastName, string email, string? phoneNumber, string role)
+    public async Task<IActionResult> Edit(string id, string firstName, string lastName, string email, string? phoneNumber, string role, IFormFile? avatarFile)
     {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user == null) return NotFound();
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-        user.FirstName = firstName;
-        user.LastName = lastName;
-        user.Email = email;
-        user.UserName = email;
-        user.PhoneNumber = phoneNumber;
-
-        var result = await _userManager.UpdateAsync(user);
-        if (result.Succeeded)
+        if (avatarFile != null && avatarFile.Length > 0)
         {
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            if (!string.IsNullOrEmpty(role) && await _roleManager.RoleExistsAsync(role))
+            var avatarResult = await _avatarService.UploadAvatarAsync(id, avatarFile);
+            if (!avatarResult.Success)
             {
-                await _userManager.AddToRoleAsync(user, role);
+                TempData["Error"] = string.Join(" ", avatarResult.Errors);
             }
+        }
 
+        var result = await _adminUserService.UpdateUserAsync(id, firstName, lastName, email, phoneNumber, role, currentUserId, currentEmail, ip);
+
+        if (result.Success)
+        {
+            TempData["Success"] = result.SuccessMessage;
             return RedirectToAction(nameof(Index));
         }
 
-        foreach (var error in result.Errors)
+        if (result.ErrorMessage == "User not found.")
         {
-            ModelState.AddModelError(string.Empty, error.Description);
+            return NotFound();
         }
 
-        ViewBag.Roles = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", role);
+        TempData["Error"] = result.ErrorMessage;
+        var roles = await _adminUserService.GetAllRoleNamesAsync();
+        ViewBag.Roles = new SelectList(roles, role);
+        ViewBag.AvatarUrl = _avatarService.GetAvatarUrl(id);
+
+        var (user, _) = await _adminUserService.GetUserForEditAsync(id);
         return View(user);
     }
 
+    // =====================================================
+    // POST: Admin/Users/RemoveAvatar
+    // =====================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveAvatar(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return NotFound();
+        await _avatarService.DeleteAvatarAsync(id);
+        TempData["Success"] = "Profile picture removed.";
+        return RedirectToAction(nameof(Edit), new { id });
+    }
+
+    // =====================================================
     // GET: Admin/Users/Delete/5
+    // =====================================================
     public async Task<IActionResult> Delete(string? id)
     {
         if (string.IsNullOrEmpty(id)) return NotFound();
 
-        var user = await _userManager.FindByIdAsync(id);
+        var (user, roles) = await _adminUserService.GetUserDetailsAsync(id);
         if (user == null) return NotFound();
 
-        ViewBag.Roles = await _userManager.GetRolesAsync(user);
+        ViewBag.Roles = roles;
         return View(user);
     }
 
+    // =====================================================
     // POST: Admin/Users/Delete/5
+    // =====================================================
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
     {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user != null)
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _adminUserService.DeleteUserAsync(id, currentUserId, currentEmail, ip);
+
+        if (!result.Success)
         {
-            await _userManager.DeleteAsync(user);
+            TempData["Error"] = result.ErrorMessage;
         }
+        else
+        {
+            TempData["Success"] = result.SuccessMessage;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // =====================================================
+    // POST: Admin/Users/ToggleStatus
+    // =====================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return NotFound();
+
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _adminUserService.ToggleUserStatusAsync(id, currentUserId, currentEmail, ip);
+
+        if (!result.Success)
+        {
+            if (result.ErrorMessage == "User not found.") return NotFound();
+            TempData["Error"] = result.ErrorMessage;
+        }
+        else
+        {
+            TempData["Success"] = result.SuccessMessage;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // =====================================================
+    // POST: Admin/Users/ResetPassword
+    // =====================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(string id, string newPassword, string confirmPassword)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentEmail = User.FindFirstValue(ClaimTypes.Email);
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _adminUserService.ResetUserPasswordAsync(id, newPassword, confirmPassword, currentUserId, currentEmail, ip);
+
+        if (!result.Success)
+        {
+            if (result.ErrorMessage == "User not found.") return NotFound();
+            TempData["Error"] = result.ErrorMessage;
+        }
+        else
+        {
+            TempData["Success"] = result.SuccessMessage;
+        }
+
         return RedirectToAction(nameof(Index));
     }
 }

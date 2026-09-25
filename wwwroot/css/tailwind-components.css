@@ -1,0 +1,200 @@
+/* =========================================================
+   CLOTHÉ — Tailwind Component Layer
+   This file is loaded via <link> so Razor won't parse @layer/@apply
+   Tailwind Play CDN processes this via <style> tags at runtime.
+   ========================================================= */
+
+@layer base {
+    :root { color-scheme: light; }
+    html.dark { color-scheme: dark; }
+
+    body {
+        @apply font-sans antialiased;
+        background-color: #ffffff;
+        color: #111827;
+    }
+
+    html.dark body {
+        background-color: #020617;
+        color: #f1f5f9;
+    }
+
+    /* Khmer font for lang=km or .font-khmer */
+    :lang(km), [lang="km"], .font-khmer {
+        font-family: 'Kantumruy Pro', system-ui, sans-serif !important;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    html.dark ::-webkit-scrollbar-track { background: #1e293b; }
+    html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    ::selection { background: rgba(66, 133, 244, .35); color: #fff; }
+}
+
+@layer components {
+    /* ── NAV LINK ── */
+    .nav-link-clothe {
+        @apply relative text-sm font-medium text-gray-700 dark:text-slate-300
+               hover:text-[#4285F4] dark:hover:text-blue-400
+               transition-colors duration-200 py-1;
+    }
+    .nav-link-clothe.active {
+        @apply text-[#4285F4] dark:text-blue-400;
+    }
+    .nav-link-clothe::after {
+        content: '';
+        @apply absolute bottom-0 left-0 w-full h-0.5 bg-[#4285F4] dark:bg-blue-400
+               scale-x-0 transition-transform duration-200 rounded-full;
+    }
+    .nav-link-clothe.active::after,
+    .nav-link-clothe:hover::after { @apply scale-x-100; }
+
+    /* ── NAV ACTION BUTTON ── */
+    .nav-action-btn {
+        @apply relative flex items-center justify-center w-9 h-9 rounded-xl
+               text-gray-600 dark:text-slate-400
+               hover:text-[#4285F4] dark:hover:text-blue-400
+               hover:bg-blue-50 dark:hover:bg-slate-800
+               transition-all duration-200 cursor-pointer border-0 bg-transparent;
+    }
+
+    /* ── BADGE ── */
+    .nav-badge {
+        @apply absolute -top-1 -right-1 flex items-center justify-center
+               text-[10px] font-bold text-white rounded-full bg-red-500;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 3px;
+    }
+
+    /* ── DROPDOWN PANEL ── */
+    .dropdown-panel {
+        @apply absolute right-0 top-full mt-2 bg-white dark:bg-slate-800
+               rounded-2xl border border-gray-100 dark:border-slate-700
+               py-1.5 z-50 opacity-0 invisible
+               transition-all duration-200;
+        box-shadow: 0 8px 32px rgba(0,0,0,.12);
+        transform: translateY(4px);
+        min-width: 13rem;
+    }
+    .dropdown-trigger:focus-within .dropdown-panel,
+    .dropdown-trigger:hover .dropdown-panel {
+        @apply opacity-100 visible;
+        transform: translateY(0);
+    }
+
+    .dropdown-item-clothe {
+        @apply flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 dark:text-slate-300
+               hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-[#4285F4]
+               dark:hover:text-blue-400 transition-colors duration-150 w-full text-left;
+    }
+
+    /* ── SALE PILL ── */
+    .sale-pill {
+        @apply inline-block ml-1.5 px-1.5 py-0.5 text-[9px] font-bold
+               uppercase tracking-wider text-white bg-red-500 rounded-full align-middle;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary-clothe {
+        @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold
+               text-white rounded-xl transition-all duration-200;
+        background-color: #4285F4;
+    }
+    .btn-primary-clothe:hover { background-color: #3367D6; box-shadow: 0 4px 12px rgba(66,133,244,.3); }
+
+    .btn-outline-clothe {
+        @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold
+               text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600
+               hover:border-[#4285F4] hover:text-[#4285F4] dark:hover:text-blue-400
+               rounded-xl transition-all duration-200 bg-transparent;
+    }
+
+    /* ── DRAWERS ── */
+    .drawer-overlay {
+        @apply fixed inset-0 z-40 opacity-0 invisible transition-all duration-300;
+        background: rgba(0,0,0,.45);
+        backdrop-filter: blur(4px);
+    }
+    .drawer-overlay.open { @apply opacity-100 visible; }
+
+    .drawer-panel {
+        @apply fixed top-0 h-full bg-white dark:bg-slate-900 z-50 shadow-2xl
+               transition-transform duration-300 overflow-y-auto;
+    }
+    .drawer-panel.left  { @apply left-0 w-80; transform: translateX(-100%); }
+    .drawer-panel.right { @apply right-0; width: 22rem; transform: translateX(100%); }
+    .drawer-panel.open  { transform: translateX(0); }
+
+    /* ── FORM INPUTS ── */
+    .input-clothe {
+        @apply w-full px-4 py-2.5 text-sm bg-gray-50 dark:bg-slate-800
+               border border-gray-200 dark:border-slate-700
+               rounded-xl text-gray-900 dark:text-slate-100
+               transition-all duration-200;
+    }
+    .input-clothe::placeholder { color: #9ca3af; }
+    .input-clothe:focus {
+        outline: none;
+        border-color: #4285F4;
+        box-shadow: 0 0 0 3px rgba(66,133,244,.15);
+    }
+
+    /* ── USER AVATAR ── */
+    .user-avatar {
+        @apply flex items-center justify-center w-8 h-8 rounded-full
+               text-white text-sm font-bold overflow-hidden flex-shrink-0;
+        background-color: #4285F4;
+    }
+
+    /* ── PROMO BAR ── */
+    .promo-bar {
+        @apply flex items-center justify-between gap-3 px-4 py-2 text-white text-xs;
+        background-color: #0f172a;
+    }
+    html.dark .promo-bar { background-color: #020617; }
+
+    /* ── ADMIN SIDEBAR ── */
+    .admin-sidebar-link {
+        @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+               text-slate-400 hover:text-white hover:bg-slate-800
+               transition-all duration-150 w-full;
+    }
+    .admin-sidebar-link.active {
+        @apply text-white bg-slate-800;
+        border-left: 2px solid #4285F4;
+    }
+    .admin-sidebar-link i { @apply w-4 text-center flex-shrink-0; }
+
+    /* ── ADMIN CARDS ── */
+    .admin-stat-card {
+        @apply bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700;
+        box-shadow: 0 2px 8px rgba(60,64,67,.08);
+    }
+    .admin-table-wrapper {
+        @apply bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden;
+        box-shadow: 0 2px 8px rgba(60,64,67,.06);
+    }
+
+    /* ── SECTION TITLES ── */
+    .section-title-clothe {
+        @apply text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100;
+    }
+    .section-subtitle-clothe {
+        @apply text-gray-500 dark:text-slate-400 text-sm;
+    }
+
+    /* ── PRODUCT CARD ── */
+    .product-card-tw {
+        @apply bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700
+               transition-all duration-300 hover:-translate-y-1;
+        box-shadow: 0 2px 8px rgba(60,64,67,.07);
+    }
+    .product-card-tw:hover {
+        box-shadow: 0 12px 30px rgba(60,64,67,.18);
+        border-color: #4285F4;
+    }
+}
