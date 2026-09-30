@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ClothingEcommerce.Client/ClothingEcommerce.Client.csproj" />
+  <Project Path="ClothingEcommerce.Server/ClothingEcommerce.Server.csproj" />
+  <Project Path="ClothingEcommerce.Shared/ClothingEcommerce.Shared.csproj" />
+</Solution>

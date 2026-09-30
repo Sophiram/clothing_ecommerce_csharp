@@ -1,0 +1,482 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Customer>
+@using WebApplication_ClothingEcommerce.Data.Enums
+
+@{
+    ViewData["Title"] = "Customers";
+    var status = ViewBag.Status as CustomerStatus?;
+    var customerAvatars = ViewBag.CustomerAvatars as Dictionary<Guid, string?> ?? new Dictionary<Guid, string?>();
+    var totalCount = (int)(ViewBag.TotalCount ?? Model.Count());
+    var activeCount = (int)(ViewBag.ActiveCount ?? Model.Count(c => c.Status == CustomerStatus.Active));
+    var blockedCount = Model.Count(c => c.Status == CustomerStatus.Blocked);
+    var totalOrders = Model.Sum(c => c.Orders?.Count ?? 0);
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-people-fill"></i>
+                <span data-en="Store Customers" data-kh="អតិថិជនហាង">Store Customers</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white" data-en="Customer Management" data-kh="ការគ្រប់គ្រងអតិថិជន">
+                Customer Management
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-en="Browse and manage customer profiles, status, orders, and interaction history." data-kh="រកមើល និងគ្រប់គ្រងគណនីអតិថិជន ស្ថានភាព ការបញ្ជាទិញ និងប្រវត្តិ។">
+                Browse and manage customer profiles, status, orders, and interaction history.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs">
+                <i class="bi bi-check-circle-fill text-emerald-500"></i>
+                <span><span data-en="Active:" data-kh="សកម្ម:">Active:</span> <strong class="text-slate-900 dark:text-white">@activeCount</strong> / @totalCount</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-check-circle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+            <i class="bi bi-exclamation-triangle-fill text-base flex-shrink-0"></i>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
+    <!-- 4 KPI SUMMARY CARDS (MATCHING REPORTS DESIGN) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. TOTAL CUSTOMERS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Total Customers" data-kh="អតិថិជនសរុប">Total Customers</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-people-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span data-en="Platform verified shoppers" data-kh="អ្នកទិញបានផ្ទៀងផ្ទាត់លើប្រព័ន្ធ">Platform verified shoppers</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ACTIVE ACCOUNTS -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Active Accounts" data-kh="គណនីសកម្ម">Active Accounts</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-person-check-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @activeCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>@(totalCount > 0 ? (activeCount * 100 / totalCount) : 0)% <span data-en="activation rate" data-kh="អត្រាសកម្ម">activation rate</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RESTRICTED & INACTIVE -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Blocked &amp; Inactive" data-kh="បានបិទ &amp; អសកម្ម">Blocked &amp; Inactive</span>
+                <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-shield-slash-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    @(totalCount - activeCount)
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span>@blockedCount <span data-en="accounts restricted" data-kh="គណនីត្រូវបានរារាំង">accounts restricted</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. TOTAL ORDERS PLACED -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Total Orders" data-kh="ការបញ្ជាទិញសរុប">Total Orders</span>
+                <span class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base">
+                    <i class="bi bi-bag-check-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                    @totalOrders
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span data-en="Cumulative purchases" data-kh="ការទិញសរុបទាំងអស់">Cumulative purchases</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SEARCH & STATUS FILTERS TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+        <form method="get" asp-action="Index" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search by name, email, phone..."
+                       data-placeholder-en="Search by name, email, phone..."
+                       data-placeholder-kh="ស្វែងរកតាមឈ្មោះ អ៊ីមែល ទូរស័ព្ទ..."
+                       class="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="submit"
+                        class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="bi bi-funnel-fill"></i> <span data-en="Search" data-kh="ស្វែងរក">Search</span>
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Clear Search">
+                        <i class="bi bi-x-lg text-xs"></i>
+                    </a>
+                }
+            </div>
+        </form>
+
+        <!-- Quick Status Filter Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="font-bold text-slate-400 text-[11px] uppercase tracking-wider mr-1">Status:</span>
+            <a asp-action="Index"
+               class="px-3 py-1.5 rounded-xl font-bold transition @(!status.HasValue ? "bg-blue-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span data-en="All" data-kh="ទាំងអស់">All</span>
+            </a>
+            <a asp-action="Index" asp-route-status="@CustomerStatus.Active"
+               class="px-3 py-1.5 rounded-xl font-bold transition @(status == CustomerStatus.Active ? "bg-emerald-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span data-en="Active" data-kh="សកម្ម">Active</span>
+            </a>
+            <a asp-action="Index" asp-route-status="@CustomerStatus.Inactive"
+               class="px-3 py-1.5 rounded-xl font-bold transition @(status == CustomerStatus.Inactive ? "bg-slate-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span data-en="Inactive" data-kh="អសកម្ម">Inactive</span>
+            </a>
+            <a asp-action="Index" asp-route-status="@CustomerStatus.Blocked"
+               class="px-3 py-1.5 rounded-xl font-bold transition @(status == CustomerStatus.Blocked ? "bg-rose-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span data-en="Blocked" data-kh="បានរារាំង">Blocked</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- CUSTOMERS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        @if (Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-4" data-en="Customer" data-kh="អតិថិជន">Customer</th>
+                            <th class="py-3 px-4" data-en="Email" data-kh="អ៊ីមែល">Email</th>
+                            <th class="py-3 px-4" data-en="Phone" data-kh="ទូរស័ព្ទ">Phone</th>
+                            <th class="py-3 px-4" data-en="Status" data-kh="ស្ថានភាព">Status</th>
+                            <th class="py-3 px-4" data-en="Orders" data-kh="ការបញ្ជាទិញ">Orders</th>
+                            <th class="py-3 px-4" data-en="Registered" data-kh="បានចុះឈ្មោះ">Registered</th>
+                            <th class="py-3 px-4 text-right" data-en="Actions" data-kh="សកម្មភាព">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        @foreach (var customer in Model)
+                        {
+                            var avatarUrl = customerAvatars.ContainsKey(customer.Id) ? customerAvatars[customer.Id] : null;
+                            var fullName = $"{customer.FirstName} {customer.LastName}".Trim();
+                            if (string.IsNullOrEmpty(fullName)) fullName = "Customer";
+
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                                <!-- Customer Avatar + Name -->
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(avatarUrl))
+                                        {
+                                            <img src="@avatarUrl" alt="@fullName" class="w-9 h-9 rounded-full object-cover shadow-xs flex-shrink-0" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center shadow-xs flex-shrink-0 text-xs">
+                                                @(string.IsNullOrEmpty(customer.FirstName) ? "C" : customer.FirstName[0].ToString().ToUpper())
+                                            </div>
+                                        }
+                                        <div>
+                                            <a asp-action="Details" asp-route-id="@customer.Id" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition block">
+                                                @fullName
+                                            </a>
+                                            <span class="text-[10px] text-slate-400 font-mono">ID: @customer.Id.ToString()[..8].ToUpper()</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Email -->
+                                <td class="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
+                                    @customer.Email
+                                </td>
+
+                                <!-- Phone -->
+                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
+                                    @(string.IsNullOrEmpty(customer.Phone) ? "—" : customer.Phone)
+                                </td>
+
+                                <!-- Status Pill -->
+                                <td class="py-3.5 px-4">
+                                    @if (customer.Status == CustomerStatus.Active)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800" data-en="Active" data-kh="សកម្ម">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                                        </span>
+                                    }
+                                    else if (customer.Status == CustomerStatus.Blocked)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800" data-en="Blocked" data-kh="បានរារាំង">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Blocked
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700" data-en="Inactive" data-kh="អសកម្ម">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Inactive
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Orders Count -->
+                                <td class="py-3.5 px-4">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] tabular-nums">
+                                        <i class="bi bi-bag text-[10px]"></i> @(customer.Orders?.Count ?? 0)
+                                    </span>
+                                </td>
+
+                                <!-- Registered -->
+                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
+                                    @customer.CreatedAt.ToString("dd MMM yyyy")
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- View Details -->
+                                        <a asp-action="Details" asp-route-id="@customer.Id"
+                                           class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 hover:border-blue-300 transition"
+                                           title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <!-- Edit Modal Trigger -->
+                                        <button type="button"
+                                                onclick="openEditCustomerModal('@customer.Id', '@customer.FirstName', '@customer.LastName', '@customer.Email', '@customer.Phone', '@((int)customer.Status)')"
+                                                class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 hover:border-amber-300 transition cursor-pointer"
+                                                title="Edit Customer">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+                                        <!-- Toggle Status Button -->
+                                        <button type="button"
+                                                onclick="confirmToggleCustomerStatus('@customer.Id', '@fullName', '@customer.Status')"
+                                                class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 hover:text-purple-600 hover:border-purple-300 transition cursor-pointer"
+                                                title="Toggle Status">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </button>
+                                        <form id="toggleForm-@customer.Id" method="post" asp-action="ToggleStatus" asp-route-id="@customer.Id" class="hidden">
+                                            @Html.AntiForgeryToken()
+                                        </form>
+
+                                        <!-- Delete Button -->
+                                        <button type="button"
+                                                onclick="confirmDeleteCustomer('@customer.Id', '@fullName')"
+                                                class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 hover:border-rose-300 transition cursor-pointer"
+                                                title="Delete Customer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <form id="deleteForm-@customer.Id" method="post" asp-action="Delete" asp-route-id="@customer.Id" class="hidden">
+                                            @Html.AntiForgeryToken()
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY STATE -->
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                    <i class="bi bi-people text-2xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1" data-en="No customers found" data-kh="រកមិនឃើញអតិថិជន">No customers found</h4>
+                <p class="text-xs text-slate-400 mb-4 max-w-xs mx-auto" data-en="No customer accounts matched your search criteria." data-kh="គ្មានគណនីអតិថិជនណាត្រូវនឹងលក្ខខណ្ឌស្វែងរករបស់អ្នកទេ។">
+                    No customer accounts matched your search criteria.
+                </p>
+                <a asp-action="Index"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition">
+                    <i class="bi bi-arrow-repeat"></i> <span data-en="Reset Search" data-kh="កំណត់ឡើងវិញ">Reset Search</span>
+                </a>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODERN TAILWIND MODAL: EDIT CUSTOMER
+========================================================== -->
+<div id="editCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-150">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base">
+                    <i class="bi bi-person-gear"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-en="Edit Customer Profile" data-kh="កែប្រែគណនីអតិថិជន">Edit Customer Profile</h3>
+                    <p class="text-[11px] text-slate-400" data-en="Update customer name, contact, and account status" data-kh="ធ្វើបច្ចុប្បន្នភាពឈ្មោះ ទំនាក់ទំនង និងស្ថានភាព">Update customer name, contact, and account status</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditCustomerModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm p-1 rounded-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form id="editCustomerForm" method="post" asp-action="Edit" class="mt-4 space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editCustId" name="Id" />
+            <input type="hidden" id="editCustEmailHidden" name="Email" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1" data-en="First Name" data-kh="នាមខ្លួន">First Name</label>
+                    <input type="text" id="editCustFirstName" name="FirstName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1" data-en="Last Name" data-kh="នាមត្រកូល">Last Name</label>
+                    <input type="text" id="editCustLastName" name="LastName" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" required />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1" data-en="Email Address" data-kh="អាសយដ្ឋានអ៊ីមែល">Email Address</label>
+                <input type="email" id="editCustEmail" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed" readonly />
+                <span class="text-[10px] text-slate-400 mt-1 block">Email address cannot be changed directly.</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1" data-en="Phone Number" data-kh="លេខទូរស័ព្ទ">Phone Number</label>
+                    <input type="text" id="editCustPhone" name="Phone" placeholder="+855 ..." class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1" data-en="Account Status" data-kh="ស្ថានភាពគណនី">Account Status</label>
+                    <select id="editCustStatus" name="Status" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                        <option value="0" data-en="Active" data-kh="សកម្ម">Active</option>
+                        <option value="1" data-en="Inactive" data-kh="អសកម្ម">Inactive</option>
+                        <option value="2" data-en="Blocked" data-kh="បានរារាំង">Blocked</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onclick="closeEditCustomerModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <span data-en="Cancel" data-kh="បោះបង់">Cancel</span>
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+                    <i class="bi bi-check2"></i> <span data-en="Save Changes" data-kh="រក្សាទុកការកែប្រែ">Save Changes</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditCustomerModal(id, firstName, lastName, email, phone, statusVal) {
+            document.getElementById('editCustId').value = id;
+            document.getElementById('editCustFirstName').value = firstName || '';
+            document.getElementById('editCustLastName').value = lastName || '';
+            document.getElementById('editCustEmail').value = email || '';
+            document.getElementById('editCustEmailHidden').value = email || '';
+            document.getElementById('editCustPhone').value = phone || '';
+            document.getElementById('editCustStatus').value = statusVal || '0';
+
+            var form = document.getElementById('editCustomerForm');
+            form.action = '/Admin/Customers/Edit/' + id;
+
+            var modal = document.getElementById('editCustomerModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeEditCustomerModal() {
+            var modal = document.getElementById('editCustomerModal');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+        }
+
+        function confirmToggleCustomerStatus(id, name, currentStatus) {
+            var isKh = (localStorage.getItem('site_language') || 'en') === 'kh';
+            Swal.fire({
+                title: isKh ? 'ប្តូរស្ថានភាពអតិថិជន?' : 'Toggle Customer Status?',
+                text: isKh ? `តើអ្នកចង់ប្តូរស្ថានភាពសម្រាប់ "${name}" មែនទេ?` : `Are you sure you want to toggle status for "${name}" (Current: ${currentStatus})?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: isKh ? 'បាទ/ចាស ប្តូរ!' : 'Yes, toggle!',
+                cancelButtonText: isKh ? 'បោះបង់' : 'Cancel',
+                reverseButtons: true
+            }).then(result => {
+                if (result.isConfirmed) {
+                    var form = document.getElementById('toggleForm-' + id);
+                    if (form) form.submit();
+                }
+            });
+        }
+
+        function confirmDeleteCustomer(id, name) {
+            var isKh = (localStorage.getItem('site_language') || 'en') === 'kh';
+            Swal.fire({
+                title: isKh ? 'តើអ្នកប្រាកដទេ?' : 'Are you sure?',
+                text: isKh ? `តើអ្នកពិតជាចង់លុបអតិថិជន "${name}" មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។` : `Are you sure you want to delete customer "${name}"? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: isKh ? 'បាទ/ចាស លុបវា!' : 'Yes, delete customer!',
+                cancelButtonText: isKh ? 'បោះបង់' : 'Cancel',
+                reverseButtons: true
+            }).then(result => {
+                if (result.isConfirmed) {
+                    var form = document.getElementById('deleteForm-' + id);
+                    if (form) form.submit();
+                }
+            });
+        }
+    </script>
+}
+

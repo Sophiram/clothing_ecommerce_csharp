@@ -1,0 +1,253 @@
+@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole>
+
+@{
+    ViewData["Title"] = "Role Management";
+    var userCounts = ViewBag.UserCounts as Dictionary<string, int> ?? new();
+    var systemRoles = ViewBag.SystemRoles as HashSet<string> ?? new();
+}
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <!-- Breadcrumb -->
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <li class="inline-flex items-center">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400">Admin</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span data-en="System" data-kh="ប្រព័ន្ធ">System</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span class="text-slate-900 dark:text-white font-semibold" data-en="Roles" data-kh="តួនាទី">Roles</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="flex items-center gap-2 mb-1">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50 uppercase tracking-wider">
+                    <i class="bi bi-shield-lock-fill"></i> SuperAdmin Control
+                </span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline" data-en="Access Control & RBAC" data-kh="ការគ្រប់គ្រងសិទ្ធិ">Access Control &amp; RBAC</span>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5" data-en="Platform Security Roles" data-kh="តួនាទីសុវត្ថិភាពប្រព័ន្ធ">
+                <span class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-shield-lock"></i>
+                </span>
+                Platform Security Roles
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-en="Manage authorization roles, user assignments, and administrative permission boundaries." data-kh="គ្រប់គ្រងតួនាទីអនុញ្ញាត ការចាត់តាំងអ្នកប្រើប្រាស់ និងសិទ្ធិ។">
+                Manage authorization roles, user assignments, and administrative permission boundaries.
+            </p>
+        </div>
+
+        <div>
+            <button type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-sm hover:shadow transition" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                <i class="bi bi-plus-lg"></i>
+                <span data-en="Add New Role" data-kh="បង្កើតតួនាទីថ្មី">Add New Role</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill text-lg text-emerald-500"></i>
+            <span class="flex-1">@TempData["Success"]</span>
+            <button type="button" class="text-emerald-500 hover:text-emerald-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill text-lg text-rose-500"></i>
+            <span class="flex-1">@TempData["Error"]</span>
+            <button type="button" class="text-rose-500 hover:text-rose-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    <!-- ROLES GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        @foreach (var role in Model)
+        {
+            var isSystem = role.Name != null && systemRoles.Contains(role.Name);
+            var memberCount = userCounts.ContainsKey(role.Id) ? userCounts[role.Id] : 0;
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow transition flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 @(role.Name == "SuperAdmin" ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" : role.Name == "Admin" ? "bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300")">
+                            @if (role.Name == "SuperAdmin")
+                            {
+                                <i class="bi bi-shield-fill-check"></i>
+                            }
+                            else if (role.Name == "Admin")
+                            {
+                                <i class="bi bi-shield-check"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-people"></i>
+                            }
+                        </div>
+
+                        @if (isSystem)
+                        {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-900/50">
+                                <i class="bi bi-lock-fill"></i> Core System Role
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                Custom Role
+                            </span>
+                        }
+                    </div>
+
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-1.5">@role.Name</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                        @if (role.Name == "SuperAdmin")
+                        {
+                            <span>Highest authority tier. Full access to system settings, audit logs, admin &amp; role management.</span>
+                        }
+                        else if (role.Name == "Admin")
+                        {
+                            <span>Store management tier. Can manage catalog, sales, inventory, and customers. Cannot manage system roles or admins.</span>
+                        }
+                        else if (role.Name == "User")
+                        {
+                            <span>Default customer tier. Can browse store, manage shopping cart, wishlist, profile, and orders.</span>
+                        }
+                        else
+                        {
+                            <span>Custom defined platform role with application-level assignments.</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 dark:text-slate-500" data-en="Assigned Users:" data-kh="អ្នកប្រើប្រាស់:">Assigned:</span>
+                        <a asp-action="Users" asp-route-roleName="@role.Name" class="font-semibold text-slate-800 dark:text-slate-200 text-xs hover:text-primary-600 dark:hover:text-primary-400 transition ml-1 inline-flex items-center" title="View all users in this role">
+                            @memberCount user@(memberCount == 1 ? "" : "s") <i class="bi bi-arrow-right-short text-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        @if (isSystem)
+                        {
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
+                                <i class="bi bi-lock"></i> Protected
+                            </span>
+                        }
+                        else
+                        {
+                            <button type="button" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs transition" title="Rename Role" data-bs-toggle="modal" data-bs-target="#editRoleModal" data-id="@role.Id" data-name="@role.Name">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-action="Delete" asp-route-id="@role.Id" class="inline" onsubmit="return confirm('Delete custom role @role.Name?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="w-8 h-8 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs transition disabled:opacity-40 disabled:cursor-not-allowed" @(memberCount > 0 ? "disabled title='Reassign users before deleting role'" : "")>
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: Create Role -->
+<div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <form method="post" asp-action="Create">
+                @Html.AntiForgeryToken()
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="bi bi-shield-plus"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-base font-bold text-slate-900 dark:text-white" data-en="Create Security Role" data-kh="បង្កើតតួនាទីថ្មី">Create Security Role</h5>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Define an authorization role name</p>
+                        </div>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Role Name *</label>
+                        <input type="text" name="roleName" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required placeholder="e.g. Moderator, Manager" />
+                        <span class="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">Enter a unique identifier for this security role.</span>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-2.5">
+                    <button type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition">Create Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Role -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <form method="post" asp-action="Edit">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="editRoleId" />
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-base font-bold text-slate-900 dark:text-white">Rename Role</h5>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Update role name identifier</p>
+                        </div>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">New Role Name *</label>
+                        <input type="text" name="newName" id="editRoleName" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required />
+                    </div>
+                </div>
+                <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-2.5">
+                    <button type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const editModal = document.getElementById('editRoleModal');
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (btn) {
+                    document.getElementById('editRoleId').value = btn.getAttribute('data-id') || '';
+                    document.getElementById('editRoleName').value = btn.getAttribute('data-name') || '';
+                }
+            });
+        }
+    </script>
+}

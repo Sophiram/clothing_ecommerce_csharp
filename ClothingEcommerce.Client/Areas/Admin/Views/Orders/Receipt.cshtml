@@ -1,0 +1,462 @@
+@model WebApplication_ClothingEcommerce.Models.Order
+@using WebApplication_ClothingEcommerce.Data.Enums
+@inject WebApplication_ClothingEcommerce.Services.Interfaces.IStoreSettingsService StoreSettingsService
+@{
+    Layout = null;
+    var storeSettings = await StoreSettingsService.GetSettingsAsync();
+
+    var orderShortCode = Model.Id.ToString()[..8].ToUpper();
+    var customerName = $"{Model.Customer?.FirstName} {Model.Customer?.LastName}".Trim();
+    if (string.IsNullOrWhiteSpace(customerName))
+    {
+        customerName = Model.Customer?.Email ?? "Guest / Unregistered";
+    }
+
+    var subtotal = Model.Items?.Sum(i => i.UnitPrice * i.Quantity) ?? 0m;
+    var shippingFee = Model.TotalAmount - subtotal;
+    if (shippingFee < 0) shippingFee = 0m;
+
+    var exchangeRate = storeSettings.ExchangeRate > 0 ? storeSettings.ExchangeRate : 4100m;
+    var totalKhr = Math.Round(Model.TotalAmount * exchangeRate, 0);
+
+    var isPaid = Model.Payment != null && 
+        (Model.Payment.PaymentStatus == PaymentStatus.Completed || 
+         Model.Payment.PaymentStatus == PaymentStatus.Paid ||
+         Model.Status == OrderStatus.Delivered);
+
+    var paymentMethodName = Model.Payment?.PaymentMethod?.Name ?? "Cash On Delivery (COD)";
+    var carrierName = !string.IsNullOrWhiteSpace(Model.Shipment?.ShippingCompany) 
+        ? Model.Shipment.ShippingCompany 
+        : "Standard Courier Express";
+
+    var adminEmail = User.Identity?.Name ?? "Admin Staff";
+    var theme = storeSettings.DefaultReceiptTheme ?? "ModernLuxury";
+    ViewData["Title"] = $"[ADMIN TAX INVOICE] #{storeSettings.ReceiptPrefix}{orderShortCode} - {storeSettings.StoreName}";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kantumruy+Pro:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+
+    <!-- QRious Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Kantumruy Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0f172a;
+            color: #0f172a;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .font-serif-luxury {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+
+        @@media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-container {
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .print-page-break {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 sm:py-10 px-3 sm:px-6 bg-slate-900 text-slate-900">
+
+    <!-- Top Action Bar (Hidden when printing) -->
+    <div class="no-print max-w-4xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-lg text-white">
+        <div class="flex items-center gap-2">
+            <a href="/Admin/Orders/Details/@Model.Id" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700 transition">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Order #@Model.Id</span>
+            </a>
+            <span class="text-slate-600">|</span>
+            <a href="/Admin/Invoices" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700 transition">
+                <i class="bi bi-receipt"></i>
+                <span>Invoices Ledger</span>
+            </a>
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                <span class="text-slate-600">|</span>
+                <a href="/Admin/Settings?tab=receipt" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-slate-700 transition">
+                    <i class="bi bi-sliders"></i>
+                    <span>Receipt Customizer</span>
+                </a>
+            }
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold transition shadow-sm cursor-pointer">
+                <i class="bi bi-printer-fill"></i>
+                <span>Print Official Invoice</span>
+            </button>
+            <a href="/Orders/Receipt/@Model.Id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-semibold text-white transition">
+                <i class="bi bi-eye"></i>
+                <span>Customer View</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN RECEIPT PAPER CONTAINER (STYLE MATCHING SELECTED THEME) -->
+    <div class="print-container max-w-4xl mx-auto bg-white border @(theme == "AuthenticThermal" ? "border-dashed border-2 border-slate-400 font-mono text-xs" : (theme == "CorporateInvoice" ? "border-2 border-blue-900 rounded-2xl" : "border-slate-300 rounded-3xl")) shadow-2xl p-6 sm:p-12 relative overflow-hidden">
+
+        <!-- STATUS WATERMARK STAMP -->
+        <div class="absolute top-10 right-8 sm:right-12 pointer-events-none transform rotate-12 opacity-85 select-none">
+            @if (isPaid)
+            {
+                <div class="border-4 border-emerald-600 rounded-2xl px-5 py-2.5 text-center shadow-xs">
+                    <span class="block text-emerald-600 font-black tracking-widest text-lg sm:text-xl uppercase">PAID &amp; VERIFIED</span>
+                    <span class="block text-emerald-700 font-bold text-[10px] tracking-tight font-mono">
+                        @(Model.Payment?.PaidAt?.ToString("yyyy-MM-dd HH:mm") ?? Model.OrderDate.ToString("yyyy-MM-dd"))
+                    </span>
+                </div>
+            }
+            else if (Model.Status == OrderStatus.Cancelled)
+            {
+                <div class="border-4 border-rose-600 rounded-2xl px-5 py-2.5 text-center shadow-xs">
+                    <span class="block text-rose-600 font-black tracking-widest text-lg sm:text-xl uppercase">CANCELLED</span>
+                    <span class="block text-rose-700 font-bold text-[10px] tracking-tight font-mono">VOID</span>
+                </div>
+            }
+            else
+            {
+                <div class="border-4 border-amber-600 rounded-2xl px-5 py-2.5 text-center shadow-xs">
+                    <span class="block text-amber-600 font-black tracking-widest text-base sm:text-lg uppercase">@Model.Status.ToString().ToUpper()</span>
+                    <span class="block text-amber-700 font-bold text-[10px] tracking-tight">@paymentMethodName</span>
+                </div>
+            }
+        </div>
+
+        <!-- 1. HEADER & BRAND (DYNAMIC STORE SETTINGS) -->
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-8 border-b-2 border-slate-900">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <img src="~/images/ClothingIcon.svg" alt="@storeSettings.StoreName" class="w-10 h-10 object-contain rounded-xl shadow-xs" />
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-serif-luxury text-3xl font-bold tracking-tight text-slate-900">
+                            @storeSettings.StoreName
+                        </span>
+                        @if (!string.IsNullOrWhiteSpace(storeSettings.StoreNameKh))
+                        {
+                            <span class="text-lg font-bold text-slate-700" style="font-family: 'Kantumruy Pro', sans-serif;">
+                                @storeSettings.StoreNameKh
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(storeSettings.Tagline))
+                {
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        @storeSettings.Tagline
+                        @if (!string.IsNullOrWhiteSpace(storeSettings.TaglineKh))
+                        {
+                            <span class="normal-case ml-1 font-semibold" style="font-family: 'Kantumruy Pro', sans-serif;">&bull; @storeSettings.TaglineKh</span>
+                        }
+                    </p>
+                }
+
+                <div class="text-xs text-slate-500 leading-relaxed space-y-0.5">
+                    @if (!string.IsNullOrWhiteSpace(storeSettings.Address))
+                    {
+                        <p>@storeSettings.Address</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(storeSettings.AddressKh))
+                    {
+                        <p style="font-family: 'Kantumruy Pro', sans-serif;">@storeSettings.AddressKh</p>
+                    }
+                    <p>
+                        @if (!string.IsNullOrWhiteSpace(storeSettings.Phone))
+                        {
+                            <span>Tel: @storeSettings.Phone</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(storeSettings.Email))
+                        {
+                            <span>&bull; @storeSettings.Email</span>
+                        }
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(storeSettings.VatNumber))
+                    {
+                        <p class="font-mono text-[11px] text-slate-700 font-semibold">VAT / TIN: @storeSettings.VatNumber</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Invoice Meta Card -->
+            <div class="sm:text-right pt-2 sm:pt-0">
+                <span class="inline-block px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest mb-2">
+                    TAX INVOICE &bull; ADMIN AUDIT
+                </span>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight font-mono">
+                    #@storeSettings.ReceiptPrefix@orderShortCode
+                </h2>
+                <div class="text-xs text-slate-600 mt-2 space-y-0.5">
+                    <p><strong class="text-slate-800 font-semibold">Order Placed:</strong> @Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+                    <p><strong class="text-slate-800 font-semibold">Order Status:</strong> <span class="font-bold">@Model.Status</span></p>
+                    <p><strong class="text-slate-800 font-semibold">Audited By:</strong> @adminEmail</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. AUDIT BAR -->
+        <div class="my-4 p-3 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+                <span class="block text-[10px] font-bold uppercase text-slate-400">Database Order ID</span>
+                <span class="font-mono text-[11px] font-semibold text-slate-800 truncate block" title="@Model.Id">@Model.Id</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold uppercase text-slate-400">Customer ID</span>
+                <span class="font-mono text-[11px] font-semibold text-slate-800 truncate block" title="@Model.CustomerId">@Model.CustomerId</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold uppercase text-slate-400">Payment Status</span>
+                <span class="font-bold text-slate-800">@(Model.Payment?.PaymentStatus.ToString() ?? "Unpaid / COD")</span>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold uppercase text-slate-400">Shipment Status</span>
+                <span class="font-bold text-slate-800">@(Model.Shipment?.ShipmentStatus.ToString() ?? "Pending")</span>
+            </div>
+        </div>
+
+        <!-- 3. CUSTOMER & DELIVERY INFO -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4 border-b border-slate-200 text-xs">
+            <div>
+                <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Customer / Purchaser Profile</span>
+                <h4 class="font-bold text-sm text-slate-900 mb-1">@customerName</h4>
+                <div class="text-slate-600 space-y-0.5">
+                    @if (!string.IsNullOrWhiteSpace(Model.Customer?.Email))
+                    {
+                        <p><i class="bi bi-envelope text-slate-400 mr-1"></i>@Model.Customer.Email</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Customer?.Phone))
+                    {
+                        <p><i class="bi bi-telephone text-slate-400 mr-1"></i>@Model.Customer.Phone</p>
+                    }
+                </div>
+            </div>
+
+            <div class="sm:text-right">
+                <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Logistics &amp; Delivery Destination</span>
+                @if (Model.Address != null)
+                {
+                    <h4 class="font-bold text-sm text-slate-900 mb-1">@Model.Address.Street</h4>
+                    <div class="text-slate-600 space-y-0.5">
+                        <p>@Model.Address.City@(string.IsNullOrWhiteSpace(Model.Address.PostalCode) ? "" : $", {Model.Address.PostalCode}")</p>
+                        <p>@(string.IsNullOrWhiteSpace(Model.Address.Province) ? "Cambodia" : $"{Model.Address.Province}, Cambodia")</p>
+                        <p class="font-mono text-[11px] text-slate-700 mt-1">
+                            <strong class="text-slate-500">Carrier:</strong> @carrierName
+                            @if (!string.IsNullOrWhiteSpace(Model.Shipment?.TrackingNumber))
+                            {
+                                <span>&bull; Track: @Model.Shipment.TrackingNumber</span>
+                            }
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-slate-500">Pickup / Standard Dispatch</p>
+                }
+            </div>
+        </div>
+
+        <!-- 4. ITEMIZED AUDIT TABLE -->
+        <div class="py-6">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Itemized Line Items</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b-2 border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            <th class="py-2.5 px-2">#</th>
+                            <th class="py-2.5 px-2">SKU</th>
+                            <th class="py-2.5 px-2">Item Description &amp; Variant</th>
+                            <th class="py-2.5 px-2 text-right">Unit Price</th>
+                            <th class="py-2.5 px-2 text-center">Qty</th>
+                            <th class="py-2.5 px-2 text-right">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.Items != null && Model.Items.Any())
+                        {
+                            int idx = 1;
+                            foreach (var item in Model.Items)
+                            {
+                                var prodName = item.Variant?.Product?.Name ?? "Apparel Item";
+                                var colorName = item.Variant?.Color?.Name;
+                                var sizeName = item.Variant?.Size?.Name;
+                                var sku = item.Variant?.SKU ?? "N/A";
+                                var lineTotal = item.UnitPrice * item.Quantity;
+
+                                <tr>
+                                    <td class="py-3 px-2 font-mono text-slate-400 text-[11px]">@idx</td>
+                                    <td class="py-3 px-2 font-mono text-slate-500 text-[11px]">@sku</td>
+                                    <td class="py-3 px-2">
+                                        <div class="font-bold text-slate-900">@prodName</div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-2">
+                                            @if (!string.IsNullOrWhiteSpace(colorName))
+                                            {
+                                                <span>Color: <strong class="text-slate-700">@colorName</strong></span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(sizeName))
+                                            {
+                                                <span>Size: <strong class="text-slate-700">@sizeName</strong></span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2 text-right font-semibold text-slate-700 font-mono">
+                                        $@item.UnitPrice.ToString("N2")
+                                    </td>
+                                    <td class="py-3 px-2 text-center font-bold text-slate-900">
+                                        @item.Quantity
+                                    </td>
+                                    <td class="py-3 px-2 text-right font-bold text-slate-900 font-mono">
+                                        $@lineTotal.ToString("N2")
+                                    </td>
+                                </tr>
+                                idx++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. FINANCIAL AUDIT RECONCILIATION -->
+        <div class="pt-4 pb-6 border-t-2 border-slate-900">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-6">
+                <!-- Left: Payment Verification & QR Stamp -->
+                <div class="space-y-3 max-w-sm w-full">
+                    @if (storeSettings.ShowKhqr)
+                    {
+                        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-3">
+                            <canvas id="adminReceiptQr" width="70" height="70" class="rounded-lg bg-white p-1 border border-slate-200 flex-shrink-0"></canvas>
+                            <div class="text-[11px] text-slate-600 leading-tight">
+                                <strong class="text-slate-900 block font-bold">Admin Verification Stamp</strong>
+                                <span>Scan to access cryptographic audit record on the portal.</span>
+                                <div class="mt-1 text-[10px] font-mono text-slate-400">KHQR-MD5: @(Model.Payment?.Id.ToString()[..12] ?? "N/A")</div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="p-3 bg-slate-100 rounded-xl text-[10px] text-slate-500 font-mono space-y-0.5">
+                        <p><strong>Operator:</strong> @adminEmail</p>
+                        <p><strong>Audit Stamp:</strong> CLOTHE-ADM-@DateTime.UtcNow.Ticks.ToString()[^8..]</p>
+                    </div>
+                </div>
+
+                <!-- Right: Financial Breakdown -->
+                <div class="w-full sm:w-72 space-y-2 text-xs ml-auto">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Items Subtotal:</span>
+                        <span class="font-semibold font-mono text-slate-900">$@subtotal.ToString("N2")</span>
+                    </div>
+
+                    <div class="flex justify-between text-slate-600">
+                        <span>Shipping / Dispatch Fee:</span>
+                        <span class="font-semibold font-mono text-slate-900">
+                            @(shippingFee > 0 ? $"${shippingFee:N2}" : "$0.00 (Free)")
+                        </span>
+                    </div>
+
+                    <div class="flex justify-between text-slate-600">
+                        <span>Tax / VAT Included (10%):</span>
+                        <span class="font-mono text-slate-700">
+                            $@((Model.TotalAmount * 0.10m / 1.10m).ToString("N2"))
+                        </span>
+                    </div>
+
+                    <div class="pt-2 border-t-2 border-slate-900 flex justify-between items-baseline">
+                        <span class="font-black text-slate-900 text-sm uppercase">Total Settled (USD):</span>
+                        <span class="font-black text-slate-900 text-xl font-mono">
+                            $@Model.TotalAmount.ToString("N2")
+                        </span>
+                    </div>
+
+                    @if (storeSettings.ShowDualCurrency)
+                    {
+                        <div class="flex justify-between items-baseline text-slate-600 font-mono text-xs">
+                            <span>Total in KHR (៛):</span>
+                            <span class="font-bold text-slate-800">៛@totalKhr.ToString("N0")</span>
+                        </div>
+                    }
+
+                    <div class="pt-2 text-[11px] text-slate-500 border-t border-slate-200">
+                        <span class="font-semibold">Payment Channel:</span> @paymentMethodName
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. SIGNATURES & FOOTER -->
+        <div class="pt-8 border-t border-slate-200 print-page-break">
+            <div class="grid grid-cols-2 gap-8 mb-6 text-center text-xs">
+                <div>
+                    <div class="h-16 border-b border-dashed border-slate-300"></div>
+                    <span class="block mt-2 font-bold text-slate-700 uppercase tracking-wider text-[10px]">Issued By (Staff / Cashier)</span>
+                </div>
+                <div>
+                    <div class="h-16 border-b border-dashed border-slate-300"></div>
+                    <span class="block mt-2 font-bold text-slate-700 uppercase tracking-wider text-[10px]">Received By (Customer / Logistics)</span>
+                </div>
+            </div>
+
+            <div class="text-center text-slate-400 text-[10px] space-y-0.5">
+                <p>@storeSettings.StoreName &bull; @storeSettings.Tagline &bull; Confidential Internal Accounting &amp; Audit Document</p>
+                @if (!string.IsNullOrWhiteSpace(storeSettings.ReturnPolicyEn))
+                {
+                    <p>@storeSettings.ReturnPolicyEn</p>
+                }
+                <p class="font-mono">Generated: @DateTime.UtcNow.ToString("dd MMM yyyy, HH:mm:ss") UTC &bull; Host: CLOTHE-APP-SRV</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- QRious script for admin receipt -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var qrCanvas = document.getElementById('adminReceiptQr');
+            if (qrCanvas && typeof QRious !== 'undefined') {
+                new QRious({
+                    element: qrCanvas,
+                    value: window.location.origin + '/Admin/Orders/Details/@Model.Id',
+                    size: 70,
+                    level: 'M',
+                    background: '#ffffff',
+                    foreground: '#0f172a'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

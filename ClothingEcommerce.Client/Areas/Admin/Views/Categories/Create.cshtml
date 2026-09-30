@@ -1,0 +1,53 @@
+@model WebApplication_ClothingEcommerce.Models.Category
+
+@{
+    ViewData["Title"] = "Add Category";
+}
+
+<div class="admin-page">
+
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">CATALOG</div>
+            <h1 class="page-title">Add Category</h1>
+        </div>
+        <a asp-action="Index" class="btn-reset"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="admin-alert admin-alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div asp-validation-summary="ModelOnly"></div>
+        </div>
+    }
+
+    <div class="admin-card" style="max-width: 640px;">
+        <div style="padding: 26px;">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-semibold">Name</label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Menswear" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Create</button>
+                    <a asp-action="Index" class="btn-reset">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

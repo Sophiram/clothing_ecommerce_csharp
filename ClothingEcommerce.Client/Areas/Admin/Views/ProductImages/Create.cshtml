@@ -1,0 +1,486 @@
+@model WebApplication_ClothingEcommerce.Models.ProductImage
+
+@{
+    ViewData["Title"] = "Add Product Image";
+
+    var product =
+        ViewBag.Product as WebApplication_ClothingEcommerce.Models.Product;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <a asp-controller="Products"
+               asp-action="Details"
+               asp-route-id="@Model.ProductId"
+               class="text-decoration-none text-muted">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Product
+
+            </a>
+
+            <h2 class="fw-bold mt-3 mb-1">
+                Add Product Image
+            </h2>
+
+            <p class="text-muted mb-0">
+                Add an image URL to your product
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         PRODUCT INFO
+    ====================================================== -->
+    @if (product != null)
+    {
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-body">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="rounded-circle
+                        bg-primary-subtle
+                        text-primary
+                        d-flex
+                        align-items-center
+                        justify-content-center
+                        me-3"
+                         style="
+                        width:48px;
+                        height:48px;
+                        ">
+
+                        <i class="bi bi-box-seam fs-5"></i>
+
+                    </div>
+
+                    <div>
+
+                        <div class="small text-muted">
+                            Adding image to product
+                        </div>
+
+                        <div class="fw-bold fs-5">
+                            @product.Name
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <div class="row g-4">
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white border-0 py-3">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="rounded
+                            bg-primary-subtle
+                            text-primary
+                            p-2
+                            me-3">
+
+                            <i class="bi bi-image fs-5"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h5 class="fw-bold mb-0">
+                                Image Information
+                            </h5>
+
+                            <small class="text-muted">
+                                Enter your product image URL
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+                    <!-- VALIDATION -->
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+
+                            <div class="fw-semibold mb-1">
+
+                                <i class="bi bi-exclamation-circle me-1"></i>
+
+                                Please fix the following error:
+
+                            </div>
+
+                            <div asp-validation-summary="All"></div>
+
+                        </div>
+                    }
+
+
+                    <!-- FORM -->
+
+                    <form asp-controller="ProductImages"
+                          asp-action="Create"
+                          method="post"
+                          enctype="multipart/form-data"
+                          id="imageForm">
+
+                        @Html.AntiForgeryToken()
+
+                        <!-- PRODUCT ID -->
+
+                        <input type="hidden"
+                               asp-for="ProductId" />
+
+
+                        <!-- IMAGE INPUT (DUAL-TAB) -->
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Product Image
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <!-- HIDDEN: actual value submitted -->
+                            <input type="hidden" asp-for="ImageUrl" id="resolvedImageUrl" />
+
+                            <!-- TAB TOGGLE -->
+                            <div class="img-input-tabs">
+                                <button type="button" class="img-input-tab-btn active" data-tab="upload" onclick="switchImgTab('product','upload')">
+                                    <i class="bi bi-upload"></i> Upload File
+                                </button>
+                                <button type="button" class="img-input-tab-btn" data-tab="url" onclick="switchImgTab('product','url')">
+                                    <i class="bi bi-link-45deg"></i> Paste URL
+                                </button>
+                            </div>
+
+                            <!-- UPLOAD PANEL -->
+                            <div class="img-input-panel active" id="productPanel-upload">
+                                <input type="file"
+                                       name="imageFile"
+                                       id="productImgFile"
+                                       class="form-control"
+                                       accept=".jpg,.jpeg,.png,.webp,.gif"
+                                       onchange="previewImgFile(this,'productPreviewImg','productPreviewEmpty')" />
+                                <div class="form-text">JPG, JPEG, PNG, WEBP or GIF. Maximum 5 MB.</div>
+                            </div>
+
+                            <!-- URL PANEL -->
+                            <div class="img-input-panel" id="productPanel-url">
+                                <input type="text"
+                                       name="imageUrl"
+                                       id="productImgUrl"
+                                       class="form-control"
+                                       placeholder="https://example.com/image.jpg"
+                                       autocomplete="off"
+                                       oninput="previewImgUrl(this.value,'productPreviewImg','productPreviewEmpty')" />
+                                <div class="form-text">Paste a direct link to the product image.</div>
+                            </div>
+
+                            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+
+                        </div>
+
+
+                        <!-- PRIMARY -->
+
+                        <div class="card bg-light border-0 mb-4">
+
+                            <div class="card-body">
+
+                                <div class="form-check">
+
+                                    <input asp-for="IsPrimary"
+                                           id="isPrimary"
+                                           class="form-check-input"
+                                           style="
+                                    width:20px;
+                                    height:20px;
+                                    " />
+
+                                    <label asp-for="IsPrimary"
+                                           class="form-check-label ms-2">
+
+                                        <span class="fw-semibold">
+                                            Set as primary image
+                                        </span>
+
+                                        <div class="small text-muted mt-1">
+
+                                            The primary image will be displayed
+                                            first for this product.
+
+                                        </div>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTIONS -->
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-primary px-4">
+
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Add Image
+
+                            </button>
+
+                            <a asp-controller="Products"
+                               asp-action="Details"
+                               asp-route-id="@Model.ProductId"
+                               class="btn btn-outline-secondary px-4">
+
+                                Cancel
+
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PREVIEW
+        ================================================== -->
+
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-white border-0 py-3">
+
+                    <h5 class="fw-bold mb-0">
+
+                        <i class="bi bi-eye me-2"></i>
+                        Image Preview
+
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div id="imagePreviewContainer"
+                         class="rounded overflow-hidden bg-light
+                        d-flex align-items-center
+                        justify-content-center"
+                         style="
+                        min-height:350px;
+                        ">
+
+                        <div id="emptyPreview"
+                             class="text-center text-muted">
+
+                            <i class="bi bi-image fs-1"></i>
+
+                            <div class="mt-2">
+                                Image preview will appear here
+                            </div>
+
+                        </div>
+
+
+                        <img id="imagePreview"
+                             src=""
+                             alt="Image Preview"
+                             class="d-none w-100"
+                             style="
+                        height:350px;
+                        object-fit:contain;
+                        " />
+
+                    </div>
+
+
+                    <!-- PRIMARY BADGE -->
+
+                    <div id="primaryPreview"
+                         class="d-none mt-3">
+
+                        <span class="badge bg-success">
+
+                            <i class="bi bi-star-fill me-1"></i>
+
+                            Primary Image
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- TIP -->
+
+            <div class="alert alert-info mt-3 border-0">
+
+                <div class="d-flex">
+
+                    <i class="bi bi-info-circle fs-5 me-2"></i>
+
+                    <div>
+
+                        <div class="fw-semibold">
+                            Image URL Tip
+                        </div>
+
+                        <small>
+                            Make sure the URL points directly to an
+                            image file or a publicly accessible image.
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        // =====================================================
+        // DUAL IMAGE INPUT - Tab Switch
+        // =====================================================
+
+        function switchImgTab(prefix, tab) {
+            const btns = document.querySelectorAll(`[onclick*="switchImgTab('${prefix}'"]`);
+            btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
+            ['upload','url'].forEach(t => {
+                const p = document.getElementById(`${prefix}Panel-${t}`);
+                if (p) p.classList.toggle('active', t === tab);
+            });
+            // Clear alternate input and reset preview
+            if (tab === 'upload') {
+                const u = document.getElementById(`${prefix}ImgUrl`);
+                if (u) u.value = '';
+            } else {
+                const f = document.getElementById(`${prefix}ImgFile`);
+                if (f) f.value = '';
+            }
+            resetLargePreview();
+        }
+
+        function previewImgFile(input, previewId, emptyId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    updateLargePreview(e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                resetLargePreview();
+            }
+        }
+
+        function previewImgUrl(url, previewId, emptyId) {
+            if (!url || !url.trim()) {
+                resetLargePreview(); return;
+            }
+            const img = document.getElementById('imagePreview');
+            img.onload = () => updateLargePreview(url.trim());
+            img.onerror = () => resetLargePreview();
+            img.src = url.trim();
+        }
+
+        // =====================================================
+        // LARGE PREVIEW (right-side card)
+        // =====================================================
+
+        const imagePreview = document.getElementById('imagePreview');
+        const emptyPreview = document.getElementById('emptyPreview');
+        const primaryCheckbox = document.getElementById('isPrimary');
+        const primaryPreview = document.getElementById('primaryPreview');
+
+        function updateLargePreview(src) {
+            imagePreview.src = src;
+            imagePreview.classList.remove('d-none');
+            emptyPreview.classList.add('d-none');
+        }
+
+        function resetLargePreview() {
+            imagePreview.src = '';
+            imagePreview.classList.add('d-none');
+            emptyPreview.classList.remove('d-none');
+        }
+
+        // =====================================================
+        // PRIMARY BADGE
+        // =====================================================
+
+        function updatePrimaryPreview() {
+            if (primaryCheckbox.checked) {
+                primaryPreview.classList.remove('d-none');
+            } else {
+                primaryPreview.classList.add('d-none');
+            }
+        }
+
+        primaryCheckbox.addEventListener('change', updatePrimaryPreview);
+        updatePrimaryPreview();
+
+    </script>
+}

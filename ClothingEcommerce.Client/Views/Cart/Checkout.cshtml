@@ -1,0 +1,385 @@
+﻿@model WebApplication_ClothingEcommerce.Models.ViewModels.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Checkout";
+    var paymentMethods = ViewBag.PaymentMethods as List<WebApplication_ClothingEcommerce.Models.PaymentMethod> ?? new List<WebApplication_ClothingEcommerce.Models.PaymentMethod>();
+}
+
+<style>
+    /* Modern Split-Screen Checkout Styles */
+    body {
+        background-color: #fff;
+    }
+
+    .checkout-layout {
+        display: flex;
+        flex-wrap: wrap;
+        min-height: calc(100vh - 78px);
+    }
+
+    .checkout-main {
+        flex: 1 1 55%;
+        padding: 40px 5% 60px 10%;
+        background: #fff;
+    }
+
+    .checkout-sidebar {
+        flex: 1 1 45%;
+        padding: 40px 10% 60px 5%;
+        background: #f8f9fa;
+        border-left: 1px solid #e9ecef;
+    }
+
+    .checkout-header {
+        margin-bottom: 30px;
+    }
+
+    .checkout-section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #202124;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Floating Label Overrides for Elegance */
+    .form-floating > .form-control {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+    }
+
+        .form-floating > .form-control:focus {
+            border-color: var(--google-blue, #4285F4);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
+        }
+
+    .form-floating > label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    /* Payment Method Cards */
+    .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .payment-method-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+        .payment-method-card:hover {
+            border-color: #9ca3af;
+        }
+
+        .payment-method-card:has(input:checked) {
+            border-color: var(--google-blue, #4285F4);
+            background: #f0f4f8;
+            box-shadow: 0 0 0 1px var(--google-blue, #4285F4);
+        }
+
+        .payment-method-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+    .payment-method-icon {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        margin-bottom: 12px;
+    }
+
+    .checkout-submit-btn {
+        width: 100%;
+        padding: 18px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        background: var(--google-blue, #4285F4);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        margin-top: 30px;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+        .checkout-submit-btn:hover {
+            background: #3367D6;
+            transform: translateY(-2px);
+        }
+
+    /* Sidebar Summary */
+    .summary-sticky {
+        position: sticky;
+        top: 100px;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .summary-img-wrap {
+        position: relative;
+        width: 65px;
+        height: 80px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        background: #fff;
+        overflow: hidden;
+    }
+
+        .summary-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .summary-qty-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #6b7280;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        z-index: 2;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #d1d5db;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    @@media (max-width: 991px) {
+        .checkout-layout {
+            flex-direction: column-reverse;
+        }
+
+        .checkout-main, .checkout-sidebar {
+            flex: none;
+            width: 100%;
+            padding: 30px 20px;
+            border-left: none;
+        }
+
+        .checkout-sidebar {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-sticky {
+            position: static;
+        }
+    }
+</style>
+
+<div class="checkout-layout">
+
+    <!-- LEFT COLUMN: FORM -->
+    <div class="checkout-main">
+        <div class="checkout-header d-none d-lg-block">
+            <h1 class="fw-bold mb-1">CLOTHÉ</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb small">
+                    <li class="breadcrumb-item"><a asp-controller="Cart" asp-action="Index" class="text-decoration-none text-muted">Cart</a></li>
+                    <li class="breadcrumb-item active fw-semibold text-dark" aria-current="page">Checkout</li>
+                </ol>
+            </nav>
+        </div>
+
+        <form asp-action="Checkout" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 rounded-3"></div>
+
+            <!-- CONTACT INFO -->
+            <div class="mb-5">
+                <h3 class="checkout-section-title">Contact Information</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="FirstName" class="form-control" placeholder="First Name" />
+                            <label asp-for="FirstName">First Name</label>
+                        </div>
+                        <span asp-validation-for="FirstName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="LastName" class="form-control" placeholder="Last Name" />
+                            <label asp-for="LastName">Last Name</label>
+                        </div>
+                        <span asp-validation-for="LastName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Email" class="form-control" placeholder="Email" />
+                            <label asp-for="Email">Email Address</label>
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Phone" class="form-control" placeholder="Phone" />
+                            <label asp-for="Phone">Phone Number</label>
+                        </div>
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHIPPING INFO -->
+            <div class="mb-5">
+                <h3 class="checkout-section-title">Shipping Address</h3>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input asp-for="Street" class="form-control" placeholder="Street Address" />
+                            <label asp-for="Street">Street Address</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input asp-for="City" class="form-control" placeholder="City" />
+                            <label asp-for="City">City</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input asp-for="Province" class="form-control" placeholder="Province" />
+                            <label asp-for="Province">Province / State</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input asp-for="PostalCode" class="form-control" placeholder="Postal Code" />
+                            <label asp-for="PostalCode">Postal Code</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT METHOD -->
+            <div class="mb-4">
+                <h3 class="checkout-section-title">Payment Method</h3>
+                <p class="text-muted small mb-3">All transactions are secure and encrypted.</p>
+
+                @if (paymentMethods.Count == 0)
+                {
+                    <div class="alert alert-warning border-0 rounded-3">No payment methods available.</div>
+                }
+                else
+                {
+                    <div class="payment-grid">
+                        @foreach (var method in paymentMethods)
+                        {
+                            <label class="payment-method-card">
+                                <input type="radio" asp-for="PaymentMethodId" value="@method.Id" />
+                                @if (!string.IsNullOrWhiteSpace(method.Icon))
+                                {
+                                    <img src="@method.Icon" alt="@method.Name" class="payment-method-icon" />
+                                }
+                                <div class="fw-bold text-dark">@method.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(method.Description))
+                                {
+                                    <div class="small text-muted mt-1">@method.Description</div>
+                                }
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="PaymentMethodId" class="text-danger small mt-2 d-block"></span>
+                }
+            </div>
+
+            <button type="submit" class="checkout-submit-btn">
+                Pay Now
+            </button>
+            <div class="text-center mt-3 text-muted small">
+                <i class="bi bi-shield-lock-fill text-success me-1"></i> 256-Bit SSL Encrypted Checkout
+            </div>
+        </form>
+    </div>
+
+    <!-- RIGHT COLUMN: SUMMARY -->
+    <div class="checkout-sidebar">
+        <div class="summary-sticky">
+
+            <h4 class="fw-bold mb-4 d-lg-none">Order Summary</h4>
+
+            <div class="mb-4">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="summary-item">
+                        <div class="summary-img-wrap">
+                            <span class="summary-qty-badge">@item.Quantity</span>
+                            <img src="@item.ImageUrl" alt="@item.ProductName" />
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark">@item.ProductName</div>
+                            <div class="small text-muted">@item.Size / @item.Color</div>
+                        </div>
+                        <div class="fw-semibold text-dark">
+                            @((item.Quantity * item.UnitPrice).ToString("C"))
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span class="fw-semibold text-dark">@Model.SubTotal.ToString("C")</span>
+            </div>
+            <div class="summary-row">
+                <span>Shipping</span>
+                <span class="fw-semibold text-dark">@Model.DeliveryFee.ToString("C")</span>
+            </div>
+
+            <div class="summary-total">
+                <span>Total</span>
+                <span>@Model.Total.ToString("C")</span>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,191 @@
+@model WebApplication_ClothingEcommerce.Models.Cart
+@{
+    ViewData["Title"] = "Customer Shopping Cart";
+    Guid customerId = ViewBag.CustomerId;
+    decimal grandTotal = 0;
+}
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <!-- Breadcrumb -->
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <li class="inline-flex items-center">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400">Admin</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span data-en="Commerce" data-kh="ពាណិជ្ជកម្ម">Commerce</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span class="text-slate-900 dark:text-white font-semibold" data-en="Customer Cart" data-kh="កន្ត្រកអតិថិជន">Customer Cart</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 flex items-center justify-center text-lg">
+                    <i class="bi bi-cart3"></i>
+                </span>
+                <span data-en="Customer Shopping Cart" data-kh="កន្ត្រកទំនិញអតិថិជន">Customer Shopping Cart</span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                <span>Customer ID:</span>
+                <span class="font-mono text-primary-600 dark:text-primary-400 font-semibold select-all">@customerId</span>
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            @if (Model != null && Model.Items != null && Model.Items.Any())
+            {
+                <form asp-action="ClearCart" method="post" onsubmit="return confirm('Are you sure you want to clear this cart?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="customerId" value="@customerId" />
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-700 dark:text-rose-300 text-xs font-semibold shadow-sm transition">
+                        <i class="bi bi-trash"></i>
+                        <span data-en="Clear Cart" data-kh="សម្អាតកន្ត្រក">Clear Cart</span>
+                    </button>
+                </form>
+            }
+            <a asp-controller="Customers" asp-action="Details" asp-route-id="@customerId" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition">
+                <i class="bi bi-person"></i>
+                <span>Customer Profile</span>
+            </a>
+        </div>
+    </div>
+
+    @if (Model == null || Model.Items == null || !Model.Items.Any())
+    {
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-12 text-center shadow-sm">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-3xl text-slate-400 mb-3">
+                <i class="bi bi-cart-x"></i>
+            </div>
+            <h5 class="text-base font-bold text-slate-900 dark:text-white" data-en="Cart is Empty" data-kh="កន្ត្រកទទេ">Cart is Empty</h5>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                This customer does not have any items currently reserved in their shopping cart.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- ITEMS TABLE (8 COLS) -->
+            <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-bag-check text-primary-500"></i>
+                        <span>Cart Contents (@Model.Items.Count items)</span>
+                    </h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <th class="py-3.5 pl-6 pr-4">Product Variant</th>
+                                <th class="py-3.5 px-4">Specifications</th>
+                                <th class="py-3.5 px-4 text-right">Price</th>
+                                <th class="py-3.5 px-4 text-center" style="width: 140px;">Quantity</th>
+                                <th class="py-3.5 px-4 text-right">Total</th>
+                                <th class="py-3.5 pl-4 pr-6 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-sm">
+                            @foreach (var item in Model.Items)
+                            {
+                                var itemTotal = (item.Variant?.Price ?? 0) * item.Quantity;
+                                grandTotal += itemTotal;
+                                var prod = item.Variant?.Product;
+                                var img = prod?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl ?? prod?.Images?.FirstOrDefault()?.ImageUrl;
+
+                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                                    <td class="py-4 pl-6 pr-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                                                @if (!string.IsNullOrEmpty(img))
+                                                {
+                                                    <img src="@img" alt="@(prod?.Name ?? "Item")" class="w-full h-full object-cover" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-full h-full flex items-center justify-center text-slate-400"><i class="bi bi-image"></i></div>
+                                                }
+                                            </div>
+                                            <div class="min-w-0">
+                                                <a asp-controller="CartItems" asp-action="Details" asp-route-id="@item.Id" class="text-sm font-semibold text-slate-900 dark:text-white hover:text-primary-600 transition truncate block">
+                                                    @(prod?.Name ?? "Product Item")
+                                                </a>
+                                                <span class="font-mono text-[10px] text-slate-400 block">SKU: @(item.Variant?.SKU ?? "N/A")</span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="py-4 px-4 text-xs text-slate-600 dark:text-slate-300">
+                                        <div>Color: <strong class="text-slate-800 dark:text-slate-200">@(item.Variant?.Color?.Name ?? "-")</strong></div>
+                                        <div>Size: <strong class="text-slate-800 dark:text-slate-200">@(item.Variant?.Size?.Name ?? "-")</strong></div>
+                                    </td>
+
+                                    <td class="py-4 px-4 text-right text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        $@(item.Variant?.Price.ToString("F2") ?? "0.00")
+                                    </td>
+
+                                    <td class="py-4 px-4 text-center">
+                                        <form asp-action="UpdateQuantity" method="post" class="inline-flex items-center justify-center">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="customerId" value="@customerId" />
+                                            <input type="hidden" name="cartItemId" value="@item.Id" />
+                                            <input type="number" name="quantity" value="@item.Quantity" min="1" class="w-16 px-2 py-1 text-center text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition" onchange="this.form.submit()" />
+                                        </form>
+                                    </td>
+
+                                    <td class="py-4 px-4 text-right font-extrabold text-slate-900 dark:text-white">
+                                        $@itemTotal.ToString("F2")
+                                    </td>
+
+                                    <td class="py-4 pl-4 pr-6 text-center">
+                                        <form asp-action="RemoveItem" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="customerId" value="@customerId" />
+                                            <input type="hidden" name="cartItemId" value="@item.Id" />
+                                            <button type="submit" class="w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center justify-center transition" title="Remove item">
+                                                <i class="bi bi-trash text-sm"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ORDER SUMMARY (4 COLS) -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800">
+                        Cart Summary
+                    </h3>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                            <span>Total Units</span>
+                            <span class="font-bold text-slate-900 dark:text-white">@Model.Items.Sum(i => i.Quantity)</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                            <span>Created At</span>
+                            <span class="text-slate-700 dark:text-slate-300">@Model.CreatedAt.ToLocalTime().ToString("g")</span>
+                        </div>
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white">Grand Total</span>
+                            <span class="text-2xl font-extrabold text-primary-600 dark:text-primary-400">$@grandTotal.ToString("F2")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

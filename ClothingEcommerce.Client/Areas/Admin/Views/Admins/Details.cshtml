@@ -1,0 +1,187 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.AdminDetailsViewModel
+
+@{
+    ViewData["Title"] = $"Administrator: {Model.FullName}";
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- Breadcrumb & Back -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-2">
+            <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to Admins
+            </a>
+            <span class="text-muted">/</span>
+            <span class="fw-semibold text-dark">Administrator Profile</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-dark btn-sm rounded-pill px-3">
+                <i class="bi bi-pencil-square me-1"></i> Edit Account
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="row g-4">
+        <!-- Left: Profile Summary -->
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 bg-white">
+                <div class="mb-3 mx-auto" style="width: 100px; height: 100px;">
+                    @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                    {
+                        <img src="@Model.AvatarUrl" alt="@Model.FullName" class="w-100 h-100 rounded-circle object-fit-cover shadow" />
+                    }
+                    else
+                    {
+                        <div class="w-100 h-100 rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold fs-2 shadow">
+                            @(string.IsNullOrEmpty(Model.FirstName) ? "A" : Model.FirstName.Substring(0, 1).ToUpperInvariant())
+                        </div>
+                    }
+                </div>
+
+                <h4 class="fw-bold mb-1">@Model.FullName</h4>
+                <p class="text-muted small mb-3">@Model.Email</p>
+
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    @foreach (var role in Model.Roles)
+                    {
+                        if (role == "SuperAdmin")
+                        {
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1.5 fw-bold">
+                                <i class="bi bi-shield-fill-check me-1"></i> SuperAdmin
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-bold">
+                                <i class="bi bi-person-badge me-1"></i> Admin
+                            </span>
+                        }
+                    }
+
+                    @if (Model.IsActive)
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold">
+                            Active
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1.5 fw-bold">
+                            Deactivated
+                        </span>
+                    }
+                </div>
+
+                @if (Model.IsCurrentAdmin)
+                {
+                    <div class="alert alert-info py-2 small rounded-pill mb-0">
+                        <i class="bi bi-person-check-fill me-1"></i> This is your current active account
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right: Detailed Information -->
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h5 class="fw-bold mb-4 text-dark">
+                    <i class="bi bi-info-circle text-primary me-2"></i> Account Details
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Account ID</div>
+                        <div class="fw-semibold font-monospace small text-dark mt-1">@Model.Id</div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Email Address</div>
+                        <div class="fw-semibold text-dark mt-1">
+                            @Model.Email
+                            @if (Model.EmailConfirmed)
+                            {
+                                <i class="bi bi-patch-check-fill text-success ms-1" title="Email Confirmed"></i>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Phone Number</div>
+                        <div class="fw-semibold text-dark mt-1">
+                            @(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Lockout / Security Status</div>
+                        <div class="fw-semibold text-dark mt-1">
+                            @if (Model.IsActive)
+                            {
+                                <span class="text-success"><i class="bi bi-unlock-fill me-1"></i> Not Locked (Operational)</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger"><i class="bi bi-lock-fill me-1"></i> Account Suspended / Locked Out</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Failed Login Attempts</div>
+                        <div class="fw-semibold text-dark mt-1">@Model.AccessFailedCount</div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="text-muted small fw-semibold text-uppercase">Permissions Hierarchy</div>
+                        <div class="fw-semibold text-dark mt-1">
+                            @if (Model.Roles.Contains("SuperAdmin"))
+                            {
+                                <span class="text-warning-emphasis fw-bold">Full System Access (Level 1)</span>
+                            }
+                            else
+                            {
+                                <span class="text-primary fw-bold">Store Administration (Level 2)</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Action Controls -->
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                    <div>
+                        @if (!Model.IsCurrentAdmin)
+                        {
+                            <form method="post" asp-action="ToggleStatus" asp-route-id="@Model.Id" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                @if (Model.IsActive)
+                                {
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                        <i class="bi bi-slash-circle me-1"></i> Deactivate Account
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                                        <i class="bi bi-check-circle me-1"></i> Activate Account
+                                    </button>
+                                }
+                            </form>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-light btn-sm rounded-pill border px-3">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

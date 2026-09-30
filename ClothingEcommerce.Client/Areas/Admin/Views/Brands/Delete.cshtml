@@ -1,0 +1,198 @@
+@model WebApplication_ClothingEcommerce.Models.Brand
+
+@{
+    ViewData["Title"] = "Delete Brand";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="mb-4">
+
+        <div class="text-uppercase text-muted small fw-bold mb-1">
+            Catalog / Brands
+        </div>
+
+        <h1 class="h3 fw-bold mb-1">
+            Delete Brand
+        </h1>
+
+        <p class="text-muted mb-0">
+            Remove this brand from your store.
+        </p>
+
+    </div>
+
+
+    <!-- DELETE CARD -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white border-0 p-4">
+
+            <div class="d-flex align-items-center gap-3">
+
+                <div class="bg-danger-subtle text-danger rounded p-3">
+
+                    <i class="bi bi-trash fs-4"></i>
+
+                </div>
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Confirm Brand Deletion
+                    </h5>
+
+                    <p class="text-muted small mb-0">
+                        This action cannot be undone.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-4">
+
+
+            @if (Model.Products != null && Model.Products.Any())
+            {
+                <!-- CANNOT DELETE -->
+
+                <div class="alert alert-danger d-flex gap-2 align-items-start">
+
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+
+                    <div>
+
+                        <strong>Cannot delete this brand.</strong>
+
+                        <div class="small mt-1">
+
+                            This brand has
+                            <strong>@Model.Products.Count</strong>
+                            product(s) associated with it.
+
+                            Remove or reassign those products before deleting this brand.
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <!-- WARNING -->
+
+                <div class="alert alert-warning d-flex gap-2 align-items-start">
+
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+
+                    <div>
+
+                        <strong>Are you sure?</strong>
+
+                        <div class="small mt-1">
+                            You are about to permanently delete this brand and its logo.
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+
+            <!-- BRAND INFORMATION -->
+
+            <div class="border rounded p-4 mb-4">
+
+                <div class="d-flex align-items-center gap-4">
+
+                    <!-- LOGO -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Logo))
+                    {
+                        <img src="@Model.Logo"
+                             alt="@Model.Name"
+                             class="rounded border"
+                             style="width:90px;height:90px;object-fit:contain;" />
+                    }
+                    else
+                    {
+                        <div class="bg-light border rounded d-flex align-items-center justify-content-center"
+                             style="width:90px;height:90px;">
+
+                            <i class="bi bi-award fs-1 text-muted"></i>
+
+                        </div>
+                    }
+
+
+                    <!-- INFO -->
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+                            @Model.Name
+                        </h5>
+
+                        <div class="text-muted small mb-2">
+                            Brand ID: @Model.Id
+                        </div>
+
+                        <span class="badge bg-secondary">
+
+                            @(Model.Products?.Count ?? 0) Products
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="d-flex gap-2">
+
+                @if (Model.Products == null || !Model.Products.Any())
+                {
+                    <form asp-action="Delete"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               asp-for="Id" />
+
+                        <button type="submit"
+                                class="btn btn-danger">
+
+                            <i class="bi bi-trash me-1"></i>
+                            Delete Brand
+
+                        </button>
+
+                    </form>
+                }
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary">
+
+                    Cancel
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

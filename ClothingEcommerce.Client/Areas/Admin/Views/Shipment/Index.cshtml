@@ -1,0 +1,91 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.Shipment>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.OrderId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TrackingNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShippingCompany)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShipmentStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShippedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DeliveredAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Order)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.OrderId)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.TrackingNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.ShippingCompany)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.ShipmentStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.ShippedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.DeliveredAt)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Order)
+            </td>
+            <td class="text-end">
+                <div class="dropdown">
+                    <button class="action-meatball-btn" type="button" aria-expanded="false" title="Actions" onclick="toggleActionMenu(this, event)">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-meatball shadow border-0">
+                        <li>
+                            <a class="dropdown-item" asp-action="Details" asp-route-id="@item.Id">
+                                <i class="bi bi-eye text-primary"></i> <span>View Details</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id">
+                                <i class="bi bi-pencil text-warning"></i> <span>Edit</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1" /></li>
+                        <li>
+                            <a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.Id">
+                                <i class="bi bi-trash"></i> <span>Delete</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

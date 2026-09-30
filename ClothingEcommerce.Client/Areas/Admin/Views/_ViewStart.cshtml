@@ -1,0 +1,11 @@
+@{
+    var isAjax = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    if (isAjax)
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    }
+}

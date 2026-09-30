@@ -1,0 +1,758 @@
+@model WebApplication_ClothingEcommerce.Models.StoreReceiptSettings
+@{
+    ViewData["Title"] = "Store & Receipt Management";
+    var isSuperAdmin = (bool)(ViewBag.IsSuperAdmin ?? false);
+    var activeTab = Context.Request.Query["tab"].ToString();
+    if (string.IsNullOrEmpty(activeTab))
+    {
+        activeTab = "store";
+    }
+}
+
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <!-- Breadcrumb -->
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <li class="inline-flex items-center">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="hover:text-primary-600 dark:hover:text-primary-400">Admin</a>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span data-en="Management" data-kh="ការគ្រប់គ្រង">Management</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="bi bi-chevron-right text-[10px] mx-1 text-slate-400"></i>
+                        <span class="text-slate-900 dark:text-white font-semibold" data-en="Store & Receipts" data-kh="ហាង & វិក្កយបត្រ">Store &amp; Receipts</span>
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="flex items-center gap-2 mb-1">
+                @if (isSuperAdmin)
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50 uppercase tracking-wider">
+                        <i class="bi bi-shield-lock-fill"></i> Super Admin Master Control
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50 uppercase tracking-wider">
+                        <i class="bi bi-shop"></i> Store Admin Portal
+                    </span>
+                }
+                <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline" data-en="Multi-Branch & Billing Engine" data-kh="ម៉ាស៊ីនគ្រប់គ្រងហាង និងវិក្កយបត្រ">Multi-Branch &amp; Billing Engine</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center text-lg shadow-sm">
+                    <i class="bi bi-sliders"></i>
+                </span>
+                <span data-en="Store Settings & Receipt Customizer" data-kh="ការកំណត់ហាង & កែច្នៃវិក្កយបត្រ">Store Settings &amp; Receipt Customizer</span>
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl" data-en="Store Admins can manage their store branding and contact info. Super Admin can customize default receipts, tax IDs, and billing templates." data-kh="អ្នកគ្រប់គ្រងហាងអាចកែសម្រួលព័ត៌មានហាង និងទំនាក់ទំនង។ Super Admin អាចកែច្នៃគំរូវិក្កយបត្រ ពន្ធ និងរូបរាងវិក្កយបត្រលំនាំដើម។">
+                Store Admins can manage their store branding and contact info. Super Admin can customize default receipts, tax IDs, and billing templates.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a asp-area="Admin" asp-controller="Invoices" asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs">
+                <i class="bi bi-receipt"></i>
+                <span data-en="View All Invoices" data-kh="មើលវិក្កយបត្រទាំងអស់">View All Invoices</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill text-lg text-emerald-500"></i>
+            <span class="flex-1 font-medium">@TempData["Success"]</span>
+            <button type="button" class="text-emerald-500 hover:text-emerald-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-sm shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill text-lg text-rose-500"></i>
+            <span class="flex-1 font-medium">@TempData["Error"]</span>
+            <button type="button" class="text-rose-500 hover:text-rose-700 p-1" onclick="this.parentElement.remove();"><i class="bi bi-x-lg"></i></button>
+        </div>
+    }
+
+    <!-- TAB NAVIGATION CONTROLS -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-1.5 shadow-xs flex flex-wrap gap-1">
+        <button type="button"
+                class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer @(activeTab == "store" ? "bg-primary-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800")"
+                onclick="switchSettingsTab('store')">
+            <i class="bi bi-shop"></i>
+            <span data-en="Store Profile & Info" data-kh="ព័ត៌មានហាង">Store Profile &amp; Info</span>
+        </button>
+
+        @if (isSuperAdmin)
+        {
+            <button type="button"
+                    class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer @(activeTab == "receipt" ? "bg-primary-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800")"
+                    onclick="switchSettingsTab('receipt')">
+                <i class="bi bi-receipt-cutoff"></i>
+                <span data-en="Receipt & Invoice Customizer" data-kh="កែច្នៃវិក្កយបត្រ">Receipt &amp; Invoice Customizer</span>
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-400 text-slate-950 font-extrabold uppercase">Super Admin</span>
+            </button>
+
+            <button type="button"
+                    class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer @(activeTab == "system" ? "bg-primary-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800")"
+                    onclick="switchSettingsTab('system')">
+                <i class="bi bi-shield-gear"></i>
+                <span data-en="System & Security" data-kh="សុវត្ថិភាពប្រព័ន្ធ">System &amp; Security</span>
+            </button>
+        }
+    </div>
+
+    <!-- =========================================================================
+         TAB 1: STORE PROFILE MANAGEMENT (STORE ADMIN & SUPER ADMIN)
+    ========================================================================= -->
+    <div id="tabContent_store" class="space-y-6 @(activeTab == "store" ? "" : "hidden")">
+        <form method="post" asp-action="UpdateStoreProfile" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="bi bi-building-gear"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white" data-en="Store Identity & Contact Details" data-kh="ព័ត៌មានហាង & ទំនាក់ទំនង">
+                                Store Identity &amp; Contact Details
+                            </h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-en="These details represent your store on storefront headers, order pages, customer emails, and printed receipts." data-kh="ព័ត៌មានទាំងនេះបង្ហាញលើហាង វិក្កយបត្រ អ៊ីមែល និងបណ្ដាញទំនាក់ទំនង។">
+                                These details represent your store on storefront headers, order pages, customer emails, and printed receipts.
+                            </p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/50">
+                        Store Admin Access
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Store Name (English) *" data-kh="ឈ្មោះហាង (អង់គ្លេស) *">
+                            Store Name (English) *
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-shop"></i>
+                            </span>
+                            <input type="text" name="StoreName" value="@Model.StoreName" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required placeholder="e.g. CLOTHÉ Boutique" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Store Name (Khmer)" data-kh="ឈ្មោះហាង (ខ្មែរ)">
+                            Store Name (Khmer)
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-translate"></i>
+                            </span>
+                            <input type="text" name="StoreNameKh" value="@Model.StoreNameKh" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="ឧទាហរណ៍៖ ហាងសម្លៀកបំពាក់ CLOTHÉ" style="font-family: 'Kantumruy Pro', sans-serif;" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Brand Tagline / Slogan (English)" data-kh="ពាក្យស្លោក (អង់គ្លេស)">
+                            Brand Tagline / Slogan (English)
+                        </label>
+                        <input type="text" name="Tagline" value="@Model.Tagline" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="e.g. Atelier & Luxury Fashion House" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Brand Tagline / Slogan (Khmer)" data-kh="ពាក្យស្លោក (ខ្មែរ)">
+                            Brand Tagline / Slogan (Khmer)
+                        </label>
+                        <input type="text" name="TaglineKh" value="@Model.TaglineKh" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="ឧទាហរណ៍៖ ម៉ូដទាន់សម័យ និងប្រណីតភាព" style="font-family: 'Kantumruy Pro', sans-serif;" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Official Store Phone *" data-kh="លេខទូរស័ព្ទផ្លូវការ *">
+                            Official Store Phone *
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-telephone"></i>
+                            </span>
+                            <input type="tel" name="Phone" value="@Model.Phone" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required placeholder="+855 23 999 888 / 096 914 4183" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Customer Support Email *" data-kh="អ៊ីមែលជំនួយ *">
+                            Customer Support Email *
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email" name="Email" value="@Model.Email" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required placeholder="contact@clothe.com" />
+                        </div>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Store Physical Address (English) *" data-kh="អាសយដ្ឋានហាង (អង់គ្លេស) *">
+                            Store Physical Address (English) *
+                        </label>
+                        <input type="text" name="Address" value="@Model.Address" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" required placeholder="#88 Preah Norodom Blvd, BKK1, Phnom Penh, Cambodia" />
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Store Physical Address (Khmer)" data-kh="អាសយដ្ឋានហាង (ខ្មែរ)">
+                            Store Physical Address (Khmer)
+                        </label>
+                        <input type="text" name="AddressKh" value="@Model.AddressKh" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="អគារលេខ ៨៨ មហាវិថីព្រះនរោត្តម សង្កាត់បឹងកេងកង១ រាជធានីភ្នំពេញ" style="font-family: 'Kantumruy Pro', sans-serif;" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Store Website URL" data-kh="គេហទំព័រហាង">
+                            Store Website URL
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-globe"></i>
+                            </span>
+                            <input type="url" name="Website" value="@Model.Website" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="https://clothe-store.com" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Telegram Channel / Support Handle" data-kh="ឆាណែល Telegram / គណនី">
+                            Telegram Channel / Support Handle
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <i class="bi bi-telegram"></i>
+                            </span>
+                            <input type="text" name="Telegram" value="@Model.Telegram" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="@@clothe_support" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-primary-500/20 transition cursor-pointer">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span data-en="Save Store Profile" data-kh="រក្សាទុកព័ត៌មានហាង">Save Store Profile</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- =========================================================================
+         TAB 2: SUPER ADMIN RECEIPT & INVOICE CUSTOMIZER (WITH LIVE PREVIEW)
+    ========================================================================= -->
+    @if (isSuperAdmin)
+    {
+        <div id="tabContent_receipt" class="space-y-6 @(activeTab == "receipt" ? "" : "hidden")">
+            <form method="post" asp-action="UpdateReceiptSettings" id="frmReceiptCustomizer" class="space-y-6">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                <!-- LEFT COLUMN: CUSTOMIZATION CONTROLS (7 COLS) -->
+                <div class="lg:col-span-7 space-y-6">
+
+                    <!-- Theme & Template Card -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-palette-fill"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-en="Default Receipt UI Preset" data-kh="គំរូរចនាវិក្កយបត្រលំនាំដើម">
+                                    Default Receipt UI Preset
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" data-en="Choose the visual layout template applied when customers and admins view or print receipts." data-kh="ជ្រើសរើសទម្រង់រចនាសម្រាប់វិក្កយបត្រនៅពេលមើល ឬបោះពុម្ព។">
+                                    Choose the visual layout template applied when customers and admins view or print receipts.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 4 Visual Theme Selection Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-2">
+                            <!-- Theme 1: Modern Luxury -->
+                            <label class="relative block p-4 rounded-2xl border-2 cursor-pointer transition @(Model.DefaultReceiptTheme == "ModernLuxury" ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300")">
+                                <input type="radio" name="DefaultReceiptTheme" value="ModernLuxury" class="sr-only" @(Model.DefaultReceiptTheme == "ModernLuxury" ? "checked" : "") onchange="updateReceiptPreview()" />
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <i class="bi bi-gem text-primary-600"></i> Modern Luxury
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            Contemporary card styling with elegant serif fonts, paid verification stamps, and dual currency totals.
+                                        </p>
+                                    </div>
+                                    <span class="w-4 h-4 rounded-full border-2 @(Model.DefaultReceiptTheme == "ModernLuxury" ? "border-primary-600 bg-primary-600" : "border-slate-300 dark:border-slate-600") flex items-center justify-center flex-shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                    </span>
+                                </div>
+                            </label>
+
+                            <!-- Theme 2: Authentic Thermal POS -->
+                            <label class="relative block p-4 rounded-2xl border-2 cursor-pointer transition @(Model.DefaultReceiptTheme == "AuthenticThermal" ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300")">
+                                <input type="radio" name="DefaultReceiptTheme" value="AuthenticThermal" class="sr-only" @(Model.DefaultReceiptTheme == "AuthenticThermal" ? "checked" : "") onchange="updateReceiptPreview()" />
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <i class="bi bi-receipt text-amber-500"></i> Authentic POS
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            Realistic 80mm cash register receipt with mono typography, dashed tear lines, and compact item layout.
+                                        </p>
+                                    </div>
+                                    <span class="w-4 h-4 rounded-full border-2 @(Model.DefaultReceiptTheme == "AuthenticThermal" ? "border-primary-600 bg-primary-600" : "border-slate-300 dark:border-slate-600") flex items-center justify-center flex-shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                    </span>
+                                </div>
+                            </label>
+
+                            <!-- Theme 3: Corporate Invoice -->
+                            <label class="relative block p-4 rounded-2xl border-2 cursor-pointer transition @(Model.DefaultReceiptTheme == "CorporateInvoice" ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300")">
+                                <input type="radio" name="DefaultReceiptTheme" value="CorporateInvoice" class="sr-only" @(Model.DefaultReceiptTheme == "CorporateInvoice" ? "checked" : "") onchange="updateReceiptPreview()" />
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <i class="bi bi-file-earmark-text text-emerald-500"></i> Corporate Invoice
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            Official Cambodian tax invoice with bilingual headers, VAT registration box, and banking clearance table.
+                                        </p>
+                                    </div>
+                                    <span class="w-4 h-4 rounded-full border-2 @(Model.DefaultReceiptTheme == "CorporateInvoice" ? "border-primary-600 bg-primary-600" : "border-slate-300 dark:border-slate-600") flex items-center justify-center flex-shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                    </span>
+                                </div>
+                            </label>
+
+                            <!-- Theme 4: Minimal Chic -->
+                            <label class="relative block p-4 rounded-2xl border-2 cursor-pointer transition @(Model.DefaultReceiptTheme == "MinimalChic" ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20 shadow-sm" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:border-slate-300")">
+                                <input type="radio" name="DefaultReceiptTheme" value="MinimalChic" class="sr-only" @(Model.DefaultReceiptTheme == "MinimalChic" ? "checked" : "") onchange="updateReceiptPreview()" />
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <i class="bi bi-app text-violet-500"></i> Minimal Chic
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            Ultra-sleek boutique minimalist aesthetic with borderless item lists and understated luxury typography.
+                                        </p>
+                                    </div>
+                                    <span class="w-4 h-4 rounded-full border-2 @(Model.DefaultReceiptTheme == "MinimalChic" ? "border-primary-600 bg-primary-600" : "border-slate-300 dark:border-slate-600") flex items-center justify-center flex-shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tax & Receipt Identification Card -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+                        <div class="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-calculator"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-en="Tax Identification & Billing Parameters" data-kh="លេខសម្គាល់ពន្ធ & ប៉ារ៉ាម៉ែត្រទូទាត់">
+                                    Tax Identification &amp; Billing Parameters
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    National tax registration (TIN), receipt prefixing, and exchange rate parameters.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="VAT / TIN Number" data-kh="លេខអត្តសញ្ញាណកម្មពន្ធ (VAT/TIN)">
+                                    VAT / TIN Number
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        <i class="bi bi-upc-scan"></i>
+                                    </span>
+                                    <input type="text" name="VatNumber" id="inpVatNumber" value="@Model.VatNumber" oninput="updateReceiptPreview()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition font-mono" placeholder="K005-902201889" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Receipt Number Prefix" data-kh="បុព្វបទលេខវិក្កយបត្រ">
+                                    Receipt Number Prefix
+                                </label>
+                                <input type="text" name="ReceiptPrefix" id="inpReceiptPrefix" value="@Model.ReceiptPrefix" oninput="updateReceiptPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition font-mono" placeholder="REC-" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="USD to KHR Exchange Rate" data-kh="អត្រាប្តូរប្រាក់ USD ទៅ KHR">
+                                    USD to KHR Exchange Rate (1 USD = ? KHR)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                        ៛
+                                    </span>
+                                    <input type="number" step="10" name="ExchangeRate" id="inpExchangeRate" value="@Model.ExchangeRate.ToString("0")" oninput="updateReceiptPreview()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition font-mono" />
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 pt-2">
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <input type="checkbox" name="ShowDualCurrency" value="true" id="chkShowDualCurrency" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300" @(Model.ShowDualCurrency ? "checked" : "") onchange="updateReceiptPreview()" />
+                                    <span>Display Dual Currency (USD &amp; KHR) on Receipts</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <input type="checkbox" name="ShowKhqr" value="true" id="chkShowKhqr" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300" @(Model.ShowKhqr ? "checked" : "") onchange="updateReceiptPreview()" />
+                                    <span>Print Verification QR Code on Receipt</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return Policy & Custom Notes Card -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+                        <div class="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg flex-shrink-0">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white" data-en="Return Policies & Thank-You Notes" data-kh="គោលការណ៍ប្តូរទំនិញ & ពាក្យថ្លែងអំណរគុណ">
+                                    Return Policies &amp; Thank-You Notes
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Custom printed footer terms and customer appreciation message.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Return & Exchange Policy (English)" data-kh="គោលការណ៍ប្តូរទំនិញ (អង់គ្លេស)">
+                                Return &amp; Exchange Policy (English)
+                            </label>
+                            <textarea name="ReturnPolicyEn" id="inpReturnPolicyEn" rows="2" oninput="updateReceiptPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition resize-none">@Model.ReturnPolicyEn</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Return & Exchange Policy (Khmer)" data-kh="គោលការណ៍ប្តូរទំនិញ (ខ្មែរ)">
+                                Return &amp; Exchange Policy (Khmer)
+                            </label>
+                            <textarea name="ReturnPolicyKh" id="inpReturnPolicyKh" rows="2" oninput="updateReceiptPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition resize-none" style="font-family: 'Kantumruy Pro', sans-serif;">@Model.ReturnPolicyKh</textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5" data-en="Thank-You Note (Bilingual)" data-kh="ពាក្យថ្លែងអំណរគុណ">
+                                Thank-You Message (English / Khmer)
+                            </label>
+                            <input type="text" name="ThankYouNoteEn" id="inpThankYouNoteEn" value="@Model.ThankYouNoteEn" oninput="updateReceiptPreview()" class="w-full mb-2 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="Thank you for shopping at CLOTHÉ!" />
+                            <input type="text" name="ThankYouNoteKh" id="inpThankYouNoteKh" value="@Model.ThankYouNoteKh" oninput="updateReceiptPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 transition" placeholder="សូមអរគុណសម្រាប់ការគាំទ្រហាងយើងខ្ញុំ! សូមអញ្ជើញមកម្តងទៀត។" style="font-family: 'Kantumruy Pro', sans-serif;" />
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                            <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm shadow-md shadow-amber-500/20 transition cursor-pointer">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span data-en="Save Receipt Customizer Settings" data-kh="រក្សាទុកការកំណត់វិក្កយបត្រ">Save Receipt Customizer Settings</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: LIVE INTERACTIVE RECEIPT PREVIEW (5 COLS) -->
+                <div class="lg:col-span-5 sticky top-6">
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm">
+                        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span>Live Receipt Preview</span>
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" id="previewThemeBadge">
+                                Theme: @Model.DefaultReceiptTheme
+                            </span>
+                        </div>
+
+                        <!-- Mini Printable Paper Container -->
+                        <div id="receiptPreviewBox" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 text-slate-900 dark:text-slate-100 font-sans text-xs transition-all duration-300">
+                            <!-- Preview Header -->
+                            <div class="text-center pb-3 border-b border-dashed border-slate-300 dark:border-slate-700">
+                                <div class="font-extrabold text-base tracking-tight text-slate-900 dark:text-white" id="prevStoreName">
+                                    @Model.StoreName
+                                </div>
+                                <div class="text-[10px] font-semibold text-slate-500 mt-0.5" id="prevStoreTagline">
+                                    @Model.Tagline
+                                </div>
+                                <div class="text-[9px] text-slate-400 mt-1 leading-tight" id="prevStoreAddress">
+                                    @Model.Address
+                                </div>
+                                <div class="text-[9px] text-slate-400" id="prevStoreContact">
+                                    Tel: @Model.Phone &bull; @Model.Email
+                                </div>
+                                <div class="text-[9px] font-mono text-slate-500 mt-1" id="prevVatBox">
+                                    VAT / TIN: @Model.VatNumber
+                                </div>
+                            </div>
+
+                            <!-- Invoice Meta -->
+                            <div class="py-2.5 flex justify-between text-[10px] border-b border-dashed border-slate-300 dark:border-slate-700">
+                                <div>
+                                    <span class="text-slate-400">Receipt:</span>
+                                    <strong class="font-mono text-slate-800 dark:text-slate-200" id="prevReceiptNo">@Model.ReceiptPrefix#8F3A2C</strong>
+                                </div>
+                                <div class="text-slate-400">
+                                    @DateTime.Now.ToString("dd MMM yyyy, hh:mm tt")
+                                </div>
+                            </div>
+
+                            <!-- Itemized Sample Rows -->
+                            <div class="py-2.5 space-y-1.5 border-b border-dashed border-slate-300 dark:border-slate-700 text-[11px]">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <div class="font-semibold">Oversized Heavyweight Tee</div>
+                                        <div class="text-[9px] text-slate-400">1 × $35.00 | Black (L)</div>
+                                    </div>
+                                    <span class="font-mono font-bold">$35.00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <div>
+                                        <div class="font-semibold">Pleated Tailored Trousers</div>
+                                        <div class="text-[9px] text-slate-400">1 × $65.00 | Charcoal (M)</div>
+                                    </div>
+                                    <span class="font-mono font-bold">$65.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Totals -->
+                            <div class="py-2.5 space-y-1 border-b border-dashed border-slate-300 dark:border-slate-700 text-[11px]">
+                                <div class="flex justify-between text-slate-500">
+                                    <span>Subtotal</span>
+                                    <span class="font-mono">$100.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-500">
+                                    <span>Delivery Fee</span>
+                                    <span class="font-mono">$2.00</span>
+                                </div>
+                                <div class="flex justify-between font-black text-sm text-slate-900 dark:text-white pt-1">
+                                    <span>Total (USD)</span>
+                                    <span class="font-mono">$102.00</span>
+                                </div>
+                                <div class="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold text-[10px]" id="prevKhrDualRow">
+                                    <span>Total (KHR)</span>
+                                    <span class="font-mono" id="prevKhrDual">~ ៛418,200</span>
+                                </div>
+                            </div>
+
+                            <!-- Mini QR & Footer -->
+                            <div class="pt-3 text-center space-y-2">
+                                <div id="prevQrWrap" class="inline-block p-1 bg-white rounded-lg shadow-xs border border-slate-200">
+                                    <div class="w-16 h-16 bg-slate-900 text-white rounded flex items-center justify-center text-[9px] font-mono">
+                                        [QR KHQR]
+                                    </div>
+                                </div>
+                                <p class="text-[9px] text-slate-400 leading-tight" id="prevPolicyBox">
+                                    @Model.ReturnPolicyEn
+                                </p>
+                                <p class="text-[10px] font-bold text-slate-700 dark:text-slate-300" id="prevThankYou">
+                                    @Model.ThankYouNoteEn
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                            <span class="text-slate-400 text-[11px]">Dynamic Live Rendering</span>
+                            <a href="/Admin/Invoices" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline flex items-center gap-1">
+                                <span>Invoices Ledger</span>
+                                <i class="bi bi-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+    }
+
+    <!-- =========================================================================
+         TAB 3: SYSTEM & SECURITY (MAINTENANCE, REGISTRATION, DIAGNOSTICS)
+    ========================================================================= -->
+    @if (isSuperAdmin)
+    {
+    <div id="tabContent_system" class="space-y-6 @(activeTab == "system" ? "" : "hidden")">
+        <form method="post" asp-action="Save" class="space-y-6">
+            @Html.AntiForgeryToken()
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg flex-shrink-0">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white" data-en="Security & Operational Controls" data-kh="សុវត្ថិភាព & ការគ្រប់គ្រងប្រតិបត្តិការ">
+                                Security &amp; Operational Controls
+                            </h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Account registration policies, maintenance mode, and environment diagnostics.
+                            </p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/50">
+                        SuperAdmin Only
+                    </span>
+                </div>
+
+                <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                    <!-- Registration Toggle -->
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="pr-4">
+                            <label class="text-sm font-semibold text-slate-900 dark:text-white block cursor-pointer" for="regSwitch" data-en="Allow Public Customer Registration" data-kh="អនុញ្ញាតឱ្យអតិថិជនចុះឈ្មោះ">
+                                Allow Public Customer Registration
+                            </label>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                When enabled, new visitors can freely register customer accounts on the storefront.
+                            </p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                            <input type="checkbox" name="allowRegistration" value="true" id="regSwitch" class="w-5 h-5 text-primary-600 rounded" checked />
+                        </label>
+                    </div>
+
+                    <!-- Maintenance Mode Toggle -->
+                    <div class="flex items-center justify-between pt-4">
+                        <div class="pr-4">
+                            <label class="text-sm font-semibold text-rose-600 dark:text-rose-400 block cursor-pointer" for="maintSwitch" data-en="Maintenance Mode" data-kh="មុខងារថែទាំប្រព័ន្ធ">
+                                Maintenance Mode
+                            </label>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                When activated, customer-facing store features are temporarily paused for scheduled servicing.
+                            </p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                            <input type="checkbox" name="maintenanceMode" value="true" id="maintSwitch" class="w-5 h-5 text-rose-600 rounded" />
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for legacy Save method -->
+                <input type="hidden" name="storeName" value="@Model.StoreName" />
+                <input type="hidden" name="supportEmail" value="@Model.Email" />
+                <input type="hidden" name="supportPhone" value="@Model.Phone" />
+                <input type="hidden" name="currency" value="USD" />
+
+                <!-- Server Environment Diagnostic Box -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Host System Diagnostics</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px]">Environment</span>
+                            <span class="font-semibold text-slate-800 dark:text-white">@ViewBag.EnvironmentName</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px]">CLR / Framework</span>
+                            <span class="font-semibold text-slate-800 dark:text-white">.NET Core @ViewBag.FrameworkVersion</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px]">Server UTC Time</span>
+                            <span class="font-mono text-slate-800 dark:text-white text-[11px]">@ViewBag.ServerTimeUtc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-sm shadow-md transition cursor-pointer">
+                        <i class="bi bi-save"></i>
+                        <span>Save System Parameters</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        function switchSettingsTab(tabName) {
+            ['store', 'receipt', 'system'].forEach(t => {
+                const el = document.getElementById('tabContent_' + t);
+                if (el) {
+                    if (t === tabName) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                }
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+            });
+
+            if (window.event && window.event.currentTarget) {
+                window.event.currentTarget.className = 'tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition cursor-pointer bg-primary-600 text-white shadow-sm';
+            }
+
+            // Update URL query without page reload
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabName);
+            window.history.replaceState({}, '', url);
+        }
+
+        function updateReceiptPreview() {
+            const vat = document.getElementById('inpVatNumber')?.value || 'K005-902201889';
+            const prefix = document.getElementById('inpReceiptPrefix')?.value || 'REC-';
+            const rate = parseFloat(document.getElementById('inpExchangeRate')?.value) || 4100;
+            const dual = document.getElementById('chkShowDualCurrency')?.checked ?? true;
+            const qr = document.getElementById('chkShowKhqr')?.checked ?? true;
+            const policyEn = document.getElementById('inpReturnPolicyEn')?.value || '';
+            const thankEn = document.getElementById('inpThankYouNoteEn')?.value || '';
+
+            const selectedTheme = document.querySelector('input[name="DefaultReceiptTheme"]:checked')?.value || 'ModernLuxury';
+
+            const pThemeBadge = document.getElementById('previewThemeBadge');
+            const pVat = document.getElementById('prevVatBox');
+            const pReceiptNo = document.getElementById('prevReceiptNo');
+            const pDualRow = document.getElementById('prevKhrDualRow');
+            const pDualKhr = document.getElementById('prevKhrDual');
+            const pQrWrap = document.getElementById('prevQrWrap');
+            const pPolicy = document.getElementById('prevPolicyBox');
+            const pThank = document.getElementById('prevThankYou');
+            const pBox = document.getElementById('receiptPreviewBox');
+
+            if (pThemeBadge) pThemeBadge.textContent = 'Theme: ' + selectedTheme;
+            if (pVat) pVat.textContent = 'VAT / TIN: ' + vat;
+            if (pReceiptNo) pReceiptNo.textContent = prefix + '#8F3A2C';
+            if (pDualRow) pDualRow.style.display = dual ? 'flex' : 'none';
+            if (pDualKhr) pDualKhr.textContent = '~ ៛' + Math.round(102 * rate).toLocaleString();
+            if (pQrWrap) pQrWrap.style.display = qr ? 'inline-block' : 'none';
+            if (pPolicy) pPolicy.textContent = policyEn;
+            if (pThank) pThank.textContent = thankEn;
+
+            // Apply Theme styling to the Preview Box
+            if (pBox) {
+                if (selectedTheme === 'AuthenticThermal') {
+                    pBox.className = 'bg-white text-slate-900 border-2 border-dashed border-slate-400 rounded-none font-mono p-4 text-[11px] shadow-sm';
+                } else if (selectedTheme === 'CorporateInvoice') {
+                    pBox.className = 'bg-white text-slate-900 border-2 border-blue-900 rounded-lg font-sans p-4 text-xs shadow-md';
+                } else if (selectedTheme === 'MinimalChic') {
+                    pBox.className = 'bg-white text-slate-900 border border-slate-100 rounded-2xl font-sans p-5 text-xs shadow-none';
+                } else {
+                    pBox.className = 'bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 text-slate-900 dark:text-slate-100 font-sans text-xs transition-all duration-300';
+                }
+            }
+        }
+    </script>
+}

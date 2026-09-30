@@ -1,0 +1,359 @@
+@model IEnumerable<WebApplication_ClothingEcommerce.Models.ContactMessage>
+
+@{
+    ViewData["Title"] = "Contact Messages";
+    bool unreadOnly = ViewBag.UnreadOnly == true;
+    int totalCount = ViewBag.TotalCount ?? Model.Count();
+    int unreadCount = ViewBag.UnreadCount ?? Model.Count(m => !m.IsRead);
+    int readCount = totalCount - unreadCount;
+}
+
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-chat-square-text-fill"></i>
+                <span data-en="Customer Inquiries &amp; Help Desk" data-kh="សារទំនាក់ទំនង &amp; សេវាអតិថិជន">Customer Inquiries &amp; Help Desk</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+                <span data-en="Contact Messages" data-kh="សារទំនាក់ទំនង">Contact Messages</span>
+                @if (unreadCount > 0)
+                {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white shadow-xs animate-pulse">
+                        @unreadCount unread
+                    </span>
+                }
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" data-en="Review, track, and reply to inquiries and feedback submitted through the contact page." data-kh="ពិនិត្យ តាមដាន និងឆ្លើយតបសារសាកសួរ និងមតិកែលម្អពីទំព័រទំនាក់ទំនង។">
+                Review, track, and reply to inquiries and feedback submitted through the contact page.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs">
+                <i class="bi bi-envelope-fill text-blue-500"></i>
+                <span><span data-en="Total:" data-kh="សរុប:">Total:</span> <strong class="text-slate-900 dark:text-white">@totalCount</strong></span>
+            </span>
+
+            @if (unreadCount > 0)
+            {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs font-bold text-rose-600 dark:text-rose-400 shadow-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <span>@unreadCount Needs Review</span>
+                </span>
+            }
+        </div>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2.5 shadow-xs">
+            <i class="bi bi-check-circle-fill text-base shrink-0"></i>
+            <span class="font-semibold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    <!-- 4 KPI SUMMARY CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- 1. Total Inquiries -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Total Messages" data-kh="សារសរុប">Total Messages</span>
+                <span class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base">
+                    <i class="bi bi-chat-left-dots-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+                    @totalCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span data-en="From contact forms" data-kh="ពីទម្រង់ទំនាក់ទំនង">From contact forms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Unread Messages -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Unread Inquiries" data-kh="សារមិនទាន់អាន">Unread Inquiries</span>
+                <span class="w-9 h-9 rounded-xl @(unreadCount > 0 ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400") flex items-center justify-center text-base">
+                    <i class="bi bi-envelope-exclamation-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black @(unreadCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-white") tabular-nums">
+                    @unreadCount
+                </div>
+                <div class="flex items-center gap-1 text-xs font-semibold mt-1 @(unreadCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400")">
+                    @if (unreadCount > 0)
+                    {
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <span data-en="Awaiting response" data-kh="រង់ចាំការឆ្លើយតប">Awaiting response</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-check-all text-emerald-500"></i>
+                        <span data-en="All caught up!" data-kh="បានអានអស់ហើយ!">All caught up!</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Read & Processed -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Read &amp; Handled" data-kh="បានអាន &amp; ដោះស្រាយ">Read &amp; Handled</span>
+                <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                    <i class="bi bi-envelope-check-fill"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                    @readCount
+                </div>
+                <div class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                    <i class="bi bi-arrow-up-right"></i>
+                    <span>@(totalCount > 0 ? (readCount * 100 / totalCount) : 100)% <span data-en="completed" data-kh="បានបញ្ចប់">completed</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Telegram Bot Alerts -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-en="Telegram Live Sync" data-kh="ការភ្ជាប់ Telegram">Telegram Live Sync</span>
+                <span class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-500 flex items-center justify-center text-base">
+                    <i class="bi bi-telegram"></i>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-xl font-black text-sky-500 dark:text-sky-400">
+                    Real-Time
+                </div>
+                <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                    <span data-en="Forwarded to admin bot" data-kh="បញ្ជូនទៅ Telegram Bot">Forwarded to admin bot</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SEARCH & STATUS FILTERS TOOLBAR -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
+        <form method="get" asp-action="Index" class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="Search by sender name, email, subject..."
+                       data-placeholder-en="Search by sender name, email, subject..."
+                       data-placeholder-kh="ស្វែងរកតាមឈ្មោះ អ៊ីមែល ប្រធានបទ..."
+                       class="w-full text-xs font-medium pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="submit"
+                        class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <i class="bi bi-funnel-fill"></i> <span data-en="Filter" data-kh="ស្វែងរក">Filter</span>
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string) || unreadOnly)
+                {
+                    <a asp-action="Index" class="p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Clear Filters">
+                        <i class="bi bi-x-lg text-xs"></i>
+                    </a>
+                }
+            </div>
+        </form>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="font-bold text-slate-400 text-[11px] uppercase tracking-wider mr-1">Filter:</span>
+            <a asp-action="Index" asp-route-search="@ViewBag.Search"
+               class="px-3 py-1.5 rounded-xl font-bold transition @(!unreadOnly ? "bg-blue-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span data-en="All Messages" data-kh="សារទាំងអស់">All Messages</span> (@totalCount)
+            </a>
+            <a asp-action="Index" asp-route-search="@ViewBag.Search" asp-route-unreadOnly="true"
+               class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 @(unreadOnly ? "bg-rose-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")">
+                <span class="w-2 h-2 rounded-full @(unreadOnly ? "bg-white" : "bg-rose-500")"></span>
+                <span data-en="Unread Only" data-kh="មិនទាន់អាន">Unread Only</span> (@unreadCount)
+            </a>
+        </div>
+    </div>
+
+    <!-- MESSAGES TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        @if (Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                            <th class="py-3 px-4 w-12 text-center">Status</th>
+                            <th class="py-3 px-4" data-en="Sender" data-kh="អ្នកផ្ញើ">Sender</th>
+                            <th class="py-3 px-4" data-en="Subject &amp; Snippet" data-kh="ប្រធានបទ &amp; សារ">Subject &amp; Snippet</th>
+                            <th class="py-3 px-4" data-en="Contact" data-kh="ទំនាក់ទំនង">Contact</th>
+                            <th class="py-3 px-4" data-en="Date" data-kh="កាលបរិច្ឆេទ">Date</th>
+                            <th class="py-3 px-4 text-right" data-en="Actions" data-kh="សកម្មភាព">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                        @foreach (var msg in Model)
+                        {
+                            var initial = !string.IsNullOrWhiteSpace(msg.Name) ? msg.Name[0].ToString().ToUpper() : "U";
+                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition @(!msg.IsRead ? "bg-amber-50/30 dark:bg-amber-950/10" : "")">
+                                <!-- Status Icon -->
+                                <td class="py-3.5 px-4 text-center">
+                                    @if (!msg.IsRead)
+                                    {
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800" title="Unread Message">
+                                            <i class="bi bi-envelope-fill text-xs"></i>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400" title="Read">
+                                            <i class="bi bi-envelope-open text-xs"></i>
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Sender Name + Avatar -->
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr @(!msg.IsRead ? "from-rose-500 to-amber-500" : "from-blue-600 to-indigo-600") text-white font-black flex items-center justify-center shadow-xs shrink-0 text-xs">
+                                            @initial
+                                        </div>
+                                        <div>
+                                            <a asp-action="Details" asp-route-id="@msg.Id" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition block">
+                                                @msg.Name
+                                            </a>
+                                            <span class="text-[10px] text-slate-400 font-mono">ID: @msg.Id.ToString()[..8].ToUpper()</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Subject & Preview Snippet -->
+                                <td class="py-3.5 px-4 max-w-xs">
+                                    <a asp-action="Details" asp-route-id="@msg.Id" class="block group">
+                                        <div class="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition truncate">
+                                            @msg.Subject
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                            @msg.Message
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <!-- Contact Info (Email & Phone) -->
+                                <td class="py-3.5 px-4 space-y-1">
+                                    <div>
+                                        <a href="mailto:@msg.Email" class="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">
+                                            <i class="bi bi-envelope text-slate-400 text-xs"></i>
+                                            <span>@msg.Email</span>
+                                        </a>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(msg.Phone))
+                                    {
+                                        <div>
+                                            <a href="tel:@msg.Phone" class="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-emerald-600 text-[11px]">
+                                                <i class="bi bi-telephone text-slate-400 text-xs"></i>
+                                                <span>@msg.Phone</span>
+                                            </a>
+                                        </div>
+                                    }
+                                </td>
+
+                                <!-- Received Date -->
+                                <td class="py-3.5 px-4 whitespace-nowrap text-slate-500 dark:text-slate-400">
+                                    <div class="font-semibold text-slate-700 dark:text-slate-300">
+                                        @msg.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                                    </div>
+                                    <div class="text-[10px] text-slate-400">
+                                        @msg.CreatedAt.ToLocalTime().ToString("hh:mm tt")
+                                    </div>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- View Details -->
+                                        <a asp-action="Details" asp-route-id="@msg.Id"
+                                           class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 transition shadow-xs"
+                                           title="View message">
+                                            <i class="bi bi-eye text-xs"></i>
+                                        </a>
+
+                                        <!-- Mark Read / Unread -->
+                                        @if (!msg.IsRead)
+                                        {
+                                            <form asp-action="MarkRead" asp-route-id="@msg.Id" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition shadow-xs"
+                                                        title="Mark as read">
+                                                    <i class="bi bi-check2 text-xs"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="MarkUnread" asp-route-id="@msg.Id" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition shadow-xs"
+                                                        title="Mark as unread">
+                                                    <i class="bi bi-envelope text-xs"></i>
+                                                </button>
+                                            </form>
+                                        }
+
+                                        <!-- Delete Message -->
+                                        <form asp-action="Delete" asp-route-id="@msg.Id" method="post" class="inline"
+                                              onsubmit="return confirm('Permanently delete this inquiry from @msg.Name?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition shadow-xs"
+                                                    title="Delete message">
+                                                <i class="bi bi-trash3 text-xs"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="py-16 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center text-2xl mb-3">
+                    <i class="bi bi-chat-square-dots"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white" data-en="No Inquiries Found" data-kh="មិនមានសារទំនាក់ទំនងទេ">
+                    No Inquiries Found
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto" data-en="Customer contact messages submitted via the About/Contact page will appear here." data-kh="សារទំនាក់ទំនងដែលផ្ញើតាមរយៈទំព័រ About/Contact នឹងបង្ហាញនៅទីនេះ។">
+                    Customer contact messages submitted via the About/Contact page will appear here.
+                </p>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string) || unreadOnly)
+                {
+                    <div class="mt-4">
+                        <a asp-action="Index" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 transition inline-flex items-center gap-1.5">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

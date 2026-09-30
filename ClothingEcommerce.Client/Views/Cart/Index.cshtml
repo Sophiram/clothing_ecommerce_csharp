@@ -1,0 +1,261 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.CartViewModel
+
+@{
+    ViewData["Title"] = "Shopping Bag";
+    ViewData["AccountActiveSection"] = "Bag";
+    var freeShippingThreshold = 50.00m;
+    var subtotal = Model?.SubTotal ?? 0;
+    var amountNeeded = Math.Max(0, freeShippingThreshold - subtotal);
+    var progressPercent = Math.Min(100, (int)((subtotal / freeShippingThreshold) * 100));
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+    var cartItems = Model?.Cart?.Items?.ToList() ?? new List<WebApplication_ClothingEcommerce.Models.CartItem>();
+    var totalItemCount = cartItems.Sum(i => i.Quantity);
+    var shippingFee = subtotal >= freeShippingThreshold || subtotal == 0 ? 0.00m : 5.00m;
+    var finalTotal = subtotal + shippingFee;
+}
+
+<div class="min-h-[85vh] bg-gray-50/50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+
+        <!-- 4 TABS GLOBAL ACCOUNT HUB NAV -->
+        <partial name="_AccountNav" />
+
+        <!-- ALERTS -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-6 flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl shadow-sm text-emerald-800 dark:text-emerald-300 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-400 text-base"></i>
+                    <span class="font-semibold">@TempData["Success"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 flex items-center justify-between p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl shadow-sm text-rose-800 dark:text-rose-300 text-sm">
+                <div class="flex items-center gap-2.5">
+                    <i class="bi bi-exclamation-triangle-fill text-rose-600 dark:text-rose-400 text-base"></i>
+                    <span class="font-semibold">@TempData["Error"]</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800">
+                    <i class="bi bi-x-lg text-xs"></i>
+                </button>
+            </div>
+        }
+
+        @if (cartItems.Any())
+        {
+            <!-- FREE SHIPPING BAR -->
+            <div class="mb-8 p-5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 text-xs font-semibold">
+                    <div class="flex items-center gap-2 text-gray-700 dark:text-slate-300">
+                        <i class="bi bi-truck text-blue-600 dark:text-blue-400 text-base"></i>
+                        @if (amountNeeded > 0)
+                        {
+                            <span>Add <strong class="text-blue-600 dark:text-blue-400">$@amountNeeded.ToString("N2")</strong> more to qualify for <strong>FREE Standard Delivery</strong>!</span>
+                        }
+                        else
+                        {
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">🎉 Congratulations! You've unlocked <strong>FREE Standard Delivery</strong>!</span>
+                        }
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold @(amountNeeded > 0 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300")">
+                        @(amountNeeded > 0 ? $"{progressPercent}% of $50 Goal" : "Free Delivery Qualified")
+                    </span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full transition-all duration-500"
+                         style="width: @progressPercent%"></div>
+                </div>
+            </div>
+
+            <!-- TWO COLUMN CART LAYOUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <!-- ITEMS LIST (8 COLS) -->
+                <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gray-50/50 dark:bg-slate-800/40">
+                        <h2 class="text-base font-bold text-gray-900 dark:text-white">Bag Items (@totalItemCount)</h2>
+                        <span class="text-xs text-gray-400">Prices in USD ($)</span>
+                    </div>
+
+                    <div class="divide-y divide-gray-100 dark:divide-slate-800 p-6 space-y-6">
+                        @foreach (var item in cartItems)
+                        {
+                            var product = item.Variant?.Product;
+                            var primaryImg = product?.Images?.FirstOrDefault(i => i.IsPrimary)?.ImageUrl 
+                                          ?? product?.Images?.FirstOrDefault()?.ImageUrl;
+                            var variantPrice = item.Variant?.Price ?? 0;
+                            var itemTotal = variantPrice * item.Quantity;
+
+                            <div class="pt-6 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <!-- Image -->
+                                    <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-gray-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-gray-200/60 dark:border-slate-800 relative">
+                                        @if (!string.IsNullOrEmpty(primaryImg))
+                                        {
+                                            <img src="@primaryImg" alt="@(product?.Name ?? "Item")" class="w-full h-full object-cover" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                <i class="bi bi-image text-2xl"></i>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <!-- Details -->
+                                    <div>
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                                            @(product?.Brand?.Name ?? "CLOTHÉ")
+                                        </span>
+                                        <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">
+                                            <a asp-controller="Shop" asp-action="Details" asp-route-id="@product?.Id" class="hover:text-blue-600 transition-colors">
+                                                @(product?.Name ?? "Item")
+                                            </a>
+                                        </h3>
+                                        <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mb-2">
+                                            @if (item.Variant?.Size != null)
+                                            {
+                                                <span>Size: <strong class="text-gray-800 dark:text-slate-200">@item.Variant.Size.Name</strong></span>
+                                            }
+                                            @if (item.Variant?.Color != null)
+                                            {
+                                                <span>Color: <strong class="text-gray-800 dark:text-slate-200">@item.Variant.Color.Name</strong></span>
+                                            }
+                                        </div>
+                                        <span class="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                                            $@variantPrice.ToString("0.00") each
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Stepper, Price & Remove -->
+                                <div class="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-slate-800">
+                                    <!-- Stepper -->
+                                    <div class="flex items-center border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-slate-800">
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="quantity" value="@(item.Quantity - 1)" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="w-8 h-8 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                                    @(item.Quantity <= 1 ? "disabled" : "")>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                        </form>
+                                        <span class="w-9 text-center text-xs font-bold text-gray-900 dark:text-white">
+                                            @item.Quantity
+                                        </span>
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="quantity" value="@(item.Quantity + 1)" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="w-8 h-8 flex items-center justify-center text-xs text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Item Total -->
+                                    <span class="text-base font-extrabold text-gray-900 dark:text-white">
+                                        $@itemTotal.ToString("0.00")
+                                    </span>
+
+                                    <!-- Delete Button -->
+                                    <form asp-controller="Cart" asp-action="Remove" method="post" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                        <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                                title="Remove item">
+                                            <i class="bi bi-trash text-sm"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Cart Footer Actions -->
+                    <div class="px-6 py-4 bg-gray-50/50 dark:bg-slate-800/40 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                        <a asp-controller="Shop" asp-action="Index" class="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                            <i class="bi bi-arrow-left"></i> Continue Shopping
+                        </a>
+                        <span class="text-xs text-gray-400">All prices include local VAT</span>
+                    </div>
+                </div>
+
+                <!-- ORDER SUMMARY SIDEBAR (4 COLS) -->
+                <div class="lg:col-span-4 sticky top-24 space-y-4">
+                    <div class="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-4">Order Summary</h3>
+
+                        <div class="space-y-3 text-xs sm:text-sm border-b border-gray-100 dark:border-slate-800 pb-4">
+                            <div class="flex items-center justify-between text-gray-600 dark:text-slate-400">
+                                <span>Subtotal</span>
+                                <span class="font-bold text-gray-900 dark:text-white">$@subtotal.ToString("0.00")</span>
+                            </div>
+                            <div class="flex items-center justify-between text-gray-600 dark:text-slate-400">
+                                <span>Shipping</span>
+                                @if (shippingFee == 0)
+                                {
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs">Free</span>
+                                }
+                                else
+                                {
+                                    <span class="font-bold text-gray-900 dark:text-white">$@shippingFee.ToString("0.00")</span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="flex items-center justify-between py-4 text-base font-extrabold text-gray-900 dark:text-white">
+                            <span>Estimated Total</span>
+                            <span class="text-xl sm:text-2xl text-blue-600 dark:text-blue-400">$@finalTotal.ToString("0.00")</span>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <a asp-controller="Checkout" asp-action="Index"
+                           class="btn-primary-clothe w-full py-3 text-sm font-bold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                            <span>Proceed to Checkout</span> <i class="bi bi-arrow-right"></i>
+                        </a>
+
+                        <!-- Payment Trust Badges -->
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 text-center">
+                            <div class="text-[11px] text-gray-400 mb-2 font-medium">Secured with Bakong KHQR &amp; SSL Encryption</div>
+                            <div class="flex items-center justify-center gap-3 text-gray-400 text-sm">
+                                <i class="bi bi-shield-check text-emerald-500"></i>
+                                <i class="bi bi-qr-code text-blue-500"></i>
+                                <i class="bi bi-credit-card"></i>
+                                <i class="bi bi-truck text-amber-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY CART STATE -->
+            <div class="text-center py-16 px-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-sm">
+                <div class="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-3xl mx-auto mb-4">
+                    <i class="bi bi-bag-x"></i>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Your shopping bag is empty</h2>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                    Looks like you haven't added any clothing pieces yet. Explore our latest seasonal drops and wardrobe essentials.
+                </p>
+                <a asp-controller="Shop" asp-action="Index" class="btn-primary-clothe py-3 px-8 text-sm">
+                    <span>Explore Catalog</span> <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        }
+
+    </div>
+</div>

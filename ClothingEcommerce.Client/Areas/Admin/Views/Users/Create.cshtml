@@ -1,0 +1,59 @@
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<div class="container-fluid px-4 py-3" style="max-width: 700px;">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a asp-action="Index" class="btn btn-light btn-sm rounded-pill border px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <span class="text-muted">/</span>
+        <span class="fw-semibold text-dark">Create User</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h4 class="fw-bold mb-1 text-dark">New User Account</h4>
+        <p class="text-muted small mb-4">Create a new customer or administrative user account.</p>
+
+        <form method="post" asp-action="Create">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold small">First Name *</label>
+                    <input type="text" name="firstName" class="form-control rounded-3" required placeholder="First name" />
+                </div>
+
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold small">Last Name *</label>
+                    <input type="text" name="lastName" class="form-control rounded-3" required placeholder="Last name" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Email Address *</label>
+                    <input type="email" name="email" class="form-control rounded-3" required placeholder="user@domain.com" />
+                </div>
+
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold small">Role *</label>
+                    <select name="role" class="form-select rounded-3" asp-items="ViewBag.Roles"></select>
+                </div>
+
+                <div class="col-sm-6">
+                    <label class="form-label fw-semibold small">Password *</label>
+                    <input type="password" name="password" class="form-control rounded-3" required minlength="6" placeholder="Min 6 characters" />
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-light rounded-pill px-4">Cancel</a>
+                <button type="submit" class="btn btn-dark rounded-pill px-4">
+                    <i class="bi bi-check2 me-1"></i> Save User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
