@@ -49,7 +49,17 @@ namespace ClothingEcommerce.Client.Controllers
                 return Redirect(returnUrl);
             }
 
-            if (response.Data.Roles.Contains("SuperAdmin") || response.Data.Roles.Contains("Admin"))
+            if (response.Data.Roles.Contains("Cashier"))
+            {
+                return RedirectToAction("Index", "Pos", new { area = "Admin" });
+            }
+
+            if (response.Data.Roles.Contains("Staff"))
+            {
+                return RedirectToAction("Index", "Fulfillment", new { area = "Admin" });
+            }
+
+            if (response.Data.Roles.Contains("SuperAdmin") || response.Data.Roles.Contains("Admin") || response.Data.Roles.Contains("Manager"))
             {
                 return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
             }

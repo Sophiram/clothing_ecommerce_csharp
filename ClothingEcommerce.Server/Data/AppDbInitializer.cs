@@ -114,6 +114,24 @@ namespace WebApplication_ClothingEcommerce.Data
                         ALTER TABLE [Payments] ADD [ExpiresAt] datetime2 NULL;
                     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'FailureReason')
                         ALTER TABLE [Payments] ADD [FailureReason] nvarchar(500) NULL;
+
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'StockMovements')
+                    BEGIN
+                        CREATE TABLE [StockMovements] (
+                            [Id] uniqueidentifier NOT NULL,
+                            [ProductVariantId] uniqueidentifier NOT NULL,
+                            [MovementType] nvarchar(50) NOT NULL,
+                            [Quantity] int NOT NULL,
+                            [PreviousQuantity] int NOT NULL,
+                            [NewQuantity] int NOT NULL,
+                            [Reason] nvarchar(255) NULL,
+                            [Reference] nvarchar(100) NULL,
+                            [CreatedBy] nvarchar(100) NULL,
+                            [CreatedAt] datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
+                            CONSTRAINT [PK_StockMovements] PRIMARY KEY ([Id]),
+                            CONSTRAINT [FK_StockMovements_ProductVariants_ProductVariantId] FOREIGN KEY ([ProductVariantId]) REFERENCES [ProductVariants] ([Id]) ON DELETE CASCADE
+                        );
+                    END
                 ");
             }
             catch { }
@@ -125,8 +143,8 @@ namespace WebApplication_ClothingEcommerce.Data
             var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var configuration = serviceScope.ServiceProvider.GetService<IConfiguration>();
 
-            // Seed Roles: SuperAdmin, Admin, User
-            string[] systemRoles = ["SuperAdmin", "Admin", "User"];
+            // Seed Roles: SuperAdmin, Admin, Manager, Cashier, Staff, User
+            string[] systemRoles = ["SuperAdmin", "Admin", "Manager", "Cashier", "Staff", "User"];
             foreach (var role in systemRoles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -209,6 +227,87 @@ namespace WebApplication_ClothingEcommerce.Data
                 if (!await userManager.IsInRoleAsync(clotheAdmin, "Admin"))
                 {
                     await userManager.AddToRoleAsync(clotheAdmin, "Admin");
+                }
+            }
+
+            // Seed Manager: manager@clothe.com
+            var managerEmail = "manager@clothe.com";
+            var managerUser = await userManager.FindByEmailAsync(managerEmail);
+            if (managerUser == null)
+            {
+                managerUser = new ApplicationUser
+                {
+                    FirstName = "Store",
+                    LastName = "Manager",
+                    UserName = managerEmail,
+                    Email = managerEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(managerUser, "Manager@12345");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(managerUser, "Manager");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(managerUser, "Manager"))
+                {
+                    await userManager.AddToRoleAsync(managerUser, "Manager");
+                }
+            }
+
+            // Seed Cashier: cashier@clothe.com
+            var cashierEmail = "cashier@clothe.com";
+            var cashierUser = await userManager.FindByEmailAsync(cashierEmail);
+            if (cashierUser == null)
+            {
+                cashierUser = new ApplicationUser
+                {
+                    FirstName = "Front",
+                    LastName = "Cashier",
+                    UserName = cashierEmail,
+                    Email = cashierEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(cashierUser, "Cashier@12345");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(cashierUser, "Cashier");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(cashierUser, "Cashier"))
+                {
+                    await userManager.AddToRoleAsync(cashierUser, "Cashier");
+                }
+            }
+
+            // Seed Staff: staff@clothe.com
+            var staffEmail = "staff@clothe.com";
+            var staffUser = await userManager.FindByEmailAsync(staffEmail);
+            if (staffUser == null)
+            {
+                staffUser = new ApplicationUser
+                {
+                    FirstName = "Warehouse",
+                    LastName = "Staff",
+                    UserName = staffEmail,
+                    Email = staffEmail,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(staffUser, "Staff@12345");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(staffUser, "Staff");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(staffUser, "Staff"))
+                {
+                    await userManager.AddToRoleAsync(staffUser, "Staff");
                 }
             }
 

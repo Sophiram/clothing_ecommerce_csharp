@@ -42,6 +42,7 @@ namespace WebApplication_ClothingEcommerce.Data
         public DbSet<HomePageSettings> HomePageSettings => Set<HomePageSettings>();
         public DbSet<StoreReceiptSettings> StoreReceiptSettings => Set<StoreReceiptSettings>();
         public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -177,6 +178,15 @@ namespace WebApplication_ClothingEcommerce.Data
                 .HasOne(i => i.ProductVariant)
                 .WithOne(v => v.Inventory)
                 .HasForeignKey<Inventory>(i => i.ProductVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ===========================
+            // Stock Movement
+            // ===========================
+            modelBuilder.Entity<StockMovement>()
+                .HasOne(sm => sm.ProductVariant)
+                .WithMany()
+                .HasForeignKey(sm => sm.ProductVariantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ===========================

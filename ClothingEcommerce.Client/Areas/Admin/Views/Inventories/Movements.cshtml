@@ -1,0 +1,119 @@
+@using ClothingEcommerce.Shared.DTOs.Catalog
+@using ClothingEcommerce.Shared.DTOs.Inventory
+@model PagedResult<StockMovementDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Stock Movement History";
+    var movementType = ViewBag.MovementType as string;
+}
+
+<div class="container-fluid py-3">
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-clock-history text-primary me-2"></i> Stock Movement Audit Trail
+            </h4>
+            <p class="text-muted small mb-0">Complete audit log of stock IN, stock OUT, damages, returns, and POS sales</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="StockCheck" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Stock Checker
+            </a>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted text-uppercase">
+                    <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Product &amp; SKU</th>
+                        <th>Variant</th>
+                        <th class="text-center">Movement Type</th>
+                        <th class="text-center">Qty Changed</th>
+                        <th class="text-center">Stock Before &rarr; After</th>
+                        <th>Reason / Reference</th>
+                        <th>Logged By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-journal-x fs-1 d-block text-secondary mb-2"></i>
+                                No stock movements recorded yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var m in Model.Items)
+                        {
+                            var isPositive = m.MovementType == "StockIn" || m.MovementType == "Return";
+                            <tr>
+                                <td class="small">
+                                    @m.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@m.ProductName</div>
+                                    <code class="small">@m.VariantSku</code>
+                                </td>
+                                <td class="small">
+                                    @m.SizeName / @m.ColorName
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(isPositive ? "bg-success" : (m.MovementType == "PosSale" ? "bg-primary" : "bg-danger"))">
+                                        @m.MovementType
+                                    </span>
+                                </td>
+                                <td class="text-center fw-bold @(isPositive ? "text-success" : "text-danger")">
+                                    @(isPositive ? $"+{m.Quantity}" : $"-{m.Quantity}")
+                                </td>
+                                <td class="text-center small font-monospace">
+                                    @m.PreviousQuantity &rarr; <strong>@m.NewQuantity</strong>
+                                </td>
+                                <td class="small">
+                                    <div>@(m.Reason ?? "—")</div>
+                                    @if (!string.IsNullOrEmpty(m.Reference))
+                                    {
+                                        <code class="text-muted">Ref: @m.Reference</code>
+                                    }
+                                </td>
+                                <td class="small text-muted">
+                                    <i class="bi bi-person me-1"></i>@(m.CreatedBy ?? "System")
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model != null && Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+                <span class="small text-muted">Page @Model.PageNumber of @Model.TotalPages</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Movements" asp-route-page="@(Model.PageNumber - 1)">Previous</a>
+                        </li>
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Movements" asp-route-page="@p">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Movements" asp-route-page="@(Model.PageNumber + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>

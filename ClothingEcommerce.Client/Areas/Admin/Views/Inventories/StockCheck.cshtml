@@ -1,0 +1,295 @@
+@using ClothingEcommerce.Shared.DTOs.Catalog
+@using ClothingEcommerce.Shared.DTOs.Inventory
+@model PagedResult<StockCheckItemDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Real-Time Stock Checker";
+    var filter = ViewBag.Filter as StockFilterDto ?? new StockFilterDto();
+    var categories = ViewBag.Categories as List<CategoryDto> ?? new List<CategoryDto>();
+    var isManagerOrAdmin = User.IsInRole("SuperAdmin") || User.IsInRole("Admin") || User.IsInRole("Manager");
+}
+
+<div class="container-fluid py-3">
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-upc-scan text-primary me-2"></i> Real-Time Stock Checker
+            </h4>
+            <p class="text-muted small mb-0">Floor staff &amp; warehouse inventory lookup across sizes and colors</p>
+        </div>
+        <div class="d-flex gap-2">
+            @if (isManagerOrAdmin)
+            {
+                <a asp-action="Movements" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-clock-history me-1"></i> Stock Movement Log
+                </a>
+            }
+            <a asp-area="Admin" asp-controller="Pos" asp-action="Index" class="btn btn-primary btn-sm fw-bold">
+                <i class="bi bi-shop me-1"></i> Open POS Terminal
+            </a>
+        </div>
+    </div>
+
+    <!-- SCANNER & FILTER BAR -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="SearchTerm" class="form-control border-start-0 ps-0" 
+                               placeholder="Scan Barcode / SKU / Product Name..." value="@filter.SearchTerm" autofocus autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch pt-2">
+                        <input class="form-check-input" type="checkbox" name="LowStockOnly" value="true" id="chkLowStock" @(filter.LowStockOnly == true ? "checked" : "") onchange="this.form.submit()" />
+                        <label class="form-check-label small fw-semibold text-danger" for="chkLowStock">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Low Stock Warning (≤ 5)
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button type="submit" class="btn btn-dark btn-sm px-4">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter Stock
+                    </button>
+                    <a asp-action="StockCheck" class="btn btn-outline-secondary btn-sm">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STOCK TABLE -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-muted text-uppercase">
+                    <tr>
+                        <th>Product &amp; Category</th>
+                        <th>Barcode / SKU</th>
+                        <th>Variant (Size &amp; Color)</th>
+                        <th class="text-end">Retail Price</th>
+                        <th class="text-center">Physical Stock</th>
+                        <th class="text-center">Available Stock</th>
+                        <th class="text-center">Stock Health</th>
+                        @if (isManagerOrAdmin)
+                        {
+                            <th class="text-end">Inventory Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block text-secondary mb-2"></i>
+                                No inventory items match your search.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" alt="" class="rounded border" style="width: 40px; height: 40px; object-fit: cover;" />
+                                        }
+                                        <div>
+                                            <div class="fw-semibold">@item.ProductName</div>
+                                            <small class="text-muted">@item.CategoryName · @item.BrandName</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <code class="fw-bold font-monospace fs-6">@item.VariantSku</code>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(item.ColorHex))
+                                        {
+                                            <span class="rounded-circle border d-inline-block" style="width: 14px; height: 14px; background-color: @item.ColorHex;"></span>
+                                        }
+                                        <span class="fw-semibold">@item.SizeName / @item.ColorName</span>
+                                    </div>
+                                </td>
+                                <td class="text-end fw-bold text-primary">
+                                    $@item.Price.ToString("N2")
+                                </td>
+                                <td class="text-center fw-bold">
+                                    @item.Quantity
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(item.AvailableQuantity > 5 ? "bg-success" : (item.AvailableQuantity > 0 ? "bg-warning text-dark" : "bg-danger")) px-3 py-2 fs-6">
+                                        @item.AvailableQuantity
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.AvailableQuantity == 0)
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger">Out of Stock</span>
+                                    }
+                                    else if (item.AvailableQuantity <= 5)
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">Low Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success">Healthy</span>
+                                    }
+                                </td>
+                                @if (isManagerOrAdmin)
+                                {
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="openAdjustModal('@item.ProductVariantId', '@item.ProductName', '@item.VariantSku', 'StockIn')">
+                                                <i class="bi bi-plus-lg me-1"></i> Stock IN
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="openAdjustModal('@item.ProductVariantId', '@item.ProductName', '@item.VariantSku', 'StockOut')">
+                                                <i class="bi bi-dash-lg me-1"></i> Stock OUT
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        @if (Model != null && Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+                <span class="small text-muted">Showing @Model.Items.Count of @Model.TotalCount items</span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="StockCheck" asp-route-page="@(Model.PageNumber - 1)" asp-route-searchTerm="@filter.SearchTerm" asp-route-lowStockOnly="@filter.LowStockOnly">Previous</a>
+                        </li>
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="StockCheck" asp-route-page="@p" asp-route-searchTerm="@filter.SearchTerm" asp-route-lowStockOnly="@filter.LowStockOnly">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="StockCheck" asp-route-page="@(Model.PageNumber + 1)" asp-route-searchTerm="@filter.SearchTerm" asp-route-lowStockOnly="@filter.LowStockOnly">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL: STOCK ADJUSTMENT (IN / OUT)
+========================================================= -->
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="adjustModalTitle">Adjust Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="adjustVariantId" />
+                
+                <div class="p-2 bg-light rounded-2 mb-3">
+                    <div class="fw-bold" id="adjustProductName">Product</div>
+                    <small class="text-muted font-monospace" id="adjustSku">SKU: --</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Adjustment Type</label>
+                    <select id="adjustTypeSelect" class="form-select">
+                        <option value="StockIn">Stock IN (Supplier Shipment Arrival)</option>
+                        <option value="StockOut">Stock OUT (Store Transfer / Sample)</option>
+                        <option value="Damaged">Damaged / Defective Goods</option>
+                        <option value="Return">Customer Return</option>
+                        <option value="AuditCorrection">Physical Audit Count Correction</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Quantity</label>
+                    <input type="number" id="adjustQuantityInput" class="form-control" min="1" value="1" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Reason / Notes</label>
+                    <input type="text" id="adjustReasonInput" class="form-control" placeholder="e.g. Batch #2026-10 arrival" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Reference Document #</label>
+                    <input type="text" id="adjustRefInput" class="form-control font-monospace" placeholder="PO-12345 or RMA-001" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btnSubmitAdjustment" class="btn btn-primary fw-bold" onclick="submitAdjustment()">
+                    Save Adjustment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openAdjustModal(variantId, name, sku, defaultType) {
+        document.getElementById('adjustVariantId').value = variantId;
+        document.getElementById('adjustProductName').innerText = name;
+        document.getElementById('adjustSku').innerText = 'SKU: ' + sku;
+        document.getElementById('adjustTypeSelect').value = defaultType;
+        document.getElementById('adjustQuantityInput').value = 1;
+        document.getElementById('adjustReasonInput').value = '';
+        document.getElementById('adjustRefInput').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('adjustModal'));
+        modal.show();
+    }
+
+    async function submitAdjustment() {
+        const btn = document.getElementById('btnSubmitAdjustment');
+        btn.disabled = true;
+
+        const payload = {
+            productVariantId: document.getElementById('adjustVariantId').value,
+            movementType: document.getElementById('adjustTypeSelect').value,
+            quantity: parseInt(document.getElementById('adjustQuantityInput').value) || 1,
+            reason: document.getElementById('adjustReasonInput').value,
+            reference: document.getElementById('adjustRefInput').value
+        };
+
+        try {
+            const res = await fetch('/Admin/Inventories/Adjust', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.success) {
+                location.reload();
+            } else {
+                alert(json.message || "Failed to adjust stock.");
+                btn.disabled = false;
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error adjusting stock.");
+            btn.disabled = false;
+        }
+    }
+</script>

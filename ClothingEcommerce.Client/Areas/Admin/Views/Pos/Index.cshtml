@@ -1,0 +1,1010 @@
+@using ClothingEcommerce.Shared.DTOs.Catalog
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "POS Terminal — Cashier Register";
+    var categories = ViewBag.Categories as List<CategoryDto> ?? new List<CategoryDto>();
+}
+
+<div class="pos-wrapper d-flex flex-column h-100" style="margin: -1.5rem; min-height: calc(100vh - 70px);">
+    <!-- POS TOP BAR -->
+    <div class="bg-dark text-white px-3 py-2 d-flex justify-content-between align-items-center shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary px-3 py-2 fs-6 fw-bold">
+                <i class="bi bi-shop me-1"></i> CLOTHÉ POS
+            </span>
+            <span class="text-white-50 small">
+                Cashier: <strong class="text-white">@ViewBag.CashierName</strong>
+            </span>
+            <span class="badge bg-secondary-subtle text-light border border-secondary px-2 py-1 small">
+                Rate: $1 = <span id="rateDisplay">4,100</span> KHR
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-light btn-sm" onclick="openShiftSummaryModal()">
+                <i class="bi bi-clock-history me-1"></i> Daily Shift (F6)
+            </button>
+            <button class="btn btn-outline-warning btn-sm" onclick="clearCart()">
+                <i class="bi bi-trash3 me-1"></i> Clear Cart (F4)
+            </button>
+            <span id="posLiveClock" class="fw-bold text-info ms-2 font-monospace"></span>
+        </div>
+    </div>
+
+    <!-- MAIN BODY: CATALOG (LEFT) + TICKET/CART (RIGHT) -->
+    <div class="row g-0 flex-grow-1" style="min-height: 0;">
+        <!-- LEFT: CATALOG & BARCODE SCANNER -->
+        <div class="col-lg-7 col-xl-8 d-flex flex-column border-end bg-light p-3" style="overflow-y: auto;">
+            <!-- SCANNER & SEARCH INPUT -->
+            <div class="row g-2 mb-3">
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-upc-scan fs-5"></i>
+                        </span>
+                        <input type="text" id="barcodeInput" class="form-control border-start-0 ps-0" 
+                               placeholder="Scan Barcode / Enter SKU (Press Enter) [F2]" autofocus autocomplete="off" />
+                        <button class="btn btn-outline-secondary" type="button" onclick="focusBarcode()">
+                            <i class="bi bi-keyboard"></i> F2
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0" 
+                               placeholder="Search product name..." autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY PILLS -->
+            <div class="d-flex gap-2 overflow-auto pb-2 mb-3" style="white-space: nowrap;">
+                <button class="btn btn-sm btn-dark category-filter active" data-cat-id="">
+                    All Categories
+                </button>
+                @foreach (var cat in categories)
+                {
+                    <button class="btn btn-sm btn-outline-secondary category-filter" data-cat-id="@cat.Id">
+                        @cat.Name
+                    </button>
+                }
+            </div>
+
+            <!-- PRODUCT GRID -->
+            <div id="productGrid" class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3 flex-grow-1">
+                <div class="col-12 text-center py-5 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                    <div>Loading POS catalog...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: TICKET / REGISTER CART -->
+        <div class="col-lg-5 col-xl-4 d-flex flex-column bg-white p-3 shadow-sm" style="overflow-y: auto;">
+            <!-- CUSTOMER BAR -->
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle fs-4 text-primary"></i>
+                    <div>
+                        <input type="text" id="customerNameInput" class="form-control form-control-sm fw-semibold border-0 p-0" 
+                               value="Walk-in Customer" style="box-shadow: none;" />
+                        <small class="text-muted" id="customerPhoneDisplay">Default In-Store</small>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="openCustomerModal()">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </div>
+
+            <!-- TICKET ITEMS TABLE -->
+            <div class="cart-items-container flex-grow-1 mb-3" style="max-height: 48vh; overflow-y: auto;">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light sticky-top">
+                        <tr class="small text-muted">
+                            <th>Item</th>
+                            <th class="text-center" style="width: 100px;">Qty</th>
+                            <th class="text-end" style="width: 75px;">Price</th>
+                            <th class="text-end" style="width: 75px;">Total</th>
+                            <th style="width: 30px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-cart3 fs-1 d-block text-secondary mb-2"></i>
+                                Cart is empty. Scan an SKU or pick a product.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TICKET SUMMARY & CHECKOUT BUTTON -->
+            <div class="bg-light p-3 rounded-3 border mt-auto">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Subtotal:</span>
+                    <span class="fw-semibold" id="cartSubtotalUsd">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-1 small">
+                    <span class="text-muted">Discount ($):</span>
+                    <input type="number" id="cartDiscountInput" class="form-control form-control-sm text-end" 
+                           value="0" min="0" step="0.5" style="width: 90px;" onchange="renderCartTotals()" />
+                </div>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold fs-6">Grand Total (USD):</span>
+                    <span class="fw-bold fs-4 text-primary" id="cartTotalUsd">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small">Grand Total (KHR):</span>
+                    <span class="fw-bold text-success fs-5 font-monospace" id="cartTotalKhr">0 ៛</span>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button id="btnPay" class="btn btn-primary btn-lg fw-bold py-3 shadow" onclick="openCheckoutModal()" disabled>
+                        <i class="bi bi-wallet2 me-2"></i> Pay & Checkout (F8)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL: PRODUCT VARIANT PICKER
+========================================================= -->
+<div class="modal fade" id="variantPickerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold" id="variantModalTitle">Select Size & Color</h5>
+                    <small class="text-muted" id="variantModalCategory"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="variantModalList" class="list-group"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL: CHECKOUT & PAYMENT (CASH / KHQR)
+========================================================= -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-cash-stack me-2"></i> POS Checkout &amp; Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- LEFT COLUMN: TOTAL & PAYMENT METHOD TABS -->
+                    <div class="col-md-5 border-end">
+                        <div class="text-center p-3 bg-light rounded-3 mb-3 border">
+                            <span class="text-muted small text-uppercase fw-semibold">Amount to Pay</span>
+                            <div class="fs-1 fw-bold text-primary mt-1" id="checkoutModalTotalUsd">$0.00</div>
+                            <div class="fs-4 fw-bold text-success font-monospace" id="checkoutModalTotalKhr">0 ៛</div>
+                        </div>
+
+                        <label class="form-label fw-bold small text-muted text-uppercase">Payment Method</label>
+                        <div class="nav nav-pills flex-column gap-2" role="tablist">
+                            <button class="nav-link active text-start py-3 d-flex align-items-center justify-content-between border" 
+                                    id="pill-cash-tab" data-bs-toggle="pill" data-bs-target="#pill-cash" type="button">
+                                <span><i class="bi bi-cash me-2 fs-5"></i> Cash (សាច់ប្រាក់)</span>
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </button>
+                            <button class="nav-link text-start py-3 d-flex align-items-center justify-content-between border" 
+                                    id="pill-khqr-tab" data-bs-toggle="pill" data-bs-target="#pill-khqr" type="button">
+                                <span><i class="bi bi-qr-code-scan me-2 fs-5 text-danger"></i> NBC Bakong KHQR</span>
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: CASH CALCULATION OR KHQR CODE -->
+                    <div class="col-md-7">
+                        <div class="tab-content">
+                            <!-- TAB 1: CASH TENDERED & CHANGE -->
+                            <div class="tab-pane fade show active" id="pill-cash">
+                                <h6 class="fw-bold mb-3">Cash Tendered</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Tendered in USD ($)</label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" id="tenderedUsdInput" class="form-control fw-bold" 
+                                               placeholder="0.00" min="0" step="1" oninput="calculateChange()" />
+                                    </div>
+                                </div>
+
+                                <!-- Quick USD chips -->
+                                <div class="d-flex gap-2 flex-wrap mb-3">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedUsd(5)">$5</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedUsd(10)">$10</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedUsd(20)">$20</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedUsd(50)">$50</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedUsd(100)">$100</button>
+                                    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="setTenderedExact()">Exact</button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Or Tendered in KHR (៛)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">៛</span>
+                                        <input type="number" id="tenderedKhrInput" class="form-control fw-bold font-monospace" 
+                                               placeholder="0" step="500" oninput="calculateChange()" />
+                                    </div>
+                                </div>
+
+                                <!-- Quick KHR chips -->
+                                <div class="d-flex gap-2 flex-wrap mb-4">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedKhr(20000)">20,000៛</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedKhr(50000)">50,000៛</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedKhr(100000)">100,000៛</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="setTenderedKhr(200000)">200,000៛</button>
+                                </div>
+
+                                <!-- CHANGE RETURN DISPLAY -->
+                                <div class="p-3 bg-success-subtle border border-success-subtle rounded-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="text-success-emphasis fw-bold">Change Due (USD):</span>
+                                        <span class="fs-4 fw-bold text-success" id="changeDisplayUsd">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-success-emphasis small">Change Due (KHR):</span>
+                                        <span class="fw-bold text-success font-monospace" id="changeDisplayKhr">0 ៛</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 2: NBC BAKONG KHQR -->
+                            <div class="tab-pane fade text-center" id="pill-khqr">
+                                <h6 class="fw-bold mb-2">Scan to Pay via Bakong KHQR</h6>
+                                <p class="text-muted small mb-3">Accepts ABA, ACLEDA, Wing, Sathapana, and 30+ Cambodia Banks</p>
+                                
+                                <div class="p-3 border rounded-3 bg-white d-inline-block shadow-sm mb-3">
+                                    <div id="khqrQrContainer" class="d-flex justify-content-center align-items-center" style="width: 220px; height: 220px;">
+                                        <div class="spinner-border text-danger" role="status"></div>
+                                    </div>
+                                </div>
+
+                                <div class="small text-muted mb-2 font-monospace" id="khqrMd5Display"></div>
+                                <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Ready for Customer Scan
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btnConfirmSale" class="btn btn-success px-5 fw-bold" onclick="processSaleSubmission()">
+                    <i class="bi bi-check-circle-fill me-2"></i> Complete Sale &amp; Print Slip
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL & PRINT AREA: THERMAL RECEIPT SLIP (80mm / 58mm)
+========================================================= -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 380px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title fw-bold"><i class="bi bi-printer me-1"></i> Receipt Slip</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2" id="printableReceiptArea">
+                <!-- PRINTABLE THERMAL SLIP CONTAINER -->
+                <div class="receipt-thermal-slip text-dark p-3" style="font-family: 'Courier New', Courier, monospace; font-size: 13px;">
+                    <div class="text-center mb-3">
+                        <h4 class="fw-bold mb-0">CLOTHÉ</h4>
+                        <div class="small text-uppercase">Premium Fashion Store</div>
+                        <div class="small">#128 Preah Sihanouk Blvd, Phnom Penh</div>
+                        <div class="small">Tel: 012 345 678 / 098 765 432</div>
+                    </div>
+                    <div class="border-top border-bottom border-dark py-1 mb-2 small">
+                        <div class="d-flex justify-content-between">
+                            <span>Receipt:</span>
+                            <span class="fw-bold" id="rcptCode">REC-0000</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Date:</span>
+                            <span id="rcptDate">--/--/----</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Cashier:</span>
+                            <span id="rcptCashier">--</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Customer:</span>
+                            <span id="rcptCustomer">Walk-in</span>
+                        </div>
+                    </div>
+                    <!-- ITEM ROWS -->
+                    <table class="w-100 mb-2 small" style="border-collapse: collapse;">
+                        <thead>
+                            <tr class="border-bottom border-dark">
+                                <th class="text-start">Item</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcptItemsTable"></tbody>
+                    </table>
+                    <div class="border-top border-dark pt-1 mb-2 small">
+                        <div class="d-flex justify-content-between">
+                            <span>Subtotal:</span>
+                            <span id="rcptSubtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Discount:</span>
+                            <span id="rcptDiscount">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold fs-6 border-top border-dark pt-1 mt-1">
+                            <span>TOTAL (USD):</span>
+                            <span id="rcptTotalUsd">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>TOTAL (KHR):</span>
+                            <span id="rcptTotalKhr">0 ៛</span>
+                        </div>
+                    </div>
+                    <div class="border-top border-dark pt-1 mb-3 small">
+                        <div class="d-flex justify-content-between">
+                            <span>Payment:</span>
+                            <span id="rcptPayMethod">Cash</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Tendered:</span>
+                            <span id="rcptTendered">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Change:</span>
+                            <span id="rcptChange">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="text-center small">
+                        <div>*** THANK YOU! PLEASE COME AGAIN ***</div>
+                        <div>Exchange within 7 days with this slip.</div>
+                        <div class="mt-2 text-muted" style="font-size: 10px;">Powered by CLOTHÉ POS</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="printReceiptSlip()">
+                    <i class="bi bi-printer-fill me-1"></i> Print Slip
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     MODAL: DAILY SHIFT SUMMARY
+========================================================= -->
+<div class="modal fade" id="shiftSummaryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history me-2"></i> Cashier Shift Summary</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="shiftSummaryBody">
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+                    <div>Loading shift figures...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     PRINT STYLES FOR 80mm / 58mm THERMAL RECEIPT
+========================================================= -->
+<style>
+@@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printableReceiptArea, #printableReceiptArea * {
+        visibility: visible;
+    }
+    #printableReceiptArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        margin: 0;
+        padding: 0;
+    }
+    .modal-backdrop, .modal-header, .modal-footer {
+        display: none !important;
+    }
+}
+.pos-product-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+.pos-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+</style>
+
+<!-- =========================================================
+     POS TERMINAL JAVASCRIPT ENGINE
+========================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+    const EXCHANGE_RATE = 4100;
+    let catalog = [];
+    let cart = []; // { variantId, productId, productName, sku, sizeName, colorName, price, quantity, maxStock }
+    let currentCategoryFilter = "";
+    let lastCheckoutResult = null;
+
+    // Live clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('posLiveClock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Hotkeys: F2 (Barcode focus), F4 (Clear cart), F8 (Checkout), F6 (Shift summary)
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            focusBarcode();
+        } else if (e.key === 'F4') {
+            e.preventDefault();
+            clearCart();
+        } else if (e.key === 'F8') {
+            e.preventDefault();
+            const btn = document.getElementById('btnPay');
+            if (btn && !btn.disabled) openCheckoutModal();
+        } else if (e.key === 'F6') {
+            e.preventDefault();
+            openShiftSummaryModal();
+        }
+    });
+
+    function focusBarcode() {
+        const input = document.getElementById('barcodeInput');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }
+
+    // Load Catalog on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCatalog();
+
+        // Barcode enter event
+        const barcodeInput = document.getElementById('barcodeInput');
+        barcodeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const code = this.value.trim();
+                if (code) {
+                    handleBarcodeScan(code);
+                    this.value = '';
+                }
+            }
+        });
+
+        // Search input debounce
+        let searchTimeout = null;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                renderProductGrid();
+            }, 250);
+        });
+
+        // Category pills
+        document.querySelectorAll('.category-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-filter').forEach(b => b.classList.remove('active', 'btn-dark'));
+                document.querySelectorAll('.category-filter').forEach(b => b.classList.add('btn-outline-secondary'));
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('active', 'btn-dark');
+                currentCategoryFilter = this.getAttribute('data-cat-id') || "";
+                renderProductGrid();
+            });
+        });
+    });
+
+    async function loadCatalog() {
+        try {
+            const res = await fetch('/Admin/Pos/GetProducts');
+            const json = await res.json();
+            if (json.success && json.data) {
+                catalog = json.data;
+                renderProductGrid();
+            } else {
+                document.getElementById('productGrid').innerHTML = `<div class="col-12 text-center text-danger py-4">${json.message || "Failed to load products"}</div>`;
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('productGrid').innerHTML = `<div class="col-12 text-center text-danger py-4">Error loading catalog.</div>`;
+        }
+    }
+
+    function renderProductGrid() {
+        const grid = document.getElementById('productGrid');
+        const term = (document.getElementById('searchInput').value || "").trim().toLowerCase();
+
+        const filtered = catalog.filter(p => {
+            const matchCat = !currentCategoryFilter || (p.categoryId === currentCategoryFilter);
+            const matchTerm = !term || p.name.toLowerCase().includes(term) || p.variants.some(v => v.sku.toLowerCase().includes(term));
+            return matchCat && matchTerm;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="col-12 text-center py-5 text-muted">No products found matching criteria.</div>`;
+            return;
+        }
+
+        grid.innerHTML = filtered.map(p => {
+            const img = p.imageUrl || '/images/product-placeholder.png';
+            const price = Number(p.basePrice).toFixed(2);
+            const hasMultipleVariants = p.variants && p.variants.length > 1;
+            const inStock = p.totalAvailableStock > 0;
+
+            return `
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm pos-product-card" onclick="onProductClick('${p.productId}')">
+                        <div class="position-relative bg-white text-center p-2 rounded-top">
+                            <img src="${img}" alt="${p.name}" class="img-fluid rounded" style="height: 110px; object-fit: contain;">
+                            <span class="badge ${inStock ? 'bg-success' : 'bg-danger'} position-absolute top-0 end-0 m-2">
+                                ${inStock ? `${p.totalAvailableStock} in stock` : 'Out of Stock'}
+                            </span>
+                        </div>
+                        <div class="card-body p-2 d-flex flex-column">
+                            <div class="fw-semibold small text-truncate mb-1" title="${p.name}">${p.name}</div>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">$${price}</span>
+                                <span class="badge bg-secondary-subtle text-secondary small">${hasMultipleVariants ? `${p.variants.length} options` : 'Standard'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function onProductClick(productId) {
+        const prod = catalog.find(p => p.productId === productId);
+        if (!prod) return;
+
+        if (prod.variants.length === 1) {
+            addVariantToCart(prod, prod.variants[0]);
+        } else {
+            openVariantPicker(prod);
+        }
+    }
+
+    function handleBarcodeScan(code) {
+        code = code.trim().toLowerCase();
+        for (const prod of catalog) {
+            for (const v of prod.variants) {
+                if (v.sku.toLowerCase() === code) {
+                    addVariantToCart(prod, v);
+                    focusBarcode();
+                    return;
+                }
+            }
+        }
+        alert(`SKU/Barcode '${code}' not found in catalog.`);
+        focusBarcode();
+    }
+
+    function openVariantPicker(prod) {
+        document.getElementById('variantModalTitle').innerText = prod.name;
+        document.getElementById('variantModalCategory').innerText = prod.categoryName || 'Catalog Item';
+
+        const list = document.getElementById('variantModalList');
+        list.innerHTML = prod.variants.map(v => {
+            const available = v.availableQuantity;
+            const disabled = available <= 0;
+            return `
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${disabled ? 'disabled opacity-50' : ''}" 
+                        onclick="onVariantSelected('${prod.productId}', '${v.variantId}')">
+                    <div>
+                        <div class="fw-bold">${v.sizeName} / ${v.colorName}</div>
+                        <small class="text-muted font-monospace">SKU: ${v.sku}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="fs-6 fw-bold text-primary d-block">$${Number(v.price).toFixed(2)}</span>
+                        <span class="badge ${available > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} small">
+                            ${available > 0 ? `${available} left` : 'Out of Stock'}
+                        </span>
+                    </div>
+                </button>
+            `;
+        }).join('');
+
+        const modal = new bootstrap.Modal(document.getElementById('variantPickerModal'));
+        modal.show();
+    }
+
+    function onVariantSelected(prodId, variantId) {
+        const prod = catalog.find(p => p.productId === prodId);
+        if (!prod) return;
+        const v = prod.variants.find(item => item.variantId === variantId);
+        if (!v) return;
+
+        addVariantToCart(prod, v);
+        bootstrap.Modal.getInstance(document.getElementById('variantPickerModal')).hide();
+        focusBarcode();
+    }
+
+    function addVariantToCart(prod, variant) {
+        if (variant.availableQuantity <= 0) {
+            alert(`Variant '${prod.name} (${variant.sizeName}/${variant.colorName})' is out of stock.`);
+            return;
+        }
+
+        const existing = cart.find(item => item.variantId === variant.variantId);
+        if (existing) {
+            if (existing.quantity + 1 > variant.availableQuantity) {
+                alert(`Max available stock (${variant.availableQuantity}) reached for this item.`);
+                return;
+            }
+            existing.quantity += 1;
+        } else {
+            cart.push({
+                variantId: variant.variantId,
+                productId: prod.productId,
+                productName: prod.name,
+                sku: variant.sku,
+                sizeName: variant.sizeName,
+                colorName: variant.colorName,
+                price: Number(variant.price),
+                quantity: 1,
+                maxStock: variant.availableQuantity
+            });
+        }
+
+        renderCart();
+    }
+
+    function updateCartQty(variantId, delta) {
+        const item = cart.find(i => i.variantId === variantId);
+        if (!item) return;
+
+        const newQty = item.quantity + delta;
+        if (newQty <= 0) {
+            removeFromCart(variantId);
+        } else if (newQty > item.maxStock) {
+            alert(`Cannot exceed available stock (${item.maxStock}).`);
+        } else {
+            item.quantity = newQty;
+            renderCart();
+        }
+    }
+
+    function removeFromCart(variantId) {
+        cart = cart.filter(i => i.variantId !== variantId);
+        renderCart();
+    }
+
+    function clearCart() {
+        if (cart.length > 0 && !confirm("Clear all items from current cart?")) return;
+        cart = [];
+        renderCart();
+        focusBarcode();
+    }
+
+    function renderCart() {
+        const tbody = document.getElementById('cartTableBody');
+        const btnPay = document.getElementById('btnPay');
+
+        if (cart.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-cart3 fs-1 d-block text-secondary mb-2"></i>
+                        Cart is empty. Scan an SKU or pick a product.
+                    </td>
+                </tr>
+            `;
+            btnPay.disabled = true;
+            renderCartTotals();
+            return;
+        }
+
+        btnPay.disabled = false;
+        tbody.innerHTML = cart.map(item => {
+            const lineTotal = (item.price * item.quantity).toFixed(2);
+            return `
+                <tr>
+                    <td>
+                        <div class="fw-semibold text-truncate" style="max-width: 140px;" title="${item.productName}">${item.productName}</div>
+                        <small class="text-muted">${item.sizeName} / ${item.colorName}</small>
+                    </td>
+                    <td class="text-center">
+                        <div class="input-group input-group-sm d-inline-flex" style="width: 85px;">
+                            <button class="btn btn-outline-secondary p-1" onclick="updateCartQty('${item.variantId}', -1)">-</button>
+                            <span class="form-control text-center p-1 fw-bold">${item.quantity}</span>
+                            <button class="btn btn-outline-secondary p-1" onclick="updateCartQty('${item.variantId}', 1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end">$${item.price.toFixed(2)}</td>
+                    <td class="text-end fw-bold text-primary">$${lineTotal}</td>
+                    <td class="text-center">
+                        <button class="btn btn-link text-danger p-0" onclick="removeFromCart('${item.variantId}')">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        renderCartTotals();
+    }
+
+    function renderCartTotals() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const discountInput = document.getElementById('cartDiscountInput');
+        let discount = parseFloat(discountInput.value) || 0;
+        if (discount < 0) discount = 0;
+        if (discount > subtotal) discount = subtotal;
+
+        const grandTotalUsd = Math.max(0, subtotal - discount);
+        const grandTotalKhr = Math.round(grandTotalUsd * EXCHANGE_RATE);
+
+        document.getElementById('cartSubtotalUsd').innerText = `$${subtotal.toFixed(2)}`;
+        document.getElementById('cartTotalUsd').innerText = `$${grandTotalUsd.toFixed(2)}`;
+        document.getElementById('cartTotalKhr').innerText = `${grandTotalKhr.toLocaleString()} ៛`;
+    }
+
+    // CHECKOUT MODAL LOGIC
+    function openCheckoutModal() {
+        if (cart.length === 0) return;
+
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const discount = parseFloat(document.getElementById('cartDiscountInput').value) || 0;
+        const totalUsd = Math.max(0, subtotal - discount);
+        const totalKhr = Math.round(totalUsd * EXCHANGE_RATE);
+
+        document.getElementById('checkoutModalTotalUsd').innerText = `$${totalUsd.toFixed(2)}`;
+        document.getElementById('checkoutModalTotalKhr').innerText = `${totalKhr.toLocaleString()} ៛`;
+
+        // Pre-fill exact cash
+        document.getElementById('tenderedUsdInput').value = totalUsd.toFixed(2);
+        document.getElementById('tenderedKhrInput').value = '';
+        calculateChange();
+
+        // Generate dynamic KHQR preview
+        generateKhqrPreview(totalUsd);
+
+        const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+        modal.show();
+    }
+
+    function setTenderedUsd(val) {
+        document.getElementById('tenderedUsdInput').value = val.toFixed(2);
+        document.getElementById('tenderedKhrInput').value = '';
+        calculateChange();
+    }
+
+    function setTenderedKhr(val) {
+        document.getElementById('tenderedKhrInput').value = val;
+        document.getElementById('tenderedUsdInput').value = '';
+        calculateChange();
+    }
+
+    function setTenderedExact() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const discount = parseFloat(document.getElementById('cartDiscountInput').value) || 0;
+        const totalUsd = Math.max(0, subtotal - discount);
+        document.getElementById('tenderedUsdInput').value = totalUsd.toFixed(2);
+        document.getElementById('tenderedKhrInput').value = '';
+        calculateChange();
+    }
+
+    function calculateChange() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const discount = parseFloat(document.getElementById('cartDiscountInput').value) || 0;
+        const totalUsd = Math.max(0, subtotal - discount);
+
+        const usdVal = parseFloat(document.getElementById('tenderedUsdInput').value) || 0;
+        const khrVal = parseFloat(document.getElementById('tenderedKhrInput').value) || 0;
+
+        const totalTenderedUsd = usdVal + (khrVal > 0 ? khrVal / EXCHANGE_RATE : 0);
+        const changeUsd = Math.max(0, totalTenderedUsd - totalUsd);
+        const changeKhr = Math.round(changeUsd * EXCHANGE_RATE);
+
+        document.getElementById('changeDisplayUsd').innerText = `$${changeUsd.toFixed(2)}`;
+        document.getElementById('changeDisplayKhr').innerText = `${changeKhr.toLocaleString()} ៛`;
+    }
+
+    function generateKhqrPreview(amount) {
+        const qrContainer = document.getElementById('khqrQrContainer');
+        qrContainer.innerHTML = '<div class="spinner-border text-danger" role="status"></div>';
+        
+        // Dynamic demo Bakong QR payload
+        const simulatedQr = `00020101021229370016bakong@clothe.pos5204599953038405405${amount.toFixed(2)}5802KH5910CLOTHE_POS6010PHNOM_PENH6304`;
+        
+        QRCode.toCanvas(simulatedQr, { width: 200, margin: 1, color: { dark: '#d32f2f', light: '#ffffff' } }, function (error, canvas) {
+            if (error) {
+                qrContainer.innerHTML = '<span class="text-danger small">QR code generation failed</span>';
+            } else {
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(canvas);
+            }
+        });
+        document.getElementById('khqrMd5Display').innerText = `Ref: KHQR-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    }
+
+    // SALE SUBMISSION
+    async function processSaleSubmission() {
+        const btn = document.getElementById('btnConfirmSale');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing Sale...';
+
+        const isCash = document.getElementById('pill-cash-tab').classList.contains('active');
+        const paymentMethod = isCash ? "Cash" : "KHQR";
+
+        const discount = parseFloat(document.getElementById('cartDiscountInput').value) || 0;
+        const tenderedUsd = parseFloat(document.getElementById('tenderedUsdInput').value) || 0;
+        const tenderedKhr = parseFloat(document.getElementById('tenderedKhrInput').value) || 0;
+
+        const payload = {
+            items: cart.map(i => ({
+                variantId: i.variantId,
+                quantity: i.quantity,
+                unitPrice: i.price,
+                discountPercentage: 0
+            })),
+            customerName: document.getElementById('customerNameInput').value || "Walk-in Customer",
+            customerPhone: null,
+            customerEmail: null,
+            paymentMethod: paymentMethod,
+            discountAmount: discount,
+            cashTenderedUsd: tenderedUsd,
+            cashTenderedKhr: tenderedKhr,
+            exchangeRate: EXCHANGE_RATE,
+            note: "In-store POS Register Sale"
+        };
+
+        try {
+            const res = await fetch('/Admin/Pos/Checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+
+            if (result.success && result.data) {
+                lastCheckoutResult = result.data;
+                bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
+
+                // Open Printable Thermal Receipt
+                displayReceipt(lastCheckoutResult);
+
+                // Clear cart & reload catalog stock
+                cart = [];
+                renderCart();
+                loadCatalog();
+            } else {
+                alert(result.message || "Failed to complete transaction.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error processing sale.");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> Complete Sale & Print Slip';
+        }
+    }
+
+    function displayReceipt(data) {
+        document.getElementById('rcptCode').innerText = data.receiptNumber || "REC-0000";
+        document.getElementById('rcptDate').innerText = new Date(data.transactionDate).toLocaleString();
+        document.getElementById('rcptCashier').innerText = data.cashierName || "Cashier";
+        document.getElementById('rcptCustomer').innerText = document.getElementById('customerNameInput').value || "Walk-in";
+
+        const tbody = document.getElementById('rcptItemsTable');
+        tbody.innerHTML = (data.items || []).map(i => `
+            <tr>
+                <td class="text-start">${i.productName} (${i.sizeName})</td>
+                <td class="text-center">${i.quantity}</td>
+                <td class="text-end">$${Number(i.totalPrice).toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('rcptSubtotal').innerText = `$${Number(data.subtotalUsd).toFixed(2)}`;
+        document.getElementById('rcptDiscount').innerText = `$${Number(data.discountUsd).toFixed(2)}`;
+        document.getElementById('rcptTotalUsd').innerText = `$${Number(data.totalAmountUsd).toFixed(2)}`;
+        document.getElementById('rcptTotalKhr').innerText = `${Number(data.totalAmountKhr).toLocaleString()} ៛`;
+
+        document.getElementById('rcptPayMethod').innerText = data.paymentMethod;
+        document.getElementById('rcptTendered').innerText = `$${Number(data.cashTenderedUsd).toFixed(2)}`;
+        document.getElementById('rcptChange').innerText = `$${Number(data.changeUsd).toFixed(2)}`;
+
+        const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+        modal.show();
+    }
+
+    function printReceiptSlip() {
+        window.print();
+    }
+
+    // DAILY SHIFT SUMMARY MODAL
+    async function openShiftSummaryModal() {
+        const modal = new bootstrap.Modal(document.getElementById('shiftSummaryModal'));
+        modal.show();
+
+        const body = document.getElementById('shiftSummaryBody');
+        body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border text-primary spinner-border-sm mb-2"></div><div>Loading shift figures...</div></div>';
+
+        try {
+            const res = await fetch('/Admin/Pos/DailySummary');
+            const result = await res.json();
+            if (result.success && result.data) {
+                const d = result.data;
+                body.innerHTML = `
+                    <div class="row g-3 text-center">
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">Total Sales (USD)</span>
+                                <div class="fs-3 fw-bold text-primary mt-1">$${Number(d.totalSalesUsd).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">Total Sales (KHR)</span>
+                                <div class="fs-4 fw-bold text-success font-monospace mt-1">${Number(d.totalSalesKhr).toLocaleString()} ៛</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">Cash In Register</span>
+                                <div class="fs-4 fw-bold text-dark mt-1">$${Number(d.cashSalesUsd).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">NBC KHQR Total</span>
+                                <div class="fs-4 fw-bold text-danger mt-1">$${Number(d.khqrSalesUsd).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">Orders Processed</span>
+                                <div class="fs-4 fw-bold text-info mt-1">${d.totalTransactions}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <span class="text-muted small">Total Items Sold</span>
+                                <div class="fs-4 fw-bold text-secondary mt-1">${d.totalItemsSold}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `<div class="text-center text-danger py-4">${result.message || "Failed to load summary."}</div>`;
+            }
+        } catch (err) {
+            body.innerHTML = `<div class="text-center text-danger py-4">Error loading shift summary.</div>`;
+        }
+    }
+</script>

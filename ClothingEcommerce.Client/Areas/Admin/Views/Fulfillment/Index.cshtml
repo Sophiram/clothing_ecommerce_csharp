@@ -1,0 +1,328 @@
+@using ClothingEcommerce.Shared.DTOs.Catalog
+@using ClothingEcommerce.Shared.DTOs.Fulfillment
+@model PagedResult<FulfillmentOrderDto>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Order Packing & Fulfillment Queue";
+    var activeTab = (ViewBag.ActiveTab as string) ?? "to_pack";
+    var search = ViewBag.SearchTerm as string;
+}
+
+<div class="container-fluid py-3">
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-box2-fill text-primary me-2"></i> Order Fulfillment Queue
+            </h4>
+            <p class="text-muted small mb-0">Warehouse packing, verification, and dispatch management</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-area="Admin" asp-controller="Inventories" asp-action="StockCheck" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-upc-scan me-1"></i> Stock Checker
+            </a>
+            <button class="btn btn-primary btn-sm" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh Queue
+            </button>
+        </div>
+    </div>
+
+    <!-- TABS & SEARCH BAR -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-center">
+                <!-- TABS -->
+                <div class="col-lg-8">
+                    <ul class="nav nav-pills gap-2">
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "to_pack" ? "active fw-bold" : "text-dark")" 
+                               asp-action="Index" asp-route-tab="to_pack" asp-route-search="@search">
+                                <i class="bi bi-clock-history me-1"></i> To Pack (ត្រូវវេចខ្ចប់)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "packed" ? "active fw-bold" : "text-dark")" 
+                               asp-action="Index" asp-route-tab="packed" asp-route-search="@search">
+                                <i class="bi bi-box-seam me-1"></i> Packed (បានវេចខ្ចប់រួច)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(activeTab == "shipped" ? "active fw-bold" : "text-dark")" 
+                               asp-action="Index" asp-route-tab="shipped" asp-route-search="@search">
+                                <i class="bi bi-truck me-1"></i> Shipped (កំពុងដឹកជញ្ជូន)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- SEARCH FORM -->
+                <div class="col-lg-4">
+                    <form method="get" class="d-flex">
+                        <input type="hidden" name="tab" value="@activeTab" />
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                   placeholder="Order #, Customer, Phone..." value="@search" />
+                            <button class="btn btn-outline-secondary" type="submit">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ORDER CARDS LIST -->
+    @if (Model == null || !Model.Items.Any())
+    {
+        <div class="text-center py-5 bg-white rounded-3 shadow-sm border">
+            <i class="bi bi-check2-circle text-success" style="font-size: 3rem;"></i>
+            <h5 class="fw-bold mt-3">All Caught Up!</h5>
+            <p class="text-muted small">No orders currently in the "@activeTab.Replace("_", " ")" queue.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var order in Model.Items)
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 border-start border-4 @(order.Status == "Shipped" ? "border-success" : (order.Status == "Processing" ? "border-info" : "border-warning"))">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold fs-6">Order #@order.OrderNumber.Substring(0, Math.Min(8, order.OrderNumber.Length)).ToUpper()</span>
+                                        <span class="badge @(order.Status == "Shipped" ? "bg-success" : (order.Status == "Processing" ? "bg-info" : "bg-warning text-dark"))">
+                                            @order.Status
+                                        </span>
+                                        <span class="badge bg-secondary-subtle text-secondary">
+                                            @order.PaymentMethod (@order.PaymentStatus)
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        Placed on: @order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-primary fs-5">$@order.TotalAmount.ToString("N2")</div>
+                                    <div class="small text-muted">@order.TotalItems item(s) to pack</div>
+                                </div>
+                            </div>
+
+                            <!-- CUSTOMER & SHIPPING DESTINATION -->
+                            <div class="p-2 bg-light rounded-2 mb-3 small d-flex flex-wrap justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-person-fill text-muted me-1"></i>
+                                    <strong>@order.CustomerName</strong> (@order.CustomerPhone)
+                                </div>
+                                <div>
+                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                    @order.ShippingAddress
+                                </div>
+                                @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                                {
+                                    <div>
+                                        <i class="bi bi-truck text-info me-1"></i>
+                                        Carrier: <strong>@order.CarrierName</strong> (Tracking: <code>@order.TrackingNumber</code>)
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- ITEMS TO PACK TABLE -->
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light small text-muted">
+                                        <tr>
+                                            <th>Item Details</th>
+                                            <th>SKU</th>
+                                            <th>Variant</th>
+                                            <th class="text-center">Quantity to Pack</th>
+                                            <th class="text-end">Unit Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in order.Items)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        @if (!string.IsNullOrEmpty(item.ProductImageUrl))
+                                                        {
+                                                            <img src="@item.ProductImageUrl" alt="" class="rounded border" style="width: 36px; height: 36px; object-fit: cover;" />
+                                                        }
+                                                        <span class="fw-semibold small">@item.ProductName</span>
+                                                    </div>
+                                                </td>
+                                                <td><code>@item.VariantSku</code></td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">
+                                                        @item.SizeName / @item.ColorName
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-primary px-3 py-2 fs-6">
+                                                        x @item.Quantity
+                                                    </span>
+                                                </td>
+                                                <td class="text-end small">$@item.UnitPrice.ToString("N2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- ACTION BAR -->
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="printPackingSlip('@order.OrderId')">
+                                    <i class="bi bi-printer me-1"></i> Print Packing Slip
+                                </button>
+
+                                <div class="d-flex gap-2">
+                                    @if (order.Status == "Pending" || (order.Status == "Processing" && string.IsNullOrEmpty(order.TrackingNumber)))
+                                    {
+                                        <button class="btn btn-info btn-sm text-white fw-bold" onclick="openDispatchModal('@order.OrderId', 'packed')">
+                                            <i class="bi bi-box-seam me-1"></i> Mark as Packed
+                                        </button>
+                                    }
+                                    @if (order.Status != "Shipped" && order.Status != "Delivered")
+                                    {
+                                        <button class="btn btn-success btn-sm fw-bold" onclick="openDispatchModal('@order.OrderId', 'shipped')">
+                                            <i class="bi bi-truck me-1"></i> Dispatch &amp; Ship
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- PAGINATION -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-center mt-4">
+                <nav>
+                    <ul class="pagination pagination-sm">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@search">Previous</a>
+                        </li>
+                        @for (int p = 1; p <= Model.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@p" asp-route-search="@search">@p</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@search">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    }
+</div>
+
+<!-- =========================================================
+     MODAL: DISPATCH / CARRIER MODAL
+========================================================= -->
+<div class="modal fade" id="dispatchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="dispatchModalTitle">Assign Carrier &amp; Dispatch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="dispatchOrderId" />
+                <input type="hidden" id="dispatchTargetStatus" />
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Delivery Carrier</label>
+                    <select id="dispatchCarrierSelect" class="form-select">
+                        <option value="VET Express (Virak Buntham)">VET Express (Virak Buntham)</option>
+                        <option value="J&T Express">J&amp;T Express</option>
+                        <option value="Capitol Express">Capitol Transport</option>
+                        <option value="Kerry Express">Kerry Express</option>
+                        <option value="Store Messenger (In Phnom Penh)">Store In-House Driver</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Tracking Number / Waybill</label>
+                    <div class="input-group">
+                        <input type="text" id="dispatchTrackingInput" class="form-control font-monospace" placeholder="Auto-generate or enter number" />
+                        <button class="btn btn-outline-secondary" type="button" onclick="generateTrackingNumber()">
+                            Auto
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Warehouse Notes</label>
+                    <textarea id="dispatchNotesInput" class="form-control" rows="2" placeholder="Fragile, handle with care, etc."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="btnConfirmDispatch" class="btn btn-primary fw-bold" onclick="submitDispatch()">
+                    Confirm &amp; Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateTrackingNumber() {
+        const rand = Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('dispatchTrackingInput').value = 'TRK-' + rand;
+    }
+
+    function openDispatchModal(orderId, status) {
+        document.getElementById('dispatchOrderId').value = orderId;
+        document.getElementById('dispatchTargetStatus').value = status;
+        document.getElementById('dispatchModalTitle').innerText = status === 'packed' ? 'Mark Order as Packed' : 'Dispatch & Ship Order';
+        generateTrackingNumber();
+
+        const modal = new bootstrap.Modal(document.getElementById('dispatchModal'));
+        modal.show();
+    }
+
+    async function submitDispatch() {
+        const btn = document.getElementById('btnConfirmDispatch');
+        btn.disabled = true;
+
+        const payload = {
+            orderId: document.getElementById('dispatchOrderId').value,
+            newStatus: document.getElementById('dispatchTargetStatus').value,
+            carrierName: document.getElementById('dispatchCarrierSelect').value,
+            trackingNumber: document.getElementById('dispatchTrackingInput').value,
+            note: document.getElementById('dispatchNotesInput').value
+        };
+
+        try {
+            const res = await fetch('/Admin/Fulfillment/UpdateStatus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.success) {
+                location.reload();
+            } else {
+                alert(json.message || "Failed to update status.");
+                btn.disabled = false;
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error communicating with server.");
+            btn.disabled = false;
+        }
+    }
+
+    function printPackingSlip(orderId) {
+        window.print();
+    }
+</script>
