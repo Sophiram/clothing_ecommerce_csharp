@@ -292,10 +292,14 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            @if (ViewBag.Categories != null)
+            @{
+                var homeCategories = (ViewBag.Categories as IEnumerable<WebApplication_ClothingEcommerce.Models.Category>)
+                    ?? Enumerable.Empty<WebApplication_ClothingEcommerce.Models.Category>();
+            }
+            @if (homeCategories.Any())
             {
                 int catIndex = 1;
-                foreach (var category in (IEnumerable<WebApplication_ClothingEcommerce.Models.Category>)ViewBag.Categories)
+                foreach (var category in homeCategories)
                 {
                     if (catIndex > 3) break;
                     string bgImage = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=800&q=80";
@@ -366,9 +370,8 @@
         </div>
 
         @{
-            var brandList = ViewBag.Brands != null
-                ? ((IEnumerable<WebApplication_ClothingEcommerce.Models.Brand>)ViewBag.Brands).Take(8).ToList()
-                : new List<WebApplication_ClothingEcommerce.Models.Brand>();
+            var brandList = (ViewBag.Brands as IEnumerable<WebApplication_ClothingEcommerce.Models.Brand>)?.Take(8).ToList()
+                ?? new List<WebApplication_ClothingEcommerce.Models.Brand>();
         }
 
         @if (brandList.Any())

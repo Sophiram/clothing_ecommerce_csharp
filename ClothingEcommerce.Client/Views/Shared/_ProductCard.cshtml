@@ -1,7 +1,5 @@
 @model WebApplication_ClothingEcommerce.Models.Product
 
-@inject Microsoft.AspNetCore.Identity.SignInManager<WebApplication_ClothingEcommerce.Models.ApplicationUser> SignInManager
-
 @using WebApplication_ClothingEcommerce.Data.Enums
 
 @{
@@ -43,7 +41,7 @@
     var fullStars = (int)Math.Floor(averageRating);
     var hasHalfStar = averageRating - fullStars >= 0.5;
 
-    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
 
     var isWishlisted = ViewData["WishlistedVariantIds"] is HashSet<Guid> wishlistedIds
         && defaultVariant != null

@@ -4,6 +4,7 @@ using ClothingEcommerce.Shared.DTOs.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using WebApplication_ClothingEcommerce.Models.ViewModels;
 
 namespace ClothingEcommerce.Client.Controllers
 {
@@ -24,18 +25,25 @@ namespace ClothingEcommerce.Client.Controllers
                 return LocalRedirect(returnUrl ?? "/");
             }
             ViewBag.ReturnUrl = returnUrl;
-            return View(new LoginRequestDto());
+            return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginRequestDto model, string? returnUrl = null)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            var response = await _apiClient.PostAsync<LoginRequestDto, AuthResponseDto>("api/auth/login", model);
+            var request = new LoginRequestDto
+            {
+                Email = model.Email,
+                Password = model.Password,
+                RememberMe = model.RememberMe
+            };
+
+            var response = await _apiClient.PostAsync<LoginRequestDto, AuthResponseDto>("api/auth/login", request);
             if (response == null || !response.Success || response.Data?.Token == null)
             {
                 ModelState.AddModelError(string.Empty, response?.Message ?? "Invalid email or password.");
@@ -44,9 +52,10 @@ namespace ClothingEcommerce.Client.Controllers
 
             await SignInWithJwtAsync(response.Data);
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            var redirectTarget = returnUrl ?? model.ReturnUrl;
+            if (!string.IsNullOrEmpty(redirectTarget) && Url.IsLocalUrl(redirectTarget))
             {
-                return Redirect(returnUrl);
+                return Redirect(redirectTarget);
             }
 
             if (response.Data.Roles.Contains("Cashier"))
@@ -74,18 +83,28 @@ namespace ClothingEcommerce.Client.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
-            return View(new RegisterRequestDto());
+            return View(new RegisterViewModel());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterRequestDto model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            var response = await _apiClient.PostAsync<RegisterRequestDto, AuthResponseDto>("api/auth/register", model);
+            var request = new RegisterRequestDto
+            {
+                Email = model.Email,
+                Password = model.Password,
+                ConfirmPassword = model.ConfirmPassword,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                PhoneNumber = model.Phone
+            };
+
+            var response = await _apiClient.PostAsync<RegisterRequestDto, AuthResponseDto>("api/auth/register", request);
             if (response == null || !response.Success || response.Data?.Token == null)
             {
                 if (response?.Errors.Any() == true)

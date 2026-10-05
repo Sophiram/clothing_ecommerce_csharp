@@ -1,7 +1,5 @@
 @model WebApplication_ClothingEcommerce.Models.Product
 
-@inject Microsoft.AspNetCore.Identity.SignInManager<WebApplication_ClothingEcommerce.Models.ApplicationUser> SignInManager
-
 @using WebApplication_ClothingEcommerce.Data.Enums
 
 @{
@@ -80,7 +78,7 @@
         ? (int)Math.Round((double)reviews.Count(r => r.Rating >= 4) / reviews.Count * 100)
         : 100;
 
-    var isSignedIn = SignInManager.IsSignedIn(User);
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
 
     // Current user's existing review (if any)
     var currentUserEmail = User.Identity?.Name;
