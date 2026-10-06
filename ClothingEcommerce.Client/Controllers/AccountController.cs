@@ -11,10 +11,12 @@ namespace ClothingEcommerce.Client.Controllers
     public class AccountController : Controller
     {
         private readonly IApiClient _apiClient;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(IApiClient apiClient)
+        public AccountController(IApiClient apiClient, IConfiguration configuration)
         {
             _apiClient = apiClient;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -123,6 +125,110 @@ namespace ClothingEcommerce.Client.Controllers
 
             await SignInWithJwtAsync(response.Data);
             return RedirectToAction("Index", "Home");
+        }
+
+        // ==========================================
+        // EXTERNAL LOGIN (GOOGLE)
+        // ==========================================
+        [HttpPost]
+        [HttpGet]
+        public IActionResult ExternalLogin(string provider = "Google", string? returnUrl = null)
+        {
+            var googleClientId = _configuration["GOOGLE_CLIENT_ID"];
+            var googleClientSecret = _configuration["GOOGLE_CLIENT_SECRET"];
+
+            if (string.IsNullOrWhiteSpace(googleClientId) ||
+                string.IsNullOrWhiteSpace(googleClientSecret) ||
+                googleClientId.Contains("your-google", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "Google OAuth is not configured yet. Please supply a valid GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.";
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            if (!string.IsNullOrEmpty(remoteError))
+            {
+                TempData["ErrorMessage"] = $"External login error: {remoteError}";
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            var authResult = await HttpContext.AuthenticateAsync("ExternalCookie");
+            if (!authResult.Succeeded || authResult.Principal == null)
+            {
+                TempData["ErrorMessage"] = "Failed to authenticate with Google.";
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            var email = authResult.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                TempData["ErrorMessage"] = "Email claim could not be retrieved from Google.";
+                await HttpContext.SignOutAsync("ExternalCookie");
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            var providerKey = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? email;
+            var fullName = authResult.Principal.FindFirstValue(ClaimTypes.Name);
+            var givenName = authResult.Principal.FindFirstValue(ClaimTypes.GivenName);
+            var surname = authResult.Principal.FindFirstValue(ClaimTypes.Surname);
+
+            var request = new ExternalLoginRequestDto
+            {
+                Provider = "Google",
+                ProviderKey = providerKey,
+                Email = email,
+                FirstName = givenName ?? (fullName != null ? fullName.Split(' ').FirstOrDefault() : ""),
+                LastName = surname ?? (fullName != null && fullName.Contains(' ') ? fullName[(fullName.IndexOf(' ') + 1)..] : ""),
+                FullName = fullName ?? email
+            };
+
+            var response = await _apiClient.PostAsync<ExternalLoginRequestDto, AuthResponseDto>("api/auth/external-login", request);
+
+            // Clear temporary external cookie
+            await HttpContext.SignOutAsync("ExternalCookie");
+
+            if (response == null || !response.Success || response.Data?.Token == null)
+            {
+                TempData["ErrorMessage"] = response?.Message ?? "Unable to complete external sign in.";
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            await SignInWithJwtAsync(response.Data);
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            if (response.Data.Roles.Contains("Cashier"))
+            {
+                return RedirectToAction("Index", "Pos", new { area = "Admin" });
+            }
+
+            if (response.Data.Roles.Contains("Staff"))
+            {
+                return RedirectToAction("Index", "Fulfillment", new { area = "Admin" });
+            }
+
+            if (response.Data.Roles.Contains("SuperAdmin") || response.Data.Roles.Contains("Admin") || response.Data.Roles.Contains("Manager"))
+            {
+                return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
 
         [HttpPost]

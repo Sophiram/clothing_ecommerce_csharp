@@ -123,6 +123,87 @@ namespace ClothingEcommerce.Server.Controllers.Api
             return Ok(ApiResponse<AuthResponseDto>.Created(response, "Registration successful."));
         }
 
+        [HttpPost("external-login")]
+        public async Task<IActionResult> ExternalLogin([FromBody] ExternalLoginRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(ApiResponse<AuthResponseDto>.Fail(errors));
+            }
+
+            // 1. Try finding user by linked login provider and key
+            var user = await _userManager.FindByLoginAsync(request.Provider, request.ProviderKey);
+
+            // 2. If not found, try finding user by email
+            if (user == null && !string.IsNullOrWhiteSpace(request.Email))
+            {
+                user = await _userManager.FindByEmailAsync(request.Email);
+            }
+
+            // 3. Create user if does not exist
+            if (user == null)
+            {
+                var firstName = !string.IsNullOrWhiteSpace(request.FirstName)
+                    ? request.FirstName
+                    : (!string.IsNullOrWhiteSpace(request.FullName) ? request.FullName.Split(' ')[0] : request.Email.Split('@')[0]);
+
+                var lastName = !string.IsNullOrWhiteSpace(request.LastName)
+                    ? request.LastName
+                    : (!string.IsNullOrWhiteSpace(request.FullName) && request.FullName.Contains(' ')
+                        ? request.FullName[(request.FullName.IndexOf(' ') + 1)..]
+                        : "");
+
+                user = new ApplicationUser
+                {
+                    UserName = request.Email,
+                    Email = request.Email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    EmailConfirmed = true
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                {
+                    var errors = createResult.Errors.Select(e => e.Description).ToList();
+                    return BadRequest(ApiResponse<AuthResponseDto>.Fail(errors));
+                }
+
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+
+            // 4. Check lockout
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                return Unauthorized(ApiResponse<AuthResponseDto>.Fail("This account has been deactivated. Please contact an administrator.", 401));
+            }
+
+            // 5. Link login if not already linked
+            var logins = await _userManager.GetLoginsAsync(user);
+            if (!logins.Any(l => l.LoginProvider == request.Provider && l.ProviderKey == request.ProviderKey))
+            {
+                await _userManager.AddLoginAsync(user, new UserLoginInfo(request.Provider, request.ProviderKey, request.Provider));
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = _tokenService.GenerateJwtToken(user, roles);
+
+            var response = new AuthResponseDto
+            {
+                Success = true,
+                Token = token,
+                Expiration = DateTime.UtcNow.AddDays(7),
+                UserId = user.Id,
+                Email = user.Email,
+                FullName = $"{user.FirstName} {user.LastName}".Trim(),
+                Roles = roles.ToList(),
+                Message = "External login successful."
+            };
+
+            return Ok(ApiResponse<AuthResponseDto>.Ok(response, "External login successful."));
+        }
+
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()

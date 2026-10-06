@@ -71,6 +71,18 @@
 
 
 
+            <!-- Flash / TempData Error Message -->
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2.5">
+                    <i class="bi bi-exclamation-triangle-fill text-base mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400"></i>
+                    <div>
+                        <p class="font-bold">Authentication Notice</p>
+                        <p class="mt-0.5">@TempData["ErrorMessage"]</p>
+                    </div>
+                </div>
+            }
+
             <!-- Validation Errors -->
             @if (!ViewData.ModelState.IsValid)
             {

@@ -63,4 +63,22 @@ namespace ClothingEcommerce.Shared.DTOs.Auth
         public List<string> Roles { get; set; } = new();
         public DateTime? CreatedAt { get; set; }
     }
+
+    public class ExternalLoginRequestDto
+    {
+        [Required]
+        public string Provider { get; set; } = "Google";
+
+        [Required]
+        public string ProviderKey { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? FullName { get; set; }
+        public string? AvatarUrl { get; set; }
+    }
 }

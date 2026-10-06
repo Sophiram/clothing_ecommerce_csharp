@@ -4,6 +4,37 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================================
+// LOAD .ENV FILE
+// ========================================
+var possibleEnvPaths = new[]
+{
+    Path.Combine(builder.Environment.ContentRootPath, ".env"),
+    Path.Combine(builder.Environment.ContentRootPath, "..", ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), ".env")
+};
+
+foreach (var envPath in possibleEnvPaths)
+{
+    if (File.Exists(envPath))
+    {
+        foreach (var line in File.ReadAllLines(envPath))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+            var parts = trimmed.Split('=', 2);
+            if (parts.Length == 2)
+            {
+                var key = parts[0].Trim();
+                var val = parts[1].Trim().Trim('"').Trim('\'');
+                Environment.SetEnvironmentVariable(key, val);
+            }
+        }
+        break;
+    }
+}
+builder.Configuration.AddEnvironmentVariables();
+
+// ========================================
 // MVC & HTTP ACCESSOR
 // ========================================
 builder.Services.AddControllersWithViews();
@@ -16,19 +47,43 @@ builder.Services.AddSession(options =>
 });
 
 // ========================================
-// AUTHENTICATION (COOKIE WITH JWT PERSISTENCE)
+// AUTHENTICATION (COOKIE + EXTERNAL GOOGLE)
 // ========================================
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+var googleClientId = builder.Configuration["GOOGLE_CLIENT_ID"];
+var googleClientSecret = builder.Configuration["GOOGLE_CLIENT_SECRET"];
+
+var authBuilder = builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.Name = "Clothe.Client.Auth";
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+})
+.AddCookie("ExternalCookie", options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+});
+
+if (!string.IsNullOrWhiteSpace(googleClientId) && 
+    !string.IsNullOrWhiteSpace(googleClientSecret) && 
+    !googleClientId.Contains("your-google", StringComparison.OrdinalIgnoreCase))
+{
+    authBuilder.AddGoogle("Google", options =>
     {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-        options.Cookie.Name = "Clothe.Client.Auth";
-        options.Cookie.HttpOnly = true;
-        options.ExpireTimeSpan = TimeSpan.FromDays(7);
-        options.SlidingExpiration = true;
+        options.SignInScheme = "ExternalCookie";
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.SaveTokens = true;
     });
+}
 
 builder.Services.AddAuthorization(options =>
 {
