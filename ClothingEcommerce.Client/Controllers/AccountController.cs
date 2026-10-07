@@ -179,6 +179,18 @@ namespace ClothingEcommerce.Client.Controllers
             var givenName = authResult.Principal.FindFirstValue(ClaimTypes.GivenName);
             var surname = authResult.Principal.FindFirstValue(ClaimTypes.Surname);
 
+            var picture = authResult.Principal.FindFirstValue("picture")
+                       ?? authResult.Principal.FindFirstValue("urn:google:picture")
+                       ?? authResult.Principal.FindFirstValue("image")
+                       ?? authResult.Principal.FindFirst("urn:google:image_url")?.Value
+                       ?? authResult.Principal.FindFirst("urn:google:avatar")?.Value;
+
+            if (string.IsNullOrEmpty(picture) && !string.IsNullOrEmpty(email))
+            {
+                var hash = Convert.ToHexString(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(email.Trim().ToLowerInvariant()))).ToLowerInvariant();
+                picture = $"https://www.gravatar.com/avatar/{hash}?d=identicon&s=200";
+            }
+
             var request = new ExternalLoginRequestDto
             {
                 Provider = "Google",
@@ -186,7 +198,8 @@ namespace ClothingEcommerce.Client.Controllers
                 Email = email,
                 FirstName = givenName ?? (fullName != null ? fullName.Split(' ').FirstOrDefault() : ""),
                 LastName = surname ?? (fullName != null && fullName.Contains(' ') ? fullName[(fullName.IndexOf(' ') + 1)..] : ""),
-                FullName = fullName ?? email
+                FullName = fullName ?? email,
+                AvatarUrl = picture
             };
 
             var response = await _apiClient.PostAsync<ExternalLoginRequestDto, AuthResponseDto>("api/auth/external-login", request);
@@ -263,6 +276,14 @@ namespace ClothingEcommerce.Client.Controllers
                 new(ClaimTypes.Email, auth.Email ?? string.Empty),
                 new(ClaimTypes.Name, auth.FullName ?? auth.Email ?? string.Empty)
             };
+
+            if (!string.IsNullOrEmpty(auth.AvatarUrl))
+            {
+                claims.Add(new Claim("avatar_url", auth.AvatarUrl));
+            }
+
+            var firstName = auth.FullName?.Split(' ').FirstOrDefault() ?? auth.Email?.Split('@')[0] ?? "";
+            claims.Add(new Claim("firstName", firstName));
 
             foreach (var role in auth.Roles)
             {

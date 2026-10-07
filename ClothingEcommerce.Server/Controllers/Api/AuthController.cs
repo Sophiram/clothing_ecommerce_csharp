@@ -197,6 +197,7 @@ namespace ClothingEcommerce.Server.Controllers.Api
                 UserId = user.Id,
                 Email = user.Email,
                 FullName = $"{user.FirstName} {user.LastName}".Trim(),
+                AvatarUrl = request.AvatarUrl,
                 Roles = roles.ToList(),
                 Message = "External login successful."
             };

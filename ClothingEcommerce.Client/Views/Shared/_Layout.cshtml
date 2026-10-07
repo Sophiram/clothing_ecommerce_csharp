@@ -13,10 +13,13 @@
 
     if (User.Identity?.IsAuthenticated == true)
     {
-        userEmail = User.Identity.Name ?? "";
+        userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value 
+                    ?? (User.Identity.Name?.Contains('@') == true ? User.Identity.Name : "");
         isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
-        userDisplayName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? (userEmail.Contains('@') ? userEmail.Split('@')[0] : userEmail);
-        userFirstName = User.FindFirst("firstName")?.Value ?? (userEmail.Contains('@') ? userEmail.Split('@')[0] : userEmail);
+        userDisplayName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value 
+                          ?? (!string.IsNullOrEmpty(userEmail) && userEmail.Contains('@') ? userEmail.Split('@')[0] : (User.Identity.Name ?? "My Account"));
+        userFirstName = User.FindFirst("firstName")?.Value 
+                        ?? (!string.IsNullOrEmpty(userDisplayName) && userDisplayName.Contains(' ') ? userDisplayName.Split(' ')[0] : userDisplayName);
         userFirstLetter = !string.IsNullOrEmpty(userDisplayName) ? userDisplayName.Substring(0, 1).ToUpper() : "U";
 
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -32,6 +35,13 @@
                     userAvatarUrl = $"/uploads/avatars/{System.IO.Path.GetFileName(files[0])}?v={fi.LastWriteTimeUtc.Ticks}";
                 }
             }
+        }
+
+        // Automatic Gravatar / Email Account avatar fallback
+        if (string.IsNullOrEmpty(userAvatarUrl) && !string.IsNullOrEmpty(userEmail))
+        {
+            var emailHash = Convert.ToHexString(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(userEmail.Trim().ToLowerInvariant()))).ToLowerInvariant();
+            userAvatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?d=identicon&s=160";
         }
     }
 

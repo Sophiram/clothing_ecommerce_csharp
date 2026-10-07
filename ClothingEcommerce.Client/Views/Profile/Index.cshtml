@@ -7,6 +7,12 @@
     var userInitial = !string.IsNullOrEmpty(Model.FirstName) ? Model.FirstName.Substring(0, 1).ToUpper() : "U";
     var fullName = $"{Model.FirstName} {Model.LastName}".Trim();
     if (string.IsNullOrEmpty(fullName)) { fullName = "Valued Customer"; }
+    var emailHash = !string.IsNullOrEmpty(Model.Email) 
+        ? Convert.ToHexString(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(Model.Email.Trim().ToLowerInvariant()))).ToLowerInvariant()
+        : "";
+    var displayAvatarUrl = !string.IsNullOrEmpty(Model.ProfileImageUrl) 
+        ? Model.ProfileImageUrl 
+        : (!string.IsNullOrEmpty(emailHash) ? $"https://www.gravatar.com/avatar/{emailHash}?d=identicon&s=200" : null);
 }
 
 <div class="min-h-[85vh] bg-gray-50/50 dark:bg-slate-950 py-8 lg:py-12 transition-colors duration-200">
@@ -53,9 +59,9 @@
                     <!-- Avatar with Upload Button -->
                     <div class="relative flex-shrink-0">
                         <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-3xl font-bold flex items-center justify-center border-4 border-white/20 shadow-2xl overflow-hidden">
-                            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                            @if (!string.IsNullOrEmpty(displayAvatarUrl))
                             {
-                                <img src="@Model.ProfileImageUrl" alt="@fullName" class="w-full h-full object-cover" />
+                                <img src="@displayAvatarUrl" alt="@fullName" class="w-full h-full object-cover" />
                             }
                             else
                             {
@@ -325,8 +331,8 @@
                                     <span class="text-[11px] text-gray-400 mt-1 block">Email is locked to your account.</span>
                                 </div>
                                 <div>
-                                    <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Phone Number</label>
-                                    <input asp-for="Phone" class="input-clothe text-sm" placeholder="+855 ..." required />
+                                    <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-slate-300 mb-1.5">Phone Number (Optional)</label>
+                                    <input asp-for="Phone" class="input-clothe text-sm" placeholder="+855 ..." />
                                     <span asp-validation-for="Phone" class="text-xs text-rose-500"></span>
                                 </div>
                             </div>

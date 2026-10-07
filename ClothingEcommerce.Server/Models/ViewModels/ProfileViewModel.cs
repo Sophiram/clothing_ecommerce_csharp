@@ -15,10 +15,9 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Phone number is required.")]
         [Phone(ErrorMessage = "Please enter a valid phone number.")]
         [StringLength(30)]
-        public string Phone { get; set; } = string.Empty;
+        public string? Phone { get; set; }
 
         [EmailAddress]
         [Display(Name = "Email")]
