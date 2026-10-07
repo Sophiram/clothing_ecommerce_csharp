@@ -8,7 +8,10 @@ namespace ClothingEcommerce.Client.Services.ApiClient
     {
         Task<ApiResponse<T>?> GetAsync<T>(string endpoint);
         Task<ApiResponse<TResponse>?> PostAsync<TRequest, TResponse>(string endpoint, TRequest data);
+        Task<ApiResponse?> PostAsync<TRequest>(string endpoint, TRequest data);
+        Task<ApiResponse?> PostMultipartAsync(string endpoint, MultipartFormDataContent content);
         Task<ApiResponse<TResponse>?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data);
+        Task<ApiResponse?> PutAsync<TRequest>(string endpoint, TRequest data);
         Task<ApiResponse<TResponse>?> DeleteAsync<TResponse>(string endpoint);
         Task<ApiResponse?> DeleteAsync(string endpoint);
     }
@@ -66,6 +69,66 @@ namespace ClothingEcommerce.Client.Services.ApiClient
             {
                 _logger.LogError(ex, "HTTP POST failed for endpoint {Endpoint}", endpoint);
                 return ApiResponse<TResponse>.Fail($"Network error communicating with API: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ApiResponse?> PostAsync<TRequest>(string endpoint, TRequest data)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(endpoint, data, _jsonOptions);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                }
+
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                return error ?? ApiResponse.Fail($"Server responded with {(int)response.StatusCode}: {response.ReasonPhrase}", (int)response.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "HTTP POST failed for endpoint {Endpoint}", endpoint);
+                return ApiResponse.Fail($"Network error communicating with API: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ApiResponse?> PostMultipartAsync(string endpoint, MultipartFormDataContent content)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync(endpoint, content);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                }
+
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                return error ?? ApiResponse.Fail($"Server responded with {(int)response.StatusCode}: {response.ReasonPhrase}", (int)response.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "HTTP multipart POST failed for endpoint {Endpoint}", endpoint);
+                return ApiResponse.Fail($"Network error communicating with API: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ApiResponse?> PutAsync<TRequest>(string endpoint, TRequest data)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync(endpoint, data, _jsonOptions);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                }
+
+                var error = await response.Content.ReadFromJsonAsync<ApiResponse>(_jsonOptions);
+                return error ?? ApiResponse.Fail($"Server responded with {(int)response.StatusCode}: {response.ReasonPhrase}", (int)response.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "HTTP PUT failed for endpoint {Endpoint}", endpoint);
+                return ApiResponse.Fail($"Network error communicating with API: {ex.Message}", 500);
             }
         }
 

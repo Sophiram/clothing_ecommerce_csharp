@@ -57,11 +57,33 @@ namespace ClothingEcommerce.Server.Controllers.Api
                 query = query.Where(p => p.Variants.Any(v => v.Price <= filter.MaxPrice.Value));
             }
 
+            if (filter.SizeId.HasValue && filter.SizeId != Guid.Empty)
+            {
+                query = query.Where(p => p.Variants.Any(v => v.SizeId == filter.SizeId.Value));
+            }
+
+            if (filter.ColorId.HasValue && filter.ColorId != Guid.Empty)
+            {
+                query = query.Where(p => p.Variants.Any(v => v.ColorId == filter.ColorId.Value));
+            }
+
+            if (filter.InStockOnly == true)
+            {
+                query = query.Where(p => p.Variants.Any(v => v.Inventory != null && v.Inventory.Quantity - v.Inventory.ReservedQuantity > 0));
+            }
+
+            if (filter.OnSaleOnly == true)
+            {
+                query = query.Where(p => p.Variants.Any(v => v.CompareAtPrice.HasValue && v.CompareAtPrice.Value > v.Price));
+            }
+
             // Sorting
             query = filter.SortBy switch
             {
-                "price_asc" => query.OrderBy(p => p.Variants.Min(v => v.Price)),
-                "price_desc" => query.OrderByDescending(p => p.Variants.Max(v => v.Price)),
+                "price_asc" or "price-low" => query.OrderBy(p => p.Variants.Min(v => v.Price)),
+                "price_desc" or "price-high" => query.OrderByDescending(p => p.Variants.Max(v => v.Price)),
+                "popular" => query.OrderByDescending(p => p.Reviews.Count),
+                "rating" => query.OrderByDescending(p => p.Reviews.Average(r => (double?)r.Rating) ?? 0),
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
 

@@ -107,4 +107,59 @@ namespace ClothingEcommerce.Server.Controllers.Api
             return Ok(ApiResponse<BrandDto>.Ok(brand));
         }
     }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SizesController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public SizesController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSizes()
+        {
+            var sizes = await _context.Sizes
+                .AsNoTracking()
+                .Select(s => new SizeDto
+                {
+                    Id = s.Id,
+                    Name = s.Name
+                })
+                .ToListAsync();
+
+            return Ok(ApiResponse<List<SizeDto>>.Ok(sizes));
+        }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ColorsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public ColorsController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetColors()
+        {
+            var colors = await _context.Colors
+                .AsNoTracking()
+                .Select(c => new ColorDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    HexCode = c.HexCode
+                })
+                .ToListAsync();
+
+            return Ok(ApiResponse<List<ColorDto>>.Ok(colors));
+        }
+    }
 }

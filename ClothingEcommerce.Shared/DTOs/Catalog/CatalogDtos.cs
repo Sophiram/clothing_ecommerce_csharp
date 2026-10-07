@@ -16,6 +16,19 @@ namespace ClothingEcommerce.Shared.DTOs.Catalog
         public int ProductCount { get; set; }
     }
 
+    public class SizeDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class ColorDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string HexCode { get; set; } = string.Empty;
+    }
+
     public class ProductVariantDto
     {
         public Guid Id { get; set; }
