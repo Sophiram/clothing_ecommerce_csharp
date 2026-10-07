@@ -40,6 +40,7 @@ namespace ClothingEcommerce.Shared.DTOs.Catalog
         public string? ColorHex { get; set; }
         public string Sku { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public decimal? CompareAtPrice { get; set; }
         public int StockQuantity { get; set; }
         public bool IsActive { get; set; }
     }

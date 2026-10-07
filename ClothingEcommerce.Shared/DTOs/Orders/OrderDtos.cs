@@ -96,6 +96,7 @@ namespace ClothingEcommerce.Shared.DTOs.Orders
         public string Address { get; set; } = string.Empty;
 
         public string? City { get; set; } = "Phnom Penh";
+        public string? PostalCode { get; set; }
         public string? Notes { get; set; }
 
         [Required(ErrorMessage = "Payment method is required.")]

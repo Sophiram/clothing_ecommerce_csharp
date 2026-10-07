@@ -1,6 +1,8 @@
 using ClothingEcommerce.Shared.Common;
 using ClothingEcommerce.Shared.DTOs.Payments;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebApplication_ClothingEcommerce.Data;
 using WebApplication_ClothingEcommerce.Services;
 
 namespace ClothingEcommerce.Server.Controllers.Api
@@ -11,11 +13,13 @@ namespace ClothingEcommerce.Server.Controllers.Api
     {
         private readonly IKhqrService _khqrService;
         private readonly IWebHostEnvironment _environment;
+        private readonly AppDbContext _context;
 
-        public PaymentsController(IKhqrService khqrService, IWebHostEnvironment environment)
+        public PaymentsController(IKhqrService khqrService, IWebHostEnvironment environment, AppDbContext context)
         {
             _khqrService = khqrService;
             _environment = environment;
+            _context = context;
         }
 
         [HttpPost("khqr/generate")]
@@ -96,6 +100,27 @@ namespace ClothingEcommerce.Server.Controllers.Api
             };
 
             return Ok(ApiResponse<PaymentStatusResponseDto>.Ok(dto));
+        }
+
+        [HttpGet("methods")]
+        public async Task<IActionResult> GetPaymentMethods()
+        {
+            var methods = await _context.PaymentMethods
+                .AsNoTracking()
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.DisplayOrder)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Description,
+                    p.Icon,
+                    p.IsActive,
+                    p.DisplayOrder
+                })
+                .ToListAsync();
+
+            return Ok(ApiResponse<object>.Ok(methods));
         }
     }
 }

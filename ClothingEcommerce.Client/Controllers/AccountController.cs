@@ -236,20 +236,25 @@ namespace ClothingEcommerce.Client.Controllers
         public async Task<IActionResult> Logout()
         {
             Response.Cookies.Delete("jwt_token");
+            HttpContext.Session.Remove("jwt_token");
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
         }
 
         private async Task SignInWithJwtAsync(AuthResponseDto auth)
         {
-            // Store token in HttpOnly cookie for outgoing API calls
-            Response.Cookies.Append("jwt_token", auth.Token!, new CookieOptions
+            // Store token in HttpOnly cookie and session for outgoing API calls
+            if (!string.IsNullOrEmpty(auth.Token))
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Expires = auth.Expiration ?? DateTimeOffset.UtcNow.AddDays(7)
-            });
+                Response.Cookies.Append("jwt_token", auth.Token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = auth.Expiration ?? DateTimeOffset.UtcNow.AddDays(7)
+                });
+                HttpContext.Session.SetString("jwt_token", auth.Token);
+            }
 
             // Extract claims from token or DTO
             var claims = new List<Claim>
