@@ -5,115 +5,174 @@
     Layout = "_Layout";
     ViewData["Title"] = "Stock Movement History";
     var movementType = ViewBag.MovementType as string;
+    var totalCount = Model?.TotalCount ?? Model?.Items?.Count ?? 0;
 }
 
-<div class="container-fluid py-3">
+<div class="space-y-6">
+
     <!-- PAGE HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <h4 class="fw-bold mb-1">
-                <i class="bi bi-clock-history text-primary me-2"></i> Stock Movement Audit Trail
-            </h4>
-            <p class="text-muted small mb-0">Complete audit log of stock IN, stock OUT, damages, returns, and POS sales</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-clock-history"></i>
+                <span>AUDIT &amp; LOGISTICS</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Stock Movement Audit Trail
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Complete timeline of inventory changes, stock additions, returns, damages, and POS cashier sales.
+            </p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="StockCheck" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Stock Checker
+
+        <!-- ACTIONS -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-action="StockCheck"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold shadow-sm transition">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Stock Checker</span>
+            </a>
+            <a asp-controller="Inventories" asp-action="Index"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold shadow-sm transition">
+                <i class="bi bi-boxes"></i>
+                <span>Inventory Overview</span>
             </a>
         </div>
     </div>
 
-    <!-- TABLE -->
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light small text-muted text-uppercase">
-                    <tr>
-                        <th>Date &amp; Time</th>
-                        <th>Product &amp; SKU</th>
-                        <th>Variant</th>
-                        <th class="text-center">Movement Type</th>
-                        <th class="text-center">Qty Changed</th>
-                        <th class="text-center">Stock Before &rarr; After</th>
-                        <th>Reason / Reference</th>
-                        <th>Logged By</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model == null || !Model.Items.Any())
-                    {
+    <!-- MAIN MOVEMENTS TABLE CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+            <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-journal-text text-blue-600"></i> Stock Movement Logs
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Immutable record of physical stock alterations</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                @totalCount log@(totalCount == 1 ? "" : "s")
+            </span>
+        </div>
+
+        @if (Model == null || !Model.Items.Any())
+        {
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl shadow-sm">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">No Stock Movements Recorded</h4>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                    Transactions recorded through POS sales, barcode stock-in adjustments, and return orders will appear here automatically.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200/80 dark:border-slate-800">
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                <i class="bi bi-journal-x fs-1 d-block text-secondary mb-2"></i>
-                                No stock movements recorded yet.
-                            </td>
+                            <th class="py-3 px-4">Date &amp; Time</th>
+                            <th class="py-3 px-4">Product &amp; SKU</th>
+                            <th class="py-3 px-4">Variant</th>
+                            <th class="py-3 px-4 text-center">Movement Type</th>
+                            <th class="py-3 px-4 text-center">Qty Delta</th>
+                            <th class="py-3 px-4 text-center">Progression (Before &rarr; After)</th>
+                            <th class="py-3 px-4">Reason / Reference</th>
+                            <th class="py-3 px-4 text-right">Logged By</th>
                         </tr>
-                    }
-                    else
-                    {
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                         @foreach (var m in Model.Items)
                         {
                             var isPositive = m.MovementType == "StockIn" || m.MovementType == "Return";
-                            <tr>
-                                <td class="small">
-                                    @m.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <div class="font-medium text-slate-800 dark:text-slate-200">@m.CreatedAt.ToString("dd MMM yyyy")</div>
+                                    <div class="text-[10px] text-slate-400">@m.CreatedAt.ToString("hh:mm tt")</div>
                                 </td>
-                                <td>
-                                    <div class="fw-semibold">@m.ProductName</div>
-                                    <code class="small">@m.VariantSku</code>
+                                <td class="py-3.5 px-4">
+                                    <div class="font-bold text-slate-900 dark:text-white">@m.ProductName</div>
+                                    <code class="text-[11px] font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">@m.VariantSku</code>
                                 </td>
-                                <td class="small">
-                                    @m.SizeName / @m.ColorName
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge @(isPositive ? "bg-success" : (m.MovementType == "PosSale" ? "bg-primary" : "bg-danger"))">
-                                        @m.MovementType
+                                <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-medium">
+                                        @m.SizeName / @m.ColorName
                                     </span>
                                 </td>
-                                <td class="text-center fw-bold @(isPositive ? "text-success" : "text-danger")">
-                                    @(isPositive ? $"+{m.Quantity}" : $"-{m.Quantity}")
-                                </td>
-                                <td class="text-center small font-monospace">
-                                    @m.PreviousQuantity &rarr; <strong>@m.NewQuantity</strong>
-                                </td>
-                                <td class="small">
-                                    <div>@(m.Reason ?? "—")</div>
-                                    @if (!string.IsNullOrEmpty(m.Reference))
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    @if (isPositive)
                                     {
-                                        <code class="text-muted">Ref: @m.Reference</code>
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                            <i class="bi bi-arrow-down-left me-1"></i>@m.MovementType
+                                        </span>
+                                    }
+                                    else if (m.MovementType == "PosSale")
+                                    {
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                            <i class="bi bi-cart me-1"></i>POS Sale
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                            <i class="bi bi-arrow-up-right me-1"></i>@m.MovementType
+                                        </span>
                                     }
                                 </td>
-                                <td class="small text-muted">
-                                    <i class="bi bi-person me-1"></i>@(m.CreatedBy ?? "System")
+                                <td class="py-3.5 px-4 text-center font-black @(isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")">
+                                    @(isPositive ? $"+{m.Quantity}" : $"-{m.Quantity}")
+                                </td>
+                                <td class="py-3.5 px-4 text-center font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <span>@m.PreviousQuantity</span>
+                                    <span class="text-slate-300 dark:text-slate-600 mx-1">&rarr;</span>
+                                    <strong class="text-slate-900 dark:text-white">@m.NewQuantity</strong>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="text-slate-700 dark:text-slate-300 font-medium">@(m.Reason ?? "—")</div>
+                                    @if (!string.IsNullOrEmpty(m.Reference))
+                                    {
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5">Ref: @m.Reference</div>
+                                    }
+                                </td>
+                                <td class="py-3.5 px-4 text-right text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1 text-[11px]">
+                                        <i class="bi bi-person text-slate-400"></i>
+                                        @(m.CreatedBy ?? "System")
+                                    </span>
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
 
-        @if (Model != null && Model.TotalPages > 1)
-        {
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
-                <span class="small text-muted">Page @Model.PageNumber of @Model.TotalPages</span>
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                            <a class="page-link" asp-action="Movements" asp-route-page="@(Model.PageNumber - 1)">Previous</a>
-                        </li>
+            <!-- PAGINATION FOOTER -->
+            @if (Model != null && Model.TotalPages > 1)
+            {
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                        Page <strong class="text-slate-800 dark:text-slate-200">@Model.PageNumber</strong> of <strong class="text-slate-800 dark:text-slate-200">@Model.TotalPages</strong>
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <a asp-action="Movements" asp-route-page="@(Model.PageNumber - 1)"
+                           class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold @(!Model.HasPreviousPage ? "opacity-50 pointer-events-none text-slate-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                            Previous
+                        </a>
                         @for (int p = 1; p <= Model.TotalPages; p++)
                         {
-                            <li class="page-item @(p == Model.PageNumber ? "active" : "")">
-                                <a class="page-link" asp-action="Movements" asp-route-page="@p">@p</a>
-                            </li>
+                            <a asp-action="Movements" asp-route-page="@p"
+                               class="w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition @(p == Model.PageNumber ? "bg-blue-600 text-white shadow-sm" : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                                @p
+                            </a>
                         }
-                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                            <a class="page-link" asp-action="Movements" asp-route-page="@(Model.PageNumber + 1)">Next</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+                        <a asp-action="Movements" asp-route-page="@(Model.PageNumber + 1)"
+                           class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold @(!Model.HasNextPage ? "opacity-50 pointer-events-none text-slate-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                            Next
+                        </a>
+                    </div>
+                </div>
+            }
         }
     </div>
 </div>

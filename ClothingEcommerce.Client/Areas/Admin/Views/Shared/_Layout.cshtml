@@ -723,15 +723,14 @@
 
                 @if (isCashier)
                 {
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5 fw-semibold me-2" style="font-size: 0.8rem;">
-                        <i class="bi bi-circle-fill text-success" style="font-size: 0.45rem;"></i> Register Live
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 me-2">
+                        <i class="bi bi-circle-fill text-[8px] text-emerald-500 animate-pulse"></i> Register Live
                     </span>
                 }
                 else if (isStaff)
                 {
                     <a asp-area="Admin" asp-controller="Fulfillment" asp-action="Index" 
-                       class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 px-3 py-1 me-2 shadow-sm rounded-pill fw-bold" 
-                       style="font-size: 0.82rem;">
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition me-2">
                         <i class="bi bi-box2-fill"></i>
                         <span>Packing Queue</span>
                     </a>
@@ -739,8 +738,7 @@
                 else if (canAccessPos && ViewContext.RouteData.Values["controller"]?.ToString() != "Pos")
                 {
                     <a asp-area="Admin" asp-controller="Pos" asp-action="Index" 
-                       class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 px-3 py-1 me-2 shadow-sm rounded-pill fw-bold" 
-                       style="font-size: 0.82rem;">
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition me-2">
                         <i class="bi bi-shop"></i>
                         <span>POS Terminal</span>
                     </a>

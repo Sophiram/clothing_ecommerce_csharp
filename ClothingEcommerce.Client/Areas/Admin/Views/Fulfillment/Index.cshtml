@@ -6,193 +6,261 @@
     ViewData["Title"] = "Order Packing & Fulfillment Queue";
     var activeTab = (ViewBag.ActiveTab as string) ?? "to_pack";
     var search = ViewBag.SearchTerm as string;
+    var totalOrders = Model?.TotalCount ?? Model?.Items?.Count ?? 0;
 }
 
-<div class="container-fluid py-3">
+<div class="space-y-6">
+
     <!-- PAGE HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-            <h4 class="fw-bold mb-1">
-                <i class="bi bi-box2-fill text-primary me-2"></i> Order Fulfillment Queue
-            </h4>
-            <p class="text-muted small mb-0">Warehouse packing, verification, and dispatch management</p>
+            <div class="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 tracking-wider uppercase">
+                <i class="bi bi-box2-fill"></i>
+                <span>LOGISTICS &amp; WAREHOUSE</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                Order Fulfillment Queue
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Warehouse packing, barcode verification, and shipping carrier dispatch management.
+            </p>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-area="Admin" asp-controller="Inventories" asp-action="StockCheck" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-upc-scan me-1"></i> Stock Checker
+
+        <!-- ACTIONS -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a asp-area="Admin" asp-controller="Inventories" asp-action="StockCheck"
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold shadow-sm transition">
+                <i class="bi bi-upc-scan"></i>
+                <span>Stock Checker</span>
             </a>
-            <button class="btn btn-primary btn-sm" onclick="location.reload()">
-                <i class="bi bi-arrow-clockwise me-1"></i> Refresh Queue
+            <button onclick="location.reload()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh Queue</span>
             </button>
         </div>
     </div>
 
-    <!-- TABS & SEARCH BAR -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body p-3">
-            <div class="row g-3 align-items-center">
-                <!-- TABS -->
-                <div class="col-lg-8">
-                    <ul class="nav nav-pills gap-2">
-                        <li class="nav-item">
-                            <a class="nav-link @(activeTab == "to_pack" ? "active fw-bold" : "text-dark")" 
-                               asp-action="Index" asp-route-tab="to_pack" asp-route-search="@search">
-                                <i class="bi bi-clock-history me-1"></i> To Pack (ត្រូវវេចខ្ចប់)
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(activeTab == "packed" ? "active fw-bold" : "text-dark")" 
-                               asp-action="Index" asp-route-tab="packed" asp-route-search="@search">
-                                <i class="bi bi-box-seam me-1"></i> Packed (បានវេចខ្ចប់រួច)
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(activeTab == "shipped" ? "active fw-bold" : "text-dark")" 
-                               asp-action="Index" asp-route-tab="shipped" asp-route-search="@search">
-                                <i class="bi bi-truck me-1"></i> Shipped (កំពុងដឹកជញ្ជូន)
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- SEARCH FORM -->
-                <div class="col-lg-4">
-                    <form method="get" class="d-flex">
-                        <input type="hidden" name="tab" value="@activeTab" />
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                   placeholder="Order #, Customer, Phone..." value="@search" />
-                            <button class="btn btn-outline-secondary" type="submit">Filter</button>
-                        </div>
-                    </form>
-                </div>
+    <!-- TABS & SEARCH BAR CARD -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- STATUS TABS -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <a asp-action="Index" asp-route-tab="to_pack" asp-route-search="@search"
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 @(activeTab == "to_pack" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200")">
+                    <i class="bi bi-clock-history"></i>
+                    <span>To Pack (ត្រូវវេចខ្ចប់)</span>
+                </a>
+                <a asp-action="Index" asp-route-tab="packed" asp-route-search="@search"
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 @(activeTab == "packed" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200")">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Packed (បានវេចខ្ចប់រួច)</span>
+                </a>
+                <a asp-action="Index" asp-route-tab="shipped" asp-route-search="@search"
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 @(activeTab == "shipped" ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200")">
+                    <i class="bi bi-truck"></i>
+                    <span>Shipped (កំពុងដឹកជញ្ជូន)</span>
+                </a>
             </div>
+
+            <!-- SEARCH FORM -->
+            <form method="get" class="flex items-center gap-2 w-full lg:w-80">
+                <input type="hidden" name="tab" value="@activeTab" />
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="bi bi-search text-xs"></i>
+                    </div>
+                    <input type="text" name="search" value="@search"
+                           class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-9 pr-3 py-2.5 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                           placeholder="Order #, Customer, Phone..." />
+                </div>
+                <button type="submit"
+                        class="px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                    Filter
+                </button>
+            </form>
         </div>
     </div>
 
     <!-- ORDER CARDS LIST -->
     @if (Model == null || !Model.Items.Any())
     {
-        <div class="text-center py-5 bg-white rounded-3 shadow-sm border">
-            <i class="bi bi-check2-circle text-success" style="font-size: 3rem;"></i>
-            <h5 class="fw-bold mt-3">All Caught Up!</h5>
-            <p class="text-muted small">No orders currently in the "@activeTab.Replace("_", " ")" queue.</p>
+        <div class="text-center py-16 px-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm">
+            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl shadow-sm">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">All Caught Up!</h4>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                No orders currently in the "@activeTab.Replace("_", " ")" queue. New web orders will populate automatically.
+            </p>
         </div>
     }
     else
     {
-        <div class="row g-3">
+        <div class="space-y-4">
             @foreach (var order in Model.Items)
             {
-                <div class="col-12">
-                    <div class="card shadow-sm border-0 border-start border-4 @(order.Status == "Shipped" ? "border-success" : (order.Status == "Processing" ? "border-info" : "border-warning"))">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-                                <div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="fw-bold fs-6">Order #@order.OrderNumber.Substring(0, Math.Min(8, order.OrderNumber.Length)).ToUpper()</span>
-                                        <span class="badge @(order.Status == "Shipped" ? "bg-success" : (order.Status == "Processing" ? "bg-info" : "bg-warning text-dark"))">
-                                            @order.Status
-                                        </span>
-                                        <span class="badge bg-secondary-subtle text-secondary">
-                                            @order.PaymentMethod (@order.PaymentStatus)
-                                        </span>
-                                    </div>
-                                    <div class="small text-muted mt-1">
-                                        Placed on: @order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <div class="fw-bold text-primary fs-5">$@order.TotalAmount.ToString("N2")</div>
-                                    <div class="small text-muted">@order.TotalItems item(s) to pack</div>
-                                </div>
-                            </div>
+                var isCancelled = order.Status == "Cancelled";
+                var isShipped = order.Status == "Shipped";
+                var isProcessing = order.Status == "Processing";
 
-                            <!-- CUSTOMER & SHIPPING DESTINATION -->
-                            <div class="p-2 bg-light rounded-2 mb-3 small d-flex flex-wrap justify-content-between align-items-center">
-                                <div>
-                                    <i class="bi bi-person-fill text-muted me-1"></i>
-                                    <strong>@order.CustomerName</strong> (@order.CustomerPhone)
-                                </div>
-                                <div>
-                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                                    @order.ShippingAddress
-                                </div>
-                                @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition space-y-4 border-l-4 @(isShipped ? "border-l-emerald-500" : (isCancelled ? "border-l-rose-500" : (isProcessing ? "border-l-blue-500" : "border-l-amber-500")))">
+                    
+                    <!-- HEADER BAR -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <span class="text-sm font-black text-slate-900 dark:text-white font-mono">
+                                    Order #@order.OrderNumber.Substring(0, Math.Min(8, order.OrderNumber.Length)).ToUpper()
+                                </span>
+                                
+                                @if (isCancelled)
                                 {
-                                    <div>
-                                        <i class="bi bi-truck text-info me-1"></i>
-                                        Carrier: <strong>@order.CarrierName</strong> (Tracking: <code>@order.TrackingNumber</code>)
-                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                        Cancelled
+                                    </span>
                                 }
-                            </div>
+                                else if (isShipped)
+                                {
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                        Shipped
+                                    </span>
+                                }
+                                else if (isProcessing)
+                                {
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                        Packed / Processing
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                        @order.Status
+                                    </span>
+                                }
 
-                            <!-- ITEMS TO PACK TABLE -->
-                            <div class="table-responsive mb-3">
-                                <table class="table table-sm align-middle mb-0">
-                                    <thead class="table-light small text-muted">
-                                        <tr>
-                                            <th>Item Details</th>
-                                            <th>SKU</th>
-                                            <th>Variant</th>
-                                            <th class="text-center">Quantity to Pack</th>
-                                            <th class="text-end">Unit Price</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var item in order.Items)
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        @if (!string.IsNullOrEmpty(item.ProductImageUrl))
-                                                        {
-                                                            <img src="@item.ProductImageUrl" alt="" class="rounded border" style="width: 36px; height: 36px; object-fit: cover;" />
-                                                        }
-                                                        <span class="fw-semibold small">@item.ProductName</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                    @order.PaymentMethod (@order.PaymentStatus)
+                                </span>
+                            </div>
+                            <div class="text-[11px] text-slate-400 mt-1">
+                                <i class="bi bi-calendar3 mr-1"></i> Placed on @order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")
+                            </div>
+                        </div>
+
+                        <div class="sm:text-right">
+                            <div class="text-lg font-black text-blue-600 dark:text-blue-400">$@order.TotalAmount.ToString("N2")</div>
+                            <div class="text-[11px] text-slate-400 font-medium">@order.TotalItems item(s) to pack</div>
+                        </div>
+                    </div>
+
+                    <!-- CUSTOMER & SHIPPING DESTINATION BANNER -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2">
+                            <i class="bi bi-person-fill text-slate-400 text-sm"></i>
+                            <span class="font-bold text-slate-900 dark:text-white">@order.CustomerName</span>
+                            <span class="text-slate-500 font-mono">(@order.CustomerPhone)</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                            <i class="bi bi-geo-alt-fill text-rose-500"></i>
+                            <span class="truncate">@order.ShippingAddress</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(order.TrackingNumber))
+                        {
+                            <div class="flex items-center gap-1.5 font-mono text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <i class="bi bi-truck"></i>
+                                <span>@order.CarrierName: @order.TrackingNumber</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- ITEMS TABLE -->
+                    <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                                <tr>
+                                    <th class="py-2.5 px-4">Item Details</th>
+                                    <th class="py-2.5 px-4">SKU</th>
+                                    <th class="py-2.5 px-4">Variant</th>
+                                    <th class="py-2.5 px-4 text-center">Quantity to Pack</th>
+                                    <th class="py-2.5 px-4 text-right">Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/40">
+                                @foreach (var item in order.Items)
+                                {
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center gap-2.5">
+                                                @if (!string.IsNullOrEmpty(item.ProductImageUrl))
+                                                {
+                                                    <img src="@item.ProductImageUrl" alt="@item.ProductName" class="w-9 h-9 rounded-lg object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                                        <i class="bi bi-box text-xs"></i>
                                                     </div>
-                                                </td>
-                                                <td><code>@item.VariantSku</code></td>
-                                                <td>
-                                                    <span class="badge bg-light text-dark border">
-                                                        @item.SizeName / @item.ColorName
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span class="badge bg-primary px-3 py-2 fs-6">
-                                                        x @item.Quantity
-                                                    </span>
-                                                </td>
-                                                <td class="text-end small">$@item.UnitPrice.ToString("N2")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
+                                                }
+                                                <span class="font-bold text-slate-800 dark:text-slate-200 truncate">@item.ProductName</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 font-mono text-[11px] text-blue-600 dark:text-blue-400">
+                                            @item.VariantSku
+                                        </td>
+                                        <td class="py-3 px-4 text-slate-600 dark:text-slate-400">
+                                            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-medium">
+                                                @item.SizeName / @item.ColorName
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                x @item.Quantity
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-medium text-slate-700 dark:text-slate-300">
+                                            $@item.UnitPrice.ToString("N2")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
 
-                            <!-- ACTION BAR -->
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="printPackingSlip('@order.OrderId')">
-                                    <i class="bi bi-printer me-1"></i> Print Packing Slip
-                                </button>
+                    <!-- ACTION FOOTER BAR -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+                        <button type="button" onclick="printPackingSlip('@order.OrderId')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 text-xs font-bold transition">
+                            <i class="bi bi-printer"></i>
+                            <span>Print Packing Slip</span>
+                        </button>
 
-                                <div class="d-flex gap-2">
-                                    @if (order.Status == "Pending" || (order.Status == "Processing" && string.IsNullOrEmpty(order.TrackingNumber)))
-                                    {
-                                        <button class="btn btn-info btn-sm text-white fw-bold" onclick="openDispatchModal('@order.OrderId', 'packed')">
-                                            <i class="bi bi-box-seam me-1"></i> Mark as Packed
-                                        </button>
-                                    }
-                                    @if (order.Status != "Shipped" && order.Status != "Delivered")
-                                    {
-                                        <button class="btn btn-success btn-sm fw-bold" onclick="openDispatchModal('@order.OrderId', 'shipped')">
-                                            <i class="bi bi-truck me-1"></i> Dispatch &amp; Ship
-                                        </button>
-                                    }
-                                </div>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            @if (isCancelled)
+                            {
+                                <span class="text-xs font-semibold text-rose-500">
+                                    <i class="bi bi-x-circle mr-1"></i>Cancelled Order — No Dispatch Required
+                                </span>
+                            }
+                            else
+                            {
+                                @if (order.Status == "Pending" || (order.Status == "Processing" && string.IsNullOrEmpty(order.TrackingNumber)))
+                                {
+                                    <button type="button" onclick="openDispatchModal('@order.OrderId', 'packed')"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                                        <i class="bi bi-box-seam"></i>
+                                        <span>Mark as Packed</span>
+                                    </button>
+                                }
+                                @if (order.Status != "Shipped" && order.Status != "Delivered")
+                                {
+                                    <button type="button" onclick="openDispatchModal('@order.OrderId', 'shipped')"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition cursor-pointer">
+                                        <i class="bi bi-truck"></i>
+                                        <span>Dispatch &amp; Ship</span>
+                                    </button>
+                                }
+                            }
                         </div>
                     </div>
                 </div>
@@ -200,25 +268,29 @@
         </div>
 
         <!-- PAGINATION -->
-        @if (Model.TotalPages > 1)
+        @if (Model != null && Model.TotalPages > 1)
         {
-            <div class="d-flex justify-content-center mt-4">
-                <nav>
-                    <ul class="pagination pagination-sm">
-                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                            <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@search">Previous</a>
-                        </li>
-                        @for (int p = 1; p <= Model.TotalPages; p++)
-                        {
-                            <li class="page-item @(p == Model.PageNumber ? "active" : "")">
-                                <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@p" asp-route-search="@search">@p</a>
-                            </li>
-                        }
-                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                            <a class="page-link" asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@search">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+            <div class="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex items-center justify-between flex-wrap gap-2">
+                <span class="text-xs text-slate-500 dark:text-slate-400">
+                    Page <strong class="text-slate-800 dark:text-slate-200">@Model.PageNumber</strong> of <strong class="text-slate-800 dark:text-slate-200">@Model.TotalPages</strong>
+                </span>
+                <div class="flex items-center gap-1.5">
+                    <a asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber - 1)" asp-route-search="@search"
+                       class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold @(!Model.HasPreviousPage ? "opacity-50 pointer-events-none text-slate-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                        Previous
+                    </a>
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <a asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@p" asp-route-search="@search"
+                           class="w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition @(p == Model.PageNumber ? "bg-blue-600 text-white shadow-sm" : "border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                            @p
+                        </a>
+                    }
+                    <a asp-action="Index" asp-route-tab="@activeTab" asp-route-page="@(Model.PageNumber + 1)" asp-route-search="@search"
+                       class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold @(!Model.HasNextPage ? "opacity-50 pointer-events-none text-slate-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50")">
+                        Next
+                    </a>
+                </div>
             </div>
         }
     }
@@ -229,18 +301,24 @@
 ========================================================= -->
 <div class="modal fade" id="dispatchModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="dispatchModalTitle">Assign Carrier &amp; Dispatch</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white" id="dispatchModalTitle">Assign Carrier &amp; Dispatch</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Order shipment details and waybill</p>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
-            <div class="modal-body">
+            <div class="p-5 space-y-4">
                 <input type="hidden" id="dispatchOrderId" />
                 <input type="hidden" id="dispatchTargetStatus" />
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">Delivery Carrier</label>
-                    <select id="dispatchCarrierSelect" class="form-select">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Delivery Carrier</label>
+                    <select id="dispatchCarrierSelect"
+                            class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="VET Express (Virak Buntham)">VET Express (Virak Buntham)</option>
                         <option value="J&T Express">J&amp;T Express</option>
                         <option value="Capitol Express">Capitol Transport</option>
@@ -249,24 +327,32 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">Tracking Number / Waybill</label>
-                    <div class="input-group">
-                        <input type="text" id="dispatchTrackingInput" class="form-control font-monospace" placeholder="Auto-generate or enter number" />
-                        <button class="btn btn-outline-secondary" type="button" onclick="generateTrackingNumber()">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Tracking Number / Waybill</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="dispatchTrackingInput"
+                               class="flex-1 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Auto-generate or enter number" />
+                        <button type="button" onclick="generateTrackingNumber()"
+                                class="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition">
                             Auto
                         </button>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">Warehouse Notes</label>
-                    <textarea id="dispatchNotesInput" class="form-control" rows="2" placeholder="Fragile, handle with care, etc."></textarea>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Warehouse Notes</label>
+                    <textarea id="dispatchNotesInput" rows="2"
+                              class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Fragile, handle with care, etc."></textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="btnConfirmDispatch" class="btn btn-primary fw-bold" onclick="submitDispatch()">
+            <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                <button type="button" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" id="btnConfirmDispatch" onclick="submitDispatch()"
+                        class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer">
                     Confirm &amp; Update
                 </button>
             </div>
