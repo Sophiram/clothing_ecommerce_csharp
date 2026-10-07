@@ -346,27 +346,34 @@ button {
     overflow-x: hidden;
     padding: 16px 14px 40px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(66, 133, 244, .4) transparent;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color .3s ease;
 }
 
+.sidebar-content:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
 
     .sidebar-content::-webkit-scrollbar {
-        width: 6px;
+        width: 4px;
     }
-
 
     .sidebar-content::-webkit-scrollbar-track {
         background: transparent;
     }
 
-
     .sidebar-content::-webkit-scrollbar-thumb {
-        background: rgba(66, 133, 244, .35);
+        background: transparent;
         border-radius: 9999px;
+        transition: background .2s ease;
+    }
+
+    .sidebar-content:hover::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
     }
 
     .sidebar-content::-webkit-scrollbar-thumb:hover {
-        background: rgba(66, 133, 244, .65);
+        background: rgba(255, 255, 255, 0.32);
     }
 
 

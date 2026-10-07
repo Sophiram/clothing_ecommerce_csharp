@@ -346,7 +346,7 @@
                         <a asp-area="Admin"
                            asp-controller="Inventories"
                            asp-action="Index"
-                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventories" ? "active" : "")">
+                           class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventories" && ViewContext.RouteData.Values["action"]?.ToString() != "Movements" && ViewContext.RouteData.Values["action"]?.ToString() != "StockCheck" ? "active" : "")">
                             <i class="bi bi-boxes"></i>
                             <span>Inventory</span>
                         </a>
