@@ -1,9 +1,11 @@
+@model WebApplication_ClothingEcommerce.Models.ViewModels.CartViewModel
+
 @{
-    var cartItems = new List<WebApplication_ClothingEcommerce.Models.CartItem>();
-    var totalQuantity = 0;
-    var subtotal = 0m;
+    var cartItems = Model?.Cart?.Items?.ToList() ?? new List<WebApplication_ClothingEcommerce.Models.CartItem>();
+    var totalQuantity = cartItems.Sum(i => i.Quantity);
+    var subtotal = Model?.SubTotal ?? cartItems.Sum(i => (i.Variant?.Price ?? 0m) * i.Quantity);
     var freeShippingThreshold = 50.00m;
-    var amountNeeded = freeShippingThreshold;
+    var amountNeeded = Math.Max(0, freeShippingThreshold - subtotal);
     var progressPercent = Math.Min(100, (int)((subtotal / freeShippingThreshold) * 100));
     var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }

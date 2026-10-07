@@ -121,20 +121,33 @@ namespace ClothingEcommerce.Server.Controllers.Api
             }
 
             // Find variant
-            Guid variantId;
+            Guid variantId = Guid.Empty;
             if (request.VariantId.HasValue && request.VariantId != Guid.Empty)
             {
-                variantId = request.VariantId.Value;
+                var variantExists = await _context.ProductVariants.AnyAsync(v => v.Id == request.VariantId.Value);
+                if (variantExists)
+                {
+                    variantId = request.VariantId.Value;
+                }
             }
-            else
+
+            if (variantId == Guid.Empty && request.ProductId.HasValue && request.ProductId != Guid.Empty)
             {
                 var defaultVariant = await _context.ProductVariants
-                    .FirstOrDefaultAsync(v => v.ProductId == request.ProductId);
-                if (defaultVariant == null)
+                    .Where(v => v.ProductId == request.ProductId.Value && v.Status == VariantStatus.Available)
+                    .OrderByDescending(v => v.Inventory != null ? v.Inventory.Quantity - v.Inventory.ReservedQuantity : 0)
+                    .FirstOrDefaultAsync()
+                    ?? await _context.ProductVariants.FirstOrDefaultAsync(v => v.ProductId == request.ProductId.Value);
+
+                if (defaultVariant != null)
                 {
-                    return NotFound(ApiResponse.Fail("No variant found for this product.", 404));
+                    variantId = defaultVariant.Id;
                 }
-                variantId = defaultVariant.Id;
+            }
+
+            if (variantId == Guid.Empty)
+            {
+                return NotFound(ApiResponse.Fail("No variant found for this product.", 404));
             }
 
             var existingItem = cart.Items.FirstOrDefault(i => i.VariantId == variantId);

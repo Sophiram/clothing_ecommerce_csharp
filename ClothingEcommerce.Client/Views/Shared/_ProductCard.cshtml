@@ -196,6 +196,7 @@
 
                     @Html.AntiForgeryToken()
 
+                    <input type="hidden" name="productId" value="@Model.Id" />
                     <input type="hidden" name="variantId" value="@defaultVariant.Id" />
                     <input type="hidden" name="quantity" value="1" />
 
@@ -238,12 +239,6 @@
             if (!form) return;
 
             event.preventDefault();
-
-            var isSignedIn = form.getAttribute('data-signed-in') === 'true';
-            if (!isSignedIn) {
-                window.location.href = "/Account/Login?ReturnUrl=" + encodeURIComponent(window.location.pathname);
-                return;
-            }
 
             var button = form.querySelector('.js-add-to-cart-btn');
             var originalHtml = button.innerHTML;

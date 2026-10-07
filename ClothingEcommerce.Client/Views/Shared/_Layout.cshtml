@@ -1167,6 +1167,9 @@
         if (e && e.detail && e.detail.toast) {
             window.showCartToast(e.detail.title || "Added to bag!", e.detail.message || "Item was successfully added.");
         }
+        if (typeof loadCartDrawerContent === 'function') {
+            loadCartDrawerContent();
+        }
         try {
             var res = await fetch('/Cart/GetCount');
             if (res.ok) {

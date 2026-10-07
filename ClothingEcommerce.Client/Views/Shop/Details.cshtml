@@ -352,6 +352,7 @@
                 {
                     <form asp-controller="Cart" asp-action="Add" method="post" id="addToCartForm" class="space-y-5">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
 
                         <!-- Colors -->
                         @if (distinctColors.Any())
@@ -1297,10 +1298,9 @@
         const cartForm = document.getElementById("addToCartForm");
         if (cartForm) {
             cartForm.addEventListener("submit", async function (e) {
-                if (!isSignedIn) {
-                    e.preventDefault();
-                    redirectToLogin();
-                    return false;
+                if (variantSelect && !variantSelect.value && variantSelect.options.length > 1) {
+                    variantSelect.selectedIndex = 1;
+                    variantSelect.dispatchEvent(new Event("change"));
                 }
                 if (!variantSelect || !variantSelect.value) {
                     e.preventDefault();
@@ -1376,10 +1376,6 @@
 
         if (stickyAddCartButton && cartForm) {
             stickyAddCartButton.addEventListener("click", function () {
-                if (!isSignedIn) {
-                    redirectToLogin();
-                    return;
-                }
                 if (!variantSelect || !variantSelect.value) {
                     alert("Please choose a product option before adding to bag.");
                     return;

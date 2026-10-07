@@ -31,8 +31,7 @@ namespace ClothingEcommerce.Shared.DTOs.Orders
 
     public class AddToCartRequestDto
     {
-        [Required]
-        public Guid ProductId { get; set; }
+        public Guid? ProductId { get; set; }
         public Guid? VariantId { get; set; }
         [Range(1, 100, ErrorMessage = "Quantity must be between 1 and 100.")]
         public int Quantity { get; set; } = 1;

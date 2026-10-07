@@ -53,6 +53,8 @@ namespace ClothingEcommerce.Client.Controllers
                 {
                     new()
                     {
+                        Id = p.DefaultVariantId ?? Guid.Empty,
+                        ProductId = p.Id,
                         Price = p.Price,
                         CompareAtPrice = p.OriginalPrice,
                         Status = WebApplication_ClothingEcommerce.Data.Enums.VariantStatus.Available,

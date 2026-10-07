@@ -115,9 +115,10 @@ namespace ClothingEcommerce.Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MoveToCart(Guid wishlistItemId)
+        public async Task<IActionResult> MoveToCart(Guid? id, Guid? wishlistItemId)
         {
-            var response = await _apiClient.PostAsync<WishlistMoveRequestDto, object>("api/wishlist/move-to-cart", new WishlistMoveRequestDto { WishlistItemId = wishlistItemId });
+            var targetId = wishlistItemId ?? id ?? Guid.Empty;
+            var response = await _apiClient.PostAsync<WishlistMoveRequestDto, object>("api/wishlist/move-to-cart", new WishlistMoveRequestDto { WishlistItemId = targetId });
             var success = response?.Success ?? false;
             var message = response?.Message ?? (success ? "Item moved to cart." : "Failed to move item to cart.");
 

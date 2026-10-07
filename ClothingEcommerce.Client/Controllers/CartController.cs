@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClothingEcommerce.Client.Services.ApiClient;
 using ClothingEcommerce.Shared.DTOs.Catalog;
 using ClothingEcommerce.Shared.DTOs.Orders;
@@ -10,6 +11,7 @@ namespace ClothingEcommerce.Client.Controllers
     public class CartController : Controller
     {
         private readonly IApiClient _apiClient;
+        private const string GuestCartSessionKey = "guest_cart_data";
 
         public CartController(IApiClient apiClient)
         {
@@ -19,6 +21,58 @@ namespace ClothingEcommerce.Client.Controllers
         private bool IsAjaxRequest() =>
             Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
             Request.Headers.Accept.ToString().Contains("application/json");
+
+        private CartDto GetGuestCart()
+        {
+            var json = HttpContext.Session.GetString(GuestCartSessionKey);
+            if (string.IsNullOrEmpty(json))
+            {
+                return new CartDto { Id = Guid.NewGuid(), ShippingFee = 5.00m };
+            }
+            try
+            {
+                return JsonSerializer.Deserialize<CartDto>(json) ?? new CartDto { Id = Guid.NewGuid(), ShippingFee = 5.00m };
+            }
+            catch
+            {
+                return new CartDto { Id = Guid.NewGuid(), ShippingFee = 5.00m };
+            }
+        }
+
+        private void SaveGuestCart(CartDto cart)
+        {
+            var json = JsonSerializer.Serialize(cart);
+            HttpContext.Session.SetString(GuestCartSessionKey, json);
+        }
+
+        private void ClearGuestCart()
+        {
+            HttpContext.Session.Remove(GuestCartSessionKey);
+        }
+
+        private async Task SyncGuestCartIfAuthenticatedAsync()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var guestCart = GetGuestCart();
+                if (guestCart.Items.Any())
+                {
+                    foreach (var item in guestCart.Items)
+                    {
+                        if (item.VariantId.HasValue)
+                        {
+                            await _apiClient.PostAsync<AddToCartRequestDto, object>("api/cart/items", new AddToCartRequestDto
+                            {
+                                ProductId = item.ProductId,
+                                VariantId = item.VariantId.Value,
+                                Quantity = item.Quantity
+                            });
+                        }
+                    }
+                    ClearGuestCart();
+                }
+            }
+        }
 
         private CartViewModel MapDtoToViewModel(CartDto dto)
         {
@@ -66,11 +120,21 @@ namespace ClothingEcommerce.Client.Controllers
             };
         }
 
+        private async Task<CartDto> GetEffectiveCartDtoAsync()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                await SyncGuestCartIfAuthenticatedAsync();
+                var response = await _apiClient.GetAsync<CartDto>("api/cart");
+                return response?.Data ?? new CartDto();
+            }
+            return GetGuestCart();
+        }
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var response = await _apiClient.GetAsync<CartDto>("api/cart");
-            var dto = response?.Data ?? new CartDto();
+            var dto = await GetEffectiveCartDtoAsync();
             var model = MapDtoToViewModel(dto);
             return View(model);
         }
@@ -78,179 +142,233 @@ namespace ClothingEcommerce.Client.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDrawerCart()
         {
-            var response = await _apiClient.GetAsync<CartDto>("api/cart");
-            return Json(response?.Data ?? new CartDto());
+            var dto = await GetEffectiveCartDtoAsync();
+            return Json(dto);
         }
 
         [HttpGet]
-        public IActionResult SidebarPartial()
+        public async Task<IActionResult> SidebarPartial()
         {
-            return PartialView("_CartSidebar");
+            var dto = await GetEffectiveCartDtoAsync();
+            var model = MapDtoToViewModel(dto);
+            return PartialView("_CartSidebar", model);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCount()
         {
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                return Json(new { count = 0 });
-            }
-
-            var response = await _apiClient.GetAsync<CartDto>("api/cart");
-            var count = response?.Data?.TotalItems ?? 0;
-            return Json(new { count });
+            var dto = await GetEffectiveCartDtoAsync();
+            return Json(new { count = dto.TotalItems });
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(Guid variantId, int quantity = 1, string? returnUrl = null)
+        public async Task<IActionResult> Add(Guid? variantId, Guid? productId, int quantity = 1, string? returnUrl = null)
         {
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                var loginUrl = Url.Action("Login", "Account", new { returnUrl = returnUrl ?? Request.Headers["Referer"].ToString() }) ?? "/Account/Login";
-                if (IsAjaxRequest())
-                {
-                    return Json(new { success = false, requireLogin = true, redirectUrl = loginUrl, message = "Please sign in to add items to your shopping bag." });
-                }
+            var qty = quantity > 0 ? quantity : 1;
+            var targetVariantId = variantId.GetValueOrDefault();
+            var targetProductId = productId.GetValueOrDefault();
 
-                TempData["Info"] = "Please sign in to add items to your shopping bag.";
-                return Redirect(loginUrl);
+            // If variantId is not specified or empty, but productId is available, find default variant
+            if (targetVariantId == Guid.Empty && targetProductId != Guid.Empty)
+            {
+                var defVariantRes = await _apiClient.GetAsync<CartItemDto>($"api/products/{targetProductId}/default-variant");
+                if (defVariantRes?.Success == true && defVariantRes.Data != null)
+                {
+                    targetVariantId = defVariantRes.Data.VariantId.GetValueOrDefault();
+                }
             }
 
-            var request = new AddToCartRequestDto
+            if (User.Identity?.IsAuthenticated == true)
             {
-                VariantId = variantId,
-                Quantity = quantity > 0 ? quantity : 1
-            };
+                var request = new AddToCartRequestDto
+                {
+                    ProductId = targetProductId != Guid.Empty ? targetProductId : null,
+                    VariantId = targetVariantId != Guid.Empty ? targetVariantId : null,
+                    Quantity = qty
+                };
 
-            var response = await _apiClient.PostAsync<AddToCartRequestDto, object>("api/cart/items", request);
-            var success = response?.Success ?? false;
-            var message = response?.Message ?? (success ? "Item added to bag." : "Failed to add item to bag.");
+                var response = await _apiClient.PostAsync<AddToCartRequestDto, object>("api/cart/items", request);
+                var success = response?.Success ?? false;
+                var message = response?.Message ?? (success ? "Item added to bag." : "Failed to add item to bag.");
 
-            if (success)
-            {
-                TempData["Success"] = message;
+                if (success) TempData["Success"] = message;
+                else TempData["Error"] = message;
+
+                if (IsAjaxRequest())
+                {
+                    var cart = await GetEffectiveCartDtoAsync();
+                    return Json(new { success, message, cartCount = cart.TotalItems });
+                }
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
             }
             else
             {
-                TempData["Error"] = message;
-            }
+                // Guest cart handling
+                CartItemDto? item = null;
 
-            if (IsAjaxRequest())
-            {
-                var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-                var cartCount = cartResponse?.Data?.TotalItems ?? 0;
-                return Json(new { success, message, cartCount });
-            }
+                if (targetVariantId != Guid.Empty)
+                {
+                    var variantRes = await _apiClient.GetAsync<CartItemDto>($"api/products/variant/{targetVariantId}");
+                    item = variantRes?.Data;
+                }
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
+                if (item == null && targetProductId != Guid.Empty)
+                {
+                    var defVariantRes = await _apiClient.GetAsync<CartItemDto>($"api/products/{targetProductId}/default-variant");
+                    item = defVariantRes?.Data;
+                }
 
-            return RedirectToAction(nameof(Index));
+                if (item == null)
+                {
+                    if (IsAjaxRequest()) return Json(new { success = false, message = "Product variant not found." });
+                    TempData["Error"] = "Product variant not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var guestCart = GetGuestCart();
+                var existing = guestCart.Items.FirstOrDefault(i => i.VariantId == item.VariantId);
+                if (existing != null)
+                {
+                    existing.Quantity += qty;
+                }
+                else
+                {
+                    item.Quantity = qty;
+                    guestCart.Items.Add(item);
+                }
+
+                SaveGuestCart(guestCart);
+
+                if (IsAjaxRequest())
+                {
+                    return Json(new { success = true, message = "Item added to your shopping bag.", cartCount = guestCart.TotalItems });
+                }
+
+                TempData["Success"] = "Item added to your shopping bag.";
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> AddItem([FromBody] AddToCartRequestDto request)
         {
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                return Json(new { success = false, requireLogin = true, message = "Please sign in to add items to your shopping bag." });
-            }
-
-            var response = await _apiClient.PostAsync<AddToCartRequestDto, object>("api/cart/items", request);
-            var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-            var cartCount = cartResponse?.Data?.TotalItems ?? 0;
-            return Json(new { success = response?.Success ?? false, message = response?.Message, cartCount });
+            return await Add(request.VariantId, request.ProductId, request.Quantity);
         }
 
         [HttpPost]
         public async Task<IActionResult> Update(Guid id, int quantity, string? returnUrl = null)
         {
-            if (User.Identity?.IsAuthenticated != true)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                if (IsAjaxRequest()) return Json(new { success = false, message = "Not authenticated." });
-                return RedirectToAction("Login", "Account");
+                var request = new UpdateCartItemRequestDto
+                {
+                    CartItemId = id,
+                    Quantity = quantity
+                };
+
+                var response = await _apiClient.PutAsync<UpdateCartItemRequestDto, object>($"api/cart/items/{id}", request);
+                var success = response?.Success ?? false;
+                var message = response?.Message ?? (success ? "Bag updated." : "Failed to update bag.");
+
+                if (success) TempData["Success"] = message;
+                else TempData["Error"] = message;
+
+                if (IsAjaxRequest())
+                {
+                    var cart = await GetEffectiveCartDtoAsync();
+                    return Json(new { success, message, cartCount = cart.TotalItems });
+                }
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
             }
-
-            var request = new UpdateCartItemRequestDto
+            else
             {
-                CartItemId = id,
-                Quantity = quantity
-            };
+                var guestCart = GetGuestCart();
+                var item = guestCart.Items.FirstOrDefault(i => i.Id == id || i.VariantId == id);
+                if (item != null)
+                {
+                    if (quantity <= 0) guestCart.Items.Remove(item);
+                    else item.Quantity = quantity;
+                    SaveGuestCart(guestCart);
+                }
 
-            var response = await _apiClient.PutAsync<UpdateCartItemRequestDto, object>($"api/cart/items/{id}", request);
-            var success = response?.Success ?? false;
-            var message = response?.Message ?? (success ? "Bag updated." : "Failed to update bag.");
+                if (IsAjaxRequest())
+                {
+                    return Json(new { success = true, message = "Bag updated.", cartCount = guestCart.TotalItems });
+                }
 
-            if (success) TempData["Success"] = message;
-            else TempData["Error"] = message;
-
-            if (IsAjaxRequest())
-            {
-                var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-                var cartCount = cartResponse?.Data?.TotalItems ?? 0;
-                return Json(new { success, message, cartCount });
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
             }
-
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-
-            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
         public async Task<IActionResult> Remove(Guid id, string? returnUrl = null)
         {
-            if (User.Identity?.IsAuthenticated != true)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                if (IsAjaxRequest()) return Json(new { success = false, message = "Not authenticated." });
-                return RedirectToAction("Login", "Account");
+                var response = await _apiClient.DeleteAsync<object>($"api/cart/items/{id}");
+                var success = response?.Success ?? false;
+                var message = response?.Message ?? (success ? "Item removed from bag." : "Failed to remove item.");
+
+                if (success) TempData["Success"] = message;
+                else TempData["Error"] = message;
+
+                if (IsAjaxRequest())
+                {
+                    var cart = await GetEffectiveCartDtoAsync();
+                    return Json(new { success, message, cartCount = cart.TotalItems });
+                }
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
             }
-
-            var response = await _apiClient.DeleteAsync<object>($"api/cart/items/{id}");
-            var success = response?.Success ?? false;
-            var message = response?.Message ?? (success ? "Item removed from bag." : "Failed to remove item.");
-
-            if (success) TempData["Success"] = message;
-            else TempData["Error"] = message;
-
-            if (IsAjaxRequest())
+            else
             {
-                var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-                var cartCount = cartResponse?.Data?.TotalItems ?? 0;
-                return Json(new { success, message, cartCount });
-            }
+                var guestCart = GetGuestCart();
+                var item = guestCart.Items.FirstOrDefault(i => i.Id == id || i.VariantId == id);
+                if (item != null)
+                {
+                    guestCart.Items.Remove(item);
+                    SaveGuestCart(guestCart);
+                }
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
+                if (IsAjaxRequest())
+                {
+                    return Json(new { success = true, message = "Item removed from bag.", cartCount = guestCart.TotalItems });
+                }
 
-            return RedirectToAction(nameof(Index));
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Clear(string? returnUrl = null)
         {
-            var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-            if (cartResponse?.Data?.Items != null)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                foreach (var item in cartResponse.Data.Items)
+                var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
+                if (cartResponse?.Data?.Items != null)
                 {
-                    await _apiClient.DeleteAsync<object>($"api/cart/items/{item.Id}");
+                    foreach (var item in cartResponse.Data.Items)
+                    {
+                        await _apiClient.DeleteAsync<object>($"api/cart/items/{item.Id}");
+                    }
                 }
+            }
+            else
+            {
+                ClearGuestCart();
             }
 
             TempData["Success"] = "Shopping bag cleared.";
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction(nameof(Index));
         }
 
@@ -281,31 +399,16 @@ namespace ClothingEcommerce.Client.Controllers
         [HttpPost]
         public async Task<IActionResult> ChangeVariant(Guid id, Guid newVariantId, string? returnUrl = null)
         {
-            var cartResponse = await _apiClient.GetAsync<CartDto>("api/cart");
-            var item = cartResponse?.Data?.Items.FirstOrDefault(i => i.Id == id);
-            var quantity = item?.Quantity ?? 1;
-
-            await _apiClient.DeleteAsync<object>($"api/cart/items/{id}");
-            var addResponse = await _apiClient.PostAsync<AddToCartRequestDto, object>("api/cart/items", new AddToCartRequestDto
-            {
-                VariantId = newVariantId,
-                Quantity = quantity
-            });
-
-            var success = addResponse?.Success ?? false;
-            var message = success ? "Item variant updated." : "Failed to update item variant.";
+            await Remove(id);
+            await Add(variantId: newVariantId, productId: null, quantity: 1);
 
             if (IsAjaxRequest())
             {
-                var updatedCart = await _apiClient.GetAsync<CartDto>("api/cart");
-                return Json(new { success, message, cartCount = updatedCart?.Data?.TotalItems ?? 0 });
+                var cart = await GetEffectiveCartDtoAsync();
+                return Json(new { success = true, message = "Variant updated.", cartCount = cart.TotalItems });
             }
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
             return RedirectToAction(nameof(Index));
         }
 

@@ -1,5 +1,6 @@
 using ClothingEcommerce.Shared.Common;
 using ClothingEcommerce.Shared.DTOs.Catalog;
+using ClothingEcommerce.Shared.DTOs.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication_ClothingEcommerce.Data;
@@ -107,6 +108,7 @@ namespace ClothingEcommerce.Server.Controllers.Api
                     CategoryName = p.Category != null ? p.Category.Name : null,
                     BrandId = p.BrandId,
                     BrandName = p.Brand != null ? p.Brand.Name : null,
+                    DefaultVariantId = p.Variants.Select(v => (Guid?)v.Id).FirstOrDefault(),
                     TotalStock = p.Variants.Where(v => v.Inventory != null).Sum(v => v.Inventory!.Quantity - v.Inventory!.ReservedQuantity)
                 })
                 .ToListAsync();
@@ -206,11 +208,95 @@ namespace ClothingEcommerce.Server.Controllers.Api
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category != null ? p.Category.Name : null,
                     BrandId = p.BrandId,
-                    BrandName = p.Brand != null ? p.Brand.Name : null
+                    BrandName = p.Brand != null ? p.Brand.Name : null,
+                    DefaultVariantId = p.Variants.Select(v => (Guid?)v.Id).FirstOrDefault(),
+                    TotalStock = p.Variants.Where(v => v.Inventory != null).Sum(v => v.Inventory!.Quantity - v.Inventory!.ReservedQuantity)
                 })
                 .ToListAsync();
 
             return Ok(ApiResponse<List<ProductDto>>.Ok(products));
+        }
+
+        [HttpGet("{productId:guid}/default-variant")]
+        public async Task<IActionResult> GetDefaultVariantByProductId(Guid productId)
+        {
+            var variant = await _context.ProductVariants
+                .AsNoTracking()
+                .Include(v => v.Product)
+                    .ThenInclude(p => p.Images)
+                .Include(v => v.Size)
+                .Include(v => v.Color)
+                .Include(v => v.Inventory)
+                .Where(v => v.ProductId == productId && v.Status == VariantStatus.Available)
+                .OrderByDescending(v => v.Inventory != null ? v.Inventory.Quantity - v.Inventory.ReservedQuantity : 0)
+                .FirstOrDefaultAsync()
+                ?? await _context.ProductVariants
+                    .AsNoTracking()
+                    .Include(v => v.Product)
+                        .ThenInclude(p => p.Images)
+                    .Include(v => v.Size)
+                    .Include(v => v.Color)
+                    .Include(v => v.Inventory)
+                    .FirstOrDefaultAsync(v => v.ProductId == productId);
+
+            if (variant == null)
+            {
+                return NotFound(ApiResponse<CartItemDto>.Fail("No variant found for product.", 404));
+            }
+
+            var dto = new CartItemDto
+            {
+                Id = Guid.NewGuid(),
+                ProductId = variant.ProductId,
+                ProductName = variant.Product.Name,
+                ProductImage = variant.Product.Images.FirstOrDefault(img => img.IsPrimary)?.ImageUrl
+                               ?? variant.Product.Images.FirstOrDefault()?.ImageUrl,
+                VariantId = variant.Id,
+                VariantSku = variant.SKU,
+                SizeName = variant.Size?.Name,
+                ColorName = variant.Color?.Name,
+                UnitPrice = variant.Price,
+                Quantity = 1,
+                MaxStock = variant.Inventory != null ? Math.Max(0, variant.Inventory.Quantity - variant.Inventory.ReservedQuantity) : 10
+            };
+
+            return Ok(ApiResponse<CartItemDto>.Ok(dto));
+        }
+
+        [HttpGet("variant/{variantId:guid}")]
+        public async Task<IActionResult> GetVariantById(Guid variantId)
+        {
+            var variant = await _context.ProductVariants
+                .AsNoTracking()
+                .Include(v => v.Product)
+                    .ThenInclude(p => p.Images)
+                .Include(v => v.Size)
+                .Include(v => v.Color)
+                .Include(v => v.Inventory)
+                .FirstOrDefaultAsync(v => v.Id == variantId);
+
+            if (variant == null)
+            {
+                return NotFound(ApiResponse<CartItemDto>.Fail("Variant not found.", 404));
+            }
+
+            var dto = new CartItemDto
+            {
+                Id = Guid.NewGuid(),
+                ProductId = variant.ProductId,
+                ProductName = variant.Product.Name,
+                ProductImage = variant.Product.Images.FirstOrDefault(img => img.IsPrimary)?.ImageUrl
+                               ?? variant.Product.Images.FirstOrDefault()?.ImageUrl,
+                VariantId = variant.Id,
+                VariantSku = variant.SKU,
+                SizeName = variant.Size?.Name,
+                ColorName = variant.Color?.Name,
+                UnitPrice = variant.Price,
+                Quantity = 1,
+                MaxStock = variant.Inventory != null ? variant.Inventory.Quantity - variant.Inventory.ReservedQuantity : 10
+            };
+
+            return Ok(ApiResponse<CartItemDto>.Ok(dto));
         }
     }
 }

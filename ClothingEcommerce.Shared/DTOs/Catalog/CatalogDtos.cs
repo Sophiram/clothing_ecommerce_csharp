@@ -71,6 +71,7 @@ namespace ClothingEcommerce.Shared.DTOs.Catalog
         public double AverageRating { get; set; }
         public int ReviewCount { get; set; }
         public int TotalStock { get; set; }
+        public Guid? DefaultVariantId { get; set; }
     }
 
     public class ProductDetailDto : ProductDto
