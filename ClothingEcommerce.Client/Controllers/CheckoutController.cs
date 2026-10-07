@@ -168,5 +168,134 @@ namespace ClothingEcommerce.Client.Controllers
             var response = await _apiClient.GetAsync<PaymentStatusResponseDto>(endpoint);
             return Json(response?.Data ?? new PaymentStatusResponseDto());
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
+        {
+            await LoadPaymentMethodsAsync();
+
+            var paymentMethods = ViewBag.PaymentMethods as List<PaymentMethod> ?? new List<PaymentMethod>();
+            var selectedMethod = paymentMethods.FirstOrDefault(p => p.Id == model.PaymentMethodId);
+            var methodName = selectedMethod?.Name ?? "KHQR";
+
+            var request = new CheckoutRequestDto
+            {
+                FullName = $"{model.FirstName} {model.LastName}".Trim(),
+                Email = model.Email,
+                Phone = model.Phone,
+                Address = !string.IsNullOrWhiteSpace(model.Street) ? model.Street : (model.SelectedProvince ?? "Phnom Penh"),
+                City = !string.IsNullOrWhiteSpace(model.City) ? model.City : "Phnom Penh",
+                PostalCode = model.PostalCode,
+                Notes = string.IsNullOrWhiteSpace(model.DeliveryNote) ? null : model.DeliveryNote,
+                PaymentMethod = methodName
+            };
+
+            var response = await _apiClient.PostAsync<CheckoutRequestDto, OrderDto>("api/orders/checkout", request);
+
+            if (response == null || !response.Success || response.Data == null)
+            {
+                var msg = response?.Message ?? (response?.Errors?.FirstOrDefault()) ?? "Failed to place your order. Please check your details.";
+                return Json(new { success = false, message = msg });
+            }
+
+            return Json(new { success = true, orderId = response.Data.Id, orderNumber = response.Data.OrderNumber });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Success(Guid id)
+        {
+            var response = await _apiClient.GetAsync<OrderDto>($"api/orders/{id}");
+            if (response?.Data == null)
+            {
+                return RedirectToAction("Index", "Orders");
+            }
+
+            var dto = response.Data;
+            var order = new Order
+            {
+                Id = dto.Id,
+                OrderDate = dto.CreatedAt,
+                TotalAmount = dto.TotalAmount,
+                Status = Enum.TryParse<WebApplication_ClothingEcommerce.Data.Enums.OrderStatus>(dto.Status, true, out var os) ? os : WebApplication_ClothingEcommerce.Data.Enums.OrderStatus.Pending,
+                Customer = new Customer
+                {
+                    FirstName = dto.CustomerName.Split(' ').FirstOrDefault() ?? dto.CustomerName,
+                    LastName = dto.CustomerName.Contains(' ') ? dto.CustomerName.Substring(dto.CustomerName.IndexOf(' ') + 1) : "",
+                    Email = dto.CustomerEmail,
+                    Phone = dto.CustomerPhone
+                },
+                Address = new Address
+                {
+                    Street = dto.ShippingAddress,
+                    City = dto.City ?? "Phnom Penh",
+                    PostalCode = dto.PostalCode ?? "12000"
+                },
+                Payment = new Payment
+                {
+                    PaymentStatus = Enum.TryParse<WebApplication_ClothingEcommerce.Data.Enums.PaymentStatus>(dto.PaymentStatus, true, out var ps) ? ps : WebApplication_ClothingEcommerce.Data.Enums.PaymentStatus.Completed,
+                    PaymentMethod = new PaymentMethod { Name = dto.PaymentMethod },
+                    BakongTransactionId = dto.OrderNumber,
+                    CreatedAt = dto.CreatedAt
+                },
+                Shipment = new Shipment
+                {
+                    ShippingCompany = "VET Express"
+                },
+                Items = dto.Items.Select(oi => new OrderItem
+                {
+                    Id = oi.Id,
+                    OrderId = dto.Id,
+                    UnitPrice = oi.UnitPrice,
+                    Quantity = oi.Quantity,
+                    Variant = new ProductVariant
+                    {
+                        Price = oi.UnitPrice,
+                        Product = new Product { Name = oi.ProductName }
+                    }
+                }).ToList()
+            };
+
+            return View("Success", order);
+        }
+
+        [HttpPost("/api/payments/bakong/create")]
+        public async Task<IActionResult> CreateBakongPayment([FromBody] WebApplication_ClothingEcommerce.Services.CreateBakongPaymentRequest request)
+        {
+            var response = await _apiClient.PostAsync<WebApplication_ClothingEcommerce.Services.CreateBakongPaymentRequest, WebApplication_ClothingEcommerce.Services.BakongPaymentResponse>("api/payments/bakong/create", request);
+            if (response == null || !response.Success || response.Data == null)
+            {
+                return BadRequest(new { success = false, message = response?.Message ?? "Failed to generate dynamic Bakong QR." });
+            }
+            return Json(response.Data);
+        }
+
+        [HttpGet("/api/payments/{paymentId:guid}/status")]
+        public async Task<IActionResult> GetBakongStatus(Guid paymentId)
+        {
+            var response = await _apiClient.GetAsync<WebApplication_ClothingEcommerce.Services.BakongStatusResponse>($"api/payments/{paymentId}/status");
+            if (response == null || response.Data == null)
+            {
+                return BadRequest(new { success = false, message = response?.Message ?? "Payment check failed." });
+            }
+            return Json(response.Data);
+        }
+
+        [HttpPost("/api/payments/{paymentId:guid}/cancel")]
+        public async Task<IActionResult> CancelBakongPayment(Guid paymentId)
+        {
+            var response = await _apiClient.PostAsync<object, object>($"api/payments/{paymentId}/cancel", new { });
+            return Json(response?.Data ?? new { success = true });
+        }
+
+        [HttpPost("/api/payments/{paymentId:guid}/simulate-confirm")]
+        public async Task<IActionResult> SimulateConfirmBakongPayment(Guid paymentId)
+        {
+            var response = await _apiClient.PostAsync<object, WebApplication_ClothingEcommerce.Services.BakongStatusResponse>($"api/payments/{paymentId}/simulate-confirm", new { });
+            if (response == null || response.Data == null)
+            {
+                return BadRequest(new { success = false, message = response?.Message ?? "Simulation confirmation failed." });
+            }
+            return Json(response.Data);
+        }
     }
 }

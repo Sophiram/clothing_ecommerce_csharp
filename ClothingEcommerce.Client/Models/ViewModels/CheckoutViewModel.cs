@@ -34,19 +34,19 @@ namespace WebApplication_ClothingEcommerce.Models.ViewModels
 
         public string CarrierCode { get; set; } = "VETExpress"; // "VETExpress", "CityDelivery", "OtherExpress"
 
-        public string SelectedProvince { get; set; } = "រាជធានីភ្នំពេញ";
+        public string? SelectedProvince { get; set; } = "រាជធានីភ្នំពេញ";
 
-        public string SelectedBranchName { get; set; } = string.Empty;
+        public string? SelectedBranchName { get; set; }
 
-        public string DeliveryNote { get; set; } = string.Empty;
+        public string? DeliveryNote { get; set; }
 
-        public string Province { get; set; } = string.Empty;
+        public string? Province { get; set; }
 
-        public string City { get; set; } = string.Empty;
+        public string? City { get; set; }
 
-        public string Street { get; set; } = string.Empty;
+        public string? Street { get; set; }
 
-        public string PostalCode { get; set; } = string.Empty;
+        public string? PostalCode { get; set; }
 
 
         // =========================================================

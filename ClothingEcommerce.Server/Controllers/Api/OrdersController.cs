@@ -168,6 +168,7 @@ namespace ClothingEcommerce.Server.Controllers.Api
                 City = request.City ?? "Phnom Penh",
                 Province = "រាជធានីភ្នំពេញ",
                 PostalCode = "12000",
+                DeliveryNote = request.Notes,
                 PaymentMethodId = paymentMethod?.Id,
                 DeliveryType = "ExpressDelivery",
                 CarrierCode = "VETExpress",
