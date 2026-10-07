@@ -198,127 +198,165 @@
 <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+            <!-- Header -->
             <div class="p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-                <div class="flex items-center gap-2">
-                    <i class="bi bi-cash-stack text-blue-400 text-lg"></i>
-                    <h3 class="text-base font-bold">POS Checkout &amp; Payment</h3>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm font-bold">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold">POS Terminal Payment</h3>
+                        <p class="text-[11px] text-slate-400">Select payment method and collect payment</p>
+                    </div>
                 </div>
-                <button type="button" class="text-slate-400 hover:text-white text-lg" data-bs-dismiss="modal">
+                <button type="button" class="text-slate-400 hover:text-white text-lg cursor-pointer" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
+
+            <!-- Body -->
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <!-- LEFT COLUMN: TOTAL & PAYMENT METHOD TABS -->
+                    <!-- LEFT COLUMN: TOTAL & PAYMENT METHOD SELECTOR -->
                     <div class="md:col-span-5 space-y-4">
+                        <!-- Total to Pay Card -->
                         <div class="text-center p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
-                            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Amount to Pay</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Amount Due</span>
                             <div class="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1" id="checkoutModalTotalUsd">$0.00</div>
                             <div class="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5" id="checkoutModalTotalKhr">0 ៛</div>
                         </div>
 
+                        <!-- Method Selector Buttons -->
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Payment Method</label>
-                            <div class="nav flex flex-col gap-2" role="tablist">
-                                <button class="nav-link active text-left p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between font-bold text-xs cursor-pointer"
-                                        id="pill-cash-tab" data-bs-toggle="pill" data-bs-target="#pill-cash" type="button">
-                                    <span class="flex items-center gap-2">
-                                        <i class="bi bi-cash text-emerald-500 text-base"></i> Cash (សាច់ប្រាក់)
+                            <div class="space-y-2">
+                                <button type="button" id="payMethodCashBtn" onclick="selectPaymentMethod('Cash')"
+                                        class="w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20 shadow-sm">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base">
+                                            <i class="bi bi-cash-stack"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold">Cash (សាច់ប្រាក់)</div>
+                                            <div class="text-[10px] font-normal opacity-70">USD ($) or KHR (៛) with Change</div>
+                                        </div>
+                                    </div>
+                                    <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]" id="payMethodCashCheck">
+                                        <i class="bi bi-check-lg"></i>
                                     </span>
-                                    <i class="bi bi-chevron-right text-slate-400 text-xs"></i>
                                 </button>
-                                <button class="nav-link text-left p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between font-bold text-xs cursor-pointer"
-                                        id="pill-khqr-tab" data-bs-toggle="pill" data-bs-target="#pill-khqr" type="button">
-                                    <span class="flex items-center gap-2">
-                                        <i class="bi bi-qr-code-scan text-rose-500 text-base"></i> NBC Bakong KHQR
+
+                                <button type="button" id="payMethodKhqrBtn" onclick="selectPaymentMethod('KHQR')"
+                                        class="w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base">
+                                            <i class="bi bi-qr-code-scan"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold">NBC Bakong KHQR</div>
+                                            <div class="text-[10px] font-normal opacity-70">Scan via ABA, ACLEDA &amp; 30+ Banks</div>
+                                        </div>
+                                    </div>
+                                    <span class="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] hidden" id="payMethodKhqrCheck">
+                                        <i class="bi bi-check-lg"></i>
                                     </span>
-                                    <i class="bi bi-chevron-right text-slate-400 text-xs"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: CASH CALCULATION OR KHQR -->
+                    <!-- RIGHT COLUMN: CASH TENDERED OR KHQR SCANNER -->
                     <div class="md:col-span-7">
-                        <div class="tab-content">
-                            <!-- TAB 1: CASH -->
-                            <div class="tab-pane fade show active space-y-4" id="pill-cash">
-                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Cash Tendered</h4>
-                                
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Tendered in USD ($)</label>
-                                    <div class="relative flex items-center">
-                                        <span class="absolute left-3.5 font-bold text-slate-400">$</span>
-                                        <input type="number" id="tenderedUsdInput" placeholder="0.00" min="0" step="1"
-                                               class="w-full text-sm font-black rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-4 py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               oninput="calculateChange()" />
-                                    </div>
-                                </div>
-
-                                <!-- Quick USD chips -->
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedUsd(5)">$5</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedUsd(10)">$10</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedUsd(20)">$20</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedUsd(50)">$50</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedUsd(100)">$100</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold shadow-sm" onclick="setTenderedExact()">Exact</button>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Or Tendered in KHR (៛)</label>
-                                    <div class="relative flex items-center">
-                                        <span class="absolute left-3.5 font-bold text-slate-400">៛</span>
-                                        <input type="number" id="tenderedKhrInput" placeholder="0" step="500"
-                                               class="w-full text-sm font-mono font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-4 py-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                               oninput="calculateChange()" />
-                                    </div>
-                                </div>
-
-                                <!-- Quick KHR chips -->
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedKhr(20000)">20,000៛</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedKhr(50000)">50,000៛</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedKhr(100000)">100,000៛</button>
-                                    <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold" onclick="setTenderedKhr(200000)">200,000៛</button>
-                                </div>
-
-                                <!-- CHANGE RETURN DISPLAY -->
-                                <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Change Due (USD):</span>
-                                        <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="changeDisplayUsd">$0.00</span>
-                                    </div>
-                                    <div class="flex items-center justify-between mt-1">
-                                        <span class="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Change Due (KHR):</span>
-                                        <span class="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400" id="changeDisplayKhr">0 ៛</span>
-                                    </div>
+                        <!-- PANE 1: CASH -->
+                        <div id="pane-cash" class="space-y-3.5">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cash Received from Customer</h4>
+                            
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tendered in USD ($)</label>
+                                <div class="relative flex items-center">
+                                    <span class="absolute left-3.5 font-black text-slate-400">$</span>
+                                    <input type="number" id="tenderedUsdInput" placeholder="0.00" min="0" step="1"
+                                           class="w-full text-sm font-black rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-4 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                           oninput="calculateChange()" />
                                 </div>
                             </div>
 
-                            <!-- TAB 2: KHQR -->
-                            <div class="tab-pane fade text-center py-4 space-y-3" id="pill-khqr">
-                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Scan to Pay via Bakong KHQR</h4>
-                                <p class="text-xs text-slate-400">Accepts ABA, ACLEDA, Wing, Sathapana, and 30+ Cambodia Banks</p>
-                                
-                                <div class="p-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-white inline-block shadow-sm">
-                                    <div id="khqrQrContainer" class="flex justify-center items-center w-[200px] h-[200px] mx-auto">
-                                        <div class="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
-                                    </div>
-                                </div>
+                            <!-- Quick USD chips -->
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedUsd(5)">$5</button>
+                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedUsd(10)">$10</button>
+                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedUsd(20)">$20</button>
+                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedUsd(50)">$50</button>
+                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedUsd(100)">$100</button>
+                                <button type="button" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer" onclick="setTenderedExact()">Exact</button>
+                            </div>
 
-                                <div class="text-[11px] font-mono text-slate-400" id="khqrMd5Display"></div>
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <i class="bi bi-arrow-repeat animate-spin"></i> Ready for Customer Scan
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Or Tendered in KHR (៛)</label>
+                                <div class="relative flex items-center">
+                                    <span class="absolute left-3.5 font-black text-slate-400">៛</span>
+                                    <input type="number" id="tenderedKhrInput" placeholder="0" step="500"
+                                           class="w-full text-sm font-mono font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-8 pr-4 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                           oninput="calculateChange()" />
+                                </div>
+                            </div>
+
+                            <!-- Quick KHR chips -->
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedKhr(20000)">20,000៛</button>
+                                <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedKhr(50000)">50,000៛</button>
+                                <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedKhr(100000)">100,000៛</button>
+                                <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] font-bold hover:bg-slate-100 cursor-pointer text-slate-700 dark:text-slate-200" onclick="setTenderedKhr(200000)">200,000៛</button>
+                            </div>
+
+                            <!-- LIVE CHANGE / REMAINING FEEDBACK BOX -->
+                            <div id="changeFeedbackBox" class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl transition">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300" id="changeFeedbackTitle">
+                                        <i class="bi bi-check-circle mr-1"></i> Change Due (USD):
+                                    </span>
+                                    <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400" id="changeDisplayUsd">$0.00</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">In Cambodian Riel:</span>
+                                    <span class="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400" id="changeDisplayKhr">0 ៛</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PANE 2: KHQR -->
+                        <div id="pane-khqr" class="hidden text-center py-2 space-y-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                    <i class="bi bi-qr-code-scan"></i> NBC Bakong KHQR
                                 </span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Scan using ABA Mobile, ACLEDA, Wing, or 30+ Cambodia Banks</p>
+                            
+                            <div class="p-3 bg-white rounded-2xl border-2 border-slate-200 dark:border-slate-700 inline-block shadow-sm">
+                                <div id="khqrQrContainer" class="flex justify-center items-center w-[180px] h-[180px] mx-auto bg-white rounded-xl">
+                                    <div class="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="text-xs font-bold text-slate-800 dark:text-slate-200" id="khqrAmountDisplay">Amount: $0.00</div>
+                                <div class="text-[11px] font-mono text-slate-400" id="khqrMd5Display"></div>
+                            </div>
+
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>Ready for customer scan</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Footer -->
             <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-                <button type="button" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50" data-bs-dismiss="modal">
-                    Cancel
+                <button type="button" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 cursor-pointer" data-bs-dismiss="modal">
+                    Cancel (Esc)
                 </button>
                 <button type="button" id="btnConfirmSale" onclick="processSaleSubmission()"
                         class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer flex items-center gap-1.5">
@@ -334,33 +372,41 @@
      MODAL & PRINT AREA: THERMAL RECEIPT SLIP (80mm / 58mm)
 ========================================================= -->
 <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h4 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                    <i class="bi bi-printer"></i> Receipt Slip
-                </h4>
-                <button type="button" class="text-slate-400 hover:text-slate-600 text-lg" data-bs-dismiss="modal">
+    <div class="modal-dialog modal-dialog-centered max-w-[420px]">
+        <div class="modal-content bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-white">
+            <div class="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold">Sale Completed Successfully</h4>
+                        <p class="text-[11px] text-slate-400">Thermal receipt slip generated</p>
+                    </div>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-white text-lg cursor-pointer" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <div class="p-3" id="printableReceiptArea">
-                <div class="receipt-thermal-slip text-slate-900 p-3 font-mono text-xs">
+            
+            <!-- RECEIPT PAPER SLIP (Forced crisp light paper in all modes) -->
+            <div class="p-5 bg-slate-950/70 flex justify-center overflow-y-auto max-h-[calc(100vh-220px)]">
+                <div id="printableReceiptArea" class="w-full max-w-[340px] bg-white text-slate-900 p-5 rounded-2xl shadow-xl border border-slate-200 font-mono text-xs select-text">
                     <div class="text-center mb-3">
-                        <h3 class="font-black text-base tracking-widest">CLOTHÉ</h3>
-                        <div class="text-[10px] uppercase text-slate-500">Premium Fashion Store</div>
+                        <h3 class="font-black text-lg tracking-widest text-slate-900">CLOTHÉ</h3>
+                        <div class="text-[10px] uppercase font-bold text-slate-600">Premium Fashion Store</div>
                         <div class="text-[10px] text-slate-500">#128 Preah Sihanouk Blvd, Phnom Penh</div>
                         <div class="text-[10px] text-slate-500">Tel: 012 345 678</div>
                     </div>
-                    <div class="border-t border-b border-dashed border-slate-400 py-1.5 mb-2 text-[11px] space-y-0.5">
-                        <div class="flex justify-between"><span>Receipt:</span><span class="font-bold" id="rcptCode">REC-0000</span></div>
+                    <div class="border-t border-b border-dashed border-slate-400 py-2 mb-2 text-[11px] space-y-1 text-slate-700">
+                        <div class="flex justify-between"><span>Receipt:</span><span class="font-black text-slate-900" id="rcptCode">REC-0000</span></div>
                         <div class="flex justify-between"><span>Date:</span><span id="rcptDate">--/--/----</span></div>
-                        <div class="flex justify-between"><span>Cashier:</span><span id="rcptCashier">--</span></div>
-                        <div class="flex justify-between"><span>Customer:</span><span id="rcptCustomer">Walk-in</span></div>
+                        <div class="flex justify-between"><span>Cashier:</span><span class="font-bold text-slate-900" id="rcptCashier">--</span></div>
+                        <div class="flex justify-between"><span>Customer:</span><span id="rcptCustomer">Walk-in Customer</span></div>
                     </div>
-                    <table class="w-full mb-2 text-[11px]">
+                    <table class="w-full mb-2 text-[11px] text-slate-900">
                         <thead>
-                            <tr class="border-b border-dashed border-slate-400">
+                            <tr class="border-b border-dashed border-slate-400 font-bold">
                                 <th class="text-left pb-1">Item</th>
                                 <th class="text-center pb-1">Qty</th>
                                 <th class="text-right pb-1">Total</th>
@@ -368,31 +414,35 @@
                         </thead>
                         <tbody id="rcptItemsTable" class="divide-y divide-dashed divide-slate-200"></tbody>
                     </table>
-                    <div class="border-t border-dashed border-slate-400 pt-1.5 mb-2 text-[11px] space-y-0.5">
-                        <div class="flex justify-between"><span>Subtotal:</span><span id="rcptSubtotal">$0.00</span></div>
-                        <div class="flex justify-between"><span>Discount:</span><span id="rcptDiscount">$0.00</span></div>
-                        <div class="flex justify-between font-black text-sm border-t border-dashed border-slate-400 pt-1 mt-1">
-                            <span>TOTAL (USD):</span><span id="rcptTotalUsd">$0.00</span>
+                    <div class="border-t border-dashed border-slate-400 pt-2 mb-2 text-[11px] space-y-1 text-slate-800">
+                        <div class="flex justify-between"><span>Subtotal:</span><span class="font-semibold" id="rcptSubtotal">$0.00</span></div>
+                        <div class="flex justify-between"><span>Discount:</span><span class="font-semibold text-rose-600" id="rcptDiscount">-$0.00</span></div>
+                        <div class="flex justify-between font-black text-sm border-t border-dashed border-slate-400 pt-1.5 mt-1 text-slate-900">
+                            <span>TOTAL (USD):</span><span class="text-base font-black text-blue-600" id="rcptTotalUsd">$0.00</span>
                         </div>
-                        <div class="flex justify-between font-bold">
-                            <span>TOTAL (KHR):</span><span id="rcptTotalKhr">0 ៛</span>
+                        <div class="flex justify-between font-bold text-slate-700">
+                            <span>TOTAL (KHR):</span><span class="font-mono text-emerald-700" id="rcptTotalKhr">0 ៛</span>
                         </div>
                     </div>
-                    <div class="border-t border-dashed border-slate-400 pt-1.5 mb-3 text-[11px] space-y-0.5">
-                        <div class="flex justify-between"><span>Payment:</span><span id="rcptPayMethod">Cash</span></div>
+                    <div class="border-t border-dashed border-slate-400 pt-2 mb-3 text-[11px] space-y-1 text-slate-700">
+                        <div class="flex justify-between"><span>Payment Method:</span><span class="font-bold text-slate-900" id="rcptPayMethod">Cash</span></div>
                         <div class="flex justify-between"><span>Tendered:</span><span id="rcptTendered">$0.00</span></div>
-                        <div class="flex justify-between font-bold"><span>Change:</span><span id="rcptChange">$0.00</span></div>
+                        <div class="flex justify-between font-bold text-slate-900"><span>Change:</span><span class="text-emerald-700 font-black" id="rcptChange">$0.00</span></div>
                     </div>
-                    <div class="text-center text-[10px] text-slate-500 space-y-0.5">
-                        <div>*** THANK YOU! PLEASE VISIT AGAIN ***</div>
+                    <div class="text-center text-[10px] text-slate-500 space-y-1 pt-1 border-t border-dashed border-slate-300">
+                        <div class="font-bold text-slate-700">*** THANK YOU! PLEASE VISIT AGAIN ***</div>
                         <div>Exchange within 7 days with valid slip.</div>
                     </div>
                 </div>
             </div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="px-4 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center gap-1" onclick="printReceiptSlip()">
-                    <i class="bi bi-printer-fill"></i> Print Slip
+            
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-end gap-2.5">
+                <button type="button" class="px-4 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer" data-bs-dismiss="modal">
+                    Close (Esc)
+                </button>
+                <button type="button" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition" onclick="printReceiptSlip()">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Print Slip (Ctrl+P)</span>
                 </button>
             </div>
         </div>
@@ -409,7 +459,7 @@
                 <h4 class="text-sm font-bold flex items-center gap-2">
                     <i class="bi bi-clock-history text-cyan-400"></i> Cashier Shift Summary
                 </h4>
-                <button type="button" class="text-slate-400 hover:text-white text-lg" data-bs-dismiss="modal">
+                <button type="button" class="text-slate-400 hover:text-white text-lg cursor-pointer" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -429,21 +479,28 @@
 <style>
 @@media print {
     body * {
-        visibility: hidden;
+        visibility: hidden !important;
     }
     #printableReceiptArea, #printableReceiptArea * {
-        visibility: visible;
+        visibility: visible !important;
+        color: #000000 !important;
+        background: #ffffff !important;
     }
     #printableReceiptArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        margin: 0;
-        padding: 0;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 80mm !important;
+        margin: 0 !important;
+        padding: 5mm !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
     }
-    .modal-backdrop, .modal-header, .modal-footer {
+    .modal, .modal-backdrop, .modal-dialog, .modal-content, .modal-header, .modal-footer {
         display: none !important;
+        background: transparent !important;
     }
 }
 </style>
@@ -781,7 +838,11 @@
         document.getElementById('cartTotalKhr').innerText = `${grandTotalKhr.toLocaleString()} ៛`;
     }
 
-    // CHECKOUT MODAL LOGIC
+    // ==========================================
+    // CHECKOUT & PAYMENT LOGIC (CASH / KHQR)
+    // ==========================================
+    let currentPaymentMethod = 'Cash';
+
     function openCheckoutModal() {
         if (cart.length === 0) return;
 
@@ -796,13 +857,47 @@
         // Pre-fill exact cash
         document.getElementById('tenderedUsdInput').value = totalUsd.toFixed(2);
         document.getElementById('tenderedKhrInput').value = '';
-        calculateChange();
+
+        // Default to Cash tab cleanly
+        selectPaymentMethod('Cash');
 
         // Generate dynamic KHQR preview
         generateKhqrPreview(totalUsd);
 
         const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
         modal.show();
+    }
+
+    function selectPaymentMethod(method) {
+        currentPaymentMethod = method;
+        const btnCash = document.getElementById('payMethodCashBtn');
+        const btnKhqr = document.getElementById('payMethodKhqrBtn');
+        const checkCash = document.getElementById('payMethodCashCheck');
+        const checkKhqr = document.getElementById('payMethodKhqrCheck');
+        const paneCash = document.getElementById('pane-cash');
+        const paneKhqr = document.getElementById('pane-khqr');
+        const btnSubmit = document.getElementById('btnConfirmSale');
+
+        if (method === 'Cash') {
+            btnCash.className = "w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20 shadow-sm";
+            btnKhqr.className = "w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300";
+            checkCash.classList.remove('hidden');
+            checkKhqr.classList.add('hidden');
+            paneCash.classList.remove('hidden');
+            paneKhqr.classList.add('hidden');
+            btnSubmit.className = "px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer flex items-center gap-1.5";
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Complete Sale &amp; Print Slip</span>';
+            calculateChange();
+        } else {
+            btnKhqr.className = "w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-rose-500 bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20 shadow-sm";
+            btnCash.className = "w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between font-bold text-xs cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300";
+            checkKhqr.classList.remove('hidden');
+            checkCash.classList.add('hidden');
+            paneKhqr.classList.remove('hidden');
+            paneCash.classList.add('hidden');
+            btnSubmit.className = "px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer flex items-center gap-1.5";
+            btnSubmit.innerHTML = '<i class="bi bi-qr-code-scan"></i><span>Confirm KHQR Paid &amp; Print Slip</span>';
+        }
     }
 
     function setTenderedUsd(val) {
@@ -835,27 +930,72 @@
         const khrVal = parseFloat(document.getElementById('tenderedKhrInput').value) || 0;
 
         const totalTenderedUsd = usdVal + (khrVal > 0 ? khrVal / EXCHANGE_RATE : 0);
-        const changeUsd = Math.max(0, totalTenderedUsd - totalUsd);
-        const changeKhr = Math.round(changeUsd * EXCHANGE_RATE);
+        const diffUsd = totalTenderedUsd - totalUsd;
 
-        document.getElementById('changeDisplayUsd').innerText = `$${changeUsd.toFixed(2)}`;
-        document.getElementById('changeDisplayKhr').innerText = `${changeKhr.toLocaleString()} ៛`;
+        const changeBox = document.getElementById('changeFeedbackBox');
+        const labelTitle = document.getElementById('changeFeedbackTitle');
+        const changeUsdEl = document.getElementById('changeDisplayUsd');
+        const changeKhrEl = document.getElementById('changeDisplayKhr');
+
+        if (diffUsd >= -0.005) {
+            const changeUsd = Math.max(0, diffUsd);
+            const changeKhr = Math.round(changeUsd * EXCHANGE_RATE);
+            if (changeBox) changeBox.className = "p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl transition";
+            if (labelTitle) {
+                labelTitle.className = "text-xs font-bold text-emerald-800 dark:text-emerald-300";
+                labelTitle.innerHTML = '<i class="bi bi-check-circle mr-1"></i> Change Due (USD):';
+            }
+            if (changeUsdEl) {
+                changeUsdEl.className = "text-2xl font-black text-emerald-600 dark:text-emerald-400";
+                changeUsdEl.innerText = `$${changeUsd.toFixed(2)}`;
+            }
+            if (changeKhrEl) {
+                changeKhrEl.className = "text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400";
+                changeKhrEl.innerText = `${changeKhr.toLocaleString()} ៛`;
+            }
+        } else {
+            const shortUsd = Math.abs(diffUsd);
+            const shortKhr = Math.round(shortUsd * EXCHANGE_RATE);
+            if (changeBox) changeBox.className = "p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl transition";
+            if (labelTitle) {
+                labelTitle.className = "text-xs font-bold text-amber-800 dark:text-amber-300";
+                labelTitle.innerHTML = '<i class="bi bi-exclamation-triangle mr-1"></i> Remaining Due (USD):';
+            }
+            if (changeUsdEl) {
+                changeUsdEl.className = "text-2xl font-black text-amber-600 dark:text-amber-400";
+                changeUsdEl.innerText = `$${shortUsd.toFixed(2)}`;
+            }
+            if (changeKhrEl) {
+                changeKhrEl.className = "text-sm font-mono font-bold text-amber-600 dark:text-amber-400";
+                changeKhrEl.innerText = `${shortKhr.toLocaleString()} ៛`;
+            }
+        }
     }
 
     function generateKhqrPreview(amount) {
+        const totalKhr = Math.round(amount * EXCHANGE_RATE);
+        const amountDisp = document.getElementById('khqrAmountDisplay');
+        if (amountDisp) {
+            amountDisp.innerText = `Amount: $${amount.toFixed(2)} (${totalKhr.toLocaleString()} ៛)`;
+        }
+
         const qrContainer = document.getElementById('khqrQrContainer');
         qrContainer.innerHTML = '<div class="w-8 h-8 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>';
         
         const simulatedQr = `00020101021229370016bakong@clothe.pos5204599953038405405${amount.toFixed(2)}5802KH5910CLOTHE_POS6010PHNOM_PENH6304`;
         
-        QRCode.toCanvas(simulatedQr, { width: 190, margin: 1, color: { dark: '#d32f2f', light: '#ffffff' } }, function (error, canvas) {
-            if (error) {
-                qrContainer.innerHTML = '<span class="text-rose-500 text-xs">QR code generation failed</span>';
-            } else {
-                qrContainer.innerHTML = '';
-                qrContainer.appendChild(canvas);
-            }
-        });
+        if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+            QRCode.toCanvas(simulatedQr, { width: 180, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } }, function (error, canvas) {
+                if (error) {
+                    qrContainer.innerHTML = '<span class="text-rose-500 text-xs">QR code generation failed</span>';
+                } else {
+                    qrContainer.innerHTML = '';
+                    qrContainer.appendChild(canvas);
+                }
+            });
+        } else {
+            qrContainer.innerHTML = '<div class="text-xs text-slate-500 p-4">KHQR Code Ready</div>';
+        }
         document.getElementById('khqrMd5Display').innerText = `Ref: KHQR-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     }
 
@@ -865,9 +1005,7 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></span> Processing Sale...';
 
-        const isCash = document.getElementById('pill-cash-tab').classList.contains('active');
-        const paymentMethod = isCash ? "Cash" : "KHQR";
-
+        const paymentMethod = currentPaymentMethod;
         const discount = parseFloat(document.getElementById('cartDiscountInput').value) || 0;
         const tenderedUsd = parseFloat(document.getElementById('tenderedUsdInput').value) || 0;
         const tenderedKhr = parseFloat(document.getElementById('tenderedKhrInput').value) || 0;
@@ -900,15 +1038,24 @@
 
             if (result.success && result.data) {
                 lastCheckoutResult = result.data;
-                bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
-
-                // Open Printable Thermal Receipt
-                displayReceipt(lastCheckoutResult);
 
                 // Clear cart & reload catalog stock
                 cart = [];
                 renderCart();
                 loadCatalog();
+
+                // Smooth modal transition: close checkout modal first, then open receipt modal
+                const checkoutModalEl = document.getElementById('checkoutModal');
+                const checkoutModalInstance = bootstrap.Modal.getInstance(checkoutModalEl);
+                if (checkoutModalInstance) {
+                    checkoutModalEl.addEventListener('hidden.bs.modal', function onModalClose() {
+                        checkoutModalEl.removeEventListener('hidden.bs.modal', onModalClose);
+                        displayReceipt(lastCheckoutResult);
+                    }, { once: true });
+                    checkoutModalInstance.hide();
+                } else {
+                    displayReceipt(lastCheckoutResult);
+                }
             } else {
                 alert(result.message || "Failed to complete transaction.");
             }
@@ -917,7 +1064,7 @@
             alert("Network error processing sale.");
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-circle-fill mr-1"></i> Complete Sale &amp; Print Slip';
+            selectPaymentMethod(currentPaymentMethod);
         }
     }
 
@@ -925,19 +1072,19 @@
         document.getElementById('rcptCode').innerText = data.receiptNumber || "REC-0000";
         document.getElementById('rcptDate').innerText = new Date(data.transactionDate).toLocaleString();
         document.getElementById('rcptCashier').innerText = data.cashierName || "Cashier";
-        document.getElementById('rcptCustomer').innerText = document.getElementById('customerNameInput').value || "Walk-in";
+        document.getElementById('rcptCustomer').innerText = document.getElementById('customerNameInput').value || "Walk-in Customer";
 
         const tbody = document.getElementById('rcptItemsTable');
         tbody.innerHTML = (data.items || []).map(i => `
             <tr>
-                <td class="text-left py-0.5">${i.productName} (${i.sizeName})</td>
-                <td class="text-center py-0.5">${i.quantity}</td>
-                <td class="text-right py-0.5">$${Number(i.totalPrice).toFixed(2)}</td>
+                <td class="text-left py-1 text-slate-800 font-medium">${i.productName} <span class="text-[10px] text-slate-500">(${i.sizeName})</span></td>
+                <td class="text-center py-1 text-slate-800 font-bold">${i.quantity}</td>
+                <td class="text-right py-1 font-bold text-slate-900">$${Number(i.totalPrice).toFixed(2)}</td>
             </tr>
         `).join('');
 
         document.getElementById('rcptSubtotal').innerText = `$${Number(data.subtotalUsd).toFixed(2)}`;
-        document.getElementById('rcptDiscount').innerText = `$${Number(data.discountUsd).toFixed(2)}`;
+        document.getElementById('rcptDiscount').innerText = `-$${Number(data.discountUsd).toFixed(2)}`;
         document.getElementById('rcptTotalUsd').innerText = `$${Number(data.totalAmountUsd).toFixed(2)}`;
         document.getElementById('rcptTotalKhr').innerText = `${Number(data.totalAmountKhr).toLocaleString()} ៛`;
 

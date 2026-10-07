@@ -195,6 +195,22 @@
 .flex-grow-1 { flex-grow: 1 !important; }
 .flex-shrink-0 { flex-shrink: 0 !important; }
 
+/* =========================================================
+   UNIVERSAL TAB CONTENT ENGINE
+========================================================= */
+.tab-content > .tab-pane {
+    display: none !important;
+}
+.tab-content > .tab-pane.active,
+.tab-content > .tab-pane.show.active {
+    display: block !important;
+}
+.tab-content > .tab-pane.fade {
+    transition: opacity .15s linear;
+}
+.tab-content > .tab-pane.fade:not(.show) {
+    opacity: 0;
+}
 
 html,
 body {
