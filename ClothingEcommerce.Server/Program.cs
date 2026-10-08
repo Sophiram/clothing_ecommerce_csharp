@@ -48,9 +48,9 @@ builder.Configuration.AddEnvironmentVariables();
 // ========================================
 // DATABASE & EF CORE
 // ========================================
-var connectionString = builder.Configuration["DefaultConnection"]
-    ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=localhost;Database=ClothingEcommerceDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["DefaultConnection"]
+    ?? "Data Source=DESKTOP-2N3944N\\SOPHIRAMMSSQL;Initial Catalog=clothing_ecommer_db;Trusted_Connection=True;TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
