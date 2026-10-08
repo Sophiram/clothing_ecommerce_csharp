@@ -13,10 +13,14 @@ namespace ClothingEcommerce.Client.Controllers
     public class CheckoutController : Controller
     {
         private readonly IApiClient _apiClient;
+        private readonly WebApplication_ClothingEcommerce.Services.IDeliveryService _deliveryService;
 
-        public CheckoutController(IApiClient apiClient)
+        public CheckoutController(
+            IApiClient apiClient,
+            WebApplication_ClothingEcommerce.Services.IDeliveryService deliveryService)
         {
             _apiClient = apiClient;
+            _deliveryService = deliveryService;
         }
 
         private async Task LoadPaymentMethodsAsync()
@@ -36,9 +40,14 @@ namespace ClothingEcommerce.Client.Controllers
             }
 
             ViewBag.PaymentMethods = methods;
-            ViewBag.DeliveryMethods = new List<object>();
-            ViewBag.DeliveryBranches = new List<object>();
-            ViewBag.Provinces = new List<string> { "រាជធានីភ្នំពេញ", "ខេត្តសៀមរាប", "ខេត្តបាត់ដំបង", "ខេត្តព្រះសីហនុ", "ខេត្តកំពង់ចាម" };
+
+            var deliveryMethods = await _deliveryService.GetActiveDeliveryMethodsAsync();
+            var branches = await _deliveryService.GetBranchesByCarrierAsync("VETExpress");
+            var provinces = await _deliveryService.GetProvincesAsync("VETExpress");
+
+            ViewBag.DeliveryMethods = deliveryMethods;
+            ViewBag.DeliveryBranches = branches;
+            ViewBag.Provinces = provinces.Any() ? provinces : new List<string> { "រាជធានីភ្នំពេញ", "ខេត្តសៀមរាប", "ខេត្តបាត់ដំបង", "ខេត្តព្រះសីហនុ", "ខេត្តកំពង់ចាម" };
         }
 
         [HttpGet]
@@ -53,7 +62,11 @@ namespace ClothingEcommerce.Client.Controllers
 
             var cartDto = cartResponse.Data;
             var subTotal = cartDto.Subtotal;
-            var deliveryFee = subTotal >= 50.00m ? 0.00m : 5.00m;
+
+            var deliveryMethods = await _deliveryService.GetActiveDeliveryMethodsAsync();
+            var defaultDelivery = deliveryMethods.FirstOrDefault(d => d.Code == "VETExpress") ?? deliveryMethods.FirstOrDefault();
+            var deliveryFee = defaultDelivery != null ? defaultDelivery.BaseFee : 2.00m;
+            var initialDeliveryCode = defaultDelivery?.Code ?? "VETExpress";
 
             var fullName = User.FindFirstValue(ClaimTypes.Name) ?? "";
             var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
@@ -70,8 +83,8 @@ namespace ClothingEcommerce.Client.Controllers
                 City = "Phnom Penh",
                 Province = "រាជធានីភ្នំពេញ",
                 SelectedProvince = "រាជធានីភ្នំពេញ",
-                DeliveryType = "ExpressDelivery",
-                CarrierCode = "VETExpress",
+                DeliveryType = initialDeliveryCode,
+                CarrierCode = initialDeliveryCode,
                 SubTotal = subTotal,
                 DeliveryFee = deliveryFee,
                 Total = subTotal + deliveryFee,

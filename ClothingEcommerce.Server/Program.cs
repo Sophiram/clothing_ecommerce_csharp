@@ -176,6 +176,14 @@ builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 builder.Services.AddScoped<IVetExpressService, VetExpressService>();
 builder.Services.AddHttpClient<ITelegramService, TelegramService>();
+builder.Services.AddHttpClient("BakongApi", client =>
+{
+    var baseUrl = builder.Configuration["BAKONG_BASE_URL"]
+               ?? builder.Configuration["KHQR_BASE_URL"]
+               ?? "https://api-bakong.nbc.gov.kh";
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 builder.Services.AddScoped<ISizeService, SizeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();

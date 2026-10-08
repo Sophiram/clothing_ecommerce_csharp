@@ -184,7 +184,9 @@ namespace WebApplication_ClothingEcommerce.Services
             try
             {
                 var client = _httpClientFactory.CreateClient("BakongApi");
-                using var request = new HttpRequestMessage(HttpMethod.Post, "v1/check_transaction_by_md5");
+                var baseUrl = !string.IsNullOrWhiteSpace(config.BaseUrl) ? config.BaseUrl : "https://api-bakong.nbc.gov.kh";
+                var fullUrl = new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), "v1/check_transaction_by_md5");
+                using var request = new HttpRequestMessage(HttpMethod.Post, fullUrl);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", config.Token);
                 request.Content = new StringContent(
                     JsonSerializer.Serialize(new { md5 = md5.Trim().ToLowerInvariant() }),

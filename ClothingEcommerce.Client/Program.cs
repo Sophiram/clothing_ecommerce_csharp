@@ -182,6 +182,15 @@ builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 })
 .AddHttpMessageHandler<AuthHeaderHandler>();
 
+builder.Services.AddHttpClient("BakongApi", client =>
+{
+    var baseUrl = builder.Configuration["BAKONG_BASE_URL"]
+               ?? builder.Configuration["KHQR_BASE_URL"]
+               ?? "https://api-bakong.nbc.gov.kh";
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 var app = builder.Build();
 
 // ========================================
